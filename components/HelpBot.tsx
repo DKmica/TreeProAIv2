@@ -113,7 +113,7 @@ const HelpBot: React.FC<{ currentLocation: string }> = ({ currentLocation }) => 
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 bg-brand-green-600 text-white p-4 rounded-full shadow-lg hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 transition-transform transform hover:scale-110"
+                className="fixed bottom-6 right-6 bg-brand-cyan-600 text-white p-4 rounded-full shadow-lg hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 transition-transform transform hover:scale-110"
                 aria-label="Open AI Assistant"
             >
                 <ChatIcon className="h-8 w-8" />
@@ -124,10 +124,10 @@ const HelpBot: React.FC<{ currentLocation: string }> = ({ currentLocation }) => 
 
     return (
         <div className="fixed bottom-6 right-6 z-50">
-            <div className="flex flex-col w-96 max-h-[70vh] h-[550px] bg-white rounded-lg shadow-2xl border border-brand-gray-200">
-                <header className="flex items-center justify-between p-4 bg-brand-green-700 text-white rounded-t-lg">
+            <div className="flex flex-col w-96 max-h-[70vh] h-[550px] bg-white rounded-lg shadow-2xl border border-brand-navy-200">
+                <header className="flex items-center justify-between p-4 bg-brand-navy-900 text-white rounded-t-lg">
                     <h2 className="text-lg font-semibold">AI Assistant</h2>
-                    <button onClick={() => setIsOpen(false)} className="hover:bg-brand-green-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
+                    <button onClick={() => setIsOpen(false)} className="hover:bg-brand-navy-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
                         <XIcon className="h-6 w-6" />
                     </button>
                 </header>
@@ -135,38 +135,38 @@ const HelpBot: React.FC<{ currentLocation: string }> = ({ currentLocation }) => 
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((msg, index) => (
                         <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-xs px-4 py-2 rounded-xl ${msg.role === 'user' ? 'bg-brand-green-600 text-white' : 'bg-brand-gray-200 text-brand-gray-800'}`}>
+                            <div className={`max-w-xs px-4 py-2 rounded-xl ${msg.role === 'user' ? 'bg-brand-cyan-600 text-white' : 'bg-brand-navy-200 text-brand-navy-800'}`}>
                                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                             </div>
                         </div>
                     ))}
                     {isLoading && messages[messages.length - 1]?.role === 'model' && (
                          <div className="flex justify-start">
-                             <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-gray-200 text-brand-gray-800">
-                                <SpinnerIcon className="h-5 w-5 text-brand-gray-500" />
+                             <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-navy-200 text-brand-navy-800">
+                                <SpinnerIcon className="h-5 w-5 text-brand-navy-500" />
                             </div>
                          </div>
                     )}
                     <div ref={messagesEndRef} />
                 </div>
 
-                {error && <div className="p-2 border-t border-brand-gray-200 text-center text-xs text-red-600">{error}</div>}
+                {error && <div className="p-2 border-t border-brand-navy-200 text-center text-xs text-red-600">{error}</div>}
 
-                <div className="border-t border-brand-gray-200 p-4 bg-white rounded-b-lg">
+                <div className="border-t border-brand-navy-200 p-4 bg-white rounded-b-lg">
                     <form onSubmit={handleSubmit} className="flex items-center space-x-3">
                         <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Ask a question..."
-                            className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                            className="flex-1 block w-full rounded-md border-brand-navy-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm"
                             aria-label="Chat input"
                             disabled={isLoading}
                         />
                         <button
                             type="submit"
                             disabled={isLoading || !inputValue.trim()}
-                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 p-2 text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 p-2 text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 disabled:bg-brand-navy-300 disabled:cursor-not-allowed"
                             aria-label="Send message"
                         >
                            {isLoading ? <SpinnerIcon className="h-5 w-5" /> : (

@@ -101,7 +101,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
 
             const jobPin = new google.maps.marker.PinElement({
-                background: job.status === 'In Progress' ? '#1d4ed8' : '#16a34a', // Blue for 'In Progress', Green for 'Scheduled'
+                background: job.status === 'In Progress' ? '#1d4ed8' : '#0891b2', // Blue for 'In Progress', Cyan for 'Scheduled'
                 borderColor: '#fff',
                 glyphColor: '#fff',
             });
@@ -195,8 +195,8 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
     if (!mapLoaded) {
         return (
             <div className="flex items-center justify-center h-full">
-                <SpinnerIcon className="h-8 w-8 text-brand-green-600" />
-                <p className="ml-3 text-brand-gray-600">Loading Map...</p>
+                <SpinnerIcon className="h-8 w-8 text-brand-cyan-600" />
+                <p className="ml-3 text-brand-navy-600">Loading Map...</p>
             </div>
         );
     }
