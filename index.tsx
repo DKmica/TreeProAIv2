@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { SessionProvider } from './contexts/SessionContext';
+import { SessionProvider } from './src/contexts/SessionContext';
 import { HashRouter } from 'react-router-dom';
 
 const rootElement = document.getElementById('root');

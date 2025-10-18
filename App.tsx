@@ -12,8 +12,8 @@ import Employees from './pages/Employees';
 import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
 import AICore from './pages/AICore';
-import Login from './pages/Login';
-import { useSession } from './contexts/SessionContext';
+import Login from './src/pages/Login';
+import { useSession } from './src/contexts/SessionContext';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 
 const App: React.FC = () => {
