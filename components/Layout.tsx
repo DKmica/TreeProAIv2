@@ -1,0 +1,33 @@
+import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import Header from './Header';
+import Sidebar from './Sidebar';
+import HelpBot from './HelpBot';
+
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  return (
+    <div>
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <div className="flex flex-1 flex-col lg:pl-64">
+        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <main className="flex-1">
+          <div className="py-6">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              {children}
+            </div>
+          </div>
+        </main>
+      </div>
+      <HelpBot currentLocation={location.pathname} />
+    </div>
+  );
+};
+
+export default Layout;
