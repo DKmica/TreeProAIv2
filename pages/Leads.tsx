@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Lead, Customer, FollowUpSequence, LeadFollowUp } from '../types';
+import { Lead, Customer } from '../types';
 import { supabase } from '../src/integrations/supabase/client';
 import { useSession } from '../src/contexts/SessionContext';
-import { generateFollowUpSequence } from '../services/geminiService';
-import SpinnerIcon from '../components/icons/SpinnerIcon';
 
 interface AddLeadFormProps {
     onSave: (leadData: Partial<Lead>, customerData: Partial<Customer>) => void;
@@ -69,12 +67,11 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
   const { session } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [activeFollowUps, setActiveFollowUps] = useState<string[]>([]);
-  const [loadingFollowUp, setLoadingFollowUp] = useState<string | null>(null);
   
   const handleSaveLead = async (leadData: Partial<Lead>, customerData: Partial<Customer>) => {
     if (!session) return;
 
+    // 1. Create or find customer
     const { data: customer, error: customerError } = await supabase
       .from('customers')
       .insert({ 
@@ -91,6 +88,7 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
       return;
     }
 
+    // 2. Create lead
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .insert({
@@ -108,6 +106,7 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
       return;
     }
 
+    // 3. Update UI state
     const newCustomer = {
         ...customer,
         address: '',
@@ -116,49 +115,6 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
     setCustomers(prev => [newCustomer, ...prev]);
     setLeads(prev => [{ ...lead, customer: newCustomer }, ...prev]);
     setShowAddForm(false);
-  };
-
-  const handleStartFollowUp = async (lead: Lead) => {
-    setLoadingFollowUp(lead.id);
-    try {
-        const sequence = await generateFollowUpSequence(lead);
-        
-        let confirmationMessage = "AI has generated the following follow-up sequence:\n\n";
-        sequence.steps.forEach((step, index) => {
-            confirmationMessage += `--- Email ${index + 1} (after ${step.delay_days} days) ---\n`;
-            confirmationMessage += `Subject: ${step.subject}\n`;
-            confirmationMessage += `Content: ${step.content.substring(0, 100)}...\n\n`;
-        });
-        confirmationMessage += "Do you want to schedule this sequence?";
-
-        if (window.confirm(confirmationMessage)) {
-            const leadCreatedAt = new Date(lead.created_at);
-            const followUpRecords = sequence.steps.map((step, index) => {
-                const scheduledDate = new Date(leadCreatedAt);
-                scheduledDate.setDate(leadCreatedAt.getDate() + step.delay_days);
-                return {
-                    lead_id: lead.id,
-                    user_id: session?.user.id,
-                    sequence_type: 'standard_follow_up',
-                    step_index: index,
-                    subject: step.subject,
-                    content: step.content,
-                    scheduled_for: scheduledDate.toISOString(),
-                    status: 'scheduled'
-                };
-            });
-
-            const { error } = await supabase.from('lead_follow_ups').insert(followUpRecords);
-            if (error) throw error;
-
-            setActiveFollowUps(prev => [...prev, lead.id]);
-            alert('Follow-up sequence scheduled successfully!');
-        }
-    } catch (error: any) {
-        alert(`Failed to start follow-up sequence: ${error.message}`);
-    } finally {
-        setLoadingFollowUp(null);
-    }
   };
 
   const filteredLeads = useMemo(() => leads.filter(lead =>
@@ -182,7 +138,7 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
       <div className="sm:flex sm:items-center"><div className="sm:flex-auto"><h1 className="text-2xl font-bold text-brand-navy-900">Leads</h1><p className="mt-2 text-sm text-brand-navy-700">A list of all incoming leads.</p></div><div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none"><button type="button" onClick={() => setShowAddForm(s => !s)} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 sm:w-auto">{showAddForm ? 'Cancel' : 'Add Lead'}</button></div></div>
       {showAddForm && <AddLeadForm onSave={handleSaveLead} onCancel={() => setShowAddForm(false)} />}
       <div className="mt-6"><input type="text" placeholder="Search leads by customer, source, or status..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-navy-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm" aria-label="Search leads" /></div>
-      <div className="mt-4 flex flex-col"><div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8"><div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8"><div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg"><table className="min-w-full divide-y divide-brand-navy-300"><thead className="bg-brand-navy-50"><tr><th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-6">Customer</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Source</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Status</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Created At</th><th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th></tr></thead><tbody className="divide-y divide-brand-navy-200 bg-white">{filteredLeads.map((lead) => (<tr key={lead.id}><td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{lead.customer?.name}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{lead.source}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lead.status)}`}>{lead.status}</span></td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{new Date(lead.created_at).toLocaleDateString()}</td><td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">{activeFollowUps.includes(lead.id) ? (<span className="text-sm font-semibold text-green-600">Sequence Active</span>) : (<button onClick={() => handleStartFollowUp(lead)} disabled={loadingFollowUp === lead.id} className="inline-flex items-center text-brand-cyan-600 hover:text-brand-cyan-900 disabled:text-brand-navy-400 disabled:cursor-wait">{loadingFollowUp === lead.id && <SpinnerIcon className="h-4 w-4 mr-2" />}Start AI Follow-up</button>)}</td></tr>))}</tbody></table></div></div></div></div>
+      <div className="mt-4 flex flex-col"><div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8"><div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8"><div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg"><table className="min-w-full divide-y divide-brand-navy-300"><thead className="bg-brand-navy-50"><tr><th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-6">Customer</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Source</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Status</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Created At</th><th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th></tr></thead><tbody className="divide-y divide-brand-navy-200 bg-white">{filteredLeads.map((lead) => (<tr key={lead.id}><td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{lead.customer?.name}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{lead.source}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lead.status)}`}>{lead.status}</span></td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{new Date(lead.created_at).toLocaleDateString()}</td><td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"><a href="#" className="text-brand-cyan-600 hover:text-brand-cyan-900">Edit</a></td></tr>))}</tbody></table></div></div></div></div>
     </div>
   );
 };

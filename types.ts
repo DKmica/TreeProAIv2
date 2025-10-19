@@ -83,16 +83,6 @@ export interface Equipment extends UserOwned {
   last_maintenance?: string;
 }
 
-export interface LeadFollowUp extends UserOwned {
-  lead_id: string;
-  sequence_type: string;
-  step_index: number;
-  subject: string;
-  content: string;
-  scheduled_for: string;
-  status: 'scheduled' | 'sent' | 'failed';
-}
-
 
 // --- AI Related Types ---
 
@@ -160,14 +150,4 @@ export interface AICoreInsights {
   leadScores: LeadScoreSuggestion[];
   jobSchedules: JobScheduleSuggestion[];
   maintenanceAlerts: MaintenanceAlert[];
-}
-
-export interface FollowUpStep {
-    delay_days: number;
-    subject: string;
-    content: string;
-}
-
-export interface FollowUpSequence {
-    steps: FollowUpStep[];
 }
