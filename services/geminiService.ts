@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment } from "../types";
+import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, LeadScoreSuggestion, JobScheduleSuggestion, MaintenanceAlert } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -241,56 +241,112 @@ export const generateEmailCampaign = async (goal: string, audience: string): Pro
     }
 };
 
+// --- AI Core Sub-Functions ---
 
-const aiCoreSchema = {
-    type: Type.OBJECT,
-    properties: {
-        businessSummary: { type: Type.STRING, description: "A brief, 1-2 sentence summary of the current business status." },
-        leadScores: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    leadId: { type: Type.STRING },
-                    customerName: { type: Type.STRING },
-                    score: { type: Type.NUMBER, description: "Score from 1-100." },
-                    reasoning: { type: Type.STRING },
-                    recommendedAction: { type: Type.STRING, enum: ['Prioritize Follow-up', 'Standard Follow-up', 'Nurture'] },
-                    urgency: { type: Type.STRING, enum: ['None', 'Medium', 'High'], description: "Urgency level based on lead notes." }
-                },
-                required: ["leadId", "customerName", "score", "reasoning", "recommendedAction", "urgency"]
-            }
-        },
-        jobSchedules: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    quoteId: { type: Type.STRING },
-                    customerName: { type: Type.STRING },
-                    suggestedDate: { type: Type.STRING, description: "Suggested date in YYYY-MM-DD format." },
-                    suggestedCrew: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    reasoning: { type: Type.STRING }
-                },
-                required: ["quoteId", "customerName", "suggestedDate", "suggestedCrew", "reasoning"]
-            }
-        },
-        maintenanceAlerts: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    equipmentId: { type: Type.STRING },
-                    equipmentName: { type: Type.STRING },
-                    reasoning: { type: Type.STRING },
-                    recommendedAction: { type: Type.STRING, enum: ['Schedule Service Immediately', 'Schedule Routine Check-up'] }
-                },
-                 required: ["equipmentId", "equipmentName", "reasoning", "recommendedAction"]
-            }
+const _generateLeadScores = async (leads: Lead[]): Promise<LeadScoreSuggestion[]> => {
+    if (leads.length === 0) return [];
+    const prompt = `
+        You are an AI assistant for a tree service company. Score the following new leads from 1-100 based on potential value and urgency.
+        Analyze the 'notes' field for keywords like 'emergency', 'ASAP', 'fallen branch', 'storm damage', 'leaning tree', 'on my house'.
+        If such keywords are present, set urgency to 'High' and the score to 90+.
+        
+        Leads: ${JSON.stringify(leads)}
+
+        Return a JSON array of lead scores.
+    `;
+    const schema = {
+        type: Type.ARRAY,
+        items: {
+            type: Type.OBJECT,
+            properties: {
+                leadId: { type: Type.STRING }, customerName: { type: Type.STRING }, score: { type: Type.NUMBER },
+                reasoning: { type: Type.STRING }, recommendedAction: { type: Type.STRING, enum: ['Prioritize Follow-up', 'Standard Follow-up', 'Nurture'] },
+                urgency: { type: Type.STRING, enum: ['None', 'Medium', 'High'] }
+            },
+            required: ["leadId", "customerName", "score", "reasoning", "recommendedAction", "urgency"]
         }
-    },
-    required: ["businessSummary", "leadScores", "jobSchedules", "maintenanceAlerts"]
+    };
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro', contents: prompt,
+        config: { responseMimeType: 'application/json', responseSchema: schema }
+    });
+    return JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, '')) as LeadScoreSuggestion[];
 };
+
+const _generateJobSchedules = async (quotes: Quote[], employees: Partial<Employee>[]): Promise<JobScheduleSuggestion[]> => {
+    if (quotes.length === 0) return [];
+    const today = new Date().toISOString().split('T')[0];
+    const prompt = `
+        You are an AI scheduler for a tree service company. Today is ${today}.
+        Suggest a schedule date (a weekday in the near future) and a crew (list of employee names) for each of the following accepted quotes.
+        
+        Accepted Quotes: ${JSON.stringify(quotes)}
+        Available Employees: ${JSON.stringify(employees)}
+
+        Return a JSON array of job schedule suggestions.
+    `;
+    const schema = {
+        type: Type.ARRAY,
+        items: {
+            type: Type.OBJECT,
+            properties: {
+                quoteId: { type: Type.STRING }, customerName: { type: Type.STRING },
+                suggestedDate: { type: Type.STRING, description: "YYYY-MM-DD format" },
+                suggestedCrew: { type: Type.ARRAY, items: { type: Type.STRING } },
+                reasoning: { type: Type.STRING }
+            },
+            required: ["quoteId", "customerName", "suggestedDate", "suggestedCrew", "reasoning"]
+        }
+    };
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro', contents: prompt,
+        config: { responseMimeType: 'application/json', responseSchema: schema }
+    });
+    return JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, '')) as JobScheduleSuggestion[];
+};
+
+const _generateMaintenanceAlerts = async (equipment: Equipment[]): Promise<MaintenanceAlert[]> => {
+    if (equipment.length === 0) return [];
+    const today = new Date().toISOString().split('T')[0];
+    const prompt = `
+        You are an AI maintenance manager for a tree service company. Today is ${today}.
+        Analyze the following equipment list. Flag items that need maintenance.
+        An item needs maintenance if its status is 'Needs Maintenance' or if its 'last_maintenance' date was more than 6 months ago.
+        
+        Equipment: ${JSON.stringify(equipment)}
+
+        Return a JSON array of maintenance alerts.
+    `;
+    const schema = {
+        type: Type.ARRAY,
+        items: {
+            type: Type.OBJECT,
+            properties: {
+                equipmentId: { type: Type.STRING }, equipmentName: { type: Type.STRING },
+                reasoning: { type: Type.STRING },
+                recommendedAction: { type: Type.STRING, enum: ['Schedule Service Immediately', 'Schedule Routine Check-up'] }
+            },
+            required: ["equipmentId", "equipmentName", "reasoning", "recommendedAction"]
+        }
+    };
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro', contents: prompt,
+        config: { responseMimeType: 'application/json', responseSchema: schema }
+    });
+    return JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, '')) as MaintenanceAlert[];
+};
+
+const _generateBusinessSummary = async (leads: Lead[], quotes: Quote[]): Promise<string> => {
+    if (leads.length === 0 && quotes.length === 0) return "No new activity to summarize.";
+    const prompt = `
+        You are an AI business analyst. Briefly summarize the current situation in 1-2 sentences based on this data.
+        New Leads: ${leads.length}
+        Quotes to Schedule: ${quotes.length}
+    `;
+    const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
+    return response.text;
+};
+
 
 export const getAiCoreInsights = async (
     leads: Lead[],
@@ -299,54 +355,32 @@ export const getAiCoreInsights = async (
     employees: Employee[],
     equipment: Equipment[]
 ): Promise<AICoreInsights> => {
-
-    // --- Data Optimization ---
-    // 1. Filter for only new leads to be scored.
-    const newLeads = leads.filter(lead => lead.status === 'New');
-
-    // 2. Find quotes that are accepted but don't have a job yet.
-    const jobQuoteIds = new Set(jobs.map(job => job.quote_id));
-    const quotesToSchedule = quotes.filter(quote => 
-        quote.status === 'Accepted' && !jobQuoteIds.has(quote.id)
-    );
-
-    // 3. Simplify employee data to only what's needed for scheduling.
-    const relevantEmployees = employees.map(e => ({ id: e.id, name: e.name, role: e.role }));
-
-    const today = new Date().toISOString().split('T')[0];
-    const prompt = `
-        You are the AI Core for TreePro AI, a business management platform for tree service companies. Your function is to analyze all operational data and provide actionable, intelligent insights to automate and optimize the business. Today's date is ${today}.
-
-        Analyze the following PRE-FILTERED business data:
-        - New Leads to be Scored: ${JSON.stringify(newLeads)}
-        - Accepted Quotes Awaiting Scheduling: ${JSON.stringify(quotesToSchedule)}
-        - Available Employees for Crew Assignment: ${JSON.stringify(relevantEmployees)}
-        - All Equipment for Maintenance Review: ${JSON.stringify(equipment)}
-
-        Based on this data, generate a JSON object with the following insights:
-        1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status based on the provided data. Mention any urgent items.
-        2.  **leadScores**: Analyze the provided 'New Leads'. 
-            - Score each lead from 1 to 100 based on potential value and likelihood to convert.
-            - **Crucially, analyze the lead's 'notes' field for keywords indicating urgency.** Keywords like 'emergency', 'ASAP', 'fallen branch', 'storm damage', 'leaning tree', 'on my house' should result in an urgency of 'High'. A 'High' urgency should significantly boost the score (e.g., to 90+).
-            - Provide brief reasoning and a recommended action.
-        3.  **jobSchedules**: For each of the 'Accepted Quotes Awaiting Scheduling', suggest an optimal schedule date (a weekday in the near future) and a crew assignment (list of employee names from the 'Available Employees' list). Consider crew composition (e.g., a leader and groundsman). Provide reasoning for your suggestion.
-        4.  **maintenanceAlerts**: Analyze the 'All Equipment' list. Flag any equipment where status is 'Needs Maintenance'. Also, flag equipment where 'last_maintenance' was more than 6 months ago from today's date (${today}). Provide a recommended action.
-
-        Return ONLY a valid JSON object adhering to the provided schema. Do not include any other text or markdown formatting.
-    `;
-    
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: aiCoreSchema
-            }
-        });
+        // --- Data Optimization ---
+        const newLeads = leads.filter(lead => lead.status === 'New');
+        const jobQuoteIds = new Set(jobs.map(job => job.quote_id));
+        const quotesToSchedule = quotes.filter(quote => quote.status === 'Accepted' && !jobQuoteIds.has(quote.id));
+        const relevantEmployees = employees.map(e => ({ id: e.id, name: e.name, role: e.role }));
 
-        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
-        return JSON.parse(cleanedJsonText) as AICoreInsights;
+        // --- Parallel AI Calls ---
+        const [
+            leadScores,
+            jobSchedules,
+            maintenanceAlerts,
+            businessSummary
+        ] = await Promise.all([
+            _generateLeadScores(newLeads),
+            _generateJobSchedules(quotesToSchedule, relevantEmployees),
+            _generateMaintenanceAlerts(equipment),
+            _generateBusinessSummary(newLeads, quotesToSchedule)
+        ]);
+
+        return {
+            businessSummary,
+            leadScores,
+            jobSchedules,
+            maintenanceAlerts
+        };
 
     } catch (error) {
         console.error("Error getting AI Core insights:", error);
