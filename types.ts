@@ -51,6 +51,8 @@ export interface Job extends UserOwned {
     description: string;
     service_items?: LineItem[];
   };
+  total_cost?: number;
+  total_time_minutes?: number;
   // For display
   customerName?: string;
 }
