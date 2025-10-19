@@ -47,7 +47,7 @@ export const useAppData = () => {
         supabase.from('employees').select('*'),
         supabase.from('equipment').select('*'),
         supabase.from('expenses').select('*'),
-        supabase.from('time_logs').select('*, employees!employee_id(name)'),
+        supabase.from('time_logs').select('*'), // Removed the problematic join
       ]);
 
       if (customersError) throw new Error(`Customers: ${customersError.message}`);
@@ -61,6 +61,7 @@ export const useAppData = () => {
       if (timeLogsError) throw new Error(`Time Logs: ${timeLogsError.message}`);
 
       const customerMap = new Map(customersData?.map(c => [c.id, c]));
+      const employeeMap = new Map(employeesData?.map(e => [e.id, e.name]));
 
       const processedCustomers = customersData?.map(c => ({
         ...c,
@@ -105,7 +106,7 @@ export const useAppData = () => {
       
       const processedTimeLogs = timeLogsData?.map(tl => ({
         ...tl,
-        employeeName: tl.employees?.name || 'Unknown',
+        employeeName: employeeMap.get(tl.employee_id) || 'Unknown',
       })) || [];
       setTimeLogs(processedTimeLogs);
 
