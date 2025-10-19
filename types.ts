@@ -91,6 +91,10 @@ export interface LineItem {
 }
 
 export interface AIEstimate {
+  species_identification: string;
+  size_estimation: string;
+  health_and_risk_assessment: string;
+  identified_obstacles: string[];
   estimated_price_range: [number, number];
   line_items: LineItem[];
   difficulty: 'Low' | 'Medium' | 'High';

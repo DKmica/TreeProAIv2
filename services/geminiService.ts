@@ -6,14 +6,18 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 const estimateSchema = {
     type: Type.OBJECT,
     properties: {
+        species_identification: { type: Type.STRING, description: "Identification of the tree species with a confidence score, e.g., 'Red Oak (Quercus rubra) with 92% confidence.'" },
+        size_estimation: { type: Type.STRING, description: "Estimation of the tree's height and DBH (Diameter at Breast Height), e.g., 'Estimated height: 80ft, Estimated DBH: 32 inches.'" },
+        health_and_risk_assessment: { type: Type.STRING, description: "A detailed assessment of the tree's health, noting any diseases, pests, or structural defects and associated risks." },
+        identified_obstacles: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of identified hazards or obstacles, e.g., ['Proximity to house', 'Power lines nearby']." },
         estimated_price_range: {
             type: Type.ARRAY,
-            description: "A tuple representing the low and high end of the estimated price range, e.g., [800, 1200].",
+            description: "A tuple representing the low and high end of the estimated price range for the entire job, e.g., [800, 1200].",
             items: { type: Type.NUMBER }
         },
         line_items: {
             type: Type.ARRAY,
-            description: "A list of line items for the quote.",
+            description: "A list of suggested line items (services) for the quote based on the assessment.",
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -31,14 +35,14 @@ const estimateSchema = {
         },
         confidence: {
             type: Type.NUMBER,
-            description: "A confidence score from 0.0 to 1.0 for the estimate."
+            description: "A confidence score from 0.0 to 1.0 for the entire estimate."
         },
         rationale: {
             type: Type.STRING,
-            description: "A brief explanation of the factors that influenced the estimate."
+            description: "A brief, overall explanation of the factors that influenced the estimate and service suggestions."
         }
     },
-    required: ["estimated_price_range", "line_items", "difficulty", "confidence", "rationale"]
+    required: ["species_identification", "size_estimation", "health_and_risk_assessment", "identified_obstacles", "estimated_price_range", "line_items", "difficulty", "confidence", "rationale"]
 };
 
 
@@ -55,25 +59,22 @@ export const generateEstimate = async (
 
   const textPart = {
     text: `
-      You are an expert estimator for a tree service company called TreePro AI.
-      Your task is to analyze the user-provided images and description to create a job estimate.
-      
-      Company Context:
-      - We specialize in residential and commercial tree removal, pruning, and stump grinding.
-      - Standard hourly rate for a 2-person crew is $250/hour.
-      - Stump grinding is typically an add-on service, priced at $5 per inch of diameter.
-      - A full day (8 hours) for a crew is around $2000.
-      
-      Job Description from customer: "${description}"
+      You are an expert ISA Certified Arborist and estimator for a tree service company called TreePro AI.
+      Your task is to perform a detailed visual assessment of the tree(s) in the user-provided images and generate a comprehensive job estimate.
 
-      Based on the images and description, provide a detailed estimate. Consider factors like:
-      - Tree size (height, diameter)
-      - Type of tree
-      - Accessibility (proximity to structures, power lines, fences)
-      - Complexity of the work (e.g., simple takedown vs. technical rigging)
-      - Cleanup requirements (hauling wood, raking, etc.)
-      
-      Return the estimate in the specified JSON format.
+      Customer's Description: "${description}"
+
+      Follow this multi-step process:
+      1.  **Analyze Images**: Carefully examine all images. Use reference objects (doors, fences, people) to gauge scale.
+      2.  **Detailed Assessment**: Based on your visual analysis, provide the following details:
+          - **Species Identification**: Identify the tree species, including a confidence score.
+          - **Size Estimation**: Estimate the tree's height in feet and its DBH (Diameter at Breast Height) in inches.
+          - **Health & Risk Assessment**: Describe the tree's condition. Note any signs of disease, pests, structural defects (e.g., codominant stems, cankers, fungal growth), or canopy dieback. State the associated risk level.
+          - **Identified Obstacles**: List all potential hazards or obstacles that would complicate the job (e.g., proximity to structures, power lines, fences, limited access).
+      3.  **Suggest Services**: Based on your assessment, create a list of line items for the services you recommend. Common services include 'Technical Tree Removal', 'Large Tree Pruning', 'Stump Grinding', 'Debris Hauling'.
+      4.  **Estimate Pricing**: Provide an estimated price range for the entire job and a unit price for each line item. Use the following context: a standard 2-person crew costs $250/hour; a full day is around $2000. Stump grinding is ~$5 per inch of diameter. High-risk or complex jobs with obstacles will be more expensive.
+
+      Return your complete analysis in the specified JSON format.
     `
   };
 
@@ -88,11 +89,9 @@ export const generateEstimate = async (
     });
 
     const jsonText = response.text.trim();
-    // In case the API returns a string wrapped in markdown ```json ... ```
     const cleanedJsonText = jsonText.replace(/^```json\s*|```$/g, '');
     const parsedResponse = JSON.parse(cleanedJsonText);
     
-    // Basic validation
     if (!parsedResponse.estimated_price_range || !parsedResponse.line_items) {
       throw new Error("Invalid response format from AI");
     }
