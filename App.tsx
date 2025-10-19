@@ -33,6 +33,7 @@ const App: React.FC = () => {
     certifications,
     timeOffRequests,
     jobCosting,
+    maintenanceHistory,
   } = useAppData();
 
   if (sessionLoading || dataLoading) {
@@ -79,7 +80,7 @@ const App: React.FC = () => {
         <Route path="/invoices" element={<Invoices invoices={invoices} setInvoices={setInvoices} jobs={jobs} customers={customers} />} />
         <Route path="/financials" element={<FinancialsPage jobCosting={jobCosting} />} />
         <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
-        <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
+        <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} maintenanceHistory={maintenanceHistory} />} />
         <Route path="/hr" element={<HRPage employees={employees} setEmployees={setEmployees} certifications={certifications} timeOffRequests={timeOffRequests} />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/login" element={<Navigate to="/dashboard" replace />} />

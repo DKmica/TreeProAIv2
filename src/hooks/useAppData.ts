@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useSession } from '../contexts/SessionContext';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Certification, TimeOffRequest, JobCostingSummary } from '../../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Certification, TimeOffRequest, JobCostingSummary, MaintenanceHistory } from '../../types';
 
 export const useAppData = () => {
   const { session } = useSession();
@@ -18,6 +18,7 @@ export const useAppData = () => {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [jobCosting, setJobCosting] = useState<JobCostingSummary[]>([]);
+  const [maintenanceHistory, setMaintenanceHistory] = useState<MaintenanceHistory[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!session) {
@@ -40,6 +41,7 @@ export const useAppData = () => {
         certificationsRes,
         timeOffRes,
         jobCostingRes,
+        maintenanceHistoryRes,
       ] = await Promise.all([
         supabase.from('customers').select('*'),
         supabase.from('leads').select('*'),
@@ -51,6 +53,7 @@ export const useAppData = () => {
         supabase.from('certifications').select('*'),
         supabase.from('time_off_requests').select('*'),
         supabase.from('job_costing_summary').select('*'),
+        supabase.from('maintenance_history').select('*'),
       ]);
 
       if (customersRes.error) throw new Error(`Customers: ${customersRes.error.message}`);
@@ -63,6 +66,7 @@ export const useAppData = () => {
       if (certificationsRes.error) throw new Error(`Certifications: ${certificationsRes.error.message}`);
       if (timeOffRes.error) throw new Error(`Time Off Requests: ${timeOffRes.error.message}`);
       if (jobCostingRes.error) throw new Error(`Job Costing: ${jobCostingRes.error.message}`);
+      if (maintenanceHistoryRes.error) throw new Error(`Maintenance History: ${maintenanceHistoryRes.error.message}`);
 
       const customersData = customersRes.data || [];
       const customerMap = new Map(customersData.map(c => [c.id, c]));
@@ -82,6 +86,7 @@ export const useAppData = () => {
       setCertifications(certificationsRes.data || []);
       setTimeOffRequests(timeOffRes.data || []);
       setJobCosting(jobCostingRes.data || []);
+      setMaintenanceHistory(maintenanceHistoryRes.data || []);
 
     } catch (err: any) {
       setError(err.message);
@@ -107,5 +112,6 @@ export const useAppData = () => {
     certifications,
     timeOffRequests,
     jobCosting,
+    maintenanceHistory,
   };
 };
