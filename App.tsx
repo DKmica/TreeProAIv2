@@ -33,10 +33,13 @@ const App: React.FC = () => {
     timeOffRequests,
   } = useAppData();
 
-  if (sessionLoading) {
+  if (sessionLoading || dataLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-brand-navy-100">
         <SpinnerIcon className="h-12 w-12 text-brand-cyan-600" />
+        <p className="ml-4 text-lg font-semibold text-brand-navy-700">
+            {sessionLoading ? 'Authenticating...' : 'Loading your business data...'}
+        </p>
       </div>
     );
   }
@@ -49,20 +52,11 @@ const App: React.FC = () => {
       </Routes>
     );
   }
-
-  if (dataLoading) {
-     return (
-      <div className="flex h-screen items-center justify-center bg-brand-navy-100">
-        <SpinnerIcon className="h-12 w-12 text-brand-cyan-600" />
-        <p className="ml-4 text-lg font-semibold text-brand-navy-700">Loading your business data...</p>
-      </div>
-    );
-  }
   
   if (error) {
       return (
-        <div className="flex h-screen items-center justify-center bg-red-50">
-            <div className="text-center">
+        <div className="flex h-screen items-center justify-center bg-red-50 text-center">
+            <div>
                 <h2 className="text-xl font-bold text-red-800">Error Loading Data</h2>
                 <p className="mt-2 text-red-600">{error}</p>
             </div>
