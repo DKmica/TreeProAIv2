@@ -118,7 +118,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
                     <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id}</h3>
                     <p style="margin: 2px 0;"><strong>Customer:</strong> ${job.customerName}</p>
                     <p style="margin: 2px 0;"><strong>Status:</strong> ${job.status}</p>
-                    <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
+                    <p style="margin: 2px 0;"><strong>Date:</strong> ${job.date}</p>
                 </div>`;
 
             marker.addListener('click', () => {
@@ -153,7 +153,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
             const content = `
                 <div style="font-family: sans-serif; color: #334155; padding: 5px;">
                     <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Crew: ${employee.name}</h3>
-                    <p style="margin: 2px 0;"><strong>Title:</strong> ${employee.jobTitle}</p>
+                    <p style="margin: 2px 0;"><strong>Title:</strong> ${employee.role}</p>
                 </div>`;
             
             marker.addListener('click', () => {

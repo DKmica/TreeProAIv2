@@ -11,9 +11,9 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
   const filteredInvoices = useMemo(() => invoices.filter(invoice =>
     invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.amount.toString().includes(searchTerm) ||
+    invoice.total_amount.toString().includes(searchTerm) ||
     invoice.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.dueDate.toLowerCase().includes(searchTerm.toLowerCase())
+    invoice.due_date.toLowerCase().includes(searchTerm.toLowerCase())
   ), [invoices, searchTerm]);
 
   const getStatusColor = (status: Invoice['status']) => {
@@ -65,13 +65,13 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                     <tr key={invoice.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{invoice.id}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{invoice.customerName}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">${invoice.amount.toFixed(2)}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">${invoice.total_amount.toFixed(2)}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(invoice.status)}`}>
                           {invoice.status}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{invoice.dueDate}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{invoice.due_date}</td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <a href="#" className="text-brand-cyan-600 hover:text-brand-cyan-900">View</a>
                       </td>
