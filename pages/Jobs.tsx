@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Job, Quote, Customer, Invoice, Employee, Expense, TimeLog } from '../types';
+import { Job, Quote, Customer, Invoice, Employee, Expense, TimeEntry } from '../types';
 import { supabase } from '../src/integrations/supabase/client';
 import { useSession } from '../src/contexts/SessionContext';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
@@ -95,8 +95,8 @@ const JobDetailModal: React.FC<{
     employees: Employee[];
     expenses: Expense[];
     setExpenses: (updateFn: (prev: Expense[]) => Expense[]) => void;
-    timeLogs: TimeLog[];
-    setTimeLogs: (updateFn: (prev: TimeLog[]) => TimeLog[]) => void;
+    timeLogs: TimeEntry[];
+    setTimeLogs: (updateFn: (prev: TimeEntry[]) => TimeEntry[]) => void;
     onClose: () => void;
     onCreateInvoice: () => void;
     onSendOMW: (jobId: string, employeeId: string, eta: number) => void;
@@ -157,37 +157,39 @@ const JobDetailModal: React.FC<{
     const handleClockInOut = async (employeeId: string) => {
         if (!employeeId || !session) return;
 
-        const openLog = jobTimeLogs.find(log => log.employee_id === employeeId && !log.clock_out_time);
+        const openLog = jobTimeLogs.find(log => log.employee_id === employeeId && !log.clock_out);
 
         if (openLog) { // Clocking out
             const { data, error } = await supabase
-                .from('time_logs')
-                .update({ clock_out_time: new Date().toISOString() })
+                .from('time_entries')
+                .update({ clock_out: new Date().toISOString() })
                 .eq('id', openLog.id)
-                .select('*, employees(name)')
+                .select()
                 .single();
             
             if (error) {
                 alert(error.message);
             } else if (data) {
-                setTimeLogs(prev => prev.map(log => log.id === data.id ? {...data, employeeName: data.employees?.name} : log));
+                const employeeName = employees.find(e => e.id === data.employee_id)?.name || 'Unknown';
+                setTimeLogs(prev => prev.map(log => log.id === data.id ? {...data, employeeName } : log));
             }
         } else { // Clocking in
             const { data, error } = await supabase
-                .from('time_logs')
+                .from('time_entries')
                 .insert({
                     job_id: job.id,
                     employee_id: employeeId,
                     user_id: session.user.id,
-                    clock_in_time: new Date().toISOString(),
+                    clock_in: new Date().toISOString(),
                 })
-                .select('*, employees(name)')
+                .select()
                 .single();
             
             if (error) {
                 alert(error.message);
             } else if (data) {
-                setTimeLogs(prev => [...prev, {...data, employeeName: data.employees?.name}]);
+                const employeeName = employees.find(e => e.id === data.employee_id)?.name || 'Unknown';
+                setTimeLogs(prev => [...prev, {...data, employeeName}]);
             }
         }
     };
@@ -224,7 +226,7 @@ const JobDetailModal: React.FC<{
                             <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Expenses</h4><ul className="mt-2 divide-y divide-gray-200">{jobExpenses.map(exp => (<li key={exp.id} className="flex items-center justify-between py-2"><p className="text-sm text-gray-600">{exp.expense_type}</p><p className="text-sm font-medium text-gray-900">${exp.amount.toFixed(2)}</p></li>))}{jobExpenses.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No expenses logged.</p>}</ul><form onSubmit={handleLogExpense} className="mt-4 flex items-center gap-x-3"><input type="text" value={expenseType} onChange={e => setExpenseType(e.target.value)} placeholder="Expense Type (e.g., Fuel)" required className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /><input type="number" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} placeholder="Amount" required className="block w-40 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /><button type="submit" className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Log Expense</button></form></div>
 
                             {/* Time Tracking */}
-                            <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Time Clock</h4><ul className="mt-2 divide-y divide-gray-200">{jobTimeLogs.map(log => (<li key={log.id} className="py-2"><div className="flex items-center justify-between"><p className="text-sm font-medium text-gray-900">{log.employeeName}</p><p className="text-sm text-gray-500">{log.clock_out_time ? `${formatMinutes(Math.floor((new Date(log.clock_out_time).getTime() - new Date(log.clock_in_time).getTime()) / 60000))}` : 'Clocked In'}</p></div><p className="text-xs text-gray-500">In: {new Date(log.clock_in_time).toLocaleString()} | Out: {log.clock_out_time ? new Date(log.clock_out_time).toLocaleString() : 'N/A'}</p></li>))}{jobTimeLogs.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No time logged.</p>}</ul><div className="mt-4 flex items-center gap-x-3"><select value={timeLogEmployee} onChange={e => setTimeLogEmployee(e.target.value)} className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-brand-cyan-600 sm:text-sm">{assignedCrewMembers.map(emp => (<option key={emp.id} value={emp.id}>{emp.name}</option>))}</select><button type="button" onClick={() => handleClockInOut(timeLogEmployee)} className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">{jobTimeLogs.find(log => log.employee_id === timeLogEmployee && !log.clock_out_time) ? 'Clock Out' : 'Clock In'}</button></div></div>
+                            <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Time Clock</h4><ul className="mt-2 divide-y divide-gray-200">{jobTimeLogs.map(log => (<li key={log.id} className="py-2"><div className="flex items-center justify-between"><p className="text-sm font-medium text-gray-900">{log.employeeName}</p><p className="text-sm text-gray-500">{log.clock_out ? `${formatMinutes(Math.floor((new Date(log.clock_out).getTime() - new Date(log.clock_in).getTime()) / 60000))}` : 'Clocked In'}</p></div><p className="text-xs text-gray-500">In: {new Date(log.clock_in).toLocaleString()} | Out: {log.clock_out ? new Date(log.clock_out).toLocaleString() : 'N/A'}</p></li>))}{jobTimeLogs.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No time logged.</p>}</ul><div className="mt-4 flex items-center gap-x-3"><select value={timeLogEmployee} onChange={e => setTimeLogEmployee(e.target.value)} className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-brand-cyan-600 sm:text-sm">{assignedCrewMembers.map(emp => (<option key={emp.id} value={emp.id}>{emp.name}</option>))}</select><button type="button" onClick={() => handleClockInOut(timeLogEmployee)} className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">{jobTimeLogs.find(log => log.employee_id === timeLogEmployee && !log.clock_out) ? 'Clock Out' : 'Clock In'}</button></div></div>
 
                             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                 <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Close</button>
@@ -271,8 +273,8 @@ interface JobsProps {
   employees: Employee[];
   expenses: Expense[];
   setExpenses: (updateFn: (prev: Expense[]) => Expense[]) => void;
-  timeLogs: TimeLog[];
-  setTimeLogs: (updateFn: (prev: TimeLog[]) => TimeLog[]) => void;
+  timeLogs: TimeEntry[];
+  setTimeLogs: (updateFn: (prev: TimeEntry[]) => TimeEntry[]) => void;
 }
 
 const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices, setInvoices, employees, expenses, setExpenses, timeLogs, setTimeLogs }) => {

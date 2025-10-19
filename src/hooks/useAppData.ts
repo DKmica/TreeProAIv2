@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useSession } from '../contexts/SessionContext';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Expense, TimeLog } from '../../types';
+import { 
+    Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Expense, TimeEntry,
+    // Import new types
+    Communication, SafetyChecklist, MaintenanceHistory, MarketingCampaign, Review, Certification, TimeOffRequest 
+} from '../../types';
 
 export const useAppData = () => {
   const { session } = useSession();
@@ -16,7 +20,17 @@ export const useAppData = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  
+  // New state for new tables
+  const [communications, setCommunications] = useState<Communication[]>([]);
+  const [safetyChecklists, setSafetyChecklists] = useState<SafetyChecklist[]>([]);
+  const [maintenanceHistory, setMaintenanceHistory] = useState<MaintenanceHistory[]>([]);
+  const [marketingCampaigns, setMarketingCampaigns] = useState<MarketingCampaign[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
+
 
   const fetchData = useCallback(async () => {
     if (!session) {
@@ -37,7 +51,15 @@ export const useAppData = () => {
         { data: employeesData, error: employeesError },
         { data: equipmentData, error: equipmentError },
         { data: expensesData, error: expensesError },
-        { data: timeLogsData, error: timeLogsError },
+        { data: timeEntriesData, error: timeEntriesError },
+        // Fetch new data
+        { data: communicationsData, error: communicationsError },
+        { data: safetyChecklistsData, error: safetyChecklistsError },
+        { data: maintenanceHistoryData, error: maintenanceHistoryError },
+        { data: marketingCampaignsData, error: marketingCampaignsError },
+        { data: reviewsData, error: reviewsError },
+        { data: certificationsData, error: certificationsError },
+        { data: timeOffRequestsData, error: timeOffRequestsError },
       ] = await Promise.all([
         supabase.from('customers').select('*'),
         supabase.from('leads').select('*'),
@@ -47,7 +69,15 @@ export const useAppData = () => {
         supabase.from('employees').select('*'),
         supabase.from('equipment').select('*'),
         supabase.from('expenses').select('*'),
-        supabase.from('time_logs').select('*'), // Removed the problematic join
+        supabase.from('time_entries').select('*'),
+        // New fetches
+        supabase.from('communications').select('*'),
+        supabase.from('safety_checklists').select('*'),
+        supabase.from('maintenance_history').select('*'),
+        supabase.from('marketing_campaigns').select('*'),
+        supabase.from('reviews').select('*'),
+        supabase.from('certifications').select('*'),
+        supabase.from('time_off_requests').select('*'),
       ]);
 
       if (customersError) throw new Error(`Customers: ${customersError.message}`);
@@ -58,7 +88,14 @@ export const useAppData = () => {
       if (employeesError) throw new Error(`Employees: ${employeesError.message}`);
       if (equipmentError) throw new Error(`Equipment: ${equipmentError.message}`);
       if (expensesError) throw new Error(`Expenses: ${expensesError.message}`);
-      if (timeLogsError) throw new Error(`Time Logs: ${timeLogsError.message}`);
+      if (timeEntriesError) throw new Error(`Time Entries: ${timeEntriesError.message}`);
+      if (communicationsError) throw new Error(`Communications: ${communicationsError.message}`);
+      if (safetyChecklistsError) throw new Error(`Safety Checklists: ${safetyChecklistsError.message}`);
+      if (maintenanceHistoryError) throw new Error(`Maintenance History: ${maintenanceHistoryError.message}`);
+      if (marketingCampaignsError) throw new Error(`Marketing Campaigns: ${marketingCampaignsError.message}`);
+      if (reviewsError) throw new Error(`Reviews: ${reviewsError.message}`);
+      if (certificationsError) throw new Error(`Certifications: ${certificationsError.message}`);
+      if (timeOffRequestsError) throw new Error(`Time Off Requests: ${timeOffRequestsError.message}`);
 
       const customerMap = new Map(customersData?.map(c => [c.id, c]));
       const employeeMap = new Map(employeesData?.map(e => [e.id, e.name]));
@@ -104,11 +141,20 @@ export const useAppData = () => {
       setEquipment(equipmentData || []);
       setExpenses(expensesData || []);
       
-      const processedTimeLogs = timeLogsData?.map(tl => ({
-        ...tl,
-        employeeName: employeeMap.get(tl.employee_id) || 'Unknown',
+      const processedTimeEntries = timeEntriesData?.map(te => ({
+        ...te,
+        employeeName: employeeMap.get(te.employee_id) || 'Unknown',
       })) || [];
-      setTimeLogs(processedTimeLogs);
+      setTimeEntries(processedTimeEntries);
+
+      // Set new state
+      setCommunications(communicationsData || []);
+      setSafetyChecklists(safetyChecklistsData || []);
+      setMaintenanceHistory(maintenanceHistoryData || []);
+      setMarketingCampaigns(marketingCampaignsData || []);
+      setReviews(reviewsData || []);
+      setCertifications(certificationsData || []);
+      setTimeOffRequests(timeOffRequestsData || []);
 
     } catch (err: any) {
       setError(err.message);
@@ -132,6 +178,14 @@ export const useAppData = () => {
     employees, setEmployees,
     equipment, setEquipment,
     expenses, setExpenses,
-    timeLogs, setTimeLogs,
+    timeEntries, setTimeEntries,
+    // Return new data
+    communications, setCommunications,
+    safetyChecklists, setSafetyChecklists,
+    maintenanceHistory, setMaintenanceHistory,
+    marketingCampaigns, setMarketingCampaigns,
+    reviews, setReviews,
+    certifications, setCertifications,
+    timeOffRequests, setTimeOffRequests,
   };
 };

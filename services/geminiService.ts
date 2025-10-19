@@ -379,7 +379,9 @@ export const getAiCoreInsights = async (
             businessSummary,
             leadScores,
             jobSchedules,
-            maintenanceAlerts
+            maintenanceAlerts,
+            financialForecasts: [],
+            anomalies: [],
         };
 
     } catch (error) {
