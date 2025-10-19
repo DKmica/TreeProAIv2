@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getAiCoreInsights } from '../services/geminiService';
-import { AICoreInsights, Lead, Job, Quote, Employee, Equipment as EquipmentType, JobScheduleSuggestion } from '../types';
+import { AICoreInsights, Lead, Job, Quote, Employee, Equipment as EquipmentType, JobScheduleSuggestion, Customer } from '../types';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
 import JobIcon from '../components/icons/JobIcon';
@@ -9,9 +9,10 @@ import EquipmentIcon from '../components/icons/EquipmentIcon';
 const ModifyScheduleModal: React.FC<{
   suggestion: JobScheduleSuggestion;
   employees: Employee[];
-  onSave: (updatedJobData: Omit<Job, 'id'>) => void;
+  quotes: Quote[];
+  onSave: (updatedJobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => void;
   onClose: () => void;
-}> = ({ suggestion, employees, onSave, onClose }) => {
+}> = ({ suggestion, employees, quotes, onSave, onClose }) => {
     const [scheduledDate, setScheduledDate] = useState(suggestion.suggestedDate);
     
     const initialCrewIds = useMemo(() => 
@@ -32,12 +33,17 @@ const ModifyScheduleModal: React.FC<{
     };
 
     const handleSave = () => {
+        const quote = quotes.find(q => q.id === suggestion.quoteId);
+        if (!quote) {
+            alert('Could not find the original quote for this job.');
+            return;
+        }
         onSave({
-            quoteId: suggestion.quoteId,
-            customerName: suggestion.customerName,
+            quote_id: suggestion.quoteId,
+            customer_id: quote.customer_id,
             status: 'Scheduled',
-            scheduledDate,
-            assignedCrew: selectedCrew,
+            date: scheduledDate,
+            assigned_crew: selectedCrew,
         });
     };
 
@@ -84,7 +90,7 @@ const ModifyScheduleModal: React.FC<{
                                   </div>
                                   <div className="ml-3 text-sm leading-6">
                                       <label htmlFor={`emp-${emp.id}`} className="font-medium text-brand-navy-900">{emp.name}</label>
-                                      <p className="text-brand-navy-500">{emp.jobTitle}</p>
+                                      <p className="text-brand-navy-500">{emp.role}</p>
                                   </div>
                               </div>
                           ))}
@@ -109,10 +115,11 @@ interface AICoreProps {
     quotes: Quote[];
     employees: Employee[];
     equipment: EquipmentType[];
+    customers: Customer[];
     setJobs: (updateFn: (prev: Job[]) => Job[]) => void;
 }
 
-const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, setJobs }) => {
+const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, customers, setJobs }) => {
     const [insights, setInsights] = useState<AICoreInsights | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -136,22 +143,43 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
     }, [fetchInsights]);
 
     const handleAcceptSuggestion = (suggestion: JobScheduleSuggestion) => {
+        const quote = quotes.find(q => q.id === suggestion.quoteId);
+        if (!quote) {
+            alert('Could not find the original quote for this job.');
+            return;
+        }
+
         const crewIds = suggestion.suggestedCrew
             .map(name => employees.find(e => e.name === name)?.id)
             .filter((id): id is string => !!id);
 
-        const newJob: Omit<Job, 'id'> = {
-            quoteId: suggestion.quoteId,
-            customerName: suggestion.customerName,
-            status: 'Scheduled',
-            scheduledDate: suggestion.suggestedDate,
-            assignedCrew: crewIds,
+        const newJobData = {
+            quote_id: suggestion.quoteId,
+            customer_id: quote.customer_id,
+            status: 'Scheduled' as Job['status'],
+            date: suggestion.suggestedDate,
+            assigned_crew: crewIds,
         };
-        setJobs(prev => [...prev, { ...newJob, id: `job-${Date.now()}` }]);
+        
+        const customer = customers.find(c => c.id === newJobData.customer_id);
+        setJobs(prev => [...prev, { 
+            ...newJobData, 
+            id: `job-${Date.now()}`, 
+            user_id: '', 
+            created_at: new Date().toISOString(),
+            customerName: customer?.name || 'N/A'
+        }]);
     };
 
-    const handleSaveModifiedSchedule = (updatedJobData: Omit<Job, 'id'>) => {
-        setJobs(prev => [...prev, { ...updatedJobData, id: `job-${Date.now()}` }]);
+    const handleSaveModifiedSchedule = (updatedJobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
+        const customer = customers.find(c => c.id === updatedJobData.customer_id);
+        setJobs(prev => [...prev, { 
+            ...updatedJobData, 
+            id: `job-${Date.now()}`,
+            user_id: '',
+            created_at: new Date().toISOString(),
+            customerName: customer?.name || 'N/A'
+        }]);
         setEditingSchedule(null); // Close modal
     };
 
@@ -281,6 +309,7 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                 <ModifyScheduleModal
                     suggestion={editingSchedule}
                     employees={employees}
+                    quotes={quotes}
                     onSave={handleSaveModifiedSchedule}
                     onClose={() => setEditingSchedule(null)}
                 />

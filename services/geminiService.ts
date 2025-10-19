@@ -308,7 +308,7 @@ export const getAiCoreInsights = async (
         - All Leads: ${JSON.stringify(leads)}
         - All Jobs: ${JSON.stringify(jobs)}
         - All Quotes: ${JSON.stringify(quotes)}
-        - All Employees: ${JSON.stringify(employees.map(e => ({id: e.id, name: e.name, jobTitle: e.jobTitle})))}
+        - All Employees: ${JSON.stringify(employees.map(e => ({id: e.id, name: e.name, role: e.role})))}
         - All Equipment: ${JSON.stringify(equipment)}
 
         Based on this data, generate a JSON object with the following insights:
