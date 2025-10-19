@@ -8,14 +8,13 @@ const JobForm: React.FC<{
     quotes: Quote[];
     customers: Customer[];
     employees: Employee[];
-    onSave: (job: Omit<Job, 'id' | 'user_id' | 'created_at'>) => void;
+    onSave: (job: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => void;
     onCancel: () => void;
-    initialData?: Job;
+    initialData?: Job | null;
 }> = ({ quotes, customers, employees, onSave, onCancel, initialData }) => {
     const availableQuotes = quotes.filter(q => q.status === 'Accepted');
     
     const [formData, setFormData] = useState({
-        id: initialData?.id || '',
         quote_id: initialData?.quote_id || (availableQuotes.length > 0 ? availableQuotes[0].id : ''),
         customer_id: initialData?.customer_id || (availableQuotes.length > 0 ? availableQuotes[0].customer_id : ''),
         date: initialData?.date || '',
@@ -26,10 +25,9 @@ const JobForm: React.FC<{
     useEffect(() => {
         if (initialData) {
             setFormData({
-                id: initialData.id,
-                quote_id: initialData.quote_id,
+                quote_id: initialData.quote_id || '',
                 customer_id: initialData.customer_id,
-                date: initialData.date,
+                date: initialData.date || '',
                 status: initialData.status,
                 assigned_crew: initialData.assigned_crew || [],
             });
@@ -53,9 +51,9 @@ const JobForm: React.FC<{
     const handleCrewChange = (employeeId: string) => {
         setFormData(prev => ({
             ...prev,
-            assigned_crew: prev.assigned_crew.includes(employeeId)
+            assigned_crew: prev.assigned_crew?.includes(employeeId)
                 ? prev.assigned_crew.filter(id => id !== employeeId)
-                : [...prev.assigned_crew, employeeId]
+                : [...(prev.assigned_crew || []), employeeId]
         }));
     };
 
@@ -77,11 +75,11 @@ const JobForm: React.FC<{
             <h2 className="text-xl font-bold text-brand-navy-900 mb-4">{initialData ? 'Edit Job' : 'Create New Job'}</h2>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    <div className="sm:col-span-3"><label htmlFor="quote_id" className="block text-sm font-medium leading-6 text-brand-navy-900">Accepted Quote</label><select id="quote_id" name="quote_id" value={formData.quote_id} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm sm:leading-6">{availableQuotes.length === 0 && <option disabled>No accepted quotes available</option>}{availableQuotes.map(quote => (<option key={quote.id} value={quote.id}>{`${quote.id} - ${quote.customerName}`}</option>))}</select></div>
+                    <div className="sm:col-span-3"><label htmlFor="quote_id" className="block text-sm font-medium leading-6 text-brand-navy-900">Accepted Quote</label><select id="quote_id" name="quote_id" value={formData.quote_id} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm sm:leading-6">{availableQuotes.length === 0 && <option disabled>No accepted quotes available</option>}{availableQuotes.map(quote => (<option key={quote.id} value={quote.id}>{`${quote.id.substring(0,8)} - ${quote.customerName}`}</option>))}</select></div>
                     <div className="sm:col-span-3"><label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-navy-900">Customer</label><input type="text" name="customerName" id="customerName" value={customerName} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-navy-100 text-brand-navy-500 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-0 sm:text-sm sm:leading-6" /></div>
                     <div className="sm:col-span-3"><label htmlFor="date" className="block text-sm font-medium leading-6 text-brand-navy-900">Scheduled Date</label><input type="date" name="date" id="date" value={formData.date} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 placeholder:text-brand-navy-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm sm:leading-6" /></div>
                     <div className="sm:col-span-3"><label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-navy-900">Status</label><select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm sm:leading-6"><option>Unscheduled</option><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option></select></div>
-                    <div className="col-span-full"><label className="block text-sm font-medium leading-6 text-brand-navy-900">Assign Crew</label><div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-md border p-4">{employees.map(emp => (<div key={emp.id} className="relative flex items-start"><div className="flex h-6 items-center"><input id={`emp-form-${emp.id}`} type="checkbox" checked={formData.assigned_crew.includes(emp.id)} onChange={() => handleCrewChange(emp.id)} className="h-4 w-4 rounded border-brand-navy-300 text-brand-cyan-600 focus:ring-brand-cyan-600" /></div><div className="ml-3 text-sm leading-6"><label htmlFor={`emp-form-${emp.id}`} className="font-medium text-brand-navy-900">{emp.name}</label></div></div>))}</div></div>
+                    <div className="col-span-full"><label className="block text-sm font-medium leading-6 text-brand-navy-900">Assign Crew</label><div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-md border p-4">{employees.map(emp => (<div key={emp.id} className="relative flex items-start"><div className="flex h-6 items-center"><input id={`emp-form-${emp.id}`} type="checkbox" checked={formData.assigned_crew?.includes(emp.id)} onChange={() => handleCrewChange(emp.id)} className="h-4 w-4 rounded border-brand-navy-300 text-brand-cyan-600 focus:ring-brand-cyan-600" /></div><div className="ml-3 text-sm leading-6"><label htmlFor={`emp-form-${emp.id}`} className="font-medium text-brand-navy-900">{emp.name}</label></div></div>))}</div></div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6"><button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-navy-900">Cancel</button><button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600">Save Job</button></div>
             </form>
@@ -89,7 +87,44 @@ const JobForm: React.FC<{
     );
 };
 
-// ... (JobDetailModal remains the same, but props will need updates)
+const JobDetailModal: React.FC<{
+    job: Job;
+    employees: Employee[];
+    onClose: () => void;
+    onCreateInvoice: () => void;
+}> = ({ job, employees, onClose, onCreateInvoice }) => {
+    const assignedCrewNames = job.assigned_crew?.map(crewId => {
+        return employees.find(emp => emp.id === crewId)?.name || 'Unknown';
+    }).join(', ');
+
+    return (
+        <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <div className="fixed inset-0 z-10 overflow-y-auto">
+                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                        <div>
+                            <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="modal-title">Job Details</h3>
+                            <div className="mt-2">
+                                <dl className="divide-y divide-gray-200">
+                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Job ID</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.id}</dd></div>
+                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Customer</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.customerName}</dd></div>
+                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Status</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.status}</dd></div>
+                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Scheduled Date</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.date || 'Not scheduled'}</dd></div>
+                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Assigned Crew</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{assignedCrewNames || 'None'}</dd></div>
+                                </dl>
+                            </div>
+                        </div>
+                        <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                            {job.status === 'Completed' && <button type="button" onClick={onCreateInvoice} className="inline-flex w-full justify-center rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600 sm:col-start-2">Create Invoice</button>}
+                            <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-navy-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 interface JobsProps {
   jobs: Job[];
@@ -109,43 +144,27 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const navigate = useNavigate();
 
-  const handleSaveJob = async (newJobData: Omit<Job, 'id' | 'user_id' | 'created_at'>) => {
+  const handleSaveJob = async (jobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
     if (!session) return;
-    const { data, error } = await supabase
-      .from('jobs')
-      .insert({ ...newJobData, user_id: session.user.id })
-      .select()
-      .single();
+    
+    const action = editingJob 
+        ? supabase.from('jobs').update({ ...jobData }).eq('id', editingJob.id)
+        : supabase.from('jobs').insert({ ...jobData, user_id: session.user.id });
+
+    const { data, error } = await action.select().single();
     
     if (error) {
       alert(error.message);
     } else if (data) {
       const customer = customers.find(c => c.id === data.customer_id);
-      setJobs(prev => [{ ...data, customerName: customer?.name || 'N/A', scheduledDate: data.date, assignedCrew: data.assigned_crew }, ...prev]);
+      const processedJob = { ...data, customerName: customer?.name || 'N/A' };
+      
+      if (editingJob) {
+        setJobs(prev => prev.map(j => j.id === data.id ? processedJob : j));
+      } else {
+        setJobs(prev => [processedJob, ...prev]);
+      }
       setShowAddForm(false);
-    }
-  };
-
-  const handleUpdateJob = async (updatedJobData: Job) => {
-    const { data, error } = await supabase
-      .from('jobs')
-      .update({
-          quote_id: updatedJobData.quote_id,
-          customer_id: updatedJobData.customer_id,
-          date: updatedJobData.date,
-          status: updatedJobData.status,
-          assigned_crew: updatedJobData.assigned_crew
-      })
-      .eq('id', updatedJobData.id)
-      .select()
-      .single();
-
-    if (error) {
-      alert(error.message);
-    } else if (data) {
-      const customer = customers.find(c => c.id === data.customer_id);
-      const updatedJob = { ...data, customerName: customer?.name || 'N/A', scheduledDate: data.date, assignedCrew: data.assigned_crew };
-      setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
       setEditingJob(null);
     }
   };
@@ -183,7 +202,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
       alert(error.message);
     } else if (data) {
       const customer = customers.find(c => c.id === data.customer_id);
-      setInvoices(prev => [{ ...data, customerName: customer?.name || 'N/A', amount: data.total_amount }, ...prev]);
+      setInvoices(prev => [{ ...data, customerName: customer?.name || 'N/A' }, ...prev]);
       alert(`Invoice ${data.id} created successfully!`);
       setSelectedJob(null);
       navigate('/invoices');
@@ -202,22 +221,95 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
       alert(error.message);
     } else if (data) {
       const customer = customers.find(c => c.id === data.customer_id);
-      const updatedJob = { ...data, customerName: customer?.name || 'N/A', scheduledDate: data.date, assignedCrew: data.assigned_crew };
+      const updatedJob = { ...data, customerName: customer?.name || 'N/A' };
       setJobs(prevJobs => prevJobs.map(j => (j.id === jobId ? updatedJob : j)));
     }
   };
 
   const filteredJobs = useMemo(() => jobs.filter(job =>
-    Object.values(job).some(value => value?.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+    (job.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (job.date || '').toLowerCase().includes(searchTerm.toLowerCase())
   ), [jobs, searchTerm]);
 
-  // ... (rest of the component including JobDetailModal and table rendering)
-  // This part is large and mostly unchanged, so I'll omit it for brevity.
-  // The logic inside the component remains the same, but it now operates on live data.
+  const getStatusColor = (status: Job['status']) => {
+    switch (status) {
+        case 'Completed': return 'bg-green-100 text-green-800';
+        case 'Scheduled': return 'bg-blue-100 text-blue-800';
+        case 'In Progress': return 'bg-yellow-100 text-yellow-800';
+        case 'Cancelled': return 'bg-red-100 text-red-800';
+        default: return 'bg-brand-navy-100 text-brand-navy-800'; // Unscheduled
+    }
+  }
+
   return (
     <div>
-        {/* UI Code Here, it will now use the functions above */}
-        <p>Jobs page connected to Supabase. UI rendering is omitted for brevity.</p>
+        <div className="sm:flex sm:items-center">
+            <div className="sm:flex-auto">
+                <h1 className="text-2xl font-bold text-brand-navy-900">Jobs</h1>
+                <p className="mt-2 text-sm text-brand-navy-700">A list of all jobs.</p>
+            </div>
+            <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <button type="button" onClick={() => { setEditingJob(null); setShowAddForm(s => !s); }} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 sm:w-auto">
+                    {showAddForm || editingJob ? 'Cancel' : 'Create Job'}
+                </button>
+            </div>
+        </div>
+
+        {(showAddForm || editingJob) && (
+            <JobForm 
+                quotes={quotes} 
+                customers={customers} 
+                employees={employees}
+                onSave={handleSaveJob} 
+                onCancel={() => { setShowAddForm(false); setEditingJob(null); }}
+                initialData={editingJob}
+            />
+        )}
+
+        <div className="mt-6">
+            <input type="text" placeholder="Search by customer, status, or date..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-navy-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm" aria-label="Search jobs" />
+        </div>
+
+        <div className="mt-4 flex flex-col">
+            <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table className="min-w-full divide-y divide-brand-navy-300">
+                            <thead className="bg-brand-navy-50">
+                                <tr>
+                                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-6">Job ID</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Customer</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Date</th>
+                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Status</th>
+                                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-brand-navy-200 bg-white">
+                                {filteredJobs.map((job) => (
+                                    <tr key={job.id}>
+                                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{job.id.substring(0,8)}...</td>
+                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{job.customerName}</td>
+                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{job.date || 'N/A'}</td>
+                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">
+                                            <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className={`rounded-full border-0 py-0.5 pl-2.5 pr-7 text-xs font-medium ${getStatusColor(job.status)} focus:ring-2 focus:ring-brand-cyan-500`}>
+                                                <option>Unscheduled</option><option>Scheduled</option><option>In Progress</option><option>Completed</option><option>Cancelled</option>
+                                            </select>
+                                        </td>
+                                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
+                                            <button onClick={() => setSelectedJob(job)} className="text-brand-cyan-600 hover:text-brand-cyan-900">View</button>
+                                            <button onClick={() => { setEditingJob(job); setShowAddForm(true); }} className="text-brand-cyan-600 hover:text-brand-cyan-900">Edit</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {selectedJob && <JobDetailModal job={selectedJob} employees={employees} onClose={() => setSelectedJob(null)} onCreateInvoice={handleCreateInvoice} />}
     </div>
   )
 };
