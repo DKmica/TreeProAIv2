@@ -6,7 +6,6 @@ import QuoteIcon from './icons/QuoteIcon';
 import JobIcon from './icons/JobIcon';
 import CustomerIcon from './icons/CustomerIcon';
 import InvoiceIcon from './icons/InvoiceIcon';
-import EmployeeIcon from './icons/EmployeeIcon';
 import EquipmentIcon from './icons/EquipmentIcon';
 import CalendarIcon from './icons/CalendarIcon';
 import MarketingIcon from './icons/MarketingIcon';
@@ -22,7 +21,6 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: CustomerIcon },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-  { name: 'Employees', href: '/employees', icon: EmployeeIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
   { name: 'HR', href: '/hr', icon: HRIcon },
   { name: 'Marketing', href: '/marketing', icon: MarketingIcon },

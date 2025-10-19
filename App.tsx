@@ -8,7 +8,6 @@ import Jobs from './pages/Jobs';
 import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
 import Calendar from './pages/Calendar';
-import Employees from './pages/Employees';
 import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
 import AICore from './pages/AICore';
@@ -85,9 +84,8 @@ const App: React.FC = () => {
         <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
         <Route path="/invoices" element={<Invoices invoices={invoices} setInvoices={setInvoices} jobs={jobs} customers={customers} />} />
         <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
-        <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
         <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
-        <Route path="/hr" element={<HRPage employees={employees} certifications={certifications} setCertifications={setCertifications} timeOffRequests={timeOffRequests} setTimeOffRequests={setTimeOffRequests} />} />
+        <Route path="/hr" element={<HRPage employees={employees} setEmployees={setEmployees} certifications={certifications} timeOffRequests={timeOffRequests} setCertifications={setCertifications} setTimeOffRequests={setTimeOffRequests} />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/login" element={<Navigate to="/dashboard" replace />} />
       </Routes>
