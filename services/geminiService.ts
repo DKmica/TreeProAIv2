@@ -300,25 +300,37 @@ export const getAiCoreInsights = async (
     equipment: Equipment[]
 ): Promise<AICoreInsights> => {
 
+    // --- Data Optimization ---
+    // 1. Filter for only new leads to be scored.
+    const newLeads = leads.filter(lead => lead.status === 'New');
+
+    // 2. Find quotes that are accepted but don't have a job yet.
+    const jobQuoteIds = new Set(jobs.map(job => job.quote_id));
+    const quotesToSchedule = quotes.filter(quote => 
+        quote.status === 'Accepted' && !jobQuoteIds.has(quote.id)
+    );
+
+    // 3. Simplify employee data to only what's needed for scheduling.
+    const relevantEmployees = employees.map(e => ({ id: e.id, name: e.name, role: e.role }));
+
     const today = new Date().toISOString().split('T')[0];
     const prompt = `
         You are the AI Core for TreePro AI, a business management platform for tree service companies. Your function is to analyze all operational data and provide actionable, intelligent insights to automate and optimize the business. Today's date is ${today}.
 
-        Analyze the following business data:
-        - All Leads: ${JSON.stringify(leads)}
-        - All Jobs: ${JSON.stringify(jobs)}
-        - All Quotes: ${JSON.stringify(quotes)}
-        - All Employees: ${JSON.stringify(employees.map(e => ({id: e.id, name: e.name, role: e.role})))}
-        - All Equipment: ${JSON.stringify(equipment)}
+        Analyze the following PRE-FILTERED business data:
+        - New Leads to be Scored: ${JSON.stringify(newLeads)}
+        - Accepted Quotes Awaiting Scheduling: ${JSON.stringify(quotesToSchedule)}
+        - Available Employees for Crew Assignment: ${JSON.stringify(relevantEmployees)}
+        - All Equipment for Maintenance Review: ${JSON.stringify(equipment)}
 
         Based on this data, generate a JSON object with the following insights:
-        1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status. Mention any urgent items.
-        2.  **leadScores**: Analyze all leads with status 'New'. 
+        1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status based on the provided data. Mention any urgent items.
+        2.  **leadScores**: Analyze the provided 'New Leads'. 
             - Score each lead from 1 to 100 based on potential value and likelihood to convert.
             - **Crucially, analyze the lead's 'notes' field for keywords indicating urgency.** Keywords like 'emergency', 'ASAP', 'fallen branch', 'storm damage', 'leaning tree', 'on my house' should result in an urgency of 'High'. A 'High' urgency should significantly boost the score (e.g., to 90+).
             - Provide brief reasoning and a recommended action.
-        3.  **jobSchedules**: Find all quotes with status 'Accepted' that do not yet have a corresponding job in the jobs list. For each, suggest an optimal schedule date (a weekday in the near future) and a crew assignment (list of employee names). Consider crew composition (e.g., a leader and groundsman). Provide reasoning for your suggestion.
-        4.  **maintenanceAlerts**: Analyze the equipment list. Flag any equipment where status is 'Needs Maintenance'. Also, flag equipment where 'lastServiceDate' was more than 6 months ago from today's date (${today}). Provide a recommended action.
+        3.  **jobSchedules**: For each of the 'Accepted Quotes Awaiting Scheduling', suggest an optimal schedule date (a weekday in the near future) and a crew assignment (list of employee names from the 'Available Employees' list). Consider crew composition (e.g., a leader and groundsman). Provide reasoning for your suggestion.
+        4.  **maintenanceAlerts**: Analyze the 'All Equipment' list. Flag any equipment where status is 'Needs Maintenance'. Also, flag equipment where 'last_maintenance' was more than 6 months ago from today's date (${today}). Provide a recommended action.
 
         Return ONLY a valid JSON object adhering to the provided schema. Do not include any other text or markdown formatting.
     `;
