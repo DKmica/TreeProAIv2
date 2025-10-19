@@ -157,10 +157,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             .map(name => employees.find(e => e.name === name)?.id)
             .filter((id): id is string => !!id);
 
-        const serviceDescription = (quote.service_items && Array.isArray(quote.service_items))
-            ? quote.service_items.map((item: any) => item.desc).join(', ')
-            : 'General tree service';
-
         const { data, error } = await supabase
             .from('jobs')
             .insert({
@@ -170,8 +166,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                 date: suggestion.suggestedDate,
                 assigned_crew: crewIds,
                 user_id: session.user.id,
-                service: serviceDescription,
-                job_details: (quote as any).job_details || { description: serviceDescription }
             })
             .select()
             .single();
@@ -182,26 +176,27 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             const customer = customers.find(c => c.id === data.customer_id);
             const newJob = { ...data, customerName: customer?.name || 'N/A' };
             setJobs(prev => [...prev, newJob]);
-            fetchInsights();
+            
+            setInsights(prevInsights => {
+                if (!prevInsights) return null;
+                return {
+                    ...prevInsights,
+                    jobSchedules: prevInsights.jobSchedules.filter(s => s.quoteId !== suggestion.quoteId)
+                };
+            });
+
             alert('Job scheduled successfully!');
         }
     };
 
     const handleSaveModifiedSchedule = async (updatedJobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
         if (!session) return;
-        
-        const quote = quotes.find(q => q.id === updatedJobData.quote_id);
-        const serviceDescription = (quote?.service_items && Array.isArray(quote.service_items))
-            ? quote.service_items.map((item: any) => item.desc).join(', ')
-            : 'General tree service';
 
         const { data, error } = await supabase
             .from('jobs')
             .insert({
                 ...updatedJobData,
                 user_id: session.user.id,
-                service: serviceDescription,
-                job_details: (quote as any)?.job_details || { description: serviceDescription }
             })
             .select()
             .single();
@@ -212,8 +207,16 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             const customer = customers.find(c => c.id === data.customer_id);
             const newJob = { ...data, customerName: customer?.name || 'N/A' };
             setJobs(prev => [...prev, newJob]);
+
+            setInsights(prevInsights => {
+                if (!prevInsights) return null;
+                return {
+                    ...prevInsights,
+                    jobSchedules: prevInsights.jobSchedules.filter(s => s.quoteId !== updatedJobData.quote_id)
+                };
+            });
+
             setEditingSchedule(null);
-            fetchInsights();
             alert('Job scheduled successfully!');
         }
     };
