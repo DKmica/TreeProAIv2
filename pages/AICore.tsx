@@ -64,7 +64,7 @@ const ModifyScheduleModal: React.FC<{
                     <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="modal-title">Modify & Schedule Job</h3>
                     <div className="mt-2">
                       <p className="text-sm text-brand-navy-500">
-                        Review and modify the AI's suggestions for Quote <span className="font-semibold">{suggestion.quoteId}</span> for <span className="font-semibold">{suggestion.customerName}</span>.
+                        Review and modify the AI's suggestions for Quote <span className="font-semibold">{suggestion.quoteId.substring(0,8)}...</span> for <span className="font-semibold">{suggestion.customerName}</span>.
                       </p>
                     </div>
                   </div>
@@ -145,27 +145,22 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
         fetchInsights();
     }, [fetchInsights]);
 
-    const handleAcceptSuggestion = async (suggestion: JobScheduleSuggestion) => {
+    const createJobFromSuggestion = async (jobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
         if (!session) return;
-        const quote = quotes.find(q => q.id === suggestion.quoteId);
+
+        const quote = quotes.find(q => q.id === jobData.quote_id);
         if (!quote) {
             alert('Could not find the original quote for this job.');
             return;
         }
 
-        const crewIds = suggestion.suggestedCrew
-            .map(name => employees.find(e => e.name === name)?.id)
-            .filter((id): id is string => !!id);
-
         const { data, error } = await supabase
             .from('jobs')
             .insert({
-                quote_id: suggestion.quoteId,
-                customer_id: quote.customer_id,
-                status: 'Scheduled',
-                date: suggestion.suggestedDate,
-                assigned_crew: crewIds,
+                ...jobData,
                 user_id: session.user.id,
+                job_price: quote.total_price,
+                job_details: { description: `Job created from quote ${quote.id}` },
             })
             .select()
             .single();
@@ -181,46 +176,28 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                 if (!prevInsights) return null;
                 return {
                     ...prevInsights,
-                    jobSchedules: prevInsights.jobSchedules.filter(s => s.quoteId !== suggestion.quoteId)
+                    jobSchedules: prevInsights.jobSchedules.filter(s => s.quoteId !== jobData.quote_id)
                 };
             });
 
             alert('Job scheduled successfully!');
+            if (editingSchedule) setEditingSchedule(null);
         }
     };
 
-    const handleSaveModifiedSchedule = async (updatedJobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
-        if (!session) return;
-
-        const { data, error } = await supabase
-            .from('jobs')
-            .insert({
-                ...updatedJobData,
-                user_id: session.user.id,
-            })
-            .select()
-            .single();
-
-        if (error) {
-            alert(`Error creating job: ${error.message}`);
-        } else if (data) {
-            const customer = customers.find(c => c.id === data.customer_id);
-            const newJob = { ...data, customerName: customer?.name || 'N/A' };
-            setJobs(prev => [...prev, newJob]);
-
-            setInsights(prevInsights => {
-                if (!prevInsights) return null;
-                return {
-                    ...prevInsights,
-                    jobSchedules: prevInsights.jobSchedules.filter(s => s.quoteId !== updatedJobData.quote_id)
-                };
-            });
-
-            setEditingSchedule(null);
-            alert('Job scheduled successfully!');
-        }
+    const handleAcceptSuggestion = (suggestion: JobScheduleSuggestion) => {
+        const crewIds = suggestion.suggestedCrew
+            .map(name => employees.find(e => e.name === name)?.id)
+            .filter((id): id is string => !!id);
+        
+        createJobFromSuggestion({
+            quote_id: suggestion.quoteId,
+            customer_id: quotes.find(q => q.id === suggestion.quoteId)?.customer_id || '',
+            status: 'Scheduled',
+            date: suggestion.suggestedDate,
+            assigned_crew: crewIds,
+        });
     };
-
 
     if (isLoading) {
         return (
@@ -268,7 +245,7 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                         <li key={lead.leadId} className="py-4">
                             <div className="flex items-center space-x-4">
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-brand-navy-900 truncate">{lead.customerName} ({lead.leadId})</p>
+                                <p className="text-sm font-medium text-brand-navy-900 truncate">{lead.customerName} ({lead.leadId.substring(0,8)}...)</p>
                                 <p className="text-sm text-brand-navy-500">{lead.reasoning}</p>
                                 <p className="text-sm font-semibold text-brand-cyan-700">{lead.recommendedAction}</p>
                             </div>
@@ -289,7 +266,7 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                     <ul role="list" className="mt-4 divide-y divide-brand-navy-200">
                          {insights.jobSchedules.map((job, index) => (
                             <li key={index} className="py-4">
-                                <p className="text-sm font-medium text-brand-navy-900">Quote <span className="font-semibold">{job.quoteId}</span> for <span className="font-semibold">{job.customerName}</span></p>
+                                <p className="text-sm font-medium text-brand-navy-900">Quote <span className="font-semibold">{job.quoteId.substring(0,8)}...</span> for <span className="font-semibold">{job.customerName}</span></p>
                                 <div className="mt-2 space-y-1 text-sm text-brand-navy-600">
                                   <p><span className="font-semibold">Suggested Date:</span> {job.suggestedDate}</p>
                                   <p><span className="font-semibold">Suggested Crew:</span> {job.suggestedCrew.join(', ')}</p>
@@ -348,7 +325,7 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                     suggestion={editingSchedule}
                     employees={employees}
                     quotes={quotes}
-                    onSave={handleSaveModifiedSchedule}
+                    onSave={createJobFromSuggestion}
                     onClose={() => setEditingSchedule(null)}
                 />
             )}
