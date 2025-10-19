@@ -70,22 +70,18 @@ export const useAppData = () => {
       const processedQuotes = quotesData?.map(q => ({
         ...q,
         customerName: customerMap.get(q.customer_id)?.name || 'N/A',
-        amount: q.total_price // Aligning type for UI
       })) || [];
       setQuotes(processedQuotes);
 
       const processedJobs = jobsData?.map(j => ({
         ...j,
         customerName: customerMap.get(j.customer_id)?.name || 'N/A',
-        scheduledDate: j.date, // Aligning type for UI
-        assignedCrew: j.assigned_crew || []
       })) || [];
       setJobs(processedJobs);
 
       const processedInvoices = invoicesData?.map(i => ({
         ...i,
         customerName: customerMap.get(i.customer_id)?.name || 'N/A',
-        amount: i.total_amount // Aligning type for UI
       })) || [];
       setInvoices(processedInvoices);
 

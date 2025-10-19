@@ -5,6 +5,8 @@ import SpinnerIcon from '../components/icons/SpinnerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
 import JobIcon from '../components/icons/JobIcon';
 import EquipmentIcon from '../components/icons/EquipmentIcon';
+import { supabase } from '../src/integrations/supabase/client';
+import { useSession } from '../src/contexts/SessionContext';
 
 const ModifyScheduleModal: React.FC<{
   suggestion: JobScheduleSuggestion;
@@ -120,6 +122,7 @@ interface AICoreProps {
 }
 
 const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, customers, setJobs }) => {
+    const { session } = useSession();
     const [insights, setInsights] = useState<AICoreInsights | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -142,7 +145,8 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
         fetchInsights();
     }, [fetchInsights]);
 
-    const handleAcceptSuggestion = (suggestion: JobScheduleSuggestion) => {
+    const handleAcceptSuggestion = async (suggestion: JobScheduleSuggestion) => {
+        if (!session) return;
         const quote = quotes.find(q => q.id === suggestion.quoteId);
         if (!quote) {
             alert('Could not find the original quote for this job.');
@@ -153,34 +157,65 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             .map(name => employees.find(e => e.name === name)?.id)
             .filter((id): id is string => !!id);
 
-        const newJobData = {
-            quote_id: suggestion.quoteId,
-            customer_id: quote.customer_id,
-            status: 'Scheduled' as Job['status'],
-            date: suggestion.suggestedDate,
-            assigned_crew: crewIds,
-        };
-        
-        const customer = customers.find(c => c.id === newJobData.customer_id);
-        setJobs(prev => [...prev, { 
-            ...newJobData, 
-            id: `job-${Date.now()}`, 
-            user_id: '', 
-            created_at: new Date().toISOString(),
-            customerName: customer?.name || 'N/A'
-        }]);
+        const serviceDescription = (quote.service_items && Array.isArray(quote.service_items))
+            ? quote.service_items.map((item: any) => item.desc).join(', ')
+            : 'General tree service';
+
+        const { data, error } = await supabase
+            .from('jobs')
+            .insert({
+                quote_id: suggestion.quoteId,
+                customer_id: quote.customer_id,
+                status: 'Scheduled',
+                date: suggestion.suggestedDate,
+                assigned_crew: crewIds,
+                user_id: session.user.id,
+                service: serviceDescription,
+                job_details: (quote as any).job_details || { description: serviceDescription }
+            })
+            .select()
+            .single();
+
+        if (error) {
+            alert(`Error creating job: ${error.message}`);
+        } else if (data) {
+            const customer = customers.find(c => c.id === data.customer_id);
+            const newJob = { ...data, customerName: customer?.name || 'N/A' };
+            setJobs(prev => [...prev, newJob]);
+            fetchInsights();
+            alert('Job scheduled successfully!');
+        }
     };
 
-    const handleSaveModifiedSchedule = (updatedJobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
-        const customer = customers.find(c => c.id === updatedJobData.customer_id);
-        setJobs(prev => [...prev, { 
-            ...updatedJobData, 
-            id: `job-${Date.now()}`,
-            user_id: '',
-            created_at: new Date().toISOString(),
-            customerName: customer?.name || 'N/A'
-        }]);
-        setEditingSchedule(null); // Close modal
+    const handleSaveModifiedSchedule = async (updatedJobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
+        if (!session) return;
+        
+        const quote = quotes.find(q => q.id === updatedJobData.quote_id);
+        const serviceDescription = (quote?.service_items && Array.isArray(quote.service_items))
+            ? quote.service_items.map((item: any) => item.desc).join(', ')
+            : 'General tree service';
+
+        const { data, error } = await supabase
+            .from('jobs')
+            .insert({
+                ...updatedJobData,
+                user_id: session.user.id,
+                service: serviceDescription,
+                job_details: (quote as any)?.job_details || { description: serviceDescription }
+            })
+            .select()
+            .single();
+
+        if (error) {
+            alert(`Error creating job: ${error.message}`);
+        } else if (data) {
+            const customer = customers.find(c => c.id === data.customer_id);
+            const newJob = { ...data, customerName: customer?.name || 'N/A' };
+            setJobs(prev => [...prev, newJob]);
+            setEditingSchedule(null);
+            fetchInsights();
+            alert('Job scheduled successfully!');
+        }
     };
 
 

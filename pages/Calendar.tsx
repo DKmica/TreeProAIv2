@@ -24,7 +24,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
     const filteredJobsOnCalendar = useMemo(() => {
         return jobs.filter(job => {
             const statusMatch = statusFilter === 'all' || job.status === statusFilter;
-            const employeeMatch = employeeFilter === 'all' || job.assignedCrew.includes(employeeFilter);
+            const employeeMatch = employeeFilter === 'all' || job.assigned_crew?.includes(employeeFilter);
             return statusMatch && employeeMatch;
         });
     }, [jobs, statusFilter, employeeFilter]);
@@ -32,7 +32,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
     const jobsByDate = useMemo(() => {
         const map = new Map<string, Job[]>();
         filteredJobsOnCalendar.forEach(job => {
-            const date = job.scheduledDate;
+            const date = job.date;
             if (!date) return;
             if (!map.has(date)) {
                 map.set(date, []);
@@ -94,7 +94,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
 
         setJobs(prevJobs => 
             prevJobs.map(job => 
-                job.id === jobId ? { ...job, scheduledDate: newScheduledDate, status: 'Scheduled' } : job
+                job.id === jobId ? { ...job, date: newScheduledDate, status: 'Scheduled' } : job
             )
         );
     };
