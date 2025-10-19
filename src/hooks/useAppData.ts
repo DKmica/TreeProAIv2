@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useSession } from '../contexts/SessionContext';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Certification, TimeOffRequest } from '../../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Certification, TimeOffRequest, JobCostingSummary } from '../../types';
 
 export const useAppData = () => {
   const { session } = useSession();
@@ -17,6 +17,7 @@ export const useAppData = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
+  const [jobCosting, setJobCosting] = useState<JobCostingSummary[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!session) {
@@ -38,6 +39,7 @@ export const useAppData = () => {
         equipmentRes,
         certificationsRes,
         timeOffRes,
+        jobCostingRes,
       ] = await Promise.all([
         supabase.from('customers').select('*'),
         supabase.from('leads').select('*'),
@@ -48,6 +50,7 @@ export const useAppData = () => {
         supabase.from('equipment').select('*'),
         supabase.from('certifications').select('*'),
         supabase.from('time_off_requests').select('*'),
+        supabase.from('job_costing_summary').select('*'),
       ]);
 
       if (customersRes.error) throw new Error(`Customers: ${customersRes.error.message}`);
@@ -59,6 +62,7 @@ export const useAppData = () => {
       if (equipmentRes.error) throw new Error(`Equipment: ${equipmentRes.error.message}`);
       if (certificationsRes.error) throw new Error(`Certifications: ${certificationsRes.error.message}`);
       if (timeOffRes.error) throw new Error(`Time Off Requests: ${timeOffRes.error.message}`);
+      if (jobCostingRes.error) throw new Error(`Job Costing: ${jobCostingRes.error.message}`);
 
       const customersData = customersRes.data || [];
       const customerMap = new Map(customersData.map(c => [c.id, c]));
@@ -77,6 +81,7 @@ export const useAppData = () => {
       setEquipment(equipmentRes.data || []);
       setCertifications(certificationsRes.data || []);
       setTimeOffRequests(timeOffRes.data || []);
+      setJobCosting(jobCostingRes.data || []);
 
     } catch (err: any) {
       setError(err.message);
@@ -101,5 +106,6 @@ export const useAppData = () => {
     equipment, setEquipment,
     certifications,
     timeOffRequests,
+    jobCosting,
   };
 };

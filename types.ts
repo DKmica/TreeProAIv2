@@ -62,6 +62,8 @@ export interface Job extends UserOwned {
   calculated_cost_equipment?: number;
   calculated_cost_materials?: number;
   calculated_profit?: number;
+  total_cost?: number;
+  total_time_minutes?: number;
 }
 
 export interface TimeEntry extends UserOwned {
@@ -117,6 +119,18 @@ export interface Expense extends UserOwned {
   expense_type: string;
   amount: number;
   date: string;
+}
+
+// Module 7: Financial Analytics
+export interface JobCostingSummary extends UserOwned {
+  job_id: string;
+  total_revenue?: number;
+  cost_labor?: number;
+  cost_equipment?: number;
+  cost_materials?: number;
+  total_cost?: number;
+  profit_amount?: number;
+  profit_margin_percentage?: number;
 }
 
 // Module 8: Marketing

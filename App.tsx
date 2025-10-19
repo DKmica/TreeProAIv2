@@ -13,6 +13,7 @@ import Marketing from './pages/Marketing';
 import AICore from './pages/AICore';
 import Login from './src/pages/Login';
 import HRPage from './pages/HR';
+import FinancialsPage from './pages/Financials';
 import { useSession } from './src/contexts/SessionContext';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 import { useAppData } from '@/src/hooks/useAppData';
@@ -31,6 +32,7 @@ const App: React.FC = () => {
     equipment, setEquipment,
     certifications,
     timeOffRequests,
+    jobCosting,
   } = useAppData();
 
   if (sessionLoading || dataLoading) {
@@ -75,6 +77,7 @@ const App: React.FC = () => {
         <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
         <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
         <Route path="/invoices" element={<Invoices invoices={invoices} setInvoices={setInvoices} jobs={jobs} customers={customers} />} />
+        <Route path="/financials" element={<FinancialsPage jobCosting={jobCosting} />} />
         <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
         <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
         <Route path="/hr" element={<HRPage employees={employees} setEmployees={setEmployees} certifications={certifications} timeOffRequests={timeOffRequests} />} />
