@@ -57,7 +57,7 @@ export const useAppData = () => {
       const processedCustomers = customersData?.map(c => ({
         ...c,
         address: [c.street, c.city, c.state, c.zip_code].filter(Boolean).join(', '),
-        coordinates: { lat: 0, lng: 0 } // Placeholder for map
+        coordinates: { lat: c.lat || 0, lng: c.lng || 0 }
       })) || [];
       setCustomers(processedCustomers);
 

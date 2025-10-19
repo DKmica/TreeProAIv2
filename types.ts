@@ -13,6 +13,8 @@ export interface Customer extends UserOwned {
   city?: string;
   state?: string;
   zip_code?: string;
+  lat?: number;
+  lng?: number;
   // For map view compatibility
   address: string; // Combined address
   coordinates: { lat: number; lng: number; };

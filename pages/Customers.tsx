@@ -4,7 +4,7 @@ import { supabase } from '../src/integrations/supabase/client';
 import { useSession } from '../src/contexts/SessionContext';
 
 interface AddCustomerFormProps {
-    onSave: (customer: Omit<Customer, 'id' | 'coordinates' | 'user_id' | 'created_at' | 'address'>) => void;
+    onSave: (customer: Omit<Customer, 'id' | 'coordinates' | 'user_id' | 'created_at' | 'address' | 'lat' | 'lng'>) => void;
     onCancel: () => void;
 }
 
@@ -58,7 +58,7 @@ const Customers: React.FC<CustomersProps> = ({ customers, setCustomers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
-  const handleSaveCustomer = async (customerData: Omit<Customer, 'id' | 'coordinates' | 'user_id' | 'created_at' | 'address'>) => {
+  const handleSaveCustomer = async (customerData: Omit<Customer, 'id' | 'coordinates' | 'user_id' | 'created_at' | 'address' | 'lat' | 'lng'>) => {
     if (!session) return;
     const { data, error } = await supabase
       .from('customers')
@@ -69,10 +69,36 @@ const Customers: React.FC<CustomersProps> = ({ customers, setCustomers }) => {
     if (error) {
       alert(error.message);
     } else if (data) {
+      const fullAddress = [data.street, data.city, data.state, data.zip_code].filter(Boolean).join(', ');
+      let coordinates = { lat: 0, lng: 0 };
+
+      if (fullAddress) {
+        try {
+          const { data: geoData, error: geoError } = await supabase.functions.invoke('geocode', {
+            body: { address: fullAddress },
+          });
+
+          if (geoError) throw geoError;
+          
+          if (geoData.lat && geoData.lng) {
+            coordinates = { lat: geoData.lat, lng: geoData.lng };
+            await supabase
+              .from('customers')
+              .update({ lat: coordinates.lat, lng: coordinates.lng })
+              .eq('id', data.id);
+          }
+        } catch (e: any) {
+          console.error("Geocoding failed:", e);
+          alert("Customer created, but their address could not be located on the map. Please verify the address details.");
+        }
+      }
+
       const newCustomer = {
         ...data,
-        address: [data.street, data.city, data.state, data.zip_code].filter(Boolean).join(', '),
-        coordinates: { lat: 0, lng: 0 }
+        lat: coordinates.lat,
+        lng: coordinates.lng,
+        address: fullAddress,
+        coordinates: coordinates
       };
       setCustomers(prev => [newCustomer, ...prev]);
       setShowAddForm(false);
