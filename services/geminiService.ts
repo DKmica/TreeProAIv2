@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment } from "../types";
+import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, FollowUpSequence } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -339,5 +339,62 @@ export const getAiCoreInsights = async (
     } catch (error) {
         console.error("Error getting AI Core insights:", error);
         throw new Error("Failed to generate AI Core insights.");
+    }
+};
+
+const followUpSequenceSchema = {
+    type: Type.OBJECT,
+    properties: {
+        steps: {
+            type: Type.ARRAY,
+            description: "A sequence of follow-up messages.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    delay_days: { type: Type.NUMBER, description: "Number of days to wait after the lead was created before sending this message." },
+                    subject: { type: Type.STRING, description: "The email subject line." },
+                    content: { type: Type.STRING, description: "The body of the email. Use [Customer Name] as a placeholder." }
+                },
+                required: ["delay_days", "subject", "content"]
+            }
+        }
+    },
+    required: ["steps"]
+};
+
+export const generateFollowUpSequence = async (lead: Lead): Promise<FollowUpSequence> => {
+    const prompt = `
+        You are a helpful assistant for TreePro AI, a tree service company.
+        Your task is to generate a professional and friendly 3-step email follow-up sequence for a new lead.
+
+        Lead Details:
+        - Customer Name: ${lead.customer?.name}
+        - Notes: ${lead.notes || 'No specific notes provided.'}
+
+        Instructions:
+        1.  Create a sequence of exactly 3 emails.
+        2.  The emails should be spaced out: one after 1 day, one after 3 days, and a final one after 7 days.
+        3.  The tone should be helpful and not pushy. The goal is to remind the customer and offer assistance.
+        4.  Use the placeholder "[Customer Name]" for personalization.
+        5.  Sign off as "The Team at TreePro AI".
+        6.  If the notes mention something specific (e.g., "trimming a large maple tree"), reference it in the first email to show you were paying attention.
+
+        Return the result in the specified JSON format.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: followUpSequenceSchema
+            }
+        });
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        return JSON.parse(cleanedJsonText) as FollowUpSequence;
+    } catch (error) {
+        console.error("Error generating follow-up sequence:", error);
+        throw new Error("Failed to generate follow-up sequence.");
     }
 };
