@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
-import Quotes from './pages/Quotes';
+import QuotesPage from './pages/QuotesPage';
 import Jobs from './pages/Jobs';
 import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
@@ -77,7 +77,7 @@ const App: React.FC = () => {
         <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
         <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} customers={customers} setJobs={setJobs} />} />
         <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
-        <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
+        <Route path="/quotes" element={<QuotesPage quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
         <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} expenses={expenses} setExpenses={setExpenses} timeLogs={timeEntries} setTimeLogs={setTimeEntries} />} />
         <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
         <Route path="/invoices" element={<Invoices invoices={invoices} setInvoices={setInvoices} jobs={jobs} customers={customers} />} />

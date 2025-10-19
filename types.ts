@@ -172,15 +172,25 @@ export interface LineItem {
 }
 
 export interface AIEstimate {
-  species_identification: string;
-  size_estimation: string;
-  health_and_risk_assessment: string;
-  identified_obstacles: string[];
-  estimated_price_range: [number, number];
-  line_items: LineItem[];
-  difficulty: 'Low' | 'Medium' | 'High';
-  confidence: number;
-  rationale: string;
+  tree_species: string;
+  estimated_height_feet: number;
+  estimated_diameter_inches: number;
+  hazards: { name: string; description: string; severity: 'Low' | 'Medium' | 'High' }[];
+  obstacles: { name: string; description: string }[];
+  detailed_assessment: string;
+  job_details: {
+    methodology: string;
+    equipment_needed: string[];
+    manpower_needed: string;
+    certifications_needed: string[];
+    estimated_duration: string;
+  };
+  service_estimates: {
+    service_name: string;
+    min_usd: number;
+    max_usd: number;
+    description: string;
+  }[];
 }
 
 export interface ChatMessage {

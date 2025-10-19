@@ -6,7 +6,7 @@ import { useSession } from '../src/contexts/SessionContext';
 
 interface AddQuoteFormProps {
     customers: Customer[];
-    onSave: (quote: Omit<Quote, 'id' | 'user_id' | 'created_at'>) => void;
+    onSave: (quote: Omit<Quote, 'id' | 'user_id' | 'created_at' | 'customerName'>) => void;
     onCancel: () => void;
 }
 
@@ -45,18 +45,18 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
     );
 };
 
-interface QuotesProps {
+interface QuotesPageProps {
     quotes: Quote[];
     setQuotes: (updateFn: (prev: Quote[]) => Quote[]) => void;
     customers: Customer[];
 }
 
-const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
+const QuotesPage: React.FC<QuotesPageProps> = ({ quotes, setQuotes, customers }) => {
     const { session } = useSession();
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     
-    const handleSaveQuote = async (newQuoteData: Omit<Quote, 'id' | 'user_id' | 'created_at'>) => {
+    const handleSaveQuote = async (newQuoteData: Omit<Quote, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
         if (!session) return;
         const { data, error } = await supabase
             .from('quotes')
@@ -68,7 +68,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
             alert(error.message);
         } else if (data) {
             const customer = customers.find(c => c.id === data.customer_id);
-            setQuotes(prev => [{ ...data, customerName: customer?.name || 'N/A', amount: data.total_price }, ...prev]);
+            setQuotes(prev => [{ ...data, customerName: customer?.name || 'N/A', total_price: data.total_price }, ...prev]);
             setShowAddForm(false);
         }
     };
@@ -93,10 +93,10 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
             <div className="sm:flex sm:items-center"><div className="sm:flex-auto"><h1 className="text-2xl font-bold text-brand-navy-900">Quotes</h1><p className="mt-2 text-sm text-brand-navy-700">A list of all quotes sent to customers.</p></div><div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none"><button type="button" onClick={() => setShowAddForm(s => !s)} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 sm:w-auto">{showAddForm ? 'Cancel' : 'Create Quote'}</button></div></div>
             {showAddForm && <AddQuoteForm customers={customers} onSave={handleSaveQuote} onCancel={() => setShowAddForm(false)} />}
             <div className="mt-6"><input type="text" placeholder="Search by customer, status, or amount..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-navy-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm" aria-label="Search quotes" /></div>
-            <div className="mt-4 flex flex-col"><div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8"><div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8"><div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg"><table className="min-w-full divide-y divide-brand-navy-300"><thead className="bg-brand-navy-50"><tr><th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-6">Quote ID</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Customer</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Amount</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Status</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Date</th><th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th></tr></thead><tbody className="divide-y divide-brand-navy-200 bg-white">{filteredQuotes.map((quote) => (<tr key={quote.id}><td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{quote.id}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{quote.customerName}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">${quote.total_price.toFixed(2)}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(quote.status)}`}>{quote.status}</span></td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{new Date(quote.created_at).toLocaleDateString()}</td><td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"><a href="#" className="text-brand-cyan-600 hover:text-brand-cyan-900">Edit</a></td></tr>))}</tbody></table></div></div></div></div>
+            <div className="mt-4 flex flex-col"><div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8"><div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8"><div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg"><table className="min-w-full divide-y divide-brand-navy-300"><thead className="bg-brand-navy-50"><tr><th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-6">Quote ID</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Customer</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Amount</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Status</th><th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Date</th><th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th></tr></thead><tbody className="divide-y divide-brand-navy-200 bg-white">{filteredQuotes.map((quote) => (<tr key={quote.id}><td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{quote.id.substring(0,8)}...</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{quote.customerName}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">${quote.total_price.toFixed(2)}</td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(quote.status)}`}>{quote.status}</span></td><td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{new Date(quote.created_at).toLocaleDateString()}</td><td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"><a href="#" className="text-brand-cyan-600 hover:text-brand-cyan-900">Edit</a></td></tr>))}</tbody></table></div></div></div></div>
             <div className="mt-12 border-t border-brand-navy-200 pt-8"><AIEstimateGenerator customers={customers} setQuotes={setQuotes} /></div>
         </div>
     );
 };
 
-export default Quotes;
+export default QuotesPage;
