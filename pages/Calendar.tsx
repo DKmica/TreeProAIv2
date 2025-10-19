@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Job, Employee } from '../types';
 import JobIcon from '../components/icons/JobIcon';
+import { supabase } from '../src/integrations/supabase/client';
 
 interface CalendarProps {
     jobs: Job[];
@@ -16,9 +17,9 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
 
     // --- Data Filtering & Memoization ---
 
-    const schedulableJobs = useMemo(() => {
-        return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'In Progress')
-            .sort((a, b) => a.id.localeCompare(b.id));
+    const unscheduledJobs = useMemo(() => {
+        return jobs.filter(job => job.status === 'Unscheduled')
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     }, [jobs]);
 
     const filteredJobsOnCalendar = useMemo(() => {
@@ -81,7 +82,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
         if (dayCell) dayCell.classList.remove('bg-brand-cyan-100');
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>, date: Date | null) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>, date: Date | null) => {
         e.preventDefault();
         const target = e.target as HTMLDivElement;
         const dayCell = target.closest('.calendar-day');
@@ -92,11 +93,25 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
         const jobId = e.dataTransfer.getData('jobId');
         const newScheduledDate = date.toISOString().split('T')[0];
 
+        // Optimistic UI update
+        const originalJobs = jobs;
         setJobs(prevJobs => 
             prevJobs.map(job => 
                 job.id === jobId ? { ...job, date: newScheduledDate, status: 'Scheduled' } : job
             )
         );
+
+        // Persist change to the database
+        const { error } = await supabase
+            .from('jobs')
+            .update({ date: newScheduledDate, status: 'Scheduled' })
+            .eq('id', jobId);
+
+        if (error) {
+            alert(`Error updating job schedule: ${error.message}`);
+            // Revert UI on error
+            setJobs(() => originalJobs);
+        }
     };
     
     const getStatusColor = (status: Job['status']) => {
@@ -114,11 +129,11 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
             <h1 className="text-2xl font-bold text-brand-navy-900">Jobs Calendar</h1>
             
             <div className="mt-6 flex flex-col lg:flex-row lg:space-x-8">
-                {/* Column 1: Jobs List */}
+                {/* Column 1: Unscheduled Jobs List */}
                 <div className="lg:w-1/3 xl:w-1/4">
-                    <h2 className="text-xl font-bold text-brand-navy-900">Jobs List</h2>
+                    <h2 className="text-xl font-bold text-brand-navy-900">Unscheduled Jobs</h2>
                      <div className="mt-4 bg-white p-3 rounded-lg shadow-sm border border-brand-navy-200 space-y-3 max-h-[80vh] overflow-y-auto">
-                        {schedulableJobs.length > 0 ? schedulableJobs.map(job => (
+                        {unscheduledJobs.length > 0 ? unscheduledJobs.map(job => (
                             <div 
                                 key={job.id}
                                 draggable="true"
@@ -127,7 +142,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
                                 className={`p-3 rounded-lg border cursor-move hover:shadow-lg transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-xl bg-brand-cyan-50' : 'bg-white shadow-sm'}`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <p className="font-semibold text-brand-navy-800 flex items-center"><JobIcon className="w-4 h-4 mr-2 text-brand-navy-400"/> {job.id}</p>
+                                    <p className="font-semibold text-brand-navy-800 flex items-center"><JobIcon className="w-4 h-4 mr-2 text-brand-navy-400"/> {job.id.substring(0,8)}...</p>
                                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ getStatusColor(job.status) }`}>
                                         {job.status}
                                     </span>
@@ -136,7 +151,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
                             </div>
                         )) : (
                             <div className="text-center py-10">
-                                <p className="text-sm text-brand-navy-500">No active jobs to schedule.</p>
+                                <p className="text-sm text-brand-navy-500">No jobs to schedule.</p>
                             </div>
                         )}
                     </div>
@@ -212,7 +227,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
                                                     onDragEnd={handleDragEnd}
                                                     className={`text-left text-xs bg-brand-cyan-100 p-1.5 rounded-md overflow-hidden cursor-move hover:shadow-md transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-lg' : ''}`}
                                                 >
-                                                    <p className="font-medium text-brand-cyan-800 truncate">{job.id}</p>
+                                                    <p className="font-medium text-brand-cyan-800 truncate">{job.id.substring(0,8)}...</p>
                                                     <p className="text-brand-cyan-700 truncate">{job.customerName}</p>
                                                 </div>
                                             ))}
