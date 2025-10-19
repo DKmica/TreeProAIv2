@@ -8,13 +8,14 @@ const JobForm: React.FC<{
     quotes: Quote[];
     customers: Customer[];
     employees: Employee[];
-    onSave: (job: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => void;
+    onSave: (job: Partial<Job>) => void;
     onCancel: () => void;
     initialData?: Job | null;
 }> = ({ quotes, customers, employees, onSave, onCancel, initialData }) => {
     const availableQuotes = quotes.filter(q => q.status === 'Accepted');
     
     const [formData, setFormData] = useState({
+        id: initialData?.id || undefined,
         quote_id: initialData?.quote_id || (availableQuotes.length > 0 ? availableQuotes[0].id : ''),
         customer_id: initialData?.customer_id || (availableQuotes.length > 0 ? availableQuotes[0].customer_id : ''),
         date: initialData?.date || '',
@@ -25,6 +26,7 @@ const JobForm: React.FC<{
     useEffect(() => {
         if (initialData) {
             setFormData({
+                id: initialData.id,
                 quote_id: initialData.quote_id || '',
                 customer_id: initialData.customer_id,
                 date: initialData.date || '',
@@ -144,23 +146,25 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const navigate = useNavigate();
 
-  const handleSaveJob = async (jobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
+  const handleSaveJob = async (jobData: Partial<Job>) => {
     if (!session) return;
-    
-    const action = editingJob 
-        ? supabase.from('jobs').update({ ...jobData }).eq('id', editingJob.id)
-        : supabase.from('jobs').insert({ ...jobData, user_id: session.user.id });
+
+    const { id, ...jobDetails } = jobData;
+
+    const action = id
+      ? supabase.from('jobs').update(jobDetails).eq('id', id)
+      : supabase.from('jobs').insert({ ...jobDetails, user_id: session.user.id });
 
     const { data, error } = await action.select().single();
-    
+
     if (error) {
       alert(error.message);
     } else if (data) {
       const customer = customers.find(c => c.id === data.customer_id);
       const processedJob = { ...data, customerName: customer?.name || 'N/A' };
-      
-      if (editingJob) {
-        setJobs(prev => prev.map(j => j.id === data.id ? processedJob : j));
+
+      if (id) {
+        setJobs(prev => prev.map(j => (j.id === data.id ? processedJob : j)));
       } else {
         setJobs(prev => [processedJob, ...prev]);
       }
