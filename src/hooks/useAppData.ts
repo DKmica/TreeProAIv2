@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useSession } from '../contexts/SessionContext';
-import { 
-    Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Expense, TimeEntry,
-    // Import new types
-    Communication, SafetyChecklist, MaintenanceHistory, MarketingCampaign, Review, Certification, TimeOffRequest 
-} from '../../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Certification, TimeOffRequest } from '../../types';
 
 export const useAppData = () => {
   const { session } = useSession();
@@ -19,18 +15,8 @@ export const useAppData = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-  
-  // New state for new tables
-  const [communications, setCommunications] = useState<Communication[]>([]);
-  const [safetyChecklists, setSafetyChecklists] = useState<SafetyChecklist[]>([]);
-  const [maintenanceHistory, setMaintenanceHistory] = useState<MaintenanceHistory[]>([]);
-  const [marketingCampaigns, setMarketingCampaigns] = useState<MarketingCampaign[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
-
 
   const fetchData = useCallback(async () => {
     if (!session) {
@@ -43,23 +29,15 @@ export const useAppData = () => {
 
     try {
       const [
-        { data: customersData, error: customersError },
-        { data: leadsData, error: leadsError },
-        { data: quotesData, error: quotesError },
-        { data: jobsData, error: jobsError },
-        { data: invoicesData, error: invoicesError },
-        { data: employeesData, error: employeesError },
-        { data: equipmentData, error: equipmentError },
-        { data: expensesData, error: expensesError },
-        { data: timeEntriesData, error: timeEntriesError },
-        // Fetch new data
-        { data: communicationsData, error: communicationsError },
-        { data: safetyChecklistsData, error: safetyChecklistsError },
-        { data: maintenanceHistoryData, error: maintenanceHistoryError },
-        { data: marketingCampaignsData, error: marketingCampaignsError },
-        { data: reviewsData, error: reviewsError },
-        { data: certificationsData, error: certificationsError },
-        { data: timeOffRequestsData, error: timeOffRequestsError },
+        customersRes,
+        leadsRes,
+        quotesRes,
+        jobsRes,
+        invoicesRes,
+        employeesRes,
+        equipmentRes,
+        certificationsRes,
+        timeOffRes,
       ] = await Promise.all([
         supabase.from('customers').select('*'),
         supabase.from('leads').select('*'),
@@ -68,93 +46,37 @@ export const useAppData = () => {
         supabase.from('invoices').select('*'),
         supabase.from('employees').select('*'),
         supabase.from('equipment').select('*'),
-        supabase.from('expenses').select('*'),
-        supabase.from('time_entries').select('*'),
-        // New fetches
-        supabase.from('communications').select('*'),
-        supabase.from('safety_checklists').select('*'),
-        supabase.from('maintenance_history').select('*'),
-        supabase.from('marketing_campaigns').select('*'),
-        supabase.from('reviews').select('*'),
         supabase.from('certifications').select('*'),
         supabase.from('time_off_requests').select('*'),
       ]);
 
-      if (customersError) throw new Error(`Customers: ${customersError.message}`);
-      if (leadsError) throw new Error(`Leads: ${leadsError.message}`);
-      if (quotesError) throw new Error(`Quotes: ${quotesError.message}`);
-      if (jobsError) throw new Error(`Jobs: ${jobsError.message}`);
-      if (invoicesError) throw new Error(`Invoices: ${invoicesError.message}`);
-      if (employeesError) throw new Error(`Employees: ${employeesError.message}`);
-      if (equipmentError) throw new Error(`Equipment: ${equipmentError.message}`);
-      if (expensesError) throw new Error(`Expenses: ${expensesError.message}`);
-      if (timeEntriesError) throw new Error(`Time Entries: ${timeEntriesError.message}`);
-      if (communicationsError) throw new Error(`Communications: ${communicationsError.message}`);
-      if (safetyChecklistsError) throw new Error(`Safety Checklists: ${safetyChecklistsError.message}`);
-      if (maintenanceHistoryError) throw new Error(`Maintenance History: ${maintenanceHistoryError.message}`);
-      if (marketingCampaignsError) throw new Error(`Marketing Campaigns: ${marketingCampaignsError.message}`);
-      if (reviewsError) throw new Error(`Reviews: ${reviewsError.message}`);
-      if (certificationsError) throw new Error(`Certifications: ${certificationsError.message}`);
-      if (timeOffRequestsError) throw new Error(`Time Off Requests: ${timeOffRequestsError.message}`);
+      if (customersRes.error) throw new Error(`Customers: ${customersRes.error.message}`);
+      if (leadsRes.error) throw new Error(`Leads: ${leadsRes.error.message}`);
+      if (quotesRes.error) throw new Error(`Quotes: ${quotesRes.error.message}`);
+      if (jobsRes.error) throw new Error(`Jobs: ${jobsRes.error.message}`);
+      if (invoicesRes.error) throw new Error(`Invoices: ${invoicesRes.error.message}`);
+      if (employeesRes.error) throw new Error(`Employees: ${employeesRes.error.message}`);
+      if (equipmentRes.error) throw new Error(`Equipment: ${equipmentRes.error.message}`);
+      if (certificationsRes.error) throw new Error(`Certifications: ${certificationsRes.error.message}`);
+      if (timeOffRes.error) throw new Error(`Time Off Requests: ${timeOffRes.error.message}`);
 
-      const customerMap = new Map(customersData?.map(c => [c.id, c]));
-      const employeeMap = new Map(employeesData?.map(e => [e.id, e.name]));
+      const customersData = customersRes.data || [];
+      const customerMap = new Map(customersData.map(c => [c.id, c]));
 
-      const processedCustomers = customersData?.map(c => ({
+      setCustomers(customersData.map(c => ({
         ...c,
         address: [c.street, c.city, c.state, c.zip_code].filter(Boolean).join(', '),
         coordinates: { lat: c.lat || 0, lng: c.lng || 0 }
-      })) || [];
-      setCustomers(processedCustomers);
-
-      const processedLeads = leadsData?.map(l => ({
-        ...l,
-        customer: customerMap.get(l.customer_id)
-      })) || [];
-      setLeads(processedLeads);
-
-      const processedQuotes = quotesData?.map(q => ({
-        ...q,
-        customerName: customerMap.get(q.customer_id)?.name || 'N/A',
-      })) || [];
-      setQuotes(processedQuotes);
-
-      const processedJobs = jobsData?.map(j => ({
-        ...j,
-        customerName: customerMap.get(j.customer_id)?.name || 'N/A',
-      })) || [];
-      setJobs(processedJobs);
-
-      const processedInvoices = invoicesData?.map(i => ({
-        ...i,
-        customerName: customerMap.get(i.customer_id)?.name || 'N/A',
-      })) || [];
-      setInvoices(processedInvoices);
-
-      const processedEmployees = employeesData?.map(e => ({
-        ...e,
-        address: '', // Placeholder
-        coordinates: { lat: 0, lng: 0 } // Placeholder for map
-      })) || [];
-      setEmployees(processedEmployees);
-
-      setEquipment(equipmentData || []);
-      setExpenses(expensesData || []);
+      })));
       
-      const processedTimeEntries = timeEntriesData?.map(te => ({
-        ...te,
-        employeeName: employeeMap.get(te.employee_id) || 'Unknown',
-      })) || [];
-      setTimeEntries(processedTimeEntries);
-
-      // Set new state
-      setCommunications(communicationsData || []);
-      setSafetyChecklists(safetyChecklistsData || []);
-      setMaintenanceHistory(maintenanceHistoryData || []);
-      setMarketingCampaigns(marketingCampaignsData || []);
-      setReviews(reviewsData || []);
-      setCertifications(certificationsData || []);
-      setTimeOffRequests(timeOffRequestsData || []);
+      setLeads((leadsRes.data || []).map(l => ({ ...l, customer: customerMap.get(l.customer_id) })));
+      setQuotes((quotesRes.data || []).map(q => ({ ...q, customerName: customerMap.get(q.customer_id)?.name || 'N/A' })));
+      setJobs((jobsRes.data || []).map(j => ({ ...j, customerName: customerMap.get(j.customer_id)?.name || 'N/A' })));
+      setInvoices((invoicesRes.data || []).map(i => ({ ...i, customerName: customerMap.get(i.customer_id)?.name || 'N/A' })));
+      setEmployees((employeesRes.data || []).map(e => ({ ...e, address: '', coordinates: { lat: 0, lng: 0 } })));
+      setEquipment(equipmentRes.data || []);
+      setCertifications(certificationsRes.data || []);
+      setTimeOffRequests(timeOffRes.data || []);
 
     } catch (err: any) {
       setError(err.message);
@@ -177,15 +99,7 @@ export const useAppData = () => {
     invoices, setInvoices,
     employees, setEmployees,
     equipment, setEquipment,
-    expenses, setExpenses,
-    timeEntries, setTimeEntries,
-    // Return new data
-    communications, setCommunications,
-    safetyChecklists, setSafetyChecklists,
-    maintenanceHistory, setMaintenanceHistory,
-    marketingCampaigns, setMarketingCampaigns,
-    reviews, setReviews,
-    certifications, setCertifications,
-    timeOffRequests, setTimeOffRequests,
+    certifications,
+    timeOffRequests,
   };
 };

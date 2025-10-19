@@ -117,9 +117,6 @@ const JobDetailModal: React.FC<{
         employees.filter(emp => job.assigned_crew?.includes(emp.id)), 
     [employees, job.assigned_crew]);
 
-    const jobExpenses = useMemo(() => expenses.filter(e => e.job_id === job.id), [expenses, job.id]);
-    const jobTimeLogs = useMemo(() => timeLogs.filter(t => t.job_id === job.id), [timeLogs, job.id]);
-
     const handleSendOMW = () => {
         if (!selectedEmployee) {
             alert('Please select a crew member.');
@@ -157,7 +154,7 @@ const JobDetailModal: React.FC<{
     const handleClockInOut = async (employeeId: string) => {
         if (!employeeId || !session) return;
 
-        const openLog = jobTimeLogs.find(log => log.employee_id === employeeId && !log.clock_out);
+        const openLog = timeLogs.find(log => log.employee_id === employeeId && !log.clock_out);
 
         if (openLog) { // Clocking out
             const { data, error } = await supabase
@@ -223,10 +220,10 @@ const JobDetailModal: React.FC<{
                             <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Job Profitability</h4><div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-4"><div className="rounded-lg bg-gray-50 p-3"><dt className="truncate text-sm font-medium text-gray-500">Job Price</dt><dd className="mt-1 text-xl font-semibold tracking-tight text-gray-900">${(job.job_price || 0).toFixed(2)}</dd></div><div className="rounded-lg bg-gray-50 p-3"><dt className="truncate text-sm font-medium text-gray-500">Total Cost</dt><dd className="mt-1 text-xl font-semibold tracking-tight text-gray-900">${(job.total_cost || 0).toFixed(2)}</dd></div><div className="rounded-lg bg-gray-50 p-3"><dt className="truncate text-sm font-medium text-gray-500">Total Time</dt><dd className="mt-1 text-xl font-semibold tracking-tight text-gray-900">{formatMinutes(job.total_time_minutes || 0)}</dd></div><div className={`rounded-lg p-3 ${netProfit >= 0 ? 'bg-green-50' : 'bg-red-50'}`}><dt className="truncate text-sm font-medium text-gray-500">Net Profit</dt><dd className={`mt-1 text-xl font-semibold tracking-tight ${netProfit >= 0 ? 'text-green-800' : 'text-red-800'}`}>${netProfit.toFixed(2)}</dd></div></div></div>
 
                             {/* Expenses */}
-                            <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Expenses</h4><ul className="mt-2 divide-y divide-gray-200">{jobExpenses.map(exp => (<li key={exp.id} className="flex items-center justify-between py-2"><p className="text-sm text-gray-600">{exp.expense_type}</p><p className="text-sm font-medium text-gray-900">${exp.amount.toFixed(2)}</p></li>))}{jobExpenses.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No expenses logged.</p>}</ul><form onSubmit={handleLogExpense} className="mt-4 flex items-center gap-x-3"><input type="text" value={expenseType} onChange={e => setExpenseType(e.target.value)} placeholder="Expense Type (e.g., Fuel)" required className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /><input type="number" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} placeholder="Amount" required className="block w-40 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /><button type="submit" className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Log Expense</button></form></div>
+                            <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Expenses</h4><ul className="mt-2 divide-y divide-gray-200">{expenses.map(exp => (<li key={exp.id} className="flex items-center justify-between py-2"><p className="text-sm text-gray-600">{exp.expense_type}</p><p className="text-sm font-medium text-gray-900">${exp.amount.toFixed(2)}</p></li>))}{expenses.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No expenses logged.</p>}</ul><form onSubmit={handleLogExpense} className="mt-4 flex items-center gap-x-3"><input type="text" value={expenseType} onChange={e => setExpenseType(e.target.value)} placeholder="Expense Type (e.g., Fuel)" required className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /><input type="number" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} placeholder="Amount" required className="block w-40 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /><button type="submit" className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Log Expense</button></form></div>
 
                             {/* Time Tracking */}
-                            <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Time Clock</h4><ul className="mt-2 divide-y divide-gray-200">{jobTimeLogs.map(log => (<li key={log.id} className="py-2"><div className="flex items-center justify-between"><p className="text-sm font-medium text-gray-900">{log.employeeName}</p><p className="text-sm text-gray-500">{log.clock_out ? `${formatMinutes(Math.floor((new Date(log.clock_out).getTime() - new Date(log.clock_in).getTime()) / 60000))}` : 'Clocked In'}</p></div><p className="text-xs text-gray-500">In: {new Date(log.clock_in).toLocaleString()} | Out: {log.clock_out ? new Date(log.clock_out).toLocaleString() : 'N/A'}</p></li>))}{jobTimeLogs.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No time logged.</p>}</ul><div className="mt-4 flex items-center gap-x-3"><select value={timeLogEmployee} onChange={e => setTimeLogEmployee(e.target.value)} className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-brand-cyan-600 sm:text-sm">{assignedCrewMembers.map(emp => (<option key={emp.id} value={emp.id}>{emp.name}</option>))}</select><button type="button" onClick={() => handleClockInOut(timeLogEmployee)} className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">{jobTimeLogs.find(log => log.employee_id === timeLogEmployee && !log.clock_out) ? 'Clock Out' : 'Clock In'}</button></div></div>
+                            <div className="border-t border-gray-200 px-4 py-5 sm:px-6"><h4 className="font-semibold text-brand-navy-800">Time Clock</h4><ul className="mt-2 divide-y divide-gray-200">{timeLogs.map(log => (<li key={log.id} className="py-2"><div className="flex items-center justify-between"><p className="text-sm font-medium text-gray-900">{log.employeeName}</p><p className="text-sm text-gray-500">{log.clock_out ? `${formatMinutes(Math.floor((new Date(log.clock_out).getTime() - new Date(log.clock_in).getTime()) / 60000))}` : 'Clocked In'}</p></div><p className="text-xs text-gray-500">In: {new Date(log.clock_in).toLocaleString()} | Out: {log.clock_out ? new Date(log.clock_out).toLocaleString() : 'N/A'}</p></li>))}{timeLogs.length === 0 && <p className="text-sm text-center text-gray-500 py-4">No time logged.</p>}</ul><div className="mt-4 flex items-center gap-x-3"><select value={timeLogEmployee} onChange={e => setTimeLogEmployee(e.target.value)} className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-brand-cyan-600 sm:text-sm">{assignedCrewMembers.map(emp => (<option key={emp.id} value={emp.id}>{emp.name}</option>))}</select><button type="button" onClick={() => handleClockInOut(timeLogEmployee)} className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">{timeLogs.find(log => log.employee_id === timeLogEmployee && !log.clock_out) ? 'Clock Out' : 'Clock In'}</button></div></div>
 
                             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                                 <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Close</button>
@@ -271,13 +268,9 @@ interface JobsProps {
   invoices: Invoice[];
   setInvoices: (updateFn: (prev: Invoice[]) => Invoice[]) => void;
   employees: Employee[];
-  expenses: Expense[];
-  setExpenses: (updateFn: (prev: Expense[]) => Expense[]) => void;
-  timeLogs: TimeEntry[];
-  setTimeLogs: (updateFn: (prev: TimeEntry[]) => TimeEntry[]) => void;
 }
 
-const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices, setInvoices, employees, expenses, setExpenses, timeLogs, setTimeLogs }) => {
+const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices, setInvoices, employees }) => {
   const { session } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -285,6 +278,43 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
+
+  const [jobExpenses, setJobExpenses] = useState<Expense[]>([]);
+  const [jobTimeLogs, setJobTimeLogs] = useState<TimeEntry[]>([]);
+
+  useEffect(() => {
+    const fetchJobDetails = async () => {
+        if (!selectedJob) {
+            setJobExpenses([]);
+            setJobTimeLogs([]);
+            return;
+        }
+
+        const [expensesRes, timeLogsRes] = await Promise.all([
+            supabase.from('expenses').select('*').eq('job_id', selectedJob.id),
+            supabase.from('time_entries').select('*').eq('job_id', selectedJob.id)
+        ]);
+
+        if (expensesRes.error) {
+            alert(`Error fetching expenses: ${expensesRes.error.message}`);
+        } else {
+            setJobExpenses(expensesRes.data || []);
+        }
+
+        if (timeLogsRes.error) {
+            alert(`Error fetching time logs: ${timeLogsRes.error.message}`);
+        } else {
+            const employeeMap = new Map(employees.map(e => [e.id, e.name]));
+            const processedTimeLogs = (timeLogsRes.data || []).map(log => ({
+                ...log,
+                employeeName: employeeMap.get(log.employee_id) || 'Unknown'
+            }));
+            setJobTimeLogs(processedTimeLogs);
+        }
+    };
+
+    fetchJobDetails();
+  }, [selectedJob, employees]);
 
   const handleSaveJob = async (jobData: Partial<Job>) => {
     if (!session) return;
@@ -474,7 +504,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
             </div>
         </div>
 
-        {selectedJob && <JobDetailModal job={selectedJob} employees={employees} expenses={expenses} setExpenses={setExpenses} timeLogs={timeLogs} setTimeLogs={setTimeLogs} onClose={() => setSelectedJob(null)} onCreateInvoice={handleCreateInvoice} onSendOMW={handleSendOMW} />}
+        {selectedJob && <JobDetailModal job={selectedJob} employees={employees} expenses={jobExpenses} setExpenses={setJobExpenses} timeLogs={jobTimeLogs} setTimeLogs={setJobTimeLogs} onClose={() => setSelectedJob(null)} onCreateInvoice={handleCreateInvoice} onSendOMW={handleSendOMW} />}
     </div>
   )
 };

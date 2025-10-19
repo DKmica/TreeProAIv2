@@ -29,10 +29,8 @@ const App: React.FC = () => {
     invoices, setInvoices,
     employees, setEmployees,
     equipment, setEquipment,
-    expenses, setExpenses,
-    timeEntries, setTimeEntries,
-    certifications, setCertifications,
-    timeOffRequests, setTimeOffRequests,
+    certifications,
+    timeOffRequests,
   } = useAppData();
 
   if (sessionLoading) {
@@ -80,12 +78,12 @@ const App: React.FC = () => {
         <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} customers={customers} setJobs={setJobs} />} />
         <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
         <Route path="/quotes" element={<QuotesPage quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
-        <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} expenses={expenses} setExpenses={setExpenses} timeLogs={timeEntries} setTimeLogs={setTimeEntries} />} />
+        <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
         <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
         <Route path="/invoices" element={<Invoices invoices={invoices} setInvoices={setInvoices} jobs={jobs} customers={customers} />} />
         <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
         <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
-        <Route path="/hr" element={<HRPage employees={employees} setEmployees={setEmployees} certifications={certifications} timeOffRequests={timeOffRequests} setCertifications={setCertifications} setTimeOffRequests={setTimeOffRequests} />} />
+        <Route path="/hr" element={<HRPage employees={employees} setEmployees={setEmployees} certifications={certifications} timeOffRequests={timeOffRequests} />} />
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/login" element={<Navigate to="/dashboard" replace />} />
       </Routes>
