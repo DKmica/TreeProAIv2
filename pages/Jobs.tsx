@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Job, Quote, Customer, Invoice, Employee } from '../types';
 import { supabase } from '../src/integrations/supabase/client';
 import { useSession } from '../src/contexts/SessionContext';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
 
 const JobForm: React.FC<{
     quotes: Quote[];
@@ -94,37 +95,76 @@ const JobDetailModal: React.FC<{
     employees: Employee[];
     onClose: () => void;
     onCreateInvoice: () => void;
-}> = ({ job, employees, onClose, onCreateInvoice }) => {
-    const assignedCrewNames = job.assigned_crew?.map(crewId => {
-        return employees.find(emp => emp.id === crewId)?.name || 'Unknown';
-    }).join(', ');
+    onSendOMW: (jobId: string, employeeId: string, eta: number) => void;
+}> = ({ job, employees, onClose, onCreateInvoice, onSendOMW }) => {
+    const [showOMWModal, setShowOMWModal] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState<string>(job.assigned_crew?.[0] || '');
+    const [eta, setEta] = useState(30);
+
+    const assignedCrewMembers = useMemo(() => 
+        employees.filter(emp => job.assigned_crew?.includes(emp.id)), 
+    [employees, job.assigned_crew]);
+
+    const handleSendOMW = () => {
+        if (!selectedEmployee) {
+            alert('Please select a crew member.');
+            return;
+        }
+        onSendOMW(job.id, selectedEmployee, eta);
+        setShowOMWModal(false);
+    };
 
     return (
-        <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <div className="fixed inset-0 z-10 overflow-y-auto">
-                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                        <div>
-                            <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="modal-title">Job Details</h3>
-                            <div className="mt-2">
-                                <dl className="divide-y divide-gray-200">
-                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Job ID</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.id}</dd></div>
-                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Customer</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.customerName}</dd></div>
-                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Status</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.status}</dd></div>
-                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Scheduled Date</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.date || 'Not scheduled'}</dd></div>
-                                    <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Assigned Crew</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{assignedCrewNames || 'None'}</dd></div>
-                                </dl>
+        <>
+            <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+                <div className="fixed inset-0 z-10 overflow-y-auto">
+                    <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                        <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                            <div>
+                                <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="modal-title">Job Details</h3>
+                                <div className="mt-2">
+                                    <dl className="divide-y divide-gray-200">
+                                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Job ID</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.id}</dd></div>
+                                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Customer</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.customerName}</dd></div>
+                                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Status</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.status}</dd></div>
+                                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Scheduled Date</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{job.date || 'Not scheduled'}</dd></div>
+                                        <div className="py-4 sm:grid sm:grid-cols-3 sm:gap-4"><dt className="text-sm font-medium text-brand-navy-500">Assigned Crew</dt><dd className="mt-1 text-sm text-brand-navy-900 sm:col-span-2 sm:mt-0">{assignedCrewMembers.map(e => e.name).join(', ') || 'None'}</dd></div>
+                                    </dl>
+                                </div>
                             </div>
-                        </div>
-                        <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                            {job.status === 'Completed' && <button type="button" onClick={onCreateInvoice} className="inline-flex w-full justify-center rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600 sm:col-start-2">Create Invoice</button>}
-                            <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-navy-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0">Close</button>
+                            <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-3 sm:gap-3">
+                                <button type="button" onClick={() => setShowOMWModal(true)} className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:col-start-1">On My Way</button>
+                                {job.status === 'Completed' && <button type="button" onClick={onCreateInvoice} className="mt-3 sm:mt-0 inline-flex w-full justify-center rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600 sm:col-start-2">Create Invoice</button>}
+                                <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-navy-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-3 sm:mt-0">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+            {showOMWModal && (
+                 <div className="relative z-20" aria-labelledby="omw-modal-title" role="dialog" aria-modal="true">
+                    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+                    <div className="fixed inset-0 z-10 overflow-y-auto">
+                        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                            <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                    <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="omw-modal-title">Send "On My Way" Notification</h3>
+                                    <div className="mt-4 space-y-4">
+                                        <div><label htmlFor="crew_leader" className="block text-sm font-medium text-brand-navy-700">Crew Leader</label><select id="crew_leader" value={selectedEmployee} onChange={e => setSelectedEmployee(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm">{assignedCrewMembers.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}</select></div>
+                                        <div><label htmlFor="eta" className="block text-sm font-medium text-brand-navy-700">ETA (in minutes)</label><input type="number" id="eta" value={eta} onChange={e => setEta(Number(e.target.value))} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm" /></div>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                                    <button type="button" onClick={handleSendOMW} className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto">Send Notification</button>
+                                    <button type="button" onClick={() => setShowOMWModal(false)} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            )}
+        </>
     );
 };
 
@@ -144,6 +184,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
 
   const handleSaveJob = async (jobData: Partial<Job>) => {
@@ -213,6 +254,22 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
     }
   };
 
+  const handleSendOMW = async (jobId: string, employeeId: string, eta: number) => {
+    setIsSending(true);
+    try {
+        const { data, error } = await supabase.functions.invoke('send-omw-sms', {
+            body: { job_id: jobId, employee_id: employeeId, eta_minutes: eta },
+        });
+        if (error) throw error;
+        alert(data.message || 'Notification sent successfully!');
+    } catch (err: any) {
+        alert(`Error sending notification: ${err.message}`);
+    } finally {
+        setIsSending(false);
+        setSelectedJob(null);
+    }
+  };
+
   const handleStatusChange = async (jobId: string, newStatus: Job['status']) => {
     const { data, error } = await supabase
       .from('jobs')
@@ -248,6 +305,11 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
 
   return (
     <div>
+        {isSending && (
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+                <SpinnerIcon className="h-12 w-12 text-white" />
+            </div>
+        )}
         <div className="sm:flex sm:items-center">
             <div className="sm:flex-auto">
                 <h1 className="text-2xl font-bold text-brand-navy-900">Jobs</h1>
@@ -313,7 +375,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
             </div>
         </div>
 
-        {selectedJob && <JobDetailModal job={selectedJob} employees={employees} onClose={() => setSelectedJob(null)} onCreateInvoice={handleCreateInvoice} />}
+        {selectedJob && <JobDetailModal job={selectedJob} employees={employees} onClose={() => setSelectedJob(null)} onCreateInvoice={handleCreateInvoice} onSendOMW={handleSendOMW} />}
     </div>
   )
 };
