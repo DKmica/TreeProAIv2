@@ -85,6 +85,23 @@ export interface Equipment extends UserOwned {
   last_maintenance?: string;
 }
 
+export interface Expense extends UserOwned {
+  job_id: string;
+  expense_type: string;
+  amount: number;
+  date: string;
+}
+
+export interface TimeLog extends UserOwned {
+  job_id: string;
+  employee_id: string;
+  clock_in_time: string;
+  clock_out_time?: string;
+  // For display
+  employeeName?: string;
+  employees?: { name: string }; // From Supabase join
+}
+
 
 // --- AI Related Types ---
 

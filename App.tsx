@@ -29,6 +29,8 @@ const App: React.FC = () => {
     invoices, setInvoices,
     employees, setEmployees,
     equipment, setEquipment,
+    expenses, setExpenses,
+    timeLogs, setTimeLogs,
   } = useAppData();
 
   if (sessionLoading) {
@@ -76,7 +78,7 @@ const App: React.FC = () => {
         <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} customers={customers} setJobs={setJobs} />} />
         <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
         <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
-        <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
+        <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} expenses={expenses} setExpenses={setExpenses} timeLogs={timeLogs} setTimeLogs={setTimeLogs} />} />
         <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
         <Route path="/invoices" element={<Invoices invoices={invoices} />} />
         <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />

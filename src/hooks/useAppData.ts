@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../integrations/supabase/client';
 import { useSession } from '../contexts/SessionContext';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, Expense, TimeLog } from '../../types';
 
 export const useAppData = () => {
   const { session } = useSession();
@@ -15,6 +15,8 @@ export const useAppData = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [timeLogs, setTimeLogs] = useState<TimeLog[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!session) {
@@ -34,6 +36,8 @@ export const useAppData = () => {
         { data: invoicesData, error: invoicesError },
         { data: employeesData, error: employeesError },
         { data: equipmentData, error: equipmentError },
+        { data: expensesData, error: expensesError },
+        { data: timeLogsData, error: timeLogsError },
       ] = await Promise.all([
         supabase.from('customers').select('*'),
         supabase.from('leads').select('*'),
@@ -42,6 +46,8 @@ export const useAppData = () => {
         supabase.from('invoices').select('*'),
         supabase.from('employees').select('*'),
         supabase.from('equipment').select('*'),
+        supabase.from('expenses').select('*'),
+        supabase.from('time_logs').select('*, employees(name)'),
       ]);
 
       if (customersError) throw new Error(`Customers: ${customersError.message}`);
@@ -51,6 +57,8 @@ export const useAppData = () => {
       if (invoicesError) throw new Error(`Invoices: ${invoicesError.message}`);
       if (employeesError) throw new Error(`Employees: ${employeesError.message}`);
       if (equipmentError) throw new Error(`Equipment: ${equipmentError.message}`);
+      if (expensesError) throw new Error(`Expenses: ${expensesError.message}`);
+      if (timeLogsError) throw new Error(`Time Logs: ${timeLogsError.message}`);
 
       const customerMap = new Map(customersData?.map(c => [c.id, c]));
 
@@ -93,6 +101,13 @@ export const useAppData = () => {
       setEmployees(processedEmployees);
 
       setEquipment(equipmentData || []);
+      setExpenses(expensesData || []);
+      
+      const processedTimeLogs = timeLogsData?.map(tl => ({
+        ...tl,
+        employeeName: tl.employees?.name || 'Unknown',
+      })) || [];
+      setTimeLogs(processedTimeLogs);
 
     } catch (err: any) {
       setError(err.message);
@@ -115,5 +130,7 @@ export const useAppData = () => {
     invoices, setInvoices,
     employees, setEmployees,
     equipment, setEquipment,
+    expenses, setExpenses,
+    timeLogs, setTimeLogs,
   };
 };
