@@ -121,6 +121,7 @@ export interface LeadScoreSuggestion {
   score: number; // 0-100
   reasoning: string;
   recommendedAction: 'Prioritize Follow-up' | 'Standard Follow-up' | 'Nurture';
+  urgency: 'None' | 'Medium' | 'High';
 }
 
 export interface JobScheduleSuggestion {

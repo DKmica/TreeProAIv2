@@ -248,8 +248,15 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                         <li key={lead.leadId} className="py-4">
                             <div className="flex items-center space-x-4">
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-brand-navy-900 truncate">{lead.customerName} ({lead.leadId.substring(0,8)}...)</p>
-                                <p className="text-sm text-brand-navy-500">{lead.reasoning}</p>
+                                <div className="flex items-center">
+                                    {lead.urgency === 'High' && (
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-red-500 mr-2">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.25-1.75a.75.75 0 00-1.5 0v-3.5a.75.75 0 001.5 0v3.5zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
+                                    <p className="text-sm font-medium text-brand-navy-900 truncate">{lead.customerName} ({lead.leadId.substring(0,8)}...)</p>
+                                </div>
+                                <p className="text-sm text-brand-navy-500 mt-1">{lead.reasoning}</p>
                                 <p className="text-sm font-semibold text-brand-cyan-700">{lead.recommendedAction}</p>
                             </div>
                             <div className={`text-2xl font-bold ${scoreColor(lead.score)}`}>{lead.score}</div>

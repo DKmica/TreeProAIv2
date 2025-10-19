@@ -256,9 +256,10 @@ const aiCoreSchema = {
                     customerName: { type: Type.STRING },
                     score: { type: Type.NUMBER, description: "Score from 1-100." },
                     reasoning: { type: Type.STRING },
-                    recommendedAction: { type: Type.STRING, enum: ['Prioritize Follow-up', 'Standard Follow-up', 'Nurture'] }
+                    recommendedAction: { type: Type.STRING, enum: ['Prioritize Follow-up', 'Standard Follow-up', 'Nurture'] },
+                    urgency: { type: Type.STRING, enum: ['None', 'Medium', 'High'], description: "Urgency level based on lead notes." }
                 },
-                required: ["leadId", "customerName", "score", "reasoning", "recommendedAction"]
+                required: ["leadId", "customerName", "score", "reasoning", "recommendedAction", "urgency"]
             }
         },
         jobSchedules: {
@@ -313,7 +314,10 @@ export const getAiCoreInsights = async (
 
         Based on this data, generate a JSON object with the following insights:
         1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status. Mention any urgent items.
-        2.  **leadScores**: Analyze all leads with status 'New'. Score each lead from 1 to 100 based on potential value, urgency (keywords like 'emergency', 'ASAP'), and likelihood to convert. Provide brief reasoning and a recommended action. An 'Emergency Call' should have a very high score.
+        2.  **leadScores**: Analyze all leads with status 'New'. 
+            - Score each lead from 1 to 100 based on potential value and likelihood to convert.
+            - **Crucially, analyze the lead's 'notes' field for keywords indicating urgency.** Keywords like 'emergency', 'ASAP', 'fallen branch', 'storm damage', 'leaning tree', 'on my house' should result in an urgency of 'High'. A 'High' urgency should significantly boost the score (e.g., to 90+).
+            - Provide brief reasoning and a recommended action.
         3.  **jobSchedules**: Find all quotes with status 'Accepted' that do not yet have a corresponding job in the jobs list. For each, suggest an optimal schedule date (a weekday in the near future) and a crew assignment (list of employee names). Consider crew composition (e.g., a leader and groundsman). Provide reasoning for your suggestion.
         4.  **maintenanceAlerts**: Analyze the equipment list. Flag any equipment where status is 'Needs Maintenance'. Also, flag equipment where 'lastServiceDate' was more than 6 months ago from today's date (${today}). Provide a recommended action.
 
