@@ -160,7 +160,10 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                 ...jobData,
                 user_id: session.user.id,
                 job_price: quote.total_price,
-                job_details: { description: `Job created from quote ${quote.id}` },
+                job_details: { 
+                    description: `Job created from quote ${quote.id}`,
+                    service_items: quote.service_items 
+                },
             })
             .select()
             .single();
