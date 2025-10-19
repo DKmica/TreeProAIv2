@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, Invoice } from "../types";
+import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -297,8 +297,7 @@ export const getAiCoreInsights = async (
     jobs: Job[],
     quotes: Quote[],
     employees: Employee[],
-    equipment: Equipment[],
-    invoices: Invoice[]
+    equipment: Equipment[]
 ): Promise<AICoreInsights> => {
 
     const today = new Date().toISOString().split('T')[0];
@@ -309,12 +308,11 @@ export const getAiCoreInsights = async (
         - All Leads: ${JSON.stringify(leads)}
         - All Jobs: ${JSON.stringify(jobs)}
         - All Quotes: ${JSON.stringify(quotes)}
-        - All Invoices: ${JSON.stringify(invoices)}
         - All Employees: ${JSON.stringify(employees.map(e => ({id: e.id, name: e.name, role: e.role})))}
         - All Equipment: ${JSON.stringify(equipment)}
 
         Based on this data, generate a JSON object with the following insights:
-        1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status. Mention any urgent items, such as overdue invoices or high-priority leads.
+        1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status. Mention any urgent items.
         2.  **leadScores**: Analyze all leads with status 'New'. Score each lead from 1 to 100 based on potential value, urgency (keywords like 'emergency', 'ASAP'), and likelihood to convert. Provide brief reasoning and a recommended action. An 'Emergency Call' should have a very high score.
         3.  **jobSchedules**: Find all quotes with status 'Accepted' that do not yet have a corresponding job in the jobs list. For each, suggest an optimal schedule date (a weekday in the near future) and a crew assignment (list of employee names). Consider crew composition (e.g., a leader and groundsman). Provide reasoning for your suggestion.
         4.  **maintenanceAlerts**: Analyze the equipment list. Flag any equipment where status is 'Needs Maintenance'. Also, flag equipment where 'lastServiceDate' was more than 6 months ago from today's date (${today}). Provide a recommended action.

@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getAiCoreInsights } from '../services/geminiService';
-import { AICoreInsights, Lead, Job, Quote, Employee, Equipment as EquipmentType, JobScheduleSuggestion, Customer, Invoice } from '../types';
+import { AICoreInsights, Lead, Job, Quote, Employee, Equipment as EquipmentType, JobScheduleSuggestion, Customer } from '../types';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
 import JobIcon from '../components/icons/JobIcon';
 import EquipmentIcon from '../components/icons/EquipmentIcon';
-import ThumbUpIcon from '../components/icons/ThumbUpIcon';
-import ThumbDownIcon from '../components/icons/ThumbDownIcon';
 import { supabase } from '../src/integrations/supabase/client';
 import { useSession } from '../src/contexts/SessionContext';
 
@@ -120,53 +118,32 @@ interface AICoreProps {
     employees: Employee[];
     equipment: EquipmentType[];
     customers: Customer[];
-    invoices: Invoice[];
     setJobs: (updateFn: (prev: Job[]) => Job[]) => void;
 }
 
-const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, customers, invoices, setJobs }) => {
+const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, customers, setJobs }) => {
     const { session } = useSession();
     const [insights, setInsights] = useState<AICoreInsights | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingSchedule, setEditingSchedule] = useState<JobScheduleSuggestion | null>(null);
-    const [feedbackSent, setFeedbackSent] = useState<Set<string>>(new Set());
 
     const fetchInsights = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await getAiCoreInsights(leads, jobs, quotes, employees, equipment, invoices);
+            const result = await getAiCoreInsights(leads, jobs, quotes, employees, equipment);
             setInsights(result);
         } catch (err: any) {
             setError(err.message || 'An unexpected error occurred while fetching AI insights.');
         } finally {
             setIsLoading(false);
         }
-    }, [leads, jobs, quotes, employees, equipment, invoices]);
+    }, [leads, jobs, quotes, employees, equipment]);
 
     useEffect(() => {
         fetchInsights();
     }, [fetchInsights]);
-
-    const handleFeedback = async (predictionId: string, featureArea: string, rating: 1 | -1) => {
-        if (!session) return;
-        const feedbackId = `${featureArea}-${predictionId}`;
-        if (feedbackSent.has(feedbackId)) return; // Prevent duplicate feedback
-
-        const { error } = await supabase.from('ai_feedback').insert({
-            user_id: session.user.id,
-            prediction_id: predictionId,
-            feature_area: featureArea,
-            rating: rating,
-        });
-
-        if (error) {
-            alert(`Error submitting feedback: ${error.message}`);
-        } else {
-            setFeedbackSent(prev => new Set(prev).add(feedbackId));
-        }
-    };
 
     const createJobFromSuggestion = async (jobData: Omit<Job, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
         if (!session) return;
@@ -270,18 +247,12 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                         {insights.leadScores.map((lead) => (
                         <li key={lead.leadId} className="py-4">
                             <div className="flex items-center space-x-4">
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-brand-navy-900 truncate">{lead.customerName} ({lead.leadId.substring(0,8)}...)</p>
-                                    <p className="text-sm text-brand-navy-500">{lead.reasoning}</p>
-                                    <p className="text-sm font-semibold text-brand-cyan-700">{lead.recommendedAction}</p>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <div className={`text-2xl font-bold ${scoreColor(lead.score)}`}>{lead.score}</div>
-                                    <div className="flex flex-col">
-                                        <button onClick={() => handleFeedback(lead.leadId, 'lead_scoring', 1)} disabled={feedbackSent.has(`lead_scoring-${lead.leadId}`)} className="p-1 rounded-full text-brand-navy-400 hover:bg-green-100 hover:text-green-600 disabled:text-green-600 disabled:opacity-70"><ThumbUpIcon className="h-4 w-4" /></button>
-                                        <button onClick={() => handleFeedback(lead.leadId, 'lead_scoring', -1)} disabled={feedbackSent.has(`lead_scoring-${lead.leadId}`)} className="p-1 rounded-full text-brand-navy-400 hover:bg-red-100 hover:text-red-600 disabled:text-red-600 disabled:opacity-70"><ThumbDownIcon className="h-4 w-4" /></button>
-                                    </div>
-                                </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-brand-navy-900 truncate">{lead.customerName} ({lead.leadId.substring(0,8)}...)</p>
+                                <p className="text-sm text-brand-navy-500">{lead.reasoning}</p>
+                                <p className="text-sm font-semibold text-brand-cyan-700">{lead.recommendedAction}</p>
+                            </div>
+                            <div className={`text-2xl font-bold ${scoreColor(lead.score)}`}>{lead.score}</div>
                             </div>
                         </li>
                         ))}
@@ -304,19 +275,13 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                                   <p><span className="font-semibold">Suggested Crew:</span> {job.suggestedCrew.join(', ')}</p>
                                 </div>
                                 <p className="mt-2 text-xs italic text-brand-navy-500">AI Rationale: {job.reasoning}</p>
-                                <div className="mt-4 flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        <button onClick={() => handleAcceptSuggestion(job)} className="rounded-md bg-brand-cyan-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600">
-                                            Accept Suggestion
-                                        </button>
-                                        <button onClick={() => setEditingSchedule(job)} className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 hover:bg-brand-navy-50">
-                                            Modify & Schedule
-                                        </button>
-                                    </div>
-                                    <div className="flex items-center space-x-1">
-                                        <button onClick={() => handleFeedback(job.quoteId, 'job_scheduling', 1)} disabled={feedbackSent.has(`job_scheduling-${job.quoteId}`)} className="p-1 rounded-full text-brand-navy-400 hover:bg-green-100 hover:text-green-600 disabled:text-green-600 disabled:opacity-70"><ThumbUpIcon className="h-4 w-4" /></button>
-                                        <button onClick={() => handleFeedback(job.quoteId, 'job_scheduling', -1)} disabled={feedbackSent.has(`job_scheduling-${job.quoteId}`)} className="p-1 rounded-full text-brand-navy-400 hover:bg-red-100 hover:text-red-600 disabled:text-red-600 disabled:opacity-70"><ThumbDownIcon className="h-4 w-4" /></button>
-                                    </div>
+                                <div className="mt-4 flex items-center space-x-3">
+                                  <button onClick={() => handleAcceptSuggestion(job)} className="rounded-md bg-brand-cyan-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600">
+                                      Accept Suggestion
+                                  </button>
+                                  <button onClick={() => setEditingSchedule(job)} className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 hover:bg-brand-navy-50">
+                                      Modify & Schedule
+                                  </button>
                                 </div>
                             </li>
                          ))}
@@ -340,7 +305,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                                 <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-0">Equipment</th>
                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Reason</th>
                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Recommended Action</th>
-                                <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0"><span className="sr-only">Feedback</span></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-brand-navy-200">
@@ -349,12 +313,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-0">{alert.equipmentName}</td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-navy-500">{alert.reasoning}</td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm font-semibold text-red-600">{alert.recommendedAction}</td>
-                                <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                                    <div className="flex items-center justify-end space-x-1">
-                                        <button onClick={() => handleFeedback(alert.equipmentId, 'maintenance_alert', 1)} disabled={feedbackSent.has(`maintenance_alert-${alert.equipmentId}`)} className="p-1 rounded-full text-brand-navy-400 hover:bg-green-100 hover:text-green-600 disabled:text-green-600 disabled:opacity-70"><ThumbUpIcon className="h-4 w-4" /></button>
-                                        <button onClick={() => handleFeedback(alert.equipmentId, 'maintenance_alert', -1)} disabled={feedbackSent.has(`maintenance_alert-${alert.equipmentId}`)} className="p-1 rounded-full text-brand-navy-400 hover:bg-red-100 hover:text-red-600 disabled:text-red-600 disabled:opacity-70"><ThumbDownIcon className="h-4 w-4" /></button>
-                                    </div>
-                                </td>
                             </tr>
                             ))}
                         </tbody>
