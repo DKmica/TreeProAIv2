@@ -21,8 +21,8 @@ const navigation = [
   { name: 'Customers', href: '/customers', icon: CustomerIcon },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
+  { name: 'Human Resources', href: '/hr', icon: HRIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
-  { name: 'HR', href: '/hr', icon: HRIcon },
   { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
 ];
 
