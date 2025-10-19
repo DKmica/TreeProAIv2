@@ -1,65 +1,60 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Invoice, Job, Customer } from '../types';
 import { supabase } from '../src/integrations/supabase/client';
 import { useSession } from '../src/contexts/SessionContext';
 
-const AddInvoiceForm: React.FC<{
+const CreateInvoiceModal: React.FC<{
     jobs: Job[];
-    customers: Customer[];
-    onSave: (invoice: Omit<Invoice, 'id' | 'user_id' | 'created_at' | 'customerName'>) => void;
-    onCancel: () => void;
-}> = ({ jobs, customers, onSave, onCancel }) => {
-    const completedJobs = jobs.filter(j => j.status === 'Completed');
-    const [selectedJobId, setSelectedJobId] = useState<string>(completedJobs.length > 0 ? completedJobs[0].id : '');
+    onSave: (invoiceData: Omit<Invoice, 'id' | 'user_id' | 'created_at' | 'customerName' | 'status'>) => void;
+    onClose: () => void;
+}> = ({ jobs, onSave, onClose }) => {
+    const completdJobsWithoutInvoice = jobs.filter(j => j.status === 'Completed'); // In a real app, you'd check if an invoice already exists
+    const [jobId, setJobId] = useState(completdJobsWithoutInvoice[0]?.id || '');
 
-    const selectedJob = useMemo(() => jobs.find(j => j.id === selectedJobId), [jobs, selectedJobId]);
-    const customerName = useMemo(() => customers.find(c => c.id === selectedJob?.customer_id)?.name, [customers, selectedJob]);
+    const handleSubmit = () => {
+        const job = jobs.find(j => j.id === jobId);
+        if (!job) return;
+        
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
 
-    const [formData, setFormData] = useState({
-        total_amount: selectedJob?.job_price || 0,
-        issue_date: new Date().toISOString().split('T')[0],
-        due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
-        status: 'Draft' as Invoice['status'],
-    });
-
-    useEffect(() => {
-        if (selectedJob) {
-            setFormData(prev => ({ ...prev, total_amount: selectedJob.job_price || 0 }));
-        }
-    }, [selectedJob]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedJob) {
-            alert('Please select a job.');
-            return;
-        }
         onSave({
-            job_id: selectedJob.id,
-            customer_id: selectedJob.customer_id,
-            ...formData,
-            total_amount: Number(formData.total_amount),
+            job_id: job.id,
+            customer_id: job.customer_id,
+            total_amount: job.job_price || 0,
+            issue_date: new Date().toISOString().split('T')[0],
+            due_date: dueDate.toISOString().split('T')[0],
         });
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow my-6">
-            <h2 className="text-xl font-bold text-brand-navy-900 mb-4">Create New Invoice</h2>
-            <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    <div className="sm:col-span-3"><label htmlFor="job_id" className="block text-sm font-medium leading-6 text-brand-navy-900">Completed Job</label><select id="job_id" name="job_id" value={selectedJobId} onChange={e => setSelectedJobId(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm sm:leading-6">{completedJobs.map(j => <option key={j.id} value={j.id}>{j.id.substring(0,8)}... - {j.customerName}</option>)}</select></div>
-                    <div className="sm:col-span-3"><label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-navy-900">Customer</label><input type="text" value={customerName || ''} readOnly className="block w-full rounded-md border-0 bg-brand-navy-100 py-1.5 text-brand-navy-500 shadow-sm ring-1 ring-inset ring-brand-navy-300 sm:text-sm" /></div>
-                    <div className="sm:col-span-2"><label htmlFor="total_amount" className="block text-sm font-medium leading-6 text-brand-navy-900">Amount ($)</label><input type="number" name="total_amount" id="total_amount" value={formData.total_amount} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 placeholder:text-brand-navy-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /></div>
-                    <div className="sm:col-span-2"><label htmlFor="issue_date" className="block text-sm font-medium leading-6 text-brand-navy-900">Issue Date</label><input type="date" name="issue_date" id="issue_date" value={formData.issue_date} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /></div>
-                    <div className="sm:col-span-2"><label htmlFor="due_date" className="block text-sm font-medium leading-6 text-brand-navy-900">Due Date</label><input type="date" name="due_date" id="due_date" value={formData.due_date} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-navy-900 shadow-sm ring-1 ring-inset ring-brand-navy-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-600 sm:text-sm" /></div>
+        <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            <div className="fixed inset-0 z-10 overflow-y-auto">
+                <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                    <div className="relative w-full max-w-lg transform overflow-hidden rounded-lg bg-white p-6 text-left shadow-xl transition-all">
+                        <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="modal-title">Create New Invoice</h3>
+                        <div className="mt-4">
+                            <label htmlFor="job-select" className="block text-sm font-medium text-brand-navy-700">Select Completed Job</label>
+                            <select
+                                id="job-select"
+                                value={jobId}
+                                onChange={e => setJobId(e.target.value)}
+                                className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-brand-cyan-500 focus:outline-none focus:ring-brand-cyan-500 sm:text-sm"
+                            >
+                                {completdJobsWithoutInvoice.length === 0 && <option disabled>No completed jobs to invoice</option>}
+                                {completdJobsWithoutInvoice.map(job => (
+                                    <option key={job.id} value={job.id}>{job.customerName} - Job #{job.id.substring(0,8)}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mt-6 flex justify-end space-x-3">
+                            <button onClick={onClose} type="button" className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancel</button>
+                            <button onClick={handleSubmit} type="button" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 disabled:bg-gray-300" disabled={!jobId}>Create Invoice</button>
+                        </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex items-center justify-end gap-x-6"><button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-navy-900">Cancel</button><button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-600">Save Invoice</button></div>
-            </form>
+            </div>
         </div>
     );
 };
@@ -74,13 +69,13 @@ interface InvoicesProps {
 const Invoices: React.FC<InvoicesProps> = ({ invoices, setInvoices, jobs, customers }) => {
   const { session } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const handleSaveInvoice = async (invoiceData: Omit<Invoice, 'id' | 'user_id' | 'created_at' | 'customerName'>) => {
+  const handleSaveInvoice = async (invoiceData: Omit<Invoice, 'id' | 'user_id' | 'created_at' | 'customerName' | 'status'>) => {
     if (!session) return;
     const { data, error } = await supabase
         .from('invoices')
-        .insert({ ...invoiceData, user_id: session.user.id })
+        .insert({ ...invoiceData, user_id: session.user.id, status: 'Draft' })
         .select()
         .single();
     
@@ -89,7 +84,7 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices, setInvoices, jobs, custom
     } else if (data) {
         const customer = customers.find(c => c.id === data.customer_id);
         setInvoices(prev => [{ ...data, customerName: customer?.name || 'N/A' }, ...prev]);
-        setShowAddForm(false);
+        setShowCreateModal(false);
     }
   };
 
@@ -135,13 +130,13 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices, setInvoices, jobs, custom
           <p className="mt-2 text-sm text-brand-navy-700">A list of all invoices.</p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button type="button" onClick={() => setShowAddForm(s => !s)} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 sm:w-auto">
-                {showAddForm ? 'Cancel' : 'Create Invoice'}
+            <button type="button" onClick={() => setShowCreateModal(true)} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 sm:w-auto">
+                Create Invoice
             </button>
         </div>
       </div>
 
-      {showAddForm && <AddInvoiceForm jobs={jobs} customers={customers} onSave={handleSaveInvoice} onCancel={() => setShowAddForm(false)} />}
+      {showCreateModal && <CreateInvoiceModal jobs={jobs} onSave={handleSaveInvoice} onClose={() => setShowCreateModal(false)} />}
 
       <div className="mt-6">
         <input
