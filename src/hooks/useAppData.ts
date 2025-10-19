@@ -47,7 +47,7 @@ export const useAppData = () => {
         supabase.from('employees').select('*'),
         supabase.from('equipment').select('*'),
         supabase.from('expenses').select('*'),
-        supabase.from('time_logs').select('*, employees(name)'),
+        supabase.from('time_logs').select('*, employees!employee_id(name)'),
       ]);
 
       if (customersError) throw new Error(`Customers: ${customersError.message}`);
