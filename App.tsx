@@ -80,7 +80,7 @@ const App: React.FC = () => {
         <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
         <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} expenses={expenses} setExpenses={setExpenses} timeLogs={timeLogs} setTimeLogs={setTimeLogs} />} />
         <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
-        <Route path="/invoices" element={<Invoices invoices={invoices} />} />
+        <Route path="/invoices" element={<Invoices invoices={invoices} setInvoices={setInvoices} jobs={jobs} customers={customers} />} />
         <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
         <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
         <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
