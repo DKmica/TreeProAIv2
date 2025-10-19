@@ -33,7 +33,23 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers }) => 
         </div>
         
         <div className="mt-8">
-            <h2 className="text-xl font-semibold text-brand-navy-900">Live Job & Crew Map</h2>
+            <div className="sm:flex sm:items-center sm:justify-between">
+                <h2 className="text-xl font-semibold text-brand-navy-900">Live Job & Crew Map</h2>
+                <div className="mt-2 sm:mt-0 flex items-center space-x-4 text-sm text-brand-navy-600">
+                    <div className="flex items-center">
+                        <span className="h-3 w-3 rounded-full bg-green-600 mr-2"></span>
+                        <span>Crew</span>
+                    </div>
+                    <div className="flex items-center">
+                        <span className="h-3 w-3 rounded-full bg-brand-cyan-600 mr-2"></span>
+                        <span>Scheduled Job</span>
+                    </div>
+                    <div className="flex items-center">
+                        <span className="h-3 w-3 rounded-full bg-amber-500 mr-2"></span>
+                        <span>Job In Progress</span>
+                    </div>
+                </div>
+            </div>
             <div className="mt-4 h-[60vh] min-h-[400px] w-full overflow-hidden rounded-lg bg-white shadow">
                 <MapView jobs={jobs} employees={employees} customers={customers} />
             </div>
