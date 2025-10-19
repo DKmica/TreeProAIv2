@@ -38,7 +38,7 @@ export const mockEmployees: Employee[] = [
 ];
 
 export const mockEquipment: Equipment[] = [
-  { id: 'equip1', user_id: mockUserId, created_at: mockDate, name: 'Stump Grinder', makeModel: 'Vermeer SC30TX', last_maintenance: '2023-05-15', status: 'Operational', assignedTo: 'Mike Miller' },
-  { id: 'equip2', user_id: mockUserId, created_at: mockDate, name: 'Wood Chipper', makeModel: 'Bandit 15XP', last_maintenance: '2023-08-15', status: 'Needs Maintenance', assignedTo: 'Crew 1' },
-  { id: 'equip3', user_id: mockUserId, created_at: mockDate, name: 'Chainsaw', makeModel: 'Stihl MS 462', last_maintenance: '2023-10-10', status: 'Operational' },
+  { id: 'equip1', user_id: mockUserId, created_at: mockDate, name: 'Stump Grinder', last_maintenance: '2023-05-15', status: 'Operational' },
+  { id: 'equip2', user_id: mockUserId, created_at: mockDate, name: 'Wood Chipper', last_maintenance: '2023-08-15', status: 'Needs Maintenance' },
+  { id: 'equip3', user_id: mockUserId, created_at: mockDate, name: 'Chainsaw', last_maintenance: '2023-10-10', status: 'Operational' },
 ];

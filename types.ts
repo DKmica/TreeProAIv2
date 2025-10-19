@@ -32,6 +32,8 @@ export interface Quote extends UserOwned {
   lead_id?: string;
   status: 'Draft' | 'Sent' | 'Accepted' | 'Declined';
   total_price: number;
+  service_items?: LineItem[];
+  quote_notes?: string;
   // For display
   customerName?: string;
 }
@@ -42,6 +44,11 @@ export interface Job extends UserOwned {
   status: 'Unscheduled' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
   date?: string;
   assigned_crew?: string[]; // Array of employee IDs
+  job_price?: number;
+  job_details?: {
+    description: string;
+    service_items?: LineItem[];
+  };
   // For display
   customerName?: string;
 }
@@ -72,9 +79,6 @@ export interface Equipment extends UserOwned {
   name: string;
   status: 'Operational' | 'Needs Maintenance' | 'Out of Service';
   last_maintenance?: string;
-  // For display
-  makeModel?: string; // From old type, will be empty
-  assignedTo?: string; // From old type, will be empty
 }
 
 
