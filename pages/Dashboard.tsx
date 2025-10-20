@@ -1,34 +1,50 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import MapView from '../components/MapView';
-import { Job, Employee, Customer } from '../types';
+import { Job, Employee, Customer, Lead, Quote } from '../types';
 
 interface DashboardProps {
     jobs: Job[];
+    leads: Lead[];
+    quotes: Quote[];
     employees: Employee[];
     customers: Customer[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers }) => {
+const Dashboard: React.FC<DashboardProps> = ({ jobs, leads, quotes, employees, customers }) => {
+
+    const kpiData = useMemo(() => {
+        const newLeads = leads.filter(l => l.status === 'New').length;
+        const quotesSent = quotes.filter(q => q.status === 'Sent' || q.status === 'Accepted' || q.status === 'Declined').length;
+        const activeJobs = jobs.filter(j => j.status === 'Scheduled' || j.status === 'In Progress').length;
+        // This is a placeholder; real revenue would come from invoices or job costing.
+        const monthlyRevenue = jobs
+            .filter(j => j.status === 'Completed' && new Date(j.created_at).getMonth() === new Date().getMonth())
+            .reduce((sum, j) => sum + (j.job_price || 0), 0);
+
+        return { newLeads, quotesSent, activeJobs, monthlyRevenue };
+    }, [jobs, leads, quotes]);
+
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-brand-navy-900">Dashboard</h1>
-      <p className="mt-2 text-brand-navy-600">Welcome to TreePro AI. Analytics and overview will be displayed here.</p>
+      <p className="mt-2 text-brand-navy-600">Real-time overview of your tree service business.</p>
        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-navy-500">New Leads</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">12</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">{kpiData.newLeads}</dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-navy-500">Quotes Sent</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">8</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">{kpiData.quotesSent}</dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-navy-500">Active Jobs</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">3</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">{kpiData.activeJobs}</dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-navy-500">Revenue (Month)</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">$12,450</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-navy-900">${kpiData.monthlyRevenue.toLocaleString()}</dd>
           </div>
         </div>
         

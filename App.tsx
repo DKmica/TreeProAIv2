@@ -71,7 +71,7 @@ const App: React.FC = () => {
     <Layout>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
+        <Route path="/dashboard" element={<Dashboard jobs={jobs} leads={leads} quotes={quotes} employees={employees} customers={customers} />} />
         <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} customers={customers} setJobs={setJobs} />} />
         <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
         <Route path="/quotes" element={<QuotesPage quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
