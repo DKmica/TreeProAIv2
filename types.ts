@@ -24,6 +24,12 @@ export interface LineItem {
   selected: boolean;
 }
 
+export interface PortalMessage {
+  sender: 'customer' | 'company';
+  text: string;
+  timestamp: string;
+}
+
 export interface Quote {
   id: string;
   leadId: string;
@@ -34,6 +40,7 @@ export interface Quote {
   createdAt: string;
   signature?: string; // Base64 encoded image
   acceptedAt?: string; // ISO date string
+  messages?: PortalMessage[];
 }
 
 export interface JobHazardAnalysis {
@@ -65,6 +72,7 @@ export interface Job {
   clockOutCoordinates?: { lat: number; lng: number; };
   jha?: JobHazardAnalysis;
   costs?: JobCost;
+  messages?: PortalMessage[];
 }
 
 
@@ -208,85 +216,4 @@ export interface UpsellSuggestion {
 export interface MaintenanceAdvice {
   next_service_recommendation: string;
   common_issues: string[];
-}
-
-export interface OptimizedRoute {
-  orderedJobs: Job[];
-  totalDistance: string;
-  totalDuration: string;
-  googleMapsUrl: string;
-}
-
-// Add type declarations for Google Maps API to satisfy TypeScript compiler
-// in absence of @types/google.maps. This allows using google.maps.* types
-// and window.google.
-declare global {
-    namespace google {
-        namespace maps {
-            interface LatLngLiteral { lat: number; lng: number; }
-            type LatLng = LatLngLiteral;
-            
-            class Map {
-                constructor(mapDiv: Element | null, opts?: any);
-                setZoom(zoom: number): void;
-                setCenter(latLng: LatLng | any): void;
-                addListener(eventName: string, handler: (...args: any[]) => void): void;
-                [key: string]: any;
-            }
-            class InfoWindow {
-                constructor(opts?: any);
-                setContent(content: string | Node): void;
-                open(options?: any): void;
-                close(): void;
-            }
-            namespace marker {
-                class AdvancedMarkerElement {
-                    constructor(options?: any);
-                    set map(map: Map | null);
-                    get position(): LatLng | null;
-                    addListener(eventName: string, handler: (...args: any[]) => void): void;
-                    [key: string]: any;
-                }
-                class PinElement {
-                    constructor(options?: any);
-                    get element(): HTMLElement;
-                }
-            }
-            
-            // For Directions Service
-            class DirectionsService {
-                route(request: DirectionsRequest, callback: (result: DirectionsResult | null, status: DirectionsStatus) => void): void;
-            }
-            class DirectionsRenderer {
-                constructor(opts?: DirectionsRendererOptions);
-                setMap(map: Map | null): void;
-                setDirections(directions: DirectionsResult | null): void;
-            }
-            interface DirectionsRequest {
-                origin: LatLng | string;
-                destination: LatLng | string;
-                waypoints?: DirectionsWaypoint[];
-                optimizeWaypoints?: boolean;
-                travelMode: TravelMode;
-            }
-            interface DirectionsWaypoint {
-                location: LatLng | string;
-                stopover?: boolean;
-            }
-            enum TravelMode { DRIVING = 'DRIVING' }
-            enum DirectionsStatus { OK = 'OK' }
-            interface DirectionsResult {
-                routes: DirectionsRoute[];
-            }
-            interface DirectionsRoute { }
-            interface DirectionsRendererOptions {
-                map?: Map;
-                directions?: DirectionsResult;
-                suppressMarkers?: boolean;
-            }
-        }
-    }
-    interface Window {
-        google: typeof google;
-    }
 }

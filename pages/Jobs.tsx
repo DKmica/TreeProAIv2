@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost } from '../types';
+import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessage } from '../types';
+import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
+import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
+import PortalMessaging from '../components/PortalMessaging';
 
 
 // Helper to calculate total
@@ -166,6 +169,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [linkCopied, setLinkCopied] = useState('');
+  const [viewingMessages, setViewingMessages] = useState<Job | null>(null);
   const navigate = useNavigate();
 
   const handleCancel = () => {
@@ -224,6 +229,28 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     setInvoices(prev => [newInvoice, ...prev]);
     alert(`Invoice ${newInvoice.id} created successfully!`);
     navigate('/invoices');
+  };
+
+  const handleCopyLink = (jobId: string) => {
+    const url = `${window.location.origin}${window.location.pathname}#/portal/job/${jobId}`;
+    navigator.clipboard.writeText(url);
+    setLinkCopied(jobId);
+    setTimeout(() => setLinkCopied(''), 2000);
+  };
+  
+  const handleSendMessage = (text: string) => {
+    if (!viewingMessages) return;
+    const newMessage: PortalMessage = {
+        sender: 'company',
+        text,
+        timestamp: new Date().toISOString(),
+    };
+    setJobs(prev => prev.map(j => 
+        j.id === viewingMessages.id 
+            ? { ...j, messages: [...(j.messages || []), newMessage] } 
+            : j
+    ));
+    setViewingMessages(prev => prev ? { ...prev, messages: [...(prev.messages || []), newMessage] } : null);
   };
 
   const handleStatusChange = (jobId: string, newStatus: Job['status']) => {
@@ -314,9 +341,19 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                   {filteredJobs.map((job) => {
                       const isInvoiceCreated = invoices.some(inv => inv.jobId === job.id);
                       const canCreateInvoice = !isInvoiceCreated && job.status === 'Completed';
+                      const portalUrl = `#/portal/job/${job.id}`;
                       return (
                         <tr key={job.id}>
-                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{job.id}</td>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
+                            <div className="flex items-center">
+                                {job.id}
+                                {job.messages && job.messages.length > 0 && (
+                                    <button onClick={() => setViewingMessages(job)} className="ml-2 text-brand-gray-400 hover:text-brand-green-600">
+                                        <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                                    </button>
+                                )}
+                            </div>
+                          </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.customerName}</td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
                              <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className="block w-full rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
@@ -328,17 +365,26 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                             </select>
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.scheduledDate || 'N/A'}</td>
-                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
+                            <div className="inline-flex rounded-md shadow-sm">
+                              <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="relative inline-flex items-center rounded-l-md bg-white px-2 py-1 text-sm font-semibold text-brand-gray-900 ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 focus:z-10">
+                                Link
+                              </a>
+                              <button onClick={() => handleCopyLink(job.id)} type="button" className="relative -ml-px inline-flex items-center rounded-r-md bg-white px-2 py-1 text-sm font-semibold text-brand-gray-900 ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 focus:z-10" title="Copy public link">
+                                <ClipboardSignatureIcon className="h-4 w-4 text-brand-gray-600" />
+                                {linkCopied === job.id && <span className="absolute -top-7 -right-1 text-xs bg-brand-gray-800 text-white px-2 py-0.5 rounded">Copied!</span>}
+                              </button>
+                            </div>
                             <button 
                                 type="button" 
                                 onClick={() => handleCreateInvoice(job)}
                                 disabled={!canCreateInvoice}
                                 title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'Completed' ? "Job must be completed" : "Create Invoice"}
-                                className="rounded bg-brand-green-50 px-2 py-1 text-xs font-semibold text-brand-green-600 shadow-sm hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed">
+                                className="ml-2 rounded bg-brand-green-50 px-2 py-1 text-xs font-semibold text-brand-green-600 shadow-sm hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed">
                                 Invoice
                             </button>
-                            <button onClick={() => handleEditClick(job)} className="text-brand-green-600 hover:text-brand-green-900">Edit</button>
-                            <button onClick={() => handleArchiveJob(job.id)} className="text-red-600 hover:text-red-900">Archive</button>
+                            <button onClick={() => handleEditClick(job)} className="ml-2 text-brand-green-600 hover:text-brand-green-900">Edit</button>
+                            <button onClick={() => handleArchiveJob(job.id)} className="ml-2 text-red-600 hover:text-red-900">Archive</button>
                           </td>
                         </tr>
                       )
@@ -349,6 +395,17 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
           </div>
         </div>
       </div>
+      {viewingMessages && (
+          <div className="fixed inset-0 bg-brand-gray-800 bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setViewingMessages(null)}>
+              <div className="bg-white rounded-lg shadow-xl w-full max-w-lg h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                  <PortalMessaging
+                      messages={viewingMessages.messages || []}
+                      onSendMessage={handleSendMessage}
+                      senderType="company"
+                  />
+              </div>
+          </div>
+      )}
     </div>
   );
 };

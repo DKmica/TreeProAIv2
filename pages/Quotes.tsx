@@ -1,12 +1,15 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Quote, Customer, LineItem, AITreeEstimate, UpsellSuggestion } from '../types';
+import { Quote, Customer, LineItem, AITreeEstimate, UpsellSuggestion, PortalMessage } from '../types';
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import { generateUpsellSuggestions } from '../services/geminiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import PlusCircleIcon from '../components/icons/PlusCircleIcon';
+import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
+import PortalMessaging from '../components/PortalMessaging';
+
 
 // Helper to calculate total
 const calculateQuoteTotal = (lineItems: LineItem[], stumpGrindingPrice: number): number => {
@@ -218,6 +221,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
     const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
     const [aiEstimateData, setAiEstimateData] = useState<Partial<Quote> | undefined>(undefined);
     const [linkCopied, setLinkCopied] = useState('');
+    const [viewingMessages, setViewingMessages] = useState<Quote | null>(null);
     const location = useLocation();
 
     useEffect(() => {
@@ -287,6 +291,22 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
       setTimeout(() => setLinkCopied(''), 2000);
     };
 
+    const handleSendMessage = (text: string) => {
+        if (!viewingMessages) return;
+        const newMessage: PortalMessage = {
+            sender: 'company',
+            text,
+            timestamp: new Date().toISOString(),
+        };
+        setQuotes(prev => prev.map(q => 
+            q.id === viewingMessages.id 
+                ? { ...q, messages: [...(q.messages || []), newMessage] } 
+                : q
+        ));
+         setViewingMessages(prev => prev ? { ...prev, messages: [...(prev.messages || []), newMessage] } : null);
+    };
+
+
     const filteredQuotes = useMemo(() => quotes.filter(q =>
         q.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.status.toLowerCase().includes(searchTerm.toLowerCase())
@@ -352,7 +372,16 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                                         const portalUrl = `#/portal/quote/${quote.id}`;
                                         return (
                                         <tr key={quote.id}>
-                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{quote.id}</td>
+                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
+                                                <div className="flex items-center">
+                                                    {quote.id}
+                                                    {quote.messages && quote.messages.length > 0 && (
+                                                        <button onClick={() => setViewingMessages(quote)} className="ml-2 text-brand-gray-400 hover:text-brand-green-600">
+                                                            <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{quote.customerName}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">${total.toFixed(2)}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
@@ -382,6 +411,18 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                     </div>
                 </div>
             </div>
+
+            {viewingMessages && (
+                 <div className="fixed inset-0 bg-brand-gray-800 bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setViewingMessages(null)}>
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <PortalMessaging
+                            messages={viewingMessages.messages || []}
+                            onSendMessage={handleSendMessage}
+                            senderType="company"
+                        />
+                    </div>
+                 </div>
+            )}
         </div>
     );
 };

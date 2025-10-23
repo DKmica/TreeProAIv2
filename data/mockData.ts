@@ -1,6 +1,6 @@
 
 
-import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem, JobCost } from '../types';
+import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem, JobCost, PortalMessage } from '../types';
 
 export const mockCustomers: Customer[] = [
   { id: 'cust1', name: 'John Doe', email: 'john.doe@example.com', phone: '555-1234', address: '123 Oak St, Los Angeles, CA', coordinates: { lat: 34.0522, lng: -118.2437 } },
@@ -25,7 +25,12 @@ export const mockQuotes: Quote[] = [
     {description: 'Remove large pine tree near house', price: 1800, selected: true},
     {description: 'Prune two front yard oak trees', price: 650, selected: true},
     {description: 'Fertilization treatment for all trees', price: 250, selected: false},
-  ], stumpGrindingPrice: 350, createdAt: '2023-10-28' },
+  ], stumpGrindingPrice: 350, createdAt: '2023-10-28',
+  messages: [
+      { sender: 'customer', text: 'Hi, I received the quote. Could we potentially schedule this for a Saturday?', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+      { sender: 'company', text: 'Hi Michael, Saturday work is possible but may incur a small surcharge. Let me know if you\'d like an updated quote.', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
+  ]
+},
 ];
 
 const mockJob1Costs: JobCost = {
@@ -36,9 +41,14 @@ const mockJob1Costs: JobCost = {
   total: 648,
 };
 
+const mockJob2Messages: PortalMessage[] = [
+    { sender: 'customer', text: 'The crew is doing a great job! Just wanted to make sure they clean up all the smaller twigs from the lawn when they are done.', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString() },
+    { sender: 'company', text: 'Absolutely! A thorough cleanup is part of our standard procedure. The crew will ensure your property is spotless before they leave.', timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString() }
+];
+
 export const mockJobs: Job[] = [
     { id: 'job1', quoteId: 'quote2', customerName: 'Jane Smith', status: 'Completed', scheduledDate: '2023-11-05', assignedCrew: ['emp2', 'emp3'], photos: [], workStartedAt: '2023-11-05T08:00:00Z', workEndedAt: '2023-11-05T16:00:00Z', clockInCoordinates: { lat: 40.7128, lng: -74.0060 }, clockOutCoordinates: { lat: 40.7130, lng: -74.0062 }, costs: mockJob1Costs },
-    { id: 'job2', quoteId: 'quote1', customerName: 'John Doe', status: 'In Progress', scheduledDate: new Date().toISOString().split('T')[0], assignedCrew: ['emp1'], photos: [], workStartedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), clockInCoordinates: { lat: 34.0522, lng: -118.2437 } },
+    { id: 'job2', quoteId: 'quote1', customerName: 'John Doe', status: 'In Progress', scheduledDate: new Date().toISOString().split('T')[0], assignedCrew: ['emp1'], photos: [], workStartedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), clockInCoordinates: { lat: 34.0522, lng: -118.2437 }, messages: mockJob2Messages },
     { id: 'job3', quoteId: 'quote3', customerName: 'Sarah Wilson', status: 'Unscheduled', scheduledDate: '', assignedCrew: ['emp1', 'emp3'], photos: [] },
 ];
 

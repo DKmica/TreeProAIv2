@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -27,6 +28,7 @@ import { mockCustomers, mockLeads, mockQuotes, mockJobs, mockInvoices, mockEmplo
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
 import Profitability from './pages/Profitability';
 import EquipmentDetail from './pages/EquipmentDetail';
+import JobStatusPortal from './pages/portal/JobStatusPortal';
 
 
 const App: React.FC = () => {
@@ -73,6 +75,7 @@ const App: React.FC = () => {
         <Route path="/portal" element={<CustomerPortalLayout />}>
           <Route path="quote/:quoteId" element={<QuotePortal quotes={quotes} setQuotes={setQuotes} />} />
           <Route path="invoice/:invoiceId" element={<InvoicePortal invoices={invoices} setInvoices={setInvoices} />} />
+          <Route path="job/:jobId" element={<JobStatusPortal jobs={jobs} quotes={quotes} employees={employees} setJobs={setJobs} />} />
         </Route>
       </Routes>
     </HashRouter>

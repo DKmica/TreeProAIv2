@@ -1,10 +1,10 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Quote, LineItem } from '../../types';
+import { Quote, LineItem, PortalMessage } from '../../types';
 import SignaturePad from '../../components/SignaturePad';
 import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
+import PortalMessaging from '../../components/PortalMessaging';
 
 interface QuotePortalProps {
   quotes: Quote[];
@@ -36,6 +36,21 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
   const handleAcceptAndSign = () => {
     setIsSigning(true);
   };
+
+  const handleSendMessage = (text: string) => {
+    if (!quoteId) return;
+    const newMessage: PortalMessage = {
+        sender: 'customer',
+        text,
+        timestamp: new Date().toISOString(),
+    };
+    setQuotes(prev => prev.map(q => 
+        q.id === quoteId 
+            ? { ...q, messages: [...(q.messages || []), newMessage] } 
+            : q
+    ));
+  };
+
 
   const handleSignatureSave = (signatureDataUrl: string) => {
     if (!quote) return;
@@ -148,6 +163,14 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
                 <p className="mt-4 text-xs text-brand-gray-500">By clicking 'Accept & Sign', you agree to the services and pricing outlined in this quote.</p>
              </div>
         )}
+      </div>
+
+      <div className="mt-6 bg-white rounded-lg shadow-lg overflow-hidden h-96">
+        <PortalMessaging 
+            messages={quote.messages || []}
+            onSendMessage={handleSendMessage}
+            senderType="customer"
+        />
       </div>
 
       {isSigning && (
