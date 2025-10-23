@@ -40,8 +40,19 @@ const JobForm: React.FC<{
                 assignedCrew: initialData.assignedCrew,
                 stumpGrindingPrice: initialData.stumpGrindingPrice || 0,
             });
+        } else {
+            const defaultQuote = availableQuotes.length > 0 ? availableQuotes[0] : null;
+            setFormData({
+                id: '',
+                quoteId: defaultQuote?.id || '',
+                customerName: defaultQuote?.customerName || '',
+                scheduledDate: '',
+                status: 'Unscheduled',
+                assignedCrew: [],
+                stumpGrindingPrice: defaultQuote?.stumpGrindingPrice || 0,
+            });
         }
-    }, [initialData]);
+    }, [initialData, quotes]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -141,158 +152,62 @@ const JobForm: React.FC<{
     );
 };
 
-const JobDetailModal: React.FC<{
-  job: Job;
-  quote?: Quote;
-  customer?: Customer;
-  employees: Employee[];
-  isInvoiceCreated: boolean;
-  onCreateInvoice: () => void;
-  onEdit: () => void;
-  onClose: () => void;
-}> = ({ job, quote, customer, employees, isInvoiceCreated, onCreateInvoice, onEdit, onClose }) => {
-    const assignedCrewMembers = useMemo(() => 
-        employees.filter(e => job.assignedCrew.includes(e.id)),
-    [employees, job.assignedCrew]);
-
-    const canCreateInvoice = !isInvoiceCreated && job.status === 'Completed';
-
-  return (
-    <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-      
-      <div className="fixed inset-0 z-10 overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
-            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div className="sm:flex sm:items-start">
-                <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6 text-brand-green-600"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                  <h3 className="text-lg font-semibold leading-6 text-brand-gray-900" id="modal-title">Job Details - {job.id}</h3>
-                  <div className="mt-4 space-y-6">
-                    <div>
-                      <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Job Information</h4>
-                      <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                        <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Status</dt><dd className="mt-1 text-sm text-brand-gray-900">{job.status}</dd></div>
-                        <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Scheduled Date</dt><dd className="mt-1 text-sm text-brand-gray-900">{job.scheduledDate || 'Not Scheduled'}</dd></div>
-                        <div className="sm:col-span-2"><dt className="text-sm font-medium text-brand-gray-500">Assigned Crew</dt><dd className="mt-1 text-sm text-brand-gray-900">{assignedCrewMembers.map(e => e.name).join(', ') || 'N/A'}</dd></div>
-                      </dl>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Customer Information</h4>
-                        {customer ? (
-                          <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                            <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Name</dt><dd className="mt-1 text-sm text-brand-gray-900">{customer.name}</dd></div>
-                            <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Email</dt><dd className="mt-1 text-sm text-brand-gray-900">{customer.email}</dd></div>
-                            <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Phone</dt><dd className="mt-1 text-sm text-brand-gray-900">{customer.phone}</dd></div>
-                            <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Address</dt><dd className="mt-1 text-sm text-brand-gray-900"><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}`} target="_blank" rel="noopener noreferrer" className="text-brand-green-600 hover:text-brand-green-900 hover:underline">{customer.address}</a></dd></div>
-                          </dl>
-                        ) : (
-                          <dd className="mt-1 text-sm text-brand-gray-900">Customer not found.</dd>
-                        )}
-                    </div>
-
-                    {quote && (
-                    <div>
-                      <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Associated Quote</h4>
-                      <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                        <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Quote ID</dt><dd className="mt-1 text-sm text-brand-gray-900">{quote.id}</dd></div>
-                        <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Amount</dt><dd className="mt-1 text-sm text-brand-gray-900">${calculateQuoteTotal(quote.lineItems, quote.stumpGrindingPrice || 0).toFixed(2)}</dd></div>
-                        <div className="sm:col-span-2"><dt className="text-sm font-medium text-brand-gray-500">Services Included</dt>
-                          <dd className="mt-1 text-sm text-brand-gray-900">
-                              <ul className="divide-y divide-brand-gray-200 rounded-md border border-brand-gray-200">
-                                  {quote.lineItems.map((item, index) => (
-                                      <li key={index} className="flex items-center justify-between py-2 pl-3 pr-4 text-sm">
-                                          <span className="truncate">{item.description}</span>
-                                          <span>${item.price.toFixed(2)}</span>
-                                      </li>
-                                  ))}
-                                  {quote.stumpGrindingPrice > 0 && (
-                                       <li className="flex items-center justify-between py-2 pl-3 pr-4 text-sm">
-                                          <span className="truncate">Stump Grinding</span>
-                                          <span>${quote.stumpGrindingPrice.toFixed(2)}</span>
-                                      </li>
-                                  )}
-                              </ul>
-                          </dd>
-                        </div>
-                      </dl>
-                    </div>)}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-brand-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-              <button 
-                type="button" 
-                onClick={onCreateInvoice} 
-                disabled={!canCreateInvoice}
-                title={ isInvoiceCreated ? "Invoice already exists for this job" : job.status !== 'Completed' ? "Job must be completed to create an invoice" : "Create Invoice" }
-                className="inline-flex w-full justify-center rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 sm:ml-3 sm:w-auto disabled:bg-brand-gray-300 disabled:cursor-not-allowed">
-                  Create Invoice
-              </button>
-              <button type="button" onClick={onEdit} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 sm:mt-0 sm:w-auto">Edit Job</button>
-              <button type="button" onClick={onClose} className="mt-3 mr-auto inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 sm:mt-0 sm:w-auto">Close</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 interface JobsProps {
   jobs: Job[];
-  setJobs: (updateFn: (prev: Job[]) => Job[]) => void;
+  // FIX: Correctly type the `setJobs` and `setInvoices` props to match `useState` setters.
+  setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
   quotes: Quote[];
   customers: Customer[];
   invoices: Invoice[];
-  setInvoices: (updateFn: (prev: Invoice[]) => Invoice[]) => void;
+  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
   employees: Employee[];
 }
 
-const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices, setInvoices, employees }) => {
+const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoices, employees }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const navigate = useNavigate();
 
-  const handleSaveJob = (newJobData: Omit<Job, 'id'>) => {
-    const newJob: Job = { id: `job${jobs.length + 1}-${Date.now()}`, ...newJobData };
-    setJobs(prev => [newJob, ...prev]);
-    setShowAddForm(false);
-  };
-
-  const handleUpdateJob = (updatedJobData: Job) => {
-    setJobs(prev => prev.map(j => j.id === updatedJobData.id ? updatedJobData : j));
+  const handleCancel = () => {
+    setShowForm(false);
     setEditingJob(null);
   };
-
-  const handleViewJob = (job: Job) => setSelectedJob(job);
-  const handleCloseModal = () => setSelectedJob(null);
-  const handleEditJob = () => {
-    if (selectedJob) {
-      setEditingJob(selectedJob);
-      setSelectedJob(null);
-    }
+  
+  const handleMainButtonClick = () => {
+      if (showForm) {
+          handleCancel();
+      } else {
+          setEditingJob(null);
+          setShowForm(true);
+      }
   };
 
-  const selectedQuote = useMemo(() => selectedJob ? quotes.find(q => q.id === selectedJob.quoteId) : undefined, [selectedJob, quotes]);
-  const selectedCustomer = useMemo(() => selectedJob ? customers.find(c => c.name === selectedJob.customerName) : undefined, [selectedJob, customers]);
-  const isInvoiceCreated = useMemo(() => selectedJob ? invoices.some(inv => inv.jobId === selectedJob.id) : false, [selectedJob, invoices]);
+  const handleEditClick = (job: Job) => {
+    setEditingJob(job);
+    setShowForm(true);
+  };
 
-  const handleCreateInvoice = () => {
-    if (!selectedJob || !selectedQuote) return;
-    if (isInvoiceCreated) {
-        alert('An invoice for this job already exists.');
-        return;
-    }
-    if (selectedJob.status !== 'Completed') {
-        alert('Job must be marked as "Completed" before creating an invoice.');
+  const handleArchiveJob = (jobId: string) => {
+      if(window.confirm('Are you sure you want to archive this job?')) {
+          setJobs(prev => prev.filter(j => j.id !== jobId));
+      }
+  };
+
+  const handleSave = (jobData: Job | Omit<Job, 'id'>) => {
+      if ('id' in jobData && jobData.id) { // Editing
+          setJobs(prev => prev.map(j => j.id === jobData.id ? jobData as Job : j));
+      } else { // Creating
+          const newJob: Job = { id: `job-${Date.now()}`, ...jobData as Omit<Job, 'id'>};
+          setJobs(prev => [newJob, ...prev]);
+      }
+      handleCancel();
+  };
+
+  const handleCreateInvoice = (job: Job) => {
+    const quote = quotes.find(q => q.id === job.quoteId);
+    if (!quote) {
+        alert('Associated quote not found.');
         return;
     }
 
@@ -300,15 +215,14 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
     dueDate.setDate(dueDate.getDate() + 30);
     const newInvoice: Invoice = {
       id: `inv-${Date.now()}`,
-      jobId: selectedJob.id,
-      customerName: selectedJob.customerName,
+      jobId: job.id,
+      customerName: job.customerName,
       status: 'Draft',
-      amount: calculateQuoteTotal(selectedQuote.lineItems, selectedQuote.stumpGrindingPrice || 0),
+      amount: calculateQuoteTotal(quote.lineItems, quote.stumpGrindingPrice || 0),
       dueDate: dueDate.toISOString().split('T')[0],
     };
     setInvoices(prev => [newInvoice, ...prev]);
     alert(`Invoice ${newInvoice.id} created successfully!`);
-    handleCloseModal();
     navigate('/invoices');
   };
 
@@ -328,12 +242,13 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
           <p className="mt-2 text-sm text-brand-gray-700">A list of all scheduled and active jobs.</p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button type="button" onClick={() => { setShowAddForm(true); setEditingJob(null); }} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">Create Job</button>
+          <button type="button" onClick={handleMainButtonClick} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
+              {showForm ? 'Cancel' : 'Create Job'}
+          </button>
         </div>
       </div>
       
-      {(showAddForm && !editingJob) && <JobForm quotes={quotes} employees={employees} onSave={handleSaveJob} onCancel={() => setShowAddForm(false)} />}
-      {editingJob && <JobForm quotes={quotes} employees={employees} onSave={handleUpdateJob as any} onCancel={() => setEditingJob(null)} initialData={editingJob} />}
+      {showForm && <JobForm quotes={quotes} employees={employees} onSave={handleSave} onCancel={handleCancel} initialData={editingJob || undefined} />}
       
       <div className="mt-6">
         <input type="text" placeholder="Search jobs..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" aria-label="Search jobs" />
@@ -354,33 +269,44 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, customers, invoices,
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-gray-200 bg-white">
-                  {filteredJobs.map((job) => (
-                    <tr key={job.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{job.id}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.customerName}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
-                         <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className="block w-full rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
-                            <option>Unscheduled</option>
-                            <option>Scheduled</option>
-                            <option>In Progress</option>
-                            <option>Completed</option>
-                            <option>Cancelled</option>
-                        </select>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.scheduledDate || 'N/A'}</td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button onClick={() => handleViewJob(job)} className="text-brand-green-600 hover:text-brand-green-900">View</button>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredJobs.map((job) => {
+                      const isInvoiceCreated = invoices.some(inv => inv.jobId === job.id);
+                      const canCreateInvoice = !isInvoiceCreated && job.status === 'Completed';
+                      return (
+                        <tr key={job.id}>
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{job.id}</td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.customerName}</td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
+                             <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className="block w-full rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                                <option>Unscheduled</option>
+                                <option>Scheduled</option>
+                                <option>In Progress</option>
+                                <option>Completed</option>
+                                <option>Cancelled</option>
+                            </select>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.scheduledDate || 'N/A'}</td>
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-4">
+                            <button 
+                                type="button" 
+                                onClick={() => handleCreateInvoice(job)}
+                                disabled={!canCreateInvoice}
+                                title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'Completed' ? "Job must be completed" : "Create Invoice"}
+                                className="rounded bg-brand-green-50 px-2 py-1 text-xs font-semibold text-brand-green-600 shadow-sm hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed">
+                                Invoice
+                            </button>
+                            <button onClick={() => handleEditClick(job)} className="text-brand-green-600 hover:text-brand-green-900">Edit</button>
+                            <button onClick={() => handleArchiveJob(job.id)} className="text-red-600 hover:text-red-900">Archive</button>
+                          </td>
+                        </tr>
+                      )
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
-
-      {selectedJob && (<JobDetailModal job={selectedJob} quote={selectedQuote} customer={selectedCustomer} employees={employees} isInvoiceCreated={isInvoiceCreated} onCreateInvoice={handleCreateInvoice} onEdit={handleEditJob} onClose={handleCloseModal} />)}
     </div>
   );
 };

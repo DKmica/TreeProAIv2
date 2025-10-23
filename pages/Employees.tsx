@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Employee } from '../types';
-import EmployeeIcon from '../components/icons/EmployeeIcon';
 
-const AddEmployeeForm: React.FC<{
-    onSave: (employee: Omit<Employee, 'id'>) => void;
+const EmployeeForm: React.FC<{
+    onSave: (employee: Partial<Employee>) => void;
     onCancel: () => void;
-}> = ({ onSave, onCancel }) => {
+    initialData?: Employee | null;
+}> = ({ onSave, onCancel, initialData }) => {
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -18,6 +18,36 @@ const AddEmployeeForm: React.FC<{
         certifications: ''
     });
 
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                name: initialData.name,
+                phone: initialData.phone,
+                address: initialData.address,
+                ssn: initialData.ssn,
+                dob: initialData.dob,
+                jobTitle: initialData.jobTitle,
+                payRate: initialData.payRate.toString(),
+                hireDate: initialData.hireDate,
+                certifications: initialData.certifications
+            });
+        } else {
+            setFormData({
+                name: '',
+                phone: '',
+                address: '',
+                ssn: '',
+                dob: '',
+                jobTitle: '',
+                payRate: '',
+                hireDate: '',
+                certifications: ''
+            });
+        }
+    }, [initialData]);
+
+    const isEditing = !!initialData;
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -28,13 +58,12 @@ const AddEmployeeForm: React.FC<{
         onSave({
             ...formData,
             payRate: parseFloat(formData.payRate) || 0,
-            coordinates: { lat: 0, lng: 0 } // Default coordinates, would be geocoded in a real app
         });
     };
 
     return (
         <div className="bg-white p-6 rounded-lg shadow my-6">
-            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">Add New Employee</h2>
+            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">{isEditing ? 'Edit Employee' : 'Add New Employee'}</h2>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
@@ -76,118 +105,69 @@ const AddEmployeeForm: React.FC<{
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                     <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
-                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Employee</button>
+                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">{isEditing ? 'Save Changes' : 'Save Employee'}</button>
                 </div>
             </form>
         </div>
     );
 };
 
-const StatCard: React.FC<{ label: string; value: string | number; valueColor?: string; subValue?: string }> = ({ label, value, valueColor = 'text-brand-gray-900', subValue }) => (
-    <div className="overflow-hidden rounded-lg bg-brand-gray-50 px-4 py-5 text-center shadow-inner">
-        <dt className="truncate text-sm font-medium text-brand-gray-500">{label}</dt>
-        <dd className={`mt-1 text-3xl font-semibold tracking-tight ${valueColor}`}>
-            {value} {subValue && <span className="text-lg font-normal text-brand-gray-500">{subValue}</span>}
-        </dd>
-    </div>
-);
-
-const EmployeeDetailModal: React.FC<{ employee: Employee | null; onClose: () => void }> = ({ employee, onClose }) => {
-    if (!employee) return null;
-
-    return (
-        <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <div className="fixed inset-0 z-10 overflow-y-auto">
-                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
-                        <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                            <div className="sm:flex sm:items-start">
-                                <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-green-100 sm:mx-0 sm:h-10 sm:w-10">
-                                    <EmployeeIcon className="h-6 w-6 text-brand-green-600" />
-                                </div>
-                                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                    <h3 className="text-lg font-semibold leading-6 text-brand-gray-900" id="modal-title">{employee.name}</h3>
-                                    <p className="text-sm text-brand-gray-500">{employee.jobTitle}</p>
-                                </div>
-                            </div>
-                            <div className="mt-5 space-y-6">
-                                {/* Performance Metrics */}
-                                {employee.performanceMetrics && (
-                                    <div>
-                                        <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Performance Metrics</h4>
-                                        <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                                            <StatCard 
-                                                label="Jobs Completed" 
-                                                value={employee.performanceMetrics.jobsCompleted} 
-                                            />
-                                            <StatCard 
-                                                label="Customer Rating" 
-                                                value={employee.performanceMetrics.customerRating.toFixed(1)} 
-                                                subValue="/ 5.0"
-                                                valueColor={
-                                                    employee.performanceMetrics.customerRating >= 4.5 ? 'text-brand-green-600' :
-                                                    employee.performanceMetrics.customerRating >= 4.0 ? 'text-yellow-600' : 'text-red-600'
-                                                }
-                                            />
-                                            <StatCard 
-                                                label="Safety Incidents" 
-                                                value={employee.performanceMetrics.safetyIncidents} 
-                                                valueColor={
-                                                    employee.performanceMetrics.safetyIncidents === 0 ? 'text-brand-green-600' : 'text-red-600'
-                                                }
-                                            />
-                                        </dl>
-                                    </div>
-                                )}
-                                {/* Certifications */}
-                                <div>
-                                    <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Certifications</h4>
-                                    <p className="text-sm text-brand-gray-700 whitespace-pre-wrap">{employee.certifications || 'No certifications listed.'}</p>
-                                </div>
-                                {/* Personal Information */}
-                                <div>
-                                    <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Personal Information</h4>
-                                    <dl className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
-                                        <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Phone</dt><dd className="mt-1 text-sm text-brand-gray-900">{employee.phone}</dd></div>
-                                        <div className="sm:col-span-1"><dt className="text-sm font-medium text-brand-gray-500">Hire Date</dt><dd className="mt-1 text-sm text-brand-gray-900">{employee.hireDate}</dd></div>
-                                        <div className="sm:col-span-2"><dt className="text-sm font-medium text-brand-gray-500">Address</dt><dd className="mt-1 text-sm text-brand-gray-900">{employee.address}</dd></div>
-                                    </dl>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="bg-brand-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                            <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 sm:mt-0 sm:w-auto">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
 interface EmployeesProps {
     employees: Employee[];
-    setEmployees: (updateFn: (prev: Employee[]) => Employee[]) => void;
+    // FIX: Correctly type the `setEmployees` prop to match `useState` setter.
+    setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
 }
 
 const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+    const [showForm, setShowForm] = useState(false);
+    const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [jobTitleFilter, setJobTitleFilter] = useState('all');
     const [sortConfig, setSortConfig] = useState<{ key: keyof Employee, direction: 'ascending' | 'descending' } | null>({ key: 'name', direction: 'ascending' });
 
     const uniqueJobTitles = useMemo(() => [...new Set(employees.map(e => e.jobTitle))], [employees]);
 
-    const handleSaveEmployee = (newEmployeeData: Omit<Employee, 'id'>) => {
-        const newEmployee: Employee = {
-            id: `emp${employees.length + 1}-${Date.now()}`,
-            ...newEmployeeData,
-        };
-        setEmployees(prev => [newEmployee, ...prev]);
-        setShowAddForm(false);
+    const handleCancel = () => {
+        setShowForm(false);
+        setEditingEmployee(null);
+    };
+
+    const handleMainButtonClick = () => {
+        if (showForm) {
+            handleCancel();
+        } else {
+            setEditingEmployee(null);
+            setShowForm(true);
+        }
+    };
+
+    const handleEditClick = (employee: Employee) => {
+        setEditingEmployee(employee);
+        setShowForm(true);
+    };
+
+    const handleArchiveEmployee = (employeeId: string) => {
+        if (window.confirm('Are you sure you want to archive this employee?')) {
+            setEmployees(prev => prev.filter(e => e.id !== employeeId));
+        }
+    };
+    
+    const handleSaveEmployee = (employeeData: Partial<Employee>) => {
+        if (editingEmployee) {
+            // Update
+            setEmployees(prev => prev.map(e => 
+                e.id === editingEmployee.id ? { ...e, ...employeeData } as Employee : e
+            ));
+        } else {
+            // Create
+            const newEmployee: Employee = {
+                id: `emp-${Date.now()}`,
+                coordinates: { lat: 0, lng: 0 },
+                ...employeeData,
+            } as Employee;
+            setEmployees(prev => [newEmployee, ...prev]);
+        }
+        handleCancel();
     };
     
     const requestSort = (key: keyof Employee) => {
@@ -209,17 +189,9 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
             filtered.sort((a, b) => {
                 const aValue = a[sortConfig.key];
                 const bValue = b[sortConfig.key];
-
-                if (aValue === undefined || aValue === null || bValue === undefined || bValue === null) {
-                    return 0;
-                }
-                
-                if (aValue < bValue) {
-                    return sortConfig.direction === 'ascending' ? -1 : 1;
-                }
-                if (aValue > bValue) {
-                    return sortConfig.direction === 'ascending' ? 1 : -1;
-                }
+                if (aValue === undefined || aValue === null || bValue === undefined || bValue === null) return 0;
+                if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
                 return 0;
             });
         }
@@ -251,13 +223,13 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
                     <p className="mt-2 text-sm text-brand-gray-700">Manage your crew and staff members.</p>
                 </div>
                 <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-                    <button onClick={() => setShowAddForm(s => !s)} type="button" className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
-                        {showAddForm ? 'Cancel' : 'Add Employee'}
+                    <button onClick={handleMainButtonClick} type="button" className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
+                        {showForm ? 'Cancel' : 'Add Employee'}
                     </button>
                 </div>
             </div>
 
-            {showAddForm && <AddEmployeeForm onSave={handleSaveEmployee} onCancel={() => setShowAddForm(false)} />}
+            {showForm && <EmployeeForm onSave={handleSaveEmployee} onCancel={handleCancel} initialData={editingEmployee} />}
       
             <div className="mt-6 flex flex-col sm:flex-row gap-4">
                 <input
@@ -292,7 +264,7 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Phone</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900"><SortableHeader sortKey="hireDate">Hire Date</SortableHeader></th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Pay Rate</th>
-                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">View</span></th>
+                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-brand-gray-200 bg-white">
@@ -304,7 +276,8 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{employee.hireDate}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">${employee.payRate.toFixed(2)}/hr</td>
                                             <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <button onClick={() => setSelectedEmployee(employee)} className="text-brand-green-600 hover:text-brand-green-900">View</button>
+                                                <button onClick={() => handleEditClick(employee)} className="text-brand-green-600 hover:text-brand-green-900">Edit</button>
+                                                <button onClick={() => handleArchiveEmployee(employee.id)} className="ml-4 text-red-600 hover:text-red-900">Archive</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -314,7 +287,6 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
                     </div>
                 </div>
             </div>
-            <EmployeeDetailModal employee={selectedEmployee} onClose={() => setSelectedEmployee(null)} />
         </div>
     );
 };

@@ -1,11 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { Job, Employee } from '../types';
 import JobIcon from '../components/icons/JobIcon';
+import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
+import { syncJobsToGoogleCalendar } from '../services/googleCalendarService';
 
 interface CalendarProps {
     jobs: Job[];
     employees: Employee[];
-    setJobs: (updateFn: (prev: Job[]) => Job[]) => void;
+    // FIX: Correctly type the `setJobs` prop to match `useState` setter.
+    setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
 }
 
 const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
@@ -13,6 +17,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [employeeFilter, setEmployeeFilter] = useState('all');
     const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // --- Data Filtering & Memoization ---
 
@@ -58,6 +63,19 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
     const goToPreviousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const goToNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     
+    const handleSyncCalendar = async () => {
+        setIsSyncing(true);
+        const jobsToSync = jobs.filter(j => j.status === 'Scheduled' && j.scheduledDate);
+        try {
+            const result = await syncJobsToGoogleCalendar(jobsToSync);
+            alert(`Successfully synced ${result.eventsCreated} jobs to Google Calendar.`);
+        } catch (error: any) {
+            alert(`Failed to sync calendar: ${error.message}`);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     // --- Drag and Drop Handlers ---
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, jobId: string) => {
         e.dataTransfer.setData('jobId', jobId);
@@ -159,24 +177,10 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
                             </button>
                         </div>
                         <div className="mt-4 sm:mt-0 flex items-center space-x-2">
-                            <div>
-                                <label htmlFor="status-filter" className="sr-only">Filter by status</label>
-                                <select id="status-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm">
-                                    <option value="all">All Statuses</option>
-                                    <option value="Unscheduled">Unscheduled</option>
-                                    <option value="Scheduled">Scheduled</option>
-                                    <option value="In Progress">In Progress</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="employee-filter" className="sr-only">Filter by employee</label>
-                                <select id="employee-filter" value={employeeFilter} onChange={e => setEmployeeFilter(e.target.value)} className="block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm">
-                                    <option value="all">All Employees</option>
-                                    {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
-                                </select>
-                            </div>
+                             <button onClick={handleSyncCalendar} disabled={isSyncing} className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                {isSyncing ? <SpinnerIcon className="h-5 w-5" /> : <GoogleCalendarIcon className="h-5 w-5" />}
+                                {isSyncing ? 'Syncing...' : 'Sync with Google Calendar'}
+                            </button>
                         </div>
                     </div>
                     <div className="mt-4 bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">

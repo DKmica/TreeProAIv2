@@ -12,14 +12,31 @@ interface AddQuoteFormProps {
     customers: Customer[];
     onSave: (quote: Omit<Quote, 'id' | 'leadId'>) => void;
     onCancel: () => void;
-    initialData?: Partial<Omit<Quote, 'id'| 'leadId'>>;
+    initialData?: Partial<Quote> | null;
 }
 
 const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel, initialData }) => {
-    const [customerName, setCustomerName] = useState(initialData?.customerName || (customers.length > 0 ? customers[0].name : ''));
-    const [status, setStatus] = useState<Quote['status']>(initialData?.status || 'Draft');
-    const [lineItems, setLineItems] = useState<LineItem[]>(initialData?.lineItems || [{ description: '', price: 0, selected: true }]);
-    const [stumpGrindingPrice, setStumpGrindingPrice] = useState(initialData?.stumpGrindingPrice || 0);
+    const [customerName, setCustomerName] = useState('');
+    const [status, setStatus] = useState<Quote['status']>('Draft');
+    const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', price: 0, selected: true }]);
+    const [stumpGrindingPrice, setStumpGrindingPrice] = useState(0);
+
+    useEffect(() => {
+        if (initialData) {
+            setCustomerName(initialData.customerName || (customers.length > 0 ? customers[0].name : ''));
+            setStatus(initialData.status || 'Draft');
+            setLineItems(initialData.lineItems && initialData.lineItems.length > 0 ? initialData.lineItems : [{ description: '', price: 0, selected: true }]);
+            setStumpGrindingPrice(initialData.stumpGrindingPrice || 0);
+        } else {
+            // Reset for new entry
+            setCustomerName(customers.length > 0 ? customers[0].name : '');
+            setStatus('Draft');
+            setLineItems([{ description: '', price: 0, selected: true }]);
+            setStumpGrindingPrice(0);
+        }
+    }, [initialData, customers]);
+
+    const isEditing = !!(initialData && 'id' in initialData);
     
     const handleLineItemChange = (index: number, field: keyof LineItem, value: string | number | boolean) => {
         const updatedItems = [...lineItems];
@@ -42,7 +59,7 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
             status,
             lineItems,
             stumpGrindingPrice,
-            createdAt: new Date().toISOString().split('T')[0]
+            createdAt: initialData?.createdAt || new Date().toISOString().split('T')[0]
         });
     };
 
@@ -50,7 +67,7 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
     
     return (
         <div className="bg-white p-6 rounded-lg shadow my-6">
-            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">Create New Quote</h2>
+            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">{isEditing ? 'Edit Quote' : 'Create New Quote'}</h2>
             <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
@@ -104,7 +121,7 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
                     <h3 className="text-lg font-bold text-brand-gray-900">Total: ${totalAmount.toFixed(2)}</h3>
                      <div className="flex items-center justify-end gap-x-6">
                         <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
-                        <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Quote</button>
+                        <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">{isEditing ? 'Save Changes' : 'Save Quote'}</button>
                     </div>
                 </div>
             </form>
@@ -114,14 +131,16 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
 
 interface QuotesProps {
     quotes: Quote[];
-    setQuotes: (updateFn: (prev: Quote[]) => Quote[]) => void;
+    // FIX: Correctly type the `setQuotes` prop to match `useState` setter.
+    setQuotes: React.Dispatch<React.SetStateAction<Quote[]>>;
     customers: Customer[];
 }
 
 const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
-    const [initialFormData, setInitialFormData] = useState<Partial<Omit<Quote, 'id' | 'leadId'>> | undefined>(undefined);
+    const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
+    const [aiEstimateData, setAiEstimateData] = useState<Partial<Quote> | undefined>(undefined);
     const location = useLocation();
 
     useEffect(() => {
@@ -133,7 +152,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                 selected: true
             }));
             
-            setInitialFormData({
+            setAiEstimateData({
                 lineItems: transformedLineItems,
                 stumpGrindingPrice: 0,
             });
@@ -143,15 +162,48 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
         }
     }, [location.state]);
     
-    const handleSaveQuote = (newQuoteData: Omit<Quote, 'id' | 'leadId'>) => {
-        const newQuote: Quote = {
-            id: `quote-${Date.now()}`,
-            leadId: '',
-            ...newQuoteData
-        };
-        setQuotes(prev => [newQuote, ...prev]);
+    const handleSave = (quoteData: Omit<Quote, 'id' | 'leadId'>) => {
+        if (editingQuote) {
+            // Update
+            const updatedQuote = { ...editingQuote, ...quoteData };
+            setQuotes(prev => prev.map(q => (q.id === editingQuote.id ? updatedQuote : q)));
+        } else {
+            // Create
+            const newQuote: Quote = {
+                id: `quote-${Date.now()}`,
+                leadId: '',
+                ...quoteData
+            };
+            setQuotes(prev => [newQuote, ...prev]);
+        }
+        handleCancel();
+    };
+
+    const handleEditClick = (quote: Quote) => {
+        setEditingQuote(quote);
+        setShowAddForm(true);
+    };
+    
+    const handleArchiveQuote = (quoteId: string) => {
+        if (window.confirm('Are you sure you want to archive this quote?')) {
+            setQuotes(prev => prev.filter(q => q.id !== quoteId));
+        }
+    };
+    
+    const handleCancel = () => {
         setShowAddForm(false);
-        setInitialFormData(undefined);
+        setEditingQuote(null);
+        setAiEstimateData(undefined);
+    };
+
+    const handleMainButtonClick = () => {
+        if (showAddForm) {
+            handleCancel();
+        } else {
+            setEditingQuote(null);
+            setAiEstimateData(undefined);
+            setShowAddForm(true);
+        }
     };
 
     const filteredQuotes = useMemo(() => quotes.filter(q =>
@@ -178,14 +230,14 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                 <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
                      <button 
                         type="button" 
-                        onClick={() => { setShowAddForm(s => !s); setInitialFormData(undefined); }}
+                        onClick={handleMainButtonClick}
                         className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
                         {showAddForm ? 'Cancel' : 'Create Quote'}
                     </button>
                 </div>
             </div>
 
-            {showAddForm && <AddQuoteForm customers={customers} onSave={handleSaveQuote} onCancel={() => {setShowAddForm(false); setInitialFormData(undefined);}} initialData={initialFormData} />}
+            {showAddForm && <AddQuoteForm customers={customers} onSave={handleSave} onCancel={handleCancel} initialData={editingQuote || aiEstimateData} />}
             
             <div className="mt-6">
                 <input
@@ -210,7 +262,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Amount</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Status</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Date</th>
-                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th>
+                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-brand-gray-200 bg-white">
@@ -228,7 +280,8 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{quote.createdAt}</td>
                                             <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <a href="#" className="text-brand-green-600 hover:text-brand-green-900">Edit</a>
+                                                <button onClick={() => handleEditClick(quote)} className="text-brand-green-600 hover:text-brand-green-900">Edit</button>
+                                                <button onClick={() => handleArchiveQuote(quote.id)} className="ml-4 text-red-600 hover:text-red-900">Archive</button>
                                             </td>
                                         </tr>
                                     )})}

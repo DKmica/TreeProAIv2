@@ -1,19 +1,44 @@
 import React, { useState, useMemo } from 'react';
-import { Invoice, Quote, LineItem } from '../types';
-
-// Helper to calculate total
-const calculateQuoteTotal = (lineItems: LineItem[], stumpGrindingPrice: number): number => {
-    const itemsTotal = lineItems.reduce((sum, item) => item.selected ? sum + item.price : sum, 0);
-    return itemsTotal + (stumpGrindingPrice || 0);
-};
+import { Invoice } from '../types';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
+import QuickBooksIcon from '../components/icons/QuickBooksIcon';
+import StripeIcon from '../components/icons/StripeIcon';
+import { syncInvoiceToQuickBooks } from '../services/quickbooksService';
+import { createStripePaymentLink } from '../services/stripeService';
 
 interface InvoicesProps {
   invoices: Invoice[];
-  quotes: Quote[];
+  quotes: any[]; // Kept quotes prop for potential future use, but not used in this version
 }
 
-const Invoices: React.FC<InvoicesProps> = ({ invoices, quotes }) => {
+const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [loadingStates, setLoadingStates] = useState<{[key: string]: {qb?: boolean, stripe?: boolean}}>({});
+
+  const handleSyncQB = async (invoice: Invoice) => {
+    setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], qb: true } }));
+    try {
+      const result = await syncInvoiceToQuickBooks(invoice);
+      alert(`Successfully synced invoice ${invoice.id}. QuickBooks ID: ${result.qbInvoiceId}`);
+    } catch (error: any) {
+      alert(`Failed to sync invoice: ${error.message}`);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], qb: false } }));
+    }
+  };
+
+  const handlePayStripe = async (invoice: Invoice) => {
+    setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], stripe: true } }));
+     try {
+      const result = await createStripePaymentLink(invoice);
+      // In a real app, you would redirect to result.url
+      alert(`Stripe payment link created (simulation): ${result.url}`);
+    } catch (error: any) {
+      alert(`Failed to create payment link: ${error.message}`);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], stripe: false } }));
+    }
+  };
 
   const filteredInvoices = useMemo(() => invoices.filter(invoice =>
     invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,7 +89,7 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices, quotes }) => {
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Amount</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Status</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Due Date</th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">View</span></th>
+                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-gray-200 bg-white">
@@ -79,8 +104,15 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices, quotes }) => {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{invoice.dueDate}</td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <a href="#" className="text-brand-green-600 hover:text-brand-green-900">View</a>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
+                        <button onClick={() => handleSyncQB(invoice)} disabled={loadingStates[invoice.id]?.qb} className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50" title="Sync to QuickBooks">
+                          {loadingStates[invoice.id]?.qb ? <SpinnerIcon className="h-4 w-4" /> : <QuickBooksIcon className="h-4 w-4" />}
+                          QB
+                        </button>
+                        <button onClick={() => handlePayStripe(invoice)} disabled={loadingStates[invoice.id]?.stripe} className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50" title="Pay with Stripe">
+                           {loadingStates[invoice.id]?.stripe ? <SpinnerIcon className="h-4 w-4" /> : <StripeIcon className="h-4 w-4" />}
+                           Pay
+                        </button>
                       </td>
                     </tr>
                   ))}

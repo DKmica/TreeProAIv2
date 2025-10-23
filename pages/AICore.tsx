@@ -110,7 +110,8 @@ interface AICoreProps {
     quotes: Quote[];
     employees: Employee[];
     equipment: EquipmentType[];
-    setJobs: (updateFn: (prev: Job[]) => Job[]) => void;
+    // FIX: Correctly type the `setJobs` prop to match `useState` setter.
+    setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
 }
 
 const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, setJobs }) => {

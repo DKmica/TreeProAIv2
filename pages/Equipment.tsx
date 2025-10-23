@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Equipment as EquipmentType } from '../types';
 
 interface AddEquipmentFormProps {
-    onSave: (equipment: Omit<EquipmentType, 'id'>) => void;
+    onSave: (equipment: Partial<EquipmentType>) => void;
     onCancel: () => void;
+    initialData?: EquipmentType | null;
 }
 
-const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel }) => {
+const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, initialData }) => {
     const [formData, setFormData] = useState({
         name: '',
         makeModel: '',
@@ -15,6 +16,31 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel })
         status: 'Operational' as EquipmentType['status'],
         assignedTo: ''
     });
+    
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                name: initialData.name,
+                makeModel: initialData.makeModel,
+                purchaseDate: initialData.purchaseDate,
+                lastServiceDate: initialData.lastServiceDate,
+                status: initialData.status,
+                assignedTo: initialData.assignedTo || ''
+            });
+        } else {
+            // Reset for new entry
+            setFormData({
+                name: '',
+                makeModel: '',
+                purchaseDate: '',
+                lastServiceDate: '',
+                status: 'Operational' as EquipmentType['status'],
+                assignedTo: ''
+            });
+        }
+    }, [initialData]);
+
+    const isEditing = !!initialData;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -28,7 +54,7 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel })
 
     return (
         <div className="bg-white p-6 rounded-lg shadow my-6">
-            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">Add New Equipment</h2>
+            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">{isEditing ? 'Edit Equipment' : 'Add New Equipment'}</h2>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
@@ -62,7 +88,7 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel })
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                     <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
-                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Equipment</button>
+                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">{isEditing ? 'Save Changes' : 'Save Equipment'}</button>
                 </div>
             </form>
         </div>
@@ -71,20 +97,60 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel })
 
 interface EquipmentProps {
     equipment: EquipmentType[];
-    setEquipment: (updateFn: (prev: EquipmentType[]) => EquipmentType[]) => void;
+    // FIX: Correctly type the `setEquipment` prop to match `useState` setter.
+    setEquipment: React.Dispatch<React.SetStateAction<EquipmentType[]>>;
 }
 
 const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
+    const [editingEquipment, setEditingEquipment] = useState<EquipmentType | null>(null);
 
-    const handleSaveEquipment = (newEquipmentData: Omit<EquipmentType, 'id'>) => {
-        const newEquipmentItem: EquipmentType = {
-            id: `equip${equipment.length + 1}-${Date.now()}`,
-            ...newEquipmentData,
-        };
-        setEquipment(prev => [newEquipmentItem, ...prev]);
+    const handleCancel = () => {
         setShowAddForm(false);
+        setEditingEquipment(null);
+    };
+
+    const handleMainButtonClick = () => {
+        if (showAddForm) {
+            handleCancel();
+        } else {
+            setEditingEquipment(null);
+            setShowAddForm(true);
+        }
+    };
+
+    const handleEditClick = (item: EquipmentType) => {
+        setEditingEquipment(item);
+        setShowAddForm(true);
+    };
+
+    const handleArchiveEquipment = (equipmentId: string) => {
+        if (window.confirm('Are you sure you want to archive this equipment?')) {
+            setEquipment(prev => prev.filter(item => item.id !== equipmentId));
+        }
+    };
+    
+    const handleSaveEquipment = (equipmentData: Partial<EquipmentType>) => {
+        if (editingEquipment) {
+            // Update
+            setEquipment(prev => prev.map(item => 
+                item.id === editingEquipment.id ? { ...item, ...equipmentData } as EquipmentType : item
+            ));
+        } else {
+            // Create
+            const newEquipmentItem: EquipmentType = {
+                id: `equip-${Date.now()}`,
+                name: equipmentData.name || 'N/A',
+                makeModel: equipmentData.makeModel || 'N/A',
+                purchaseDate: equipmentData.purchaseDate || '',
+                lastServiceDate: equipmentData.lastServiceDate || '',
+                status: equipmentData.status || 'Operational',
+                assignedTo: equipmentData.assignedTo || undefined
+            };
+            setEquipment(prev => [newEquipmentItem, ...prev]);
+        }
+        handleCancel();
     };
   
     const filteredEquipment = useMemo(() => equipment.filter(e => 
@@ -110,13 +176,13 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
                     <p className="mt-2 text-sm text-brand-gray-700">A list of all company equipment.</p>
                 </div>
                 <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-                    <button onClick={() => setShowAddForm(s => !s)} type="button" className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
+                    <button onClick={handleMainButtonClick} type="button" className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
                         {showAddForm ? 'Cancel' : 'Add Equipment'}
                     </button>
                 </div>
             </div>
 
-            {showAddForm && <AddEquipmentForm onSave={handleSaveEquipment} onCancel={() => setShowAddForm(false)} />}
+            {showAddForm && <AddEquipmentForm onSave={handleSaveEquipment} onCancel={handleCancel} initialData={editingEquipment} />}
       
             <div className="mt-6">
                 <input
@@ -140,7 +206,7 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Make/Model</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Status</th>
                                         <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Assigned To</th>
-                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th>
+                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-brand-gray-200 bg-white">
@@ -155,7 +221,8 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{item.assignedTo || 'N/A'}</td>
                                             <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <a href="#" className="text-brand-green-600 hover:text-brand-green-900">Edit</a>
+                                                <button onClick={() => handleEditClick(item)} className="text-brand-green-600 hover:text-brand-green-900">Edit</button>
+                                                <button onClick={() => handleArchiveEquipment(item.id)} className="ml-4 text-red-600 hover:text-red-900">Archive</button>
                                             </td>
                                         </tr>
                                     ))}
