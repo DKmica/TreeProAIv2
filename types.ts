@@ -1,3 +1,4 @@
+
 export interface Customer {
   id: string;
   name: string;
@@ -30,6 +31,8 @@ export interface Quote {
   lineItems: LineItem[];
   stumpGrindingPrice: number; // 0 if not included
   createdAt: string;
+  signature?: string; // Base64 encoded image
+  acceptedAt?: string; // ISO date string
 }
 
 export interface Job {
@@ -40,6 +43,11 @@ export interface Job {
   scheduledDate: string;
   assignedCrew: string[];
   stumpGrindingPrice?: number;
+  workStartedAt?: string;
+  workEndedAt?: string;
+  photos?: string[];
+  clockInCoordinates?: { lat: number; lng: number; };
+  clockOutCoordinates?: { lat: number; lng: number; };
 }
 
 
@@ -49,7 +57,9 @@ export interface Invoice {
   customerName: string;
   status: 'Draft' | 'Sent' | 'Paid' | 'Overdue';
   amount: number;
+  lineItems: LineItem[];
   dueDate: string;
+  paidAt?: string; // ISO date string
 }
 
 export interface Employee {
@@ -87,7 +97,7 @@ export interface GroundingSource {
 }
 
 export interface ChatMessage {
-  id: string;
+  id:string;
   role: 'user' | 'model' | 'tool';
   text: string;
   sources?: GroundingSource[];
@@ -161,4 +171,10 @@ export interface AITreeEstimate {
     required_equipment: string[];
     required_manpower: number;
     estimated_duration_hours: number;
+}
+
+export interface UpsellSuggestion {
+  service_name: string;
+  description: string;
+  suggested_price: number;
 }

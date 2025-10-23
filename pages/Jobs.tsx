@@ -154,7 +154,6 @@ const JobForm: React.FC<{
 
 interface JobsProps {
   jobs: Job[];
-  // FIX: Correctly type the `setJobs` and `setInvoices` props to match `useState` setters.
   setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
   quotes: Quote[];
   customers: Customer[];
@@ -219,6 +218,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
       customerName: job.customerName,
       status: 'Draft',
       amount: calculateQuoteTotal(quote.lineItems, quote.stumpGrindingPrice || 0),
+      // FIX: Add missing `lineItems` property to satisfy the Invoice type.
+      lineItems: quote.lineItems,
       dueDate: dueDate.toISOString().split('T')[0],
     };
     setInvoices(prev => [newInvoice, ...prev]);

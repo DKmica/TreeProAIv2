@@ -1,31 +1,45 @@
-import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment } from '../types';
+
+import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem } from '../types';
 
 export const mockCustomers: Customer[] = [
   { id: 'cust1', name: 'John Doe', email: 'john.doe@example.com', phone: '555-1234', address: '123 Oak St, Los Angeles, CA', coordinates: { lat: 34.0522, lng: -118.2437 } },
   { id: 'cust2', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '555-5678', address: '456 Pine Ave, New York, NY', coordinates: { lat: 40.7128, lng: -74.0060 } },
   { id: 'cust3', name: 'Sarah Wilson', email: 'sarah.w@example.com', phone: '555-8888', address: '789 Birch Rd, Chicago, IL', coordinates: { lat: 41.8781, lng: -87.6298 } },
+  { id: 'cust4', name: 'Michael Brown', email: 'michael.b@example.com', phone: '555-4444', address: '101 Maple Ln, Miami, FL', coordinates: { lat: 25.7617, lng: -80.1918 } },
+
 ];
 
 export const mockLeads: Lead[] = [
   { id: 'lead1', customer: mockCustomers[0], source: 'Website', status: 'New', createdAt: '2023-10-26', description: 'Wants a quote for trimming a large maple tree.' },
   { id: 'lead2', customer: mockCustomers[1], source: 'Referral', status: 'Contacted', createdAt: '2023-10-25' },
   { id: 'lead3', customer: mockCustomers[2], source: 'Emergency Call', status: 'New', createdAt: new Date().toISOString().split('T')[0], description: 'A large branch has fallen on my garage. Need it removed ASAP!' },
+  { id: 'lead4', customer: mockCustomers[3], source: 'Website', status: 'Qualified', createdAt: '2023-10-28', description: 'Request for quote for various services.' },
 ];
 
 export const mockQuotes: Quote[] = [
-  { id: 'quote1', leadId: 'lead1', customerName: 'John Doe', status: 'Accepted', lineItems: [{description: 'Trimming large maple tree', price: 1200, selected: true}], stumpGrindingPrice: 0, createdAt: '2023-10-26' },
-  { id: 'quote2', leadId: 'lead2', customerName: 'Jane Smith', status: 'Accepted', lineItems: [{description: 'Oak tree removal', price: 850, selected: true}], stumpGrindingPrice: 0, createdAt: '2023-10-25' },
-  { id: 'quote3', leadId: 'lead3', customerName: 'Sarah Wilson', status: 'Accepted', lineItems: [{description: 'Emergency branch removal from garage', price: 2100, selected: true}], stumpGrindingPrice: 400, createdAt: new Date().toISOString().split('T')[0] },
+  { id: 'quote1', leadId: 'lead1', customerName: 'John Doe', status: 'Accepted', lineItems: [{description: 'Trimming large maple tree', price: 1200, selected: true}], stumpGrindingPrice: 0, createdAt: '2023-10-26', acceptedAt: '2023-10-27T10:00:00Z', signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==' },
+  { id: 'quote2', leadId: 'lead2', customerName: 'Jane Smith', status: 'Accepted', lineItems: [{description: 'Oak tree removal', price: 850, selected: true}], stumpGrindingPrice: 0, createdAt: '2023-10-25', acceptedAt: '2023-10-26T11:30:00Z', signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==' },
+  { id: 'quote3', leadId: 'lead3', customerName: 'Sarah Wilson', status: 'Accepted', lineItems: [{description: 'Emergency branch removal from garage', price: 2100, selected: true}], stumpGrindingPrice: 400, createdAt: new Date().toISOString().split('T')[0], acceptedAt: new Date().toISOString(), signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==' },
+  { id: 'quote4', leadId: 'lead4', customerName: 'Michael Brown', status: 'Sent', lineItems: [
+    {description: 'Remove large pine tree near house', price: 1800, selected: true},
+    {description: 'Prune two front yard oak trees', price: 650, selected: true},
+    {description: 'Fertilization treatment for all trees', price: 250, selected: false},
+  ], stumpGrindingPrice: 350, createdAt: '2023-10-28' },
 ];
 
 export const mockJobs: Job[] = [
-    { id: 'job1', quoteId: 'quote2', customerName: 'Jane Smith', status: 'Scheduled', scheduledDate: '2023-11-05', assignedCrew: ['emp2', 'emp3'] },
-    { id: 'job2', quoteId: 'quote1', customerName: 'John Doe', status: 'In Progress', scheduledDate: new Date().toISOString().split('T')[0], assignedCrew: ['emp1'] },
-    { id: 'job3', quoteId: 'quote3', customerName: 'Sarah Wilson', status: 'Unscheduled', scheduledDate: '', assignedCrew: ['emp1', 'emp3'] },
+    { id: 'job1', quoteId: 'quote2', customerName: 'Jane Smith', status: 'Completed', scheduledDate: '2023-11-05', assignedCrew: ['emp2', 'emp3'], photos: [], workStartedAt: '2023-11-05T08:00:00Z', workEndedAt: '2023-11-05T16:00:00Z', clockInCoordinates: { lat: 40.7128, lng: -74.0060 }, clockOutCoordinates: { lat: 40.7130, lng: -74.0062 } },
+    { id: 'job2', quoteId: 'quote1', customerName: 'John Doe', status: 'In Progress', scheduledDate: new Date().toISOString().split('T')[0], assignedCrew: ['emp1'], photos: [], workStartedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), clockInCoordinates: { lat: 34.0522, lng: -118.2437 } },
+    { id: 'job3', quoteId: 'quote3', customerName: 'Sarah Wilson', status: 'Unscheduled', scheduledDate: '', assignedCrew: ['emp1', 'emp3'], photos: [] },
 ];
 
+const quote2LineItems: LineItem[] = mockQuotes.find(q => q.id === 'quote2')?.lineItems || [];
+const quote1LineItems: LineItem[] = mockQuotes.find(q => q.id === 'quote1')?.lineItems || [];
+
+
 export const mockInvoices: Invoice[] = [
-    { id: 'inv1', jobId: 'job1', customerName: 'Jane Smith', status: 'Paid', amount: 850, dueDate: '2023-11-20' },
+    { id: 'inv1', jobId: 'job1', customerName: 'Jane Smith', status: 'Paid', amount: 850, lineItems: quote2LineItems, dueDate: '2023-11-20', paidAt: '2023-11-15T14:25:00Z' },
+    { id: 'inv2', jobId: 'job2', customerName: 'John Doe', status: 'Sent', amount: 1200, lineItems: quote1LineItems, dueDate: '2024-01-15' },
 ];
 
 export const mockEmployees: Employee[] = [

@@ -15,6 +15,12 @@ import Marketing from './pages/Marketing';
 import AICore from './pages/AICore';
 import AITreeEstimator from './pages/AITreeEstimator';
 import ChatPage from './pages/Chat';
+import CrewLayout from './components/CrewLayout';
+import CrewDashboard from './pages/crew/CrewDashboard';
+import CrewJobDetail from './pages/crew/CrewJobDetail';
+import CustomerPortalLayout from './components/CustomerPortalLayout';
+import QuotePortal from './pages/portal/QuotePortal';
+import InvoicePortal from './pages/portal/InvoicePortal';
 import { mockCustomers, mockLeads, mockQuotes, mockJobs, mockInvoices, mockEmployees, mockEquipment } from './data/mockData';
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
 
@@ -32,8 +38,9 @@ const App: React.FC = () => {
 
   return (
     <HashRouter>
-      <Layout appData={appData}>
-        <Routes>
+      <Routes>
+        {/* Main App Layout */}
+        <Route element={<Layout appData={appData} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
@@ -48,8 +55,20 @@ const App: React.FC = () => {
           <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
           <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
           <Route path="/marketing" element={<Marketing />} />
-        </Routes>
-      </Layout>
+        </Route>
+        
+        {/* Crew App Layout */}
+        <Route path="/crew" element={<CrewLayout />}>
+           <Route index element={<CrewDashboard jobs={jobs} />} />
+           <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} />} />
+        </Route>
+
+        {/* Customer Portal Layout */}
+        <Route path="/portal" element={<CustomerPortalLayout />}>
+          <Route path="quote/:quoteId" element={<QuotePortal quotes={quotes} setQuotes={setQuotes} />} />
+          <Route path="invoice/:invoiceId" element={<InvoicePortal invoices={invoices} setInvoices={setInvoices} />} />
+        </Route>
+      </Routes>
     </HashRouter>
   );
 };

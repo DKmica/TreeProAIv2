@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import HelpBot from './HelpBot';
@@ -17,11 +18,10 @@ interface AppData {
 }
 
 interface LayoutProps {
-  children: React.ReactNode;
   appData: AppData;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, appData }) => {
+const Layout: React.FC<LayoutProps> = ({ appData }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -33,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ children, appData }) => {
         <main className="flex-1">
           <div className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              {children}
+              <Outlet />
             </div>
           </div>
         </main>

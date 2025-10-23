@@ -1,5 +1,6 @@
+
 import { GoogleGenAI, Type, FunctionDeclaration, Chat } from "@google/genai";
-import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate } from "../types";
+import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate, UpsellSuggestion } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -368,5 +369,60 @@ export const getAiCoreInsights = async (
     } catch (error) {
         console.error("Error getting AI Core insights:", error);
         throw new Error("Failed to generate AI Core insights.");
+    }
+};
+
+const upsellSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            service_name: { type: Type.STRING, description: "A clear name for the suggested service (e.g., 'Stump Grinding', 'Debris Haul-Away')." },
+            description: { type: Type.STRING, description: "A brief, customer-facing explanation of what the service entails." },
+            suggested_price: { type: Type.NUMBER, description: "A reasonable, competitive price for this standalone service." }
+        },
+        required: ["service_name", "description", "suggested_price"]
+    }
+};
+
+export const generateUpsellSuggestions = async (existingServices: string[]): Promise<UpsellSuggestion[]> => {
+    const prompt = `
+        You are an expert sales assistant for a tree care company. Based on the services already in a customer's quote, suggest relevant upsell or cross-sell opportunities.
+
+        **Existing Services in Quote:**
+        - ${existingServices.join('\n- ')}
+
+        **Your Task:**
+        Provide a list of 2-3 complementary services. For each suggestion:
+        1.  Provide a clear service name.
+        2.  Write a brief, compelling description for the customer.
+        3.  Suggest a realistic price.
+
+        **Common Upsell Pairings:**
+        -   If "Tree Removal", suggest "Stump Grinding", "Debris Haul-Away", or "Soil/Grass Restoration".
+        -   If "Tree Pruning" or "Trimming", suggest "Fertilization Treatment", "Cabling and Bracing" for weak branches, or "Pest/Disease Inspection".
+        -   If "Emergency Service", suggest "Preventative Pruning for other trees" or "Comprehensive Property Safety Assessment".
+        
+        Do not suggest services that are already in the quote. Return ONLY a valid JSON array adhering to the provided schema. If there are no logical suggestions, return an empty array.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: upsellSchema
+            }
+        });
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        // Handle cases where the model might return an empty string for no suggestions
+        if (!cleanedJsonText) {
+            return [];
+        }
+        return JSON.parse(cleanedJsonText) as UpsellSuggestion[];
+    } catch (error) {
+        console.error("Error generating upsell suggestions:", error);
+        throw new Error("Failed to generate AI upsell suggestions.");
     }
 };
