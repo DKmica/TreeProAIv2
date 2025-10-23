@@ -13,11 +13,13 @@ import CalendarIcon from './icons/CalendarIcon';
 import MarketingIcon from './icons/MarketingIcon';
 import AICoreIcon from './icons/AICoreIcon';
 import SparklesIcon from './icons/SparklesIcon';
+import ChatIcon from './icons/ChatIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
   { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
   { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
+  { name: 'Chat', href: '/chat', icon: ChatIcon },
   { name: 'Leads', href: '/leads', icon: LeadIcon },
   { name: 'Quotes', href: '/quotes', icon: QuoteIcon },
   { name: 'Jobs', href: '/jobs', icon: JobIcon },

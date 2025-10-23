@@ -1,92 +1,77 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat } from '@google/genai';
-import { ChatMessage } from '../types';
+import React from 'react';
+import { useGeminiChat } from '../hooks/useGeminiChat';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../types';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
+import ToolIcon from '../components/icons/ToolIcon';
+import FunctionCallIcon from '../components/icons/FunctionCallIcon';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+interface AppData {
+  customers: Customer[];
+  leads: Lead[];
+  quotes: Quote[];
+  jobs: Job[];
+  invoices: Invoice[];
+  employees: Employee[];
+  equipment: Equipment[];
+}
 
-const ChatPage: React.FC = () => {
-    const [chat, setChat] = useState<Chat | null>(null);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [inputValue, setInputValue] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+interface ChatPageProps {
+    appData: AppData;
+}
 
-    useEffect(() => {
-        const initChat = () => {
-            const chatSession = ai.chats.create({
-                model: 'gemini-2.5-flash',
-                config: {
-                    systemInstruction: 'You are a friendly and helpful assistant for TreePro AI, a software platform for tree service businesses. Your role is to help users manage their business operations efficiently. You can answer questions about leads, quotes, jobs, scheduling, and invoicing within the context of the app.',
-                },
-            });
-            setChat(chatSession);
-            setMessages([
-                { role: 'model', text: 'Hello! I am your TreePro AI assistant. How can I help you manage your business today?' }
-            ]);
-        };
-        initChat();
-    }, []);
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!inputValue.trim() || isLoading || !chat) return;
-
-        const userMessage: ChatMessage = { role: 'user', text: inputValue };
-        setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
-        setIsLoading(true);
-        setError(null);
-        
-        // Add a placeholder for the model's response
-        setMessages(prev => [...prev, { role: 'model', text: '' }]);
-
-        try {
-            const responseStream = await chat.sendMessageStream({ message: userMessage.text });
-            
-            for await (const chunk of responseStream) {
-                 setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage && lastMessage.role === 'model') {
-                        const updatedMessages = [...prev];
-                        updatedMessages[prev.length - 1] = { ...lastMessage, text: lastMessage.text + chunk.text };
-                        return updatedMessages;
-                    }
-                    return prev;
-                });
-            }
-        } catch (err: any) {
-            console.error("Error sending message:", err);
-            setError("Sorry, I encountered an error. Please try again.");
-            setMessages(prev => prev.slice(0, -1)); // Remove model placeholder
-        } finally {
-            setIsLoading(false);
-        }
-    };
+const ChatPage: React.FC<ChatPageProps> = ({ appData }) => {
+    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = useGeminiChat({
+        appData: appData,
+        pageContext: "The user is on the dedicated full-screen Chat page. They may ask about any aspect of the application."
+    });
 
     return (
         <div>
             <h1 className="text-2xl font-bold text-brand-gray-900">AI Assistant</h1>
-            <p className="mt-2 text-sm text-brand-gray-700">Ask questions and get help managing your business.</p>
+            <p className="mt-2 text-sm text-brand-gray-700">Your intelligent co-pilot for managing your tree service business. Ask questions, get insights, or tell it to perform tasks.</p>
             
-            <div className="mt-6 flex flex-col h-[calc(100vh-14rem)] bg-white rounded-lg shadow-lg border border-brand-gray-200">
+            <div className="mt-6 flex flex-col h-[calc(100vh-16rem)] bg-white rounded-lg shadow-lg border border-brand-gray-200">
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    {messages.map((msg, index) => (
-                        <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-lg px-4 py-2 rounded-xl ${msg.role === 'user' ? 'bg-brand-green-600 text-white' : 'bg-brand-gray-200 text-brand-gray-800'}`}>
-                                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                            </div>
+                    {messages.map((msg) => (
+                        <div key={msg.id}>
+                            {msg.role === 'user' && (
+                                <div className="flex justify-end">
+                                    <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-green-600 text-white">
+                                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {msg.role === 'model' && (
+                                <div className="flex justify-start">
+                                    <div className="max-w-2xl px-4 py-2 rounded-xl bg-brand-gray-100 text-brand-gray-800">
+                                        <p className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{__html: msg.text.replace(/\n/g, '<br />')}}></p>
+                                        {msg.sources && msg.sources.length > 0 && (
+                                            <div className="mt-3 border-t pt-2">
+                                                <h4 className="text-xs font-semibold text-brand-gray-600">Sources:</h4>
+                                                <ol className="list-decimal list-inside text-xs space-y-1 mt-1">
+                                                    {msg.sources.map(source => (
+                                                        <li key={source.uri}><a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-brand-green-700 hover:underline">{source.title}</a></li>
+                                                    ))}
+                                                </ol>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                             {msg.role === 'tool' && (
+                                <div className="flex justify-center items-center my-4 text-xs text-brand-gray-500">
+                                    <div className="flex items-center gap-2 border rounded-full px-3 py-1 bg-brand-gray-50">
+                                        {msg.text.includes('Searching the web') ? <ToolIcon className="w-4 h-4" /> : <FunctionCallIcon className="w-4 h-4" />}
+                                        <span>{msg.text}</span>
+                                        <SpinnerIcon className="w-4 h-4" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
-                    {isLoading && messages[messages.length - 1]?.role === 'model' && (
+                     {isLoading && !messages.some(m => m.isThinking) && (
                          <div className="flex justify-start">
-                             <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-gray-200 text-brand-gray-800">
+                             <div className="max-w-lg px-4 py-3 rounded-xl bg-brand-gray-100 text-brand-gray-800">
                                 <SpinnerIcon className="h-5 w-5 text-brand-gray-500" />
                             </div>
                          </div>
@@ -102,7 +87,7 @@ const ChatPage: React.FC = () => {
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Ask about creating a quote, scheduling a job, etc..."
+                            placeholder="Ask me to find a customer, summarize open jobs, or ask a question about trees..."
                             className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                             aria-label="Chat input"
                             disabled={isLoading}

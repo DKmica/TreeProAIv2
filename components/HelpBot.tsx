@@ -1,113 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { GoogleGenAI, Chat } from '@google/genai';
-import { ChatMessage } from '../types';
+import React, { useState, useRef } from 'react';
+import { useGeminiChat } from '../hooks/useGeminiChat';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, ChatMessage } from '../types';
 import SpinnerIcon from './icons/SpinnerIcon';
 import ChatIcon from './icons/ChatIcon';
 import XIcon from './icons/XIcon';
+import ToolIcon from './icons/ToolIcon';
+import FunctionCallIcon from './icons/FunctionCallIcon';
 
+interface AppData {
+  customers: Customer[];
+  leads: Lead[];
+  quotes: Quote[];
+  jobs: Job[];
+  invoices: Invoice[];
+  employees: Employee[];
+  equipment: Equipment[];
+}
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-
-const getSystemInstruction = (pathname: string): string => {
-  const baseInstruction = 'You are a friendly and helpful assistant for TreePro AI, a software platform for tree service businesses. Your role is to help users manage their business operations efficiently. You can answer questions about leads, quotes, jobs, scheduling, and invoicing within the context of the app.';
-  
-  let pageContext = '';
-  if (pathname.startsWith('/dashboard')) {
-    pageContext = "The user is currently on the Dashboard page, which shows an overview of the business, including key metrics and a live map of jobs and crews.";
-  } else if (pathname.startsWith('/ai-core')) {
-    pageContext = "The user is on the AI Core page, which provides intelligent insights like lead scoring, automated job scheduling suggestions, and equipment maintenance alerts.";
-  } else if (pathname.startsWith('/leads')) {
-    pageContext = "The user is on the Leads page. They can view, add, and manage all incoming customer leads here.";
-  } else if (pathname.startsWith('/quotes')) {
-    pageContext = "The user is on the Quotes page. They can create manual quotes or use the AI-powered estimator. They can also view all existing quotes.";
-  } else if (pathname.startsWith('/jobs')) {
-    pageContext = "The user is on the Jobs page, where they manage all active jobs converted from quotes. They can view job details, update status, and assign crew members.";
-  } else if (pathname.startsWith('/customers')) {
-    pageContext = "The user is on the Customers page, which lists all customer information.";
-  } else if (pathname.startsWith('/invoices')) {
-    pageContext = "The user is on the Invoices page, for managing billing and payments.";
-  } else if (pathname.startsWith('/calendar')) {
-    pageContext = "The user is on the Calendar page. This page provides a drag-and-drop interface for scheduling jobs.";
-  } else if (pathname.startsWith('/employees')) {
-    pageContext = "The user is on the Employees page, used for managing staff and crew members.";
-  } else if (pathname.startsWith('/equipment')) {
-    pageContext = "The user is on the Equipment page, where they can track all company assets like trucks and tools.";
-  } else if (pathname.startsWith('/marketing')) {
-    pageContext = "The user is on the Marketing page. This page has AI tools to generate social media posts, optimize SEO, and create email campaigns.";
-  }
-
-  if (pageContext) {
-    return `${baseInstruction}\n\nCURRENT PAGE CONTEXT: ${pageContext}`;
-  }
-
-  return baseInstruction;
+const getPageContext = (pathname: string): string => {
+  if (pathname.startsWith('/dashboard')) return "The user is on the Dashboard, viewing business KPIs and a live map.";
+  if (pathname.startsWith('/ai-core')) return "The user is on the AI Core page, viewing intelligent insights and suggestions.";
+  if (pathname.startsWith('/leads')) return "The user is on the Leads page, managing potential customer inquiries.";
+  if (pathname.startsWith('/quotes')) return "The user is on the Quotes page, creating and managing price estimates.";
+  if (pathname.startsWith('/jobs')) return "The user is on the Jobs page, managing scheduled work.";
+  if (pathname.startsWith('/customers')) return "The user is on the Customers page, viewing their client list.";
+  if (pathname.startsWith('/invoices')) return "The user is on the Invoices page, managing billing.";
+  if (pathname.startsWith('/calendar')) return "The user is on the Calendar page, scheduling jobs.";
+  if (pathname.startsWith('/employees')) return "The user is on the Employees page, managing staff.";
+  if (pathname.startsWith('/equipment')) return "The user is on the Equipment page, tracking company assets.";
+  if (pathname.startsWith('/marketing')) return "The user is on the Marketing page, using AI tools for promotion.";
+  if (pathname.startsWith('/chat')) return "The user is on the dedicated Chat page.";
+  return "The user is on an unknown page.";
 };
 
 
-const HelpBot: React.FC<{ currentLocation: string }> = ({ currentLocation }) => {
+const HelpBot: React.FC<{ currentLocation: string; appData: AppData }> = ({ currentLocation, appData }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [chat, setChat] = useState<Chat | null>(null);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
-    const [inputValue, setInputValue] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (isOpen) {
-            const systemInstruction = getSystemInstruction(currentLocation);
-            const chatSession = ai.chats.create({
-                model: 'gemini-2.5-flash',
-                config: {
-                    systemInstruction: systemInstruction,
-                },
-            });
-            setChat(chatSession);
-            setMessages([
-                { role: 'model', text: 'Hello! I am your TreePro AI assistant. How can I help you manage your business today?' }
-            ]);
-        }
-    }, [isOpen, currentLocation]);
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!inputValue.trim() || isLoading || !chat) return;
-
-        const userMessage: ChatMessage = { role: 'user', text: inputValue };
-        setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
-        setIsLoading(true);
-        setError(null);
-        
-        setMessages(prev => [...prev, { role: 'model', text: '' }]);
-
-        try {
-            const responseStream = await chat.sendMessageStream({ message: userMessage.text });
-            
-            for await (const chunk of responseStream) {
-                 setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage && lastMessage.role === 'model') {
-                        const updatedMessages = [...prev];
-                        updatedMessages[prev.length - 1] = { ...lastMessage, text: lastMessage.text + chunk.text };
-                        return updatedMessages;
-                    }
-                    return prev;
-                });
-            }
-        } catch (err: any) {
-            console.error("Error sending message:", err);
-            setError("Sorry, I encountered an error. Please try again.");
-            setMessages(prev => prev.slice(0, -1)); // Remove model placeholder
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    
+    const pageContext = getPageContext(currentLocation);
+    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = useGeminiChat({
+        appData: isOpen ? appData : undefined, // Only pass data when the bot is open to avoid unnecessary processing
+        pageContext: pageContext
+    });
 
     if (!isOpen) {
         return (
@@ -132,17 +66,47 @@ const HelpBot: React.FC<{ currentLocation: string }> = ({ currentLocation }) => 
                     </button>
                 </header>
                 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((msg, index) => (
-                        <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-xs px-4 py-2 rounded-xl ${msg.role === 'user' ? 'bg-brand-green-600 text-white' : 'bg-brand-gray-200 text-brand-gray-800'}`}>
-                                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                            </div>
+                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {messages.map((msg) => (
+                         <div key={msg.id}>
+                            {msg.role === 'user' && (
+                                <div className="flex justify-end">
+                                    <div className="max-w-xs px-4 py-2 rounded-xl bg-brand-green-600 text-white">
+                                        <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {msg.role === 'model' && (
+                                <div className="flex justify-start">
+                                    <div className="max-w-xs px-4 py-2 rounded-xl bg-brand-gray-100 text-brand-gray-800">
+                                        <p className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{__html: msg.text.replace(/\n/g, '<br />')}}></p>
+                                         {msg.sources && msg.sources.length > 0 && (
+                                            <div className="mt-3 border-t pt-2">
+                                                <h4 className="text-xs font-semibold text-brand-gray-600">Sources:</h4>
+                                                <ol className="list-decimal list-inside text-xs space-y-1 mt-1">
+                                                    {msg.sources.map(source => (
+                                                        <li key={source.uri}><a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-brand-green-700 hover:underline">{source.title}</a></li>
+                                                    ))}
+                                                </ol>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            {msg.role === 'tool' && (
+                                <div className="flex justify-center items-center my-4 text-xs text-brand-gray-500">
+                                    <div className="flex items-center gap-2 border rounded-full px-3 py-1 bg-brand-gray-50">
+                                        {msg.text.includes('Searching the web') ? <ToolIcon className="w-4 h-4" /> : <FunctionCallIcon className="w-4 h-4" />}
+                                        <span>{msg.text}</span>
+                                        <SpinnerIcon className="w-4 h-4" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
-                    {isLoading && messages[messages.length - 1]?.role === 'model' && (
+                    {isLoading && !messages.some(m => m.isThinking) && (
                          <div className="flex justify-start">
-                             <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-gray-200 text-brand-gray-800">
+                             <div className="max-w-lg px-4 py-3 rounded-xl bg-brand-gray-100 text-brand-gray-800">
                                 <SpinnerIcon className="h-5 w-5 text-brand-gray-500" />
                             </div>
                          </div>

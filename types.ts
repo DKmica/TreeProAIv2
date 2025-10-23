@@ -81,10 +81,19 @@ export interface Equipment {
   assignedTo?: string;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
+export interface GroundingSource {
+  uri: string;
+  title: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model' | 'tool';
+  text: string;
+  sources?: GroundingSource[];
+  isThinking?: boolean;
+}
+
 
 export interface SEOSuggestions {
   suggested_title: string;

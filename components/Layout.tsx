@@ -3,12 +3,25 @@ import { useLocation } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import HelpBot from './HelpBot';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../types';
+
+
+interface AppData {
+  customers: Customer[];
+  leads: Lead[];
+  quotes: Quote[];
+  jobs: Job[];
+  invoices: Invoice[];
+  employees: Employee[];
+  equipment: Equipment[];
+}
 
 interface LayoutProps {
   children: React.ReactNode;
+  appData: AppData;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, appData }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -25,7 +38,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </main>
       </div>
-      <HelpBot currentLocation={location.pathname} />
+      <HelpBot currentLocation={location.pathname} appData={appData} />
     </div>
   );
 };

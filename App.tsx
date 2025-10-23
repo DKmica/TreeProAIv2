@@ -14,6 +14,7 @@ import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
 import AICore from './pages/AICore';
 import AITreeEstimator from './pages/AITreeEstimator';
+import ChatPage from './pages/Chat';
 import { mockCustomers, mockLeads, mockQuotes, mockJobs, mockInvoices, mockEmployees, mockEquipment } from './data/mockData';
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
 
@@ -27,14 +28,17 @@ const App: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
   const [equipment, setEquipment] = useState<EquipmentType[]>(mockEquipment);
 
+  const appData = { customers, leads, quotes, jobs, invoices, employees, equipment };
+
   return (
     <HashRouter>
-      <Layout>
+      <Layout appData={appData}>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
+          <Route path="/chat" element={<ChatPage appData={appData} />} />
           <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
           <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
           <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />

@@ -7,10 +7,16 @@ export const loadGoogleMapsScript = (): Promise<void> => {
       return resolve();
     }
 
+    // Add a global error handler for auth failures before loading the script
+    (window as any).gm_authFailure = () => {
+        reject(new Error('Google Maps authentication failed. This is often due to an invalid API key or a project with billing not enabled. Please check your Google Cloud Console.'));
+    };
+
     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
     if (existingScript) {
         // If a script tag is already there, wait for it to load.
         if (window.google && window.google.maps) {
+            delete (window as any).gm_authFailure; // Clean up
             return resolve();
         }
         existingScript.addEventListener('load', () => resolve());
@@ -20,8 +26,10 @@ export const loadGoogleMapsScript = (): Promise<void> => {
 
     const script = document.createElement('script');
     
-    // Hardcoded Google Maps API key as requested.
-    const apiKey = 'AIzaSyCweyegNcdWPO53GqYFIelJ2YXIHYFkImM';
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      return reject(new Error('API_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured.'));
+    }
 
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker`;
     script.async = true;
@@ -29,6 +37,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
     
     script.onload = () => {
         if (window.google && window.google.maps) {
+            delete (window as any).gm_authFailure; // Clean up the global handler on success
             resolve();
         } else {
             reject(new Error('Google Maps script loaded but `window.google.maps` is not available.'));
@@ -37,7 +46,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
 
     script.onerror = (error) => {
         console.error("Failed to load Google Maps script:", error);
-        reject(new Error('Failed to load Google Maps script. Check your API key, network connection, and browser console for more details.'));
+        reject(new Error('Failed to load Google Maps script. Check your network connection and browser console for more details.'));
     };
     
     document.head.appendChild(script);

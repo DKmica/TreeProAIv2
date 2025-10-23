@@ -1,7 +1,55 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration, Chat } from "@google/genai";
 import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+
+// --- New Advanced Chat Service ---
+
+const appFunctions: FunctionDeclaration[] = [
+    {
+        name: 'navigateTo',
+        description: 'Navigate to a specific page within the TreePro AI application.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                path: {
+                    type: Type.STRING,
+                    description: 'The path to navigate to (e.g., "/quotes", "/jobs").',
+                    enum: ['/dashboard', '/ai-core', '/leads', '/quotes', '/jobs', '/customers', '/invoices', '/calendar', '/employees', '/equipment', '/marketing']
+                },
+            },
+            required: ['path'],
+        },
+    },
+    {
+        name: 'findCustomer',
+        description: 'Find a customer by their name and get their contact details.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                name: { type: Type.STRING, description: 'The full name of the customer to find.' },
+            },
+            required: ['name'],
+        },
+    },
+    {
+        name: 'summarizeOpenJobs',
+        description: 'Get a summary of all jobs that are currently "Scheduled" or "In Progress".',
+        parameters: { type: Type.OBJECT, properties: {} },
+    },
+];
+
+export const startChatSession = (systemInstruction: string): Chat => {
+    return ai.chats.create({
+        model: 'gemini-2.5-flash',
+        systemInstruction: systemInstruction,
+        config: {
+            tools: [{ googleSearch: {} }, { functionDeclarations: appFunctions }],
+        }
+    });
+};
+
+// --- Existing Services ---
 
 export const generateTreeEstimate = async (files: { mimeType: string, data: string }[]): Promise<AITreeEstimate> => {
     const aiTreeEstimateSchema = {

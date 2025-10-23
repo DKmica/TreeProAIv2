@@ -83,6 +83,15 @@ const AddEmployeeForm: React.FC<{
     );
 };
 
+const StatCard: React.FC<{ label: string; value: string | number; valueColor?: string; subValue?: string }> = ({ label, value, valueColor = 'text-brand-gray-900', subValue }) => (
+    <div className="overflow-hidden rounded-lg bg-brand-gray-50 px-4 py-5 text-center shadow-inner">
+        <dt className="truncate text-sm font-medium text-brand-gray-500">{label}</dt>
+        <dd className={`mt-1 text-3xl font-semibold tracking-tight ${valueColor}`}>
+            {value} {subValue && <span className="text-lg font-normal text-brand-gray-500">{subValue}</span>}
+        </dd>
+    </div>
+);
+
 const EmployeeDetailModal: React.FC<{ employee: Employee | null; onClose: () => void }> = ({ employee, onClose }) => {
     if (!employee) return null;
 
@@ -108,9 +117,26 @@ const EmployeeDetailModal: React.FC<{ employee: Employee | null; onClose: () => 
                                     <div>
                                         <h4 className="font-medium text-brand-gray-800 border-b pb-1 mb-2">Performance Metrics</h4>
                                         <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                                            <div className="overflow-hidden rounded-lg bg-brand-gray-50 px-4 py-5"><dt className="truncate text-sm font-medium text-brand-gray-500">Jobs Completed</dt><dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{employee.performanceMetrics.jobsCompleted}</dd></div>
-                                            <div className="overflow-hidden rounded-lg bg-brand-gray-50 px-4 py-5"><dt className="truncate text-sm font-medium text-brand-gray-500">Customer Rating</dt><dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{employee.performanceMetrics.customerRating.toFixed(1)} <span className="text-lg font-normal">/ 5.0</span></dd></div>
-                                            <div className="overflow-hidden rounded-lg bg-brand-gray-50 px-4 py-5"><dt className="truncate text-sm font-medium text-brand-gray-500">Safety Incidents</dt><dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{employee.performanceMetrics.safetyIncidents}</dd></div>
+                                            <StatCard 
+                                                label="Jobs Completed" 
+                                                value={employee.performanceMetrics.jobsCompleted} 
+                                            />
+                                            <StatCard 
+                                                label="Customer Rating" 
+                                                value={employee.performanceMetrics.customerRating.toFixed(1)} 
+                                                subValue="/ 5.0"
+                                                valueColor={
+                                                    employee.performanceMetrics.customerRating >= 4.5 ? 'text-brand-green-600' :
+                                                    employee.performanceMetrics.customerRating >= 4.0 ? 'text-yellow-600' : 'text-red-600'
+                                                }
+                                            />
+                                            <StatCard 
+                                                label="Safety Incidents" 
+                                                value={employee.performanceMetrics.safetyIncidents} 
+                                                valueColor={
+                                                    employee.performanceMetrics.safetyIncidents === 0 ? 'text-brand-green-600' : 'text-red-600'
+                                                }
+                                            />
                                         </dl>
                                     </div>
                                 )}

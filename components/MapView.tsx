@@ -180,8 +180,9 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
                 </svg>
                 <p className="mt-3 font-semibold">Map Error</p>
                 <p className="mt-2 text-sm">{mapError}</p>
+                 <p className="mt-1 text-xs">This often indicates a problem with the Google Maps API key, such as billing not being enabled for the associated project.</p>
                 <a 
-                  href="https://developers.google.com/maps/documentation/javascript/error-messages#invalid-key-map-error"
+                  href="https://developers.google.com/maps/documentation/javascript/error-messages#billing-not-enabled-map-error"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-4 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
