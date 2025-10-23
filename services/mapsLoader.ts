@@ -34,7 +34,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
       return reject(new Error('MAPS_API_KEY or API_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured.'));
     }
 
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker,routes`;
     script.async = true;
     script.defer = true;
     

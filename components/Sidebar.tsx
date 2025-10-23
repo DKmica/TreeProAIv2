@@ -14,6 +14,7 @@ import MarketingIcon from './icons/MarketingIcon';
 import AICoreIcon from './icons/AICoreIcon';
 import SparklesIcon from './icons/SparklesIcon';
 import ChatIcon from './icons/ChatIcon';
+import DollarIcon from './icons/DollarIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Jobs', href: '/jobs', icon: JobIcon },
   { name: 'Customers', href: '/customers', icon: CustomerIcon },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
+  { name: 'Profitability', href: '/profitability', icon: DollarIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'Employees', href: '/employees', icon: EmployeeIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },

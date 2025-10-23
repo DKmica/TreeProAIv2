@@ -1,13 +1,17 @@
 
+
 import React, { useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Job, Quote, Customer } from '../../types';
+import { Job, Quote, Customer, JobHazardAnalysis } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
 import CameraIcon from '../../components/icons/CameraIcon';
 import CheckCircleIcon from '../../components/icons/CheckCircleIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
+import { generateJobHazardAnalysis } from '../../services/geminiService';
+import ExclamationTriangleIcon from '../../components/icons/ExclamationTriangleIcon';
+import ShieldCheckIcon from '../../components/icons/ShieldCheckIcon';
 
 interface CrewJobDetailProps {
   jobs: Job[];
@@ -22,6 +26,8 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isClocking, setIsClocking] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isGeneratingJha, setIsGeneratingJha] = useState(false);
+  const [jhaError, setJhaError] = useState<string | null>(null);
 
   const job = useMemo(() => jobs.find(j => j.id === jobId), [jobs, jobId]);
   const quote = useMemo(() => quotes.find(q => q.id === job?.quoteId), [quotes, job]);
@@ -105,6 +111,50 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
   const handlePhotoUploadClick = () => {
     fileInputRef.current?.click();
   };
+  
+  const blobUrlToBase64 = async (blobUrl: string): Promise<{ data: string, mimeType: string }> => {
+      const response = await fetch(blobUrl);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = (reader.result as string).split(',')[1];
+          if (base64String) {
+            resolve({ data: base64String, mimeType: blob.type });
+          } else {
+            reject(new Error('Failed to convert blob to base64.'));
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+  };
+
+  const handleGenerateJHA = async () => {
+    if (!job.photos || job.photos.length === 0) {
+      setJhaError("Please upload at least one photo of the job site first.");
+      return;
+    }
+
+    setIsGeneratingJha(true);
+    setJhaError(null);
+
+    try {
+        const imageParts = await Promise.all(
+            job.photos.map(url => blobUrlToBase64(url))
+        );
+
+        const servicesText = services.map(s => s.description).join(', ');
+        const result = await generateJobHazardAnalysis(imageParts, servicesText);
+        handleStatusUpdate({ jha: result });
+
+    } catch (error: any) {
+        setJhaError(error.message || "An unknown error occurred.");
+    } finally {
+        setIsGeneratingJha(false);
+    }
+  };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -175,6 +225,47 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
             {services.length === 0 && <li className="text-brand-gray-500">No services listed for this job.</li>}
           </ul>
         </div>
+      </div>
+
+      <div className="mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-brand-gray-800 mb-3">Safety & Compliance Co-pilot</h2>
+        {!job.jha ? (
+             <div>
+                <button 
+                    onClick={handleGenerateJHA} 
+                    disabled={!job.photos || job.photos.length === 0 || isGeneratingJha}
+                    className="w-full inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-400 disabled:cursor-not-allowed"
+                >
+                    {isGeneratingJha ? <SpinnerIcon className="h-5 w-5 mr-2"/> :  <ShieldCheckIcon className="h-5 w-5 mr-2" />}
+                    {isGeneratingJha ? 'Analyzing Site...' : 'Generate Job Hazard Analysis'}
+                </button>
+                {(!job.photos || job.photos.length === 0) && <p className="text-xs text-center mt-2 text-brand-gray-500">Please upload job photos to enable analysis.</p>}
+                {jhaError && <p className="mt-2 text-sm text-red-600 text-center">{jhaError}</p>}
+            </div>
+        ) : (
+            <div className="space-y-4 animate-fade-in">
+                <div>
+                    <h3 className="text-md font-semibold text-brand-gray-800 flex items-center">
+                        <ExclamationTriangleIcon className="w-5 h-5 mr-2 text-yellow-500"/>
+                        Identified Hazards
+                    </h3>
+                    <ul className="mt-2 list-disc list-inside space-y-1 text-brand-gray-700 text-sm">
+                        {job.jha.identified_hazards.map((hazard, i) => <li key={i}>{hazard}</li>)}
+                    </ul>
+                </div>
+                 <div>
+                    <h3 className="text-md font-semibold text-brand-gray-800 flex items-center">
+                        <ShieldCheckIcon className="w-5 h-5 mr-2 text-blue-500"/>
+                        Recommended PPE
+                    </h3>
+                    <ul className="mt-2 list-disc list-inside space-y-1 text-brand-gray-700 text-sm">
+                        {job.jha.recommended_ppe.map((ppe, i) => <li key={i}>{ppe}</li>)}
+                    </ul>
+                </div>
+                <p className="text-xs text-brand-gray-400 text-right">Analysis generated at {new Date(job.jha.analysis_timestamp).toLocaleTimeString()}</p>
+            </div>
+        )}
+       
       </div>
       
       {(job.workStartedAt || locationError) && (

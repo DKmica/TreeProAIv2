@@ -1,6 +1,7 @@
 
+
 import { GoogleGenAI, Type, FunctionDeclaration, Chat } from "@google/genai";
-import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate, UpsellSuggestion } from "../types";
+import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate, UpsellSuggestion, JobHazardAnalysis, MaintenanceAdvice } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -43,7 +44,6 @@ const appFunctions: FunctionDeclaration[] = [
 export const startChatSession = (systemInstruction: string): Chat => {
     return ai.chats.create({
         model: 'gemini-2.5-flash',
-        // FIX: `systemInstruction` must be inside the `config` object.
         config: {
             systemInstruction: systemInstruction,
             tools: [{ functionDeclarations: appFunctions }],
@@ -52,6 +52,73 @@ export const startChatSession = (systemInstruction: string): Chat => {
 };
 
 // --- Existing Services ---
+
+export const generateJobHazardAnalysis = async (files: { mimeType: string, data: string }[], services: string): Promise<JobHazardAnalysis> => {
+    const jhaSchema = {
+        type: Type.OBJECT,
+        properties: {
+            identified_hazards: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "A list of potential hazards identified from the images and job description."
+            },
+            recommended_ppe: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "A list of recommended Personal Protective Equipment (PPE)."
+            },
+            analysis_timestamp: {
+                type: Type.STRING,
+                description: "The ISO 8601 timestamp of when the analysis was generated."
+            }
+        },
+        required: ["identified_hazards", "recommended_ppe", "analysis_timestamp"]
+    };
+
+    const prompt = `You are an OSHA-certified safety expert for the arboriculture industry. Your task is to perform a Job Hazard Analysis (JHA) based on the provided images and the list of services to be performed.
+
+    **Services to be Performed:**
+    ${services}
+
+    **Analysis Instructions:**
+    1.  **Examine the images for common job-site hazards**, including but not limited to:
+        -   Overhead power lines or electrical conductors.
+        -   Uneven, sloped, or unstable ground.
+        -   Proximity to structures (houses, sheds, fences).
+        -   Presence of bystanders, vehicles, or public access areas.
+        -   Visible tree decay, dead branches (widow-makers), or structural weaknesses.
+        -   Limited drop zones for debris.
+    2.  **Consider the services to be performed** (e.g., tree removal requires evaluating the felling path, pruning involves aerial work).
+    3.  **List all identified hazards** clearly and concisely. If no specific hazards are visible, state "No immediate hazards visible, but maintain standard safety protocols."
+    4.  **Recommend necessary Personal Protective Equipment (PPE)** based on the job tasks and potential hazards. Standard PPE includes a hard hat, eye protection, and work boots. Add specific items like chainsaw-resistant chaps, hearing protection, or high-visibility vests as needed.
+    5.  Include the current timestamp in ISO 8601 format.
+
+    Return ONLY a valid JSON object adhering to the provided schema.`;
+
+    const imageParts = files.map(file => ({
+        inlineData: {
+            mimeType: file.mimeType,
+            data: file.data,
+        },
+    }));
+
+     try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: { parts: [{ text: prompt }, ...imageParts] },
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: jhaSchema
+            }
+        });
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        return JSON.parse(cleanedJsonText) as JobHazardAnalysis;
+    } catch (error) {
+        console.error("Error generating JHA:", error);
+        throw new Error("Failed to generate AI Job Hazard Analysis.");
+    }
+};
+
 
 export const generateTreeEstimate = async (files: { mimeType: string, data: string }[]): Promise<AITreeEstimate> => {
     const aiTreeEstimateSchema = {
@@ -424,5 +491,56 @@ export const generateUpsellSuggestions = async (existingServices: string[]): Pro
     } catch (error) {
         console.error("Error generating upsell suggestions:", error);
         throw new Error("Failed to generate AI upsell suggestions.");
+    }
+};
+
+const maintenanceAdviceSchema = {
+    type: Type.OBJECT,
+    properties: {
+        next_service_recommendation: {
+            type: Type.STRING,
+            description: "A concise, actionable recommendation for the next service and when it should be performed."
+        },
+        common_issues: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: "A list of common issues or parts to check for this specific make and model."
+        }
+    },
+    required: ["next_service_recommendation", "common_issues"]
+};
+
+export const generateMaintenanceAdvice = async (equipment: Equipment): Promise<MaintenanceAdvice> => {
+    const prompt = `
+        You are an expert equipment maintenance technician specializing in arboriculture machinery. Analyze the provided equipment data and its service history to give proactive maintenance advice.
+
+        **Equipment Details:**
+        - Name: ${equipment.name}
+        - Make/Model: ${equipment.make} ${equipment.model}
+        - Purchase Date: ${equipment.purchaseDate}
+        - Last Service Date: ${equipment.lastServiceDate}
+        - Maintenance History: ${JSON.stringify(equipment.maintenanceHistory, null, 2)}
+
+        **Your Task:**
+        1.  **Next Service Recommendation**: Based on the equipment type, age, and last service date, provide a clear, one-sentence recommendation for its next service. (e.g., "Recommend a full engine service with oil and filter change within the next 3 months or 50 operating hours.").
+        2.  **Common Issues**: For this specific make and model (${equipment.make} ${equipment.model}), list 2-3 common issues or parts that wear out and should be inspected regularly. (e.g., "Check hydraulic hoses for cracks", "Inspect grinder teeth for wear and torque", "Ensure chipper blades are sharp and properly gapped").
+
+        Return ONLY a valid JSON object adhering to the provided schema.
+    `;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: maintenanceAdviceSchema
+            }
+        });
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        return JSON.parse(cleanedJsonText) as MaintenanceAdvice;
+    } catch (error) {
+        console.error("Error generating maintenance advice:", error);
+        throw new Error("Failed to generate AI maintenance advice.");
     }
 };

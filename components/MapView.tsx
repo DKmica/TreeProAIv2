@@ -1,49 +1,10 @@
 
+
+
 import React, { useEffect, useRef, useState } from 'react';
-import { Job, Employee, Customer } from '../types';
+import { Job, Employee, Customer, OptimizedRoute } from '../types';
 import { loadGoogleMapsScript } from '../services/mapsLoader';
 import SpinnerIcon from './icons/SpinnerIcon';
-
-// Add type declarations for Google Maps API to satisfy TypeScript compiler
-// in absence of @types/google.maps. This allows using google.maps.* types
-// and window.google.
-declare global {
-    namespace google {
-        namespace maps {
-            interface LatLng {}
-            
-            class Map {
-                constructor(mapDiv: Element | null, opts?: any);
-                setZoom(zoom: number): void;
-                setCenter(latLng: LatLng | any): void;
-                addListener(eventName: string, handler: (...args: any[]) => void): void;
-                [key: string]: any;
-            }
-            class InfoWindow {
-                constructor(opts?: any);
-                setContent(content: string | Node): void;
-                open(options?: any): void;
-                close(): void;
-            }
-            namespace marker {
-                class AdvancedMarkerElement {
-                    constructor(options?: any);
-                    set map(map: Map | null);
-                    get position(): LatLng | null;
-                    addListener(eventName: string, handler: (...args: any[]) => void): void;
-                    [key: string]: any;
-                }
-                class PinElement {
-                    constructor(options?: any);
-                    get element(): HTMLElement;
-                }
-            }
-        }
-    }
-    interface Window {
-        google: typeof google;
-    }
-}
 
 interface MapViewProps {
     jobs: Job[];
@@ -51,13 +12,15 @@ interface MapViewProps {
     customers: Customer[];
     selectedJobId: string | null;
     onJobSelect: (jobId: string | null) => void;
+    optimizedRoute?: OptimizedRoute | null;
 }
 
-const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJobId, onJobSelect }) => {
+const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJobId, onJobSelect, optimizedRoute }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<google.maps.Map | null>(null);
     const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+    const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
 
@@ -83,6 +46,9 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
             });
             mapInstance.current = map;
             infoWindowRef.current = new window.google.maps.InfoWindow();
+            // FIX: Initialize renderer without the map to prevent timing issues.
+            // It will be associated with the map right before drawing a route.
+            directionsRendererRef.current = new window.google.maps.DirectionsRenderer();
 
             // Add a single listener to close info window and deselect job when map is clicked
             map.addListener('click', () => {
@@ -107,8 +73,14 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
 
         const newMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
 
-        // Add Job Markers
-        const activeJobs = jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress');
+        const jobsInRoute = optimizedRoute ? optimizedRoute.orderedJobs.map(j => j.id) : [];
+
+        // Add Job Markers (for jobs NOT in the optimized route)
+        const activeJobs = jobs.filter(job => 
+            (job.status === 'Scheduled' || job.status === 'In Progress') &&
+            !jobsInRoute.includes(job.id)
+        );
+
         activeJobs.forEach(job => {
             const customer = customers.find(c => c.name === job.customerName);
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
@@ -189,7 +161,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
         markersRef.current = newMarkers;
 
         // Auto-center and open info window if a job is selected from the list
-        if (selectedJobId) {
+        if (selectedJobId && !jobsInRoute.includes(selectedJobId)) {
             const job = jobs.find(j => j.id === selectedJobId);
             const customer = customers.find(c => c.name === job?.customerName);
             if (customer?.coordinates && (customer.coordinates.lat !== 0 || customer.coordinates.lng !== 0)) {
@@ -200,10 +172,10 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
                 if (selectedMarker) {
                     const content = `
                     <div style="font-family: sans-serif; color: #334155; padding: 5px;">
-                        <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id}</h3>
-                        <p style="margin: 2px 0;"><strong>Customer:</strong> ${job.customerName}</p>
-                        <p style="margin: 2px 0;"><strong>Status:</strong> ${job.status}</p>
-                        <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
+                        <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job!.id}</h3>
+                        <p style="margin: 2px 0;"><strong>Customer:</strong> ${job!.customerName}</p>
+                        <p style="margin: 2px 0;"><strong>Status:</strong> ${job!.status}</p>
+                        <p style="margin: 2px 0;"><strong>Date:</strong> ${job!.scheduledDate}</p>
                     </div>`;
                     infoWindow.setContent(content);
                     infoWindow.open({ anchor: selectedMarker, map });
@@ -211,7 +183,58 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
             }
         }
 
-    }, [jobs, employees, customers, mapLoaded, selectedJobId, onJobSelect]);
+    }, [jobs, employees, customers, mapLoaded, selectedJobId, onJobSelect, optimizedRoute]);
+    
+    useEffect(() => {
+        if (!mapLoaded || !directionsRendererRef.current || !mapInstance.current) return;
+
+        const directionsService = new window.google.maps.DirectionsService();
+        const directionsRenderer = directionsRendererRef.current;
+
+        // FIX: Explicitly associate the renderer with the map instance before using it.
+        directionsRenderer.setMap(mapInstance.current);
+
+        if (!optimizedRoute || optimizedRoute.orderedJobs.length === 0) {
+            directionsRenderer.setDirections(null); // Clear previous route
+            return;
+        }
+
+        const crewLeader = employees.find(e => optimizedRoute.orderedJobs[0].assignedCrew.includes(e.id) && e.jobTitle === 'Crew Leader');
+        
+        if (!crewLeader) {
+             directionsRenderer.setDirections(null);
+             return;
+        };
+
+        const origin = crewLeader.coordinates;
+        const jobWaypoints = optimizedRoute.orderedJobs.map(job => {
+            const customer = customers.find(c => c.name === job.customerName);
+            return { customer, job };
+        }).filter(item => item.customer);
+
+        if(jobWaypoints.length === 0) return;
+
+        const destination = jobWaypoints[jobWaypoints.length - 1].customer!.coordinates;
+        const waypoints = jobWaypoints.slice(0, -1).map(item => ({
+            location: item.customer!.coordinates,
+            stopover: true,
+        }));
+        
+        directionsService.route({
+            origin: origin,
+            destination: destination,
+            waypoints: waypoints,
+            travelMode: window.google.maps.TravelMode.DRIVING,
+        }, (result, status) => {
+            if (status === window.google.maps.DirectionsStatus.OK && result) {
+                directionsRenderer.setDirections(result);
+            } else {
+                console.error(`Directions request failed due to ${status}`);
+                directionsRenderer.setDirections(null);
+            }
+        });
+
+    }, [mapLoaded, optimizedRoute, customers, employees]);
 
     if (mapError) {
         return (

@@ -1,4 +1,6 @@
 
+
+
 import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -23,6 +25,8 @@ import QuotePortal from './pages/portal/QuotePortal';
 import InvoicePortal from './pages/portal/InvoicePortal';
 import { mockCustomers, mockLeads, mockQuotes, mockJobs, mockInvoices, mockEmployees, mockEquipment } from './data/mockData';
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
+import Profitability from './pages/Profitability';
+import EquipmentDetail from './pages/EquipmentDetail';
 
 
 const App: React.FC = () => {
@@ -54,7 +58,9 @@ const App: React.FC = () => {
           <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
           <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
           <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
+          <Route path="/equipment/:equipmentId" element={<EquipmentDetail equipment={equipment} setEquipment={setEquipment} />} />
           <Route path="/marketing" element={<Marketing />} />
+          <Route path="/profitability" element={<Profitability jobs={jobs} quotes={quotes} employees={employees} />} />
         </Route>
         
         {/* Crew App Layout */}

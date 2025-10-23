@@ -1,5 +1,6 @@
 
-import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem } from '../types';
+
+import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem, JobCost } from '../types';
 
 export const mockCustomers: Customer[] = [
   { id: 'cust1', name: 'John Doe', email: 'john.doe@example.com', phone: '555-1234', address: '123 Oak St, Los Angeles, CA', coordinates: { lat: 34.0522, lng: -118.2437 } },
@@ -27,8 +28,16 @@ export const mockQuotes: Quote[] = [
   ], stumpGrindingPrice: 350, createdAt: '2023-10-28' },
 ];
 
+const mockJob1Costs: JobCost = {
+  labor: 448, // 2 crew * 8 hours * ($22 + $35)/2 avg rate
+  equipment: 100, // Simulated
+  materials: 20, // Simulated
+  disposal: 80, // Simulated
+  total: 648,
+};
+
 export const mockJobs: Job[] = [
-    { id: 'job1', quoteId: 'quote2', customerName: 'Jane Smith', status: 'Completed', scheduledDate: '2023-11-05', assignedCrew: ['emp2', 'emp3'], photos: [], workStartedAt: '2023-11-05T08:00:00Z', workEndedAt: '2023-11-05T16:00:00Z', clockInCoordinates: { lat: 40.7128, lng: -74.0060 }, clockOutCoordinates: { lat: 40.7130, lng: -74.0062 } },
+    { id: 'job1', quoteId: 'quote2', customerName: 'Jane Smith', status: 'Completed', scheduledDate: '2023-11-05', assignedCrew: ['emp2', 'emp3'], photos: [], workStartedAt: '2023-11-05T08:00:00Z', workEndedAt: '2023-11-05T16:00:00Z', clockInCoordinates: { lat: 40.7128, lng: -74.0060 }, clockOutCoordinates: { lat: 40.7130, lng: -74.0062 }, costs: mockJob1Costs },
     { id: 'job2', quoteId: 'quote1', customerName: 'John Doe', status: 'In Progress', scheduledDate: new Date().toISOString().split('T')[0], assignedCrew: ['emp1'], photos: [], workStartedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), clockInCoordinates: { lat: 34.0522, lng: -118.2437 } },
     { id: 'job3', quoteId: 'quote3', customerName: 'Sarah Wilson', status: 'Unscheduled', scheduledDate: '', assignedCrew: ['emp1', 'emp3'], photos: [] },
 ];
@@ -50,7 +59,17 @@ export const mockEmployees: Employee[] = [
 ];
 
 export const mockEquipment: Equipment[] = [
-  { id: 'equip1', name: 'Stump Grinder', makeModel: 'Vermeer SC30TX', purchaseDate: '2021-02-10', lastServiceDate: '2023-05-15', status: 'Operational', assignedTo: 'Mike Miller' },
-  { id: 'equip2', name: 'Wood Chipper', makeModel: 'Bandit 15XP', purchaseDate: '2020-01-15', lastServiceDate: '2023-08-15', status: 'Needs Maintenance', assignedTo: 'Crew 1' },
-  { id: 'equip3', name: 'Chainsaw', makeModel: 'Stihl MS 462', purchaseDate: '2023-03-20', lastServiceDate: '2023-10-10', status: 'Operational' },
+  { id: 'equip1', name: 'Stump Grinder', make: 'Vermeer', model: 'SC30TX', purchaseDate: '2021-02-10', lastServiceDate: '2023-05-15', status: 'Operational', assignedTo: 'Mike Miller',
+    maintenanceHistory: [
+      { id: 'maint1', date: '2023-05-15', description: 'Replaced grinder teeth and changed oil.', cost: 450 },
+      { id: 'maint2', date: '2022-11-01', description: 'Annual engine service.', cost: 220 },
+    ]
+  },
+  { id: 'equip2', name: 'Wood Chipper', make: 'Bandit', model: '15XP', purchaseDate: '2020-01-15', lastServiceDate: '2023-08-15', status: 'Needs Maintenance', assignedTo: 'Crew 1',
+    maintenanceHistory: [
+        { id: 'maint3', date: '2023-08-15', description: 'Sharpened blades.', cost: 300 },
+        { id: 'maint4', date: '2023-02-20', description: 'Replaced hydraulic fluid.', cost: 150 },
+    ]
+   },
+  { id: 'equip3', name: 'Chainsaw', make: 'Stihl', model: 'MS 462', purchaseDate: '2023-03-20', lastServiceDate: '2023-10-10', status: 'Operational', maintenanceHistory: [] },
 ];

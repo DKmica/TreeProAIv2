@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Equipment as EquipmentType } from '../types';
 
 interface AddEquipmentFormProps {
@@ -10,7 +11,8 @@ interface AddEquipmentFormProps {
 const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, initialData }) => {
     const [formData, setFormData] = useState({
         name: '',
-        makeModel: '',
+        make: '',
+        model: '',
         purchaseDate: '',
         lastServiceDate: '',
         status: 'Operational' as EquipmentType['status'],
@@ -21,7 +23,8 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
         if (initialData) {
             setFormData({
                 name: initialData.name,
-                makeModel: initialData.makeModel,
+                make: initialData.make,
+                model: initialData.model,
                 purchaseDate: initialData.purchaseDate,
                 lastServiceDate: initialData.lastServiceDate,
                 status: initialData.status,
@@ -31,7 +34,8 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
             // Reset for new entry
             setFormData({
                 name: '',
-                makeModel: '',
+                make: '',
+                model: '',
                 purchaseDate: '',
                 lastServiceDate: '',
                 status: 'Operational' as EquipmentType['status'],
@@ -62,8 +66,12 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
                         <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="sm:col-span-3">
-                        <label htmlFor="makeModel" className="block text-sm font-medium leading-6 text-brand-gray-900">Make / Model</label>
-                        <input type="text" name="makeModel" id="makeModel" value={formData.makeModel} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                        <label htmlFor="make" className="block text-sm font-medium leading-6 text-brand-gray-900">Make</label>
+                        <input type="text" name="make" id="make" value={formData.make} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="model" className="block text-sm font-medium leading-6 text-brand-gray-900">Model</label>
+                        <input type="text" name="model" id="model" value={formData.model} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="purchaseDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Purchase Date</label>
@@ -97,7 +105,6 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
 
 interface EquipmentProps {
     equipment: EquipmentType[];
-    // FIX: Correctly type the `setEquipment` prop to match `useState` setter.
     setEquipment: React.Dispatch<React.SetStateAction<EquipmentType[]>>;
 }
 
@@ -142,7 +149,8 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
             const newEquipmentItem: EquipmentType = {
                 id: `equip-${Date.now()}`,
                 name: equipmentData.name || 'N/A',
-                makeModel: equipmentData.makeModel || 'N/A',
+                make: equipmentData.make || 'N/A',
+                model: equipmentData.model || 'N/A',
                 purchaseDate: equipmentData.purchaseDate || '',
                 lastServiceDate: equipmentData.lastServiceDate || '',
                 status: equipmentData.status || 'Operational',
@@ -155,7 +163,8 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
   
     const filteredEquipment = useMemo(() => equipment.filter(e => 
         e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.makeModel.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.status.toLowerCase().includes(searchTerm.toLowerCase())
     ), [equipment, searchTerm]);
 
@@ -212,8 +221,12 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
                                 <tbody className="divide-y divide-brand-gray-200 bg-white">
                                     {filteredEquipment.map((item) => (
                                         <tr key={item.id}>
-                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{item.name}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{item.makeModel}</td>
+                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
+                                                <Link to={`/equipment/${item.id}`} className="text-brand-green-600 hover:text-brand-green-800 hover:underline">
+                                                    {item.name}
+                                                </Link>
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{`${item.make} ${item.model}`}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
                                                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(item.status)}`}>
                                                     {item.status}

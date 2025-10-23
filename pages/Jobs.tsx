@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Job, Quote, Customer, Invoice, Employee, LineItem } from '../types';
+import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost } from '../types';
 
 
 // Helper to calculate total
@@ -218,7 +218,6 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
       customerName: job.customerName,
       status: 'Draft',
       amount: calculateQuoteTotal(quote.lineItems, quote.stumpGrindingPrice || 0),
-      // FIX: Add missing `lineItems` property to satisfy the Invoice type.
       lineItems: quote.lineItems,
       dueDate: dueDate.toISOString().split('T')[0],
     };
@@ -228,7 +227,49 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   };
 
   const handleStatusChange = (jobId: string, newStatus: Job['status']) => {
-    setJobs(prevJobs => prevJobs.map(j => (j.id === jobId ? { ...j, status: newStatus } : j)));
+    setJobs(prevJobs => prevJobs.map(j => {
+      if (j.id === jobId) {
+        const updatedJob = { ...j, status: newStatus };
+
+        // If status is changing TO 'Completed' and costs haven't been calculated yet
+        if (newStatus === 'Completed' && !updatedJob.costs) {
+          // 1. Calculate labor cost
+          let laborCost = 0;
+          if (updatedJob.workStartedAt && updatedJob.workEndedAt && updatedJob.assignedCrew.length > 0) {
+            const startTime = new Date(updatedJob.workStartedAt).getTime();
+            const endTime = new Date(updatedJob.workEndedAt).getTime();
+            const durationHours = (endTime - startTime) / (1000 * 60 * 60);
+
+            const totalCrewHourlyRate = updatedJob.assignedCrew.reduce((sum, empId) => {
+              const employee = employees.find(e => e.id === empId);
+              return sum + (employee?.payRate || 0);
+            }, 0);
+            
+            laborCost = durationHours * totalCrewHourlyRate;
+          }
+
+          // 2. Simulated operational costs
+          const equipmentCost = 100; // Simulated cost for equipment usage
+          const materialsCost = 20;  // Simulated cost for materials
+          const disposalCost = 80;   // Simulated cost for debris disposal
+
+          // 3. Total cost
+          const totalCost = laborCost + equipmentCost + materialsCost + disposalCost;
+
+          const jobCost: JobCost = {
+            labor: parseFloat(laborCost.toFixed(2)),
+            equipment: equipmentCost,
+            materials: materialsCost,
+            disposal: disposalCost,
+            total: parseFloat(totalCost.toFixed(2)),
+          };
+          
+          return { ...updatedJob, costs: jobCost };
+        }
+        return updatedJob;
+      }
+      return j;
+    }));
   };
 
   const filteredJobs = useMemo(() => jobs.filter(job =>

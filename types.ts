@@ -1,4 +1,5 @@
 
+
 export interface Customer {
   id: string;
   name: string;
@@ -35,6 +36,20 @@ export interface Quote {
   acceptedAt?: string; // ISO date string
 }
 
+export interface JobHazardAnalysis {
+    identified_hazards: string[];
+    recommended_ppe: string[];
+    analysis_timestamp: string;
+}
+
+export interface JobCost {
+    labor: number;
+    equipment: number;
+    materials: number;
+    disposal: number;
+    total: number;
+}
+
 export interface Job {
   id: string;
   quoteId: string;
@@ -48,6 +63,8 @@ export interface Job {
   photos?: string[];
   clockInCoordinates?: { lat: number; lng: number; };
   clockOutCoordinates?: { lat: number; lng: number; };
+  jha?: JobHazardAnalysis;
+  costs?: JobCost;
 }
 
 
@@ -81,14 +98,23 @@ export interface Employee {
   };
 }
 
+export interface MaintenanceLog {
+  id: string;
+  date: string;
+  description: string;
+  cost: number;
+}
+
 export interface Equipment {
   id: string;
   name: string;
-  makeModel: string;
+  make: string;
+  model: string;
   purchaseDate: string;
   lastServiceDate: string;
   status: 'Operational' | 'Needs Maintenance' | 'Out of Service';
   assignedTo?: string;
+  maintenanceHistory?: MaintenanceLog[];
 }
 
 export interface GroundingSource {
@@ -177,4 +203,90 @@ export interface UpsellSuggestion {
   service_name: string;
   description: string;
   suggested_price: number;
+}
+
+export interface MaintenanceAdvice {
+  next_service_recommendation: string;
+  common_issues: string[];
+}
+
+export interface OptimizedRoute {
+  orderedJobs: Job[];
+  totalDistance: string;
+  totalDuration: string;
+  googleMapsUrl: string;
+}
+
+// Add type declarations for Google Maps API to satisfy TypeScript compiler
+// in absence of @types/google.maps. This allows using google.maps.* types
+// and window.google.
+declare global {
+    namespace google {
+        namespace maps {
+            interface LatLngLiteral { lat: number; lng: number; }
+            type LatLng = LatLngLiteral;
+            
+            class Map {
+                constructor(mapDiv: Element | null, opts?: any);
+                setZoom(zoom: number): void;
+                setCenter(latLng: LatLng | any): void;
+                addListener(eventName: string, handler: (...args: any[]) => void): void;
+                [key: string]: any;
+            }
+            class InfoWindow {
+                constructor(opts?: any);
+                setContent(content: string | Node): void;
+                open(options?: any): void;
+                close(): void;
+            }
+            namespace marker {
+                class AdvancedMarkerElement {
+                    constructor(options?: any);
+                    set map(map: Map | null);
+                    get position(): LatLng | null;
+                    addListener(eventName: string, handler: (...args: any[]) => void): void;
+                    [key: string]: any;
+                }
+                class PinElement {
+                    constructor(options?: any);
+                    get element(): HTMLElement;
+                }
+            }
+            
+            // For Directions Service
+            class DirectionsService {
+                route(request: DirectionsRequest, callback: (result: DirectionsResult | null, status: DirectionsStatus) => void): void;
+            }
+            class DirectionsRenderer {
+                constructor(opts?: DirectionsRendererOptions);
+                setMap(map: Map | null): void;
+                setDirections(directions: DirectionsResult | null): void;
+            }
+            interface DirectionsRequest {
+                origin: LatLng | string;
+                destination: LatLng | string;
+                waypoints?: DirectionsWaypoint[];
+                optimizeWaypoints?: boolean;
+                travelMode: TravelMode;
+            }
+            interface DirectionsWaypoint {
+                location: LatLng | string;
+                stopover?: boolean;
+            }
+            enum TravelMode { DRIVING = 'DRIVING' }
+            enum DirectionsStatus { OK = 'OK' }
+            interface DirectionsResult {
+                routes: DirectionsRoute[];
+            }
+            interface DirectionsRoute { }
+            interface DirectionsRendererOptions {
+                map?: Map;
+                directions?: DirectionsResult;
+                suppressMarkers?: boolean;
+            }
+        }
+    }
+    interface Window {
+        google: typeof google;
+    }
 }
