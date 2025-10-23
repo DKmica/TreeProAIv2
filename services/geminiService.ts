@@ -42,9 +42,10 @@ const appFunctions: FunctionDeclaration[] = [
 export const startChatSession = (systemInstruction: string): Chat => {
     return ai.chats.create({
         model: 'gemini-2.5-flash',
-        systemInstruction: systemInstruction,
+        // FIX: `systemInstruction` must be inside the `config` object.
         config: {
-            tools: [{ googleSearch: {} }, { functionDeclarations: appFunctions }],
+            systemInstruction: systemInstruction,
+            tools: [{ functionDeclarations: appFunctions }],
         }
     });
 };

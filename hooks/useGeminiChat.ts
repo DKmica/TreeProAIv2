@@ -108,25 +108,20 @@ export const useGeminiChat = ({ appData, pageContext }: UseGeminiChatProps) => {
                 const response = await chat.sendMessage({ message: userMessageText });
                 
                 if (response.functionCalls && response.functionCalls.length > 0) {
-                    const fc = response.functionCalls[0];
-                    let toolMessage = `Using tool: ${fc.name}...`;
-                    if (fc.name === 'googleSearch' && fc.args.query) {
-                        toolMessage = `Searching the web for: "${fc.args.query}"...`;
-                    }
-                    addMessage({ role: 'tool', text: toolMessage, isThinking: true });
+                     addMessage({ role: 'tool', text: `Executing tools...`, isThinking: true });
 
-                    const toolResult = executeTool(fc.name, fc.args);
-                    
-                    // FIX: Correctly format the tool response for the chat.sendMessage method.
-                    const toolResponsePart = {
-                      functionResponse: {
-                        name: fc.name,
-                        response: { result: toolResult },
-                      },
-                    };
+                    const toolResponseParts = response.functionCalls.map(fc => {
+                        const toolResult = executeTool(fc.name, fc.args);
+                        return {
+                            functionResponse: {
+                                name: fc.name,
+                                response: { result: toolResult },
+                            },
+                        };
+                    });
 
-                    // Send tool response back to the model
-                    const finalResponse = await chat.sendMessage({ message: [toolResponsePart] });
+                    // Send all tool responses back to the model
+                    const finalResponse = await chat.sendMessage({ message: toolResponseParts });
                     
                     const groundingChunks = finalResponse.candidates?.[0]?.groundingMetadata?.groundingChunks;
                     const sources: GroundingSource[] | undefined = groundingChunks

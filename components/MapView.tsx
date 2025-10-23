@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Job, Employee, Customer } from '../types';
 import { loadGoogleMapsScript } from '../services/mapsLoader';
@@ -15,12 +16,14 @@ declare global {
                 constructor(mapDiv: Element | null, opts?: any);
                 setZoom(zoom: number): void;
                 setCenter(latLng: LatLng | any): void;
+                addListener(eventName: string, handler: (...args: any[]) => void): void;
                 [key: string]: any;
             }
             class InfoWindow {
                 constructor(opts?: any);
                 setContent(content: string | Node): void;
                 open(options?: any): void;
+                close(): void;
             }
             namespace marker {
                 class AdvancedMarkerElement {
@@ -28,6 +31,7 @@ declare global {
                     set map(map: Map | null);
                     get position(): LatLng | null;
                     addListener(eventName: string, handler: (...args: any[]) => void): void;
+                    [key: string]: any;
                 }
                 class PinElement {
                     constructor(options?: any);
@@ -45,9 +49,11 @@ interface MapViewProps {
     jobs: Job[];
     employees: Employee[];
     customers: Customer[];
+    selectedJobId: string | null;
+    onJobSelect: (jobId: string | null) => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
+const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJobId, onJobSelect }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<google.maps.Map | null>(null);
     const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
@@ -70,14 +76,21 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
         if (!mapLoaded) return;
 
         if (mapRef.current && !mapInstance.current && window.google?.maps?.marker) {
-            mapInstance.current = new window.google.maps.Map(mapRef.current, {
+            const map = new window.google.maps.Map(mapRef.current, {
                 center: { lat: 39.8283, lng: -98.5795 }, // Center of US
                 zoom: 4,
                 mapId: 'TREEPRO_AI_MAP' // Custom map ID for styling
             });
+            mapInstance.current = map;
             infoWindowRef.current = new window.google.maps.InfoWindow();
+
+            // Add a single listener to close info window and deselect job when map is clicked
+            map.addListener('click', () => {
+                infoWindowRef.current?.close();
+                onJobSelect(null);
+            });
         }
-    }, [mapLoaded]);
+    }, [mapLoaded, onJobSelect]);
 
     useEffect(() => {
         if (!mapLoaded) return;
@@ -99,18 +112,22 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
         activeJobs.forEach(job => {
             const customer = customers.find(c => c.name === job.customerName);
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
+            
+            const isSelected = job.id === selectedJobId;
 
             const jobPin = new google.maps.marker.PinElement({
-                background: job.status === 'In Progress' ? '#1d4ed8' : '#16a34a', // Blue for 'In Progress', Green for 'Scheduled'
+                background: isSelected ? '#ca8a04' : (job.status === 'In Progress' ? '#1d4ed8' : '#16a34a'), // Gold for selected, Blue for 'In Progress', Green for 'Scheduled'
                 borderColor: '#fff',
                 glyphColor: '#fff',
+                scale: isSelected ? 1.4 : 1.0,
             });
 
             const marker = new google.maps.marker.AdvancedMarkerElement({
                 position: customer.coordinates,
                 map,
-                title: `Job: ${job.id} - ${job.customerName}`,
+                title: `Job: ${job.id}`,
                 content: jobPin.element,
+                zIndex: isSelected ? 10 : 1, // Bring selected marker to front
             });
 
             const content = `
@@ -121,7 +138,8 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
                     <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
                 </div>`;
 
-            marker.addListener('click', () => {
+            marker.addListener('click', (e: MouseEvent) => {
+                e.stopPropagation(); // Prevent map click from firing immediately
                 infoWindow.setContent(content);
                 infoWindow.open({
                     anchor: marker,
@@ -129,6 +147,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
                 });
                 map.setZoom(15);
                 map.setCenter(marker.position as google.maps.LatLng);
+                onJobSelect(job.id);
             });
             newMarkers.push(marker);
         });
@@ -140,7 +159,8 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
             const crewPin = new google.maps.marker.PinElement({
                 background: '#f97316', // Orange for crew
                 borderColor: '#fff',
-                glyph: new URL('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-1.458a9.337 9.337 0 004.121 1.458c1.61.296 3.023-.423 3.023-2.622v-3.023a9.337 9.337 0 00-1.458-4.121a9.337 9.337 0 001.458-4.121V6.523c0-2.199-1.414-2.918-3.023-2.622a9.337 9.337 0 00-4.121 1.458A9.337 9.337 0 0015 3.872a9.38 9.38 0 00-2.625-.372M15 19.128v-3.023c0-2.199-1.414-2.918-3.023-2.622a9.337 9.337 0 00-4.121 1.458A9.337 9.337 0 003 16.105v3.023c0 2.199 1.414 2.918 3.023 2.622a9.337 9.337 0 004.121-1.458 9.337 9.337 0 004.121 1.458zM15 19.128a9.38 9.38 0 00-2.625-.372M15 19.128a9.38 9.38 0 002.625.372M6.75 8.25A3.75 3.75 0 0110.5 4.5a3.75 3.75 0 013.75 3.75v.375c0 1.023-.428 1.948-1.125 2.625a3.75 3.75 0 11-5.25 0 3.75 3.75 0 01-1.125-2.625V8.25z"/></svg>')
+                glyph: 'E', // Using a simple 'E' for Employee for better clarity
+                glyphColor: '#fff',
             });
 
             const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -162,15 +182,36 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
                     anchor: marker,
                     map,
                 });
-                map.setZoom(15);
-                map.setCenter(marker.position as google.maps.LatLng);
             });
             newMarkers.push(marker);
         });
 
         markersRef.current = newMarkers;
 
-    }, [jobs, employees, customers, mapLoaded]);
+        // Auto-center and open info window if a job is selected from the list
+        if (selectedJobId) {
+            const job = jobs.find(j => j.id === selectedJobId);
+            const customer = customers.find(c => c.name === job?.customerName);
+            if (customer?.coordinates && (customer.coordinates.lat !== 0 || customer.coordinates.lng !== 0)) {
+                map.setZoom(15);
+                map.setCenter(customer.coordinates);
+                 // Open info window for selected job
+                const selectedMarker = newMarkers.find(m => m.title?.startsWith(`Job: ${selectedJobId}`));
+                if (selectedMarker) {
+                    const content = `
+                    <div style="font-family: sans-serif; color: #334155; padding: 5px;">
+                        <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id}</h3>
+                        <p style="margin: 2px 0;"><strong>Customer:</strong> ${job.customerName}</p>
+                        <p style="margin: 2px 0;"><strong>Status:</strong> ${job.status}</p>
+                        <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
+                    </div>`;
+                    infoWindow.setContent(content);
+                    infoWindow.open({ anchor: selectedMarker, map });
+                }
+            }
+        }
+
+    }, [jobs, employees, customers, mapLoaded, selectedJobId, onJobSelect]);
 
     if (mapError) {
         return (

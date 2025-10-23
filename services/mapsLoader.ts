@@ -26,9 +26,12 @@ export const loadGoogleMapsScript = (): Promise<void> => {
 
     const script = document.createElement('script');
     
-    const apiKey = process.env.API_KEY;
+    // FIX: Directly use the provided Maps API key to resolve the InvalidKeyMapError.
+    // The previous implementation might have been falling back to the general Gemini API key,
+    // which is not authorized for the Google Maps JavaScript API.
+    const apiKey = 'AIzaSyAJ3NuxhCMIXciZXo9V6vvDM96WhpjRzcQ';
     if (!apiKey) {
-      return reject(new Error('API_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured.'));
+      return reject(new Error('MAPS_API_KEY or API_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured.'));
     }
 
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker`;
