@@ -1,42 +1,70 @@
 import React, { useState, useMemo } from 'react';
-import { Equipment as EquipmentType, MaintenanceHistory } from '../types';
-import { supabase } from '../src/integrations/supabase/client';
-import { useSession } from '../src/contexts/SessionContext';
+import { Equipment as EquipmentType } from '../types';
 
-const MaintenanceHistoryModal: React.FC<{
-    equipment: EquipmentType;
-    history: MaintenanceHistory[];
-    onClose: () => void;
-}> = ({ equipment, history, onClose }) => {
+interface AddEquipmentFormProps {
+    onSave: (equipment: Omit<EquipmentType, 'id'>) => void;
+    onCancel: () => void;
+}
+
+const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel }) => {
+    const [formData, setFormData] = useState({
+        name: '',
+        makeModel: '',
+        purchaseDate: '',
+        lastServiceDate: '',
+        status: 'Operational' as EquipmentType['status'],
+        assignedTo: ''
+    });
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(formData);
+    };
+
     return (
-        <div className="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <div className="fixed inset-0 z-10 overflow-y-auto">
-                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
-                        <h3 className="text-lg font-semibold leading-6 text-brand-navy-900" id="modal-title">
-                            Maintenance History for {equipment.name}
-                        </h3>
-                        <div className="mt-4">
-                            <ul className="divide-y divide-gray-200">
-                                {history.map(item => (
-                                    <li key={item.id} className="py-3">
-                                        <p className="text-sm font-medium text-brand-navy-800">{new Date(item.service_date).toLocaleDateString()} - Cost: ${item.cost?.toFixed(2) || 'N/A'}</p>
-                                        <p className="text-sm text-brand-navy-600">{item.description}</p>
-                                        {item.parts_used && <p className="text-xs text-brand-navy-500">Parts: {item.parts_used.join(', ')}</p>}
-                                    </li>
-                                ))}
-                                {history.length === 0 && <p className="text-sm text-center text-brand-navy-500 py-4">No maintenance history recorded.</p>}
-                            </ul>
-                        </div>
-                        <div className="mt-5 sm:mt-6">
-                            <button type="button" onClick={onClose} className="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-navy-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Close
-                            </button>
-                        </div>
+        <div className="bg-white p-6 rounded-lg shadow my-6">
+            <h2 className="text-xl font-bold text-brand-gray-900 mb-4">Add New Equipment</h2>
+            <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                    <div className="sm:col-span-3">
+                        <label htmlFor="name" className="block text-sm font-medium leading-6 text-brand-gray-900">Equipment Name</label>
+                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="makeModel" className="block text-sm font-medium leading-6 text-brand-gray-900">Make / Model</label>
+                        <input type="text" name="makeModel" id="makeModel" value={formData.makeModel} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="purchaseDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Purchase Date</label>
+                        <input type="date" name="purchaseDate" id="purchaseDate" value={formData.purchaseDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    </div>
+                     <div className="sm:col-span-3">
+                        <label htmlFor="lastServiceDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Last Service Date</label>
+                        <input type="date" name="lastServiceDate" id="lastServiceDate" value={formData.lastServiceDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-gray-900">Status</label>
+                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                            <option>Operational</option>
+                            <option>Needs Maintenance</option>
+                            <option>Out of Service</option>
+                        </select>
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="assignedTo" className="block text-sm font-medium leading-6 text-brand-gray-900">Assigned To</label>
+                        <input type="text" name="assignedTo" id="assignedTo" value={formData.assignedTo} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
                     </div>
                 </div>
-            </div>
+                <div className="mt-6 flex items-center justify-end gap-x-6">
+                    <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
+                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Equipment</button>
+                </div>
+            </form>
         </div>
     );
 };
@@ -44,16 +72,24 @@ const MaintenanceHistoryModal: React.FC<{
 interface EquipmentProps {
     equipment: EquipmentType[];
     setEquipment: (updateFn: (prev: EquipmentType[]) => EquipmentType[]) => void;
-    maintenanceHistory: MaintenanceHistory[];
 }
 
-const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment, maintenanceHistory }) => {
-    const { session } = useSession();
+const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedEquipment, setSelectedEquipment] = useState<EquipmentType | null>(null);
+    const [showAddForm, setShowAddForm] = useState(false);
 
-    const filteredEquipment = useMemo(() => equipment.filter(e =>
+    const handleSaveEquipment = (newEquipmentData: Omit<EquipmentType, 'id'>) => {
+        const newEquipmentItem: EquipmentType = {
+            id: `equip${equipment.length + 1}-${Date.now()}`,
+            ...newEquipmentData,
+        };
+        setEquipment(prev => [newEquipmentItem, ...prev]);
+        setShowAddForm(false);
+    };
+  
+    const filteredEquipment = useMemo(() => equipment.filter(e => 
         e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.makeModel.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.status.toLowerCase().includes(searchTerm.toLowerCase())
     ), [equipment, searchTerm]);
 
@@ -70,56 +106,65 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment, maintena
         <div>
             <div className="sm:flex sm:items-center">
                 <div className="sm:flex-auto">
-                    <h1 className="text-2xl font-bold text-brand-navy-900">Equipment</h1>
-                    <p className="mt-2 text-sm text-brand-navy-700">Manage all company assets, view maintenance history, and track status.</p>
+                    <h1 className="text-2xl font-bold text-brand-gray-900">Equipment</h1>
+                    <p className="mt-2 text-sm text-brand-gray-700">A list of all company equipment.</p>
                 </div>
-                {/* Add Equipment form can be triggered here */}
+                <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                    <button onClick={() => setShowAddForm(s => !s)} type="button" className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
+                        {showAddForm ? 'Cancel' : 'Add Equipment'}
+                    </button>
+                </div>
             </div>
 
+            {showAddForm && <AddEquipmentForm onSave={handleSaveEquipment} onCancel={() => setShowAddForm(false)} />}
+      
             <div className="mt-6">
-                <input type="text" placeholder="Search by name or status..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-navy-300 shadow-sm focus:border-brand-cyan-500 sm:text-sm" />
+                <input
+                    type="text"
+                    placeholder="Search by name, model, or status..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full max-w-sm rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    aria-label="Search equipment"
+                />
             </div>
 
             <div className="mt-4 flex flex-col">
-                <div className="inline-block min-w-full py-2 align-middle">
-                    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                        <table className="min-w-full divide-y divide-brand-navy-300">
-                            <thead className="bg-brand-navy-50">
-                                <tr>
-                                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-navy-900 sm:pl-6">Name</th>
-                                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Status</th>
-                                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Last Service</th>
-                                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Purchase Date</th>
-                                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-brand-navy-900">Value</th>
-                                    <th className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-brand-navy-200 bg-white">
-                                {filteredEquipment.map((item) => (
-                                    <tr key={item.id}>
-                                        <td className="py-4 pl-4 pr-3 text-sm font-medium text-brand-navy-900 sm:pl-6">{item.name}</td>
-                                        <td className="px-3 py-4 text-sm"><span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(item.status)}`}>{item.status}</span></td>
-                                        <td className="px-3 py-4 text-sm text-brand-navy-500">{item.last_maintenance || 'N/A'}</td>
-                                        <td className="px-3 py-4 text-sm text-brand-navy-500">{item.purchase_date || 'N/A'}</td>
-                                        <td className="px-3 py-4 text-sm text-brand-navy-500">${item.value?.toLocaleString() || 'N/A'}</td>
-                                        <td className="relative py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                            <button onClick={() => setSelectedEquipment(item)} className="text-brand-cyan-600 hover:text-brand-cyan-900">History</button>
-                                        </td>
+                <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                            <table className="min-w-full divide-y divide-brand-gray-300">
+                                <thead className="bg-brand-gray-50">
+                                    <tr>
+                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-gray-900 sm:pl-6">Name</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Make/Model</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Status</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Assigned To</th>
+                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-brand-gray-200 bg-white">
+                                    {filteredEquipment.map((item) => (
+                                        <tr key={item.id}>
+                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{item.name}</td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{item.makeModel}</td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
+                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(item.status)}`}>
+                                                    {item.status}
+                                                </span>
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{item.assignedTo || 'N/A'}</td>
+                                            <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                                <a href="#" className="text-brand-green-600 hover:text-brand-green-900">Edit</a>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {selectedEquipment && (
-                <MaintenanceHistoryModal
-                    equipment={selectedEquipment}
-                    history={maintenanceHistory.filter(h => h.equipment_id === selectedEquipment.id)}
-                    onClose={() => setSelectedEquipment(null)}
-                />
-            )}
         </div>
     );
 };

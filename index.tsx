@@ -1,8 +1,7 @@
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { SessionProvider } from './src/contexts/SessionContext';
-import { HashRouter } from 'react-router-dom';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -12,10 +11,6 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <HashRouter>
-      <SessionProvider>
-        <App />
-      </SessionProvider>
-    </HashRouter>
+    <App />
   </React.StrictMode>
 );

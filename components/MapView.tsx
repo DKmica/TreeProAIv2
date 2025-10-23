@@ -10,15 +10,11 @@ declare global {
     namespace google {
         namespace maps {
             interface LatLng {}
-            class LatLngBounds {
-                constructor(sw?: LatLng | null, ne?: LatLng | null);
-                extend(point: LatLng | {lat: number, lng: number}): void;
-            }
+            
             class Map {
                 constructor(mapDiv: Element | null, opts?: any);
                 setZoom(zoom: number): void;
                 setCenter(latLng: LatLng | any): void;
-                fitBounds(bounds: LatLngBounds): void;
                 [key: string]: any;
             }
             class InfoWindow {
@@ -37,9 +33,6 @@ declare global {
                     constructor(options?: any);
                     get element(): HTMLElement;
                 }
-            }
-            namespace event {
-                function addListenerOnce(instance: object, eventName: string, handler: Function): any;
             }
         }
     }
@@ -78,7 +71,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
 
         if (mapRef.current && !mapInstance.current && window.google?.maps?.marker) {
             mapInstance.current = new window.google.maps.Map(mapRef.current, {
-                center: { lat: 39.8283, lng: -98.5795 }, // Default center
+                center: { lat: 39.8283, lng: -98.5795 }, // Center of US
                 zoom: 4,
                 mapId: 'TREEPRO_AI_MAP' // Custom map ID for styling
             });
@@ -93,23 +86,22 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
         const infoWindow = infoWindowRef.current;
         if (!map || !infoWindow) return;
 
-        // Clear previous markers
+        // Clear previous markers from the map
         markersRef.current.forEach(marker => {
             marker.map = null;
         });
         markersRef.current = [];
 
         const newMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
-        const bounds = new window.google.maps.LatLngBounds();
 
         // Add Job Markers
         const activeJobs = jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress');
         activeJobs.forEach(job => {
-            const customer = customers.find(c => c.id === job.customer_id);
+            const customer = customers.find(c => c.name === job.customerName);
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
 
             const jobPin = new google.maps.marker.PinElement({
-                background: job.status === 'In Progress' ? '#f59e0b' : '#0891b2', // Amber for 'In Progress', Cyan for 'Scheduled'
+                background: job.status === 'In Progress' ? '#1d4ed8' : '#16a34a', // Blue for 'In Progress', Green for 'Scheduled'
                 borderColor: '#fff',
                 glyphColor: '#fff',
             });
@@ -117,24 +109,28 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
             const marker = new google.maps.marker.AdvancedMarkerElement({
                 position: customer.coordinates,
                 map,
-                title: `Job: ${job.id.substring(0,8)} - ${job.customerName}`,
+                title: `Job: ${job.id} - ${job.customerName}`,
                 content: jobPin.element,
             });
 
             const content = `
-                <div style="font-family: sans-serif; color: #334155; padding: 5px; max-width: 250px;">
-                    <h3 style="font-weight: 600; font-size: 1rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id.substring(0,8)}</h3>
-                    <p style="margin: 2px 0; font-size: 0.875rem;"><strong>Customer:</strong> ${job.customerName}</p>
-                    <p style="margin: 2px 0; font-size: 0.875rem;"><strong>Status:</strong> ${job.status}</p>
-                    <p style="margin: 2px 0; font-size: 0.875rem;"><strong>Date:</strong> ${job.date}</p>
+                <div style="font-family: sans-serif; color: #334155; padding: 5px;">
+                    <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id}</h3>
+                    <p style="margin: 2px 0;"><strong>Customer:</strong> ${job.customerName}</p>
+                    <p style="margin: 2px 0;"><strong>Status:</strong> ${job.status}</p>
+                    <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
                 </div>`;
 
             marker.addListener('click', () => {
                 infoWindow.setContent(content);
-                infoWindow.open({ anchor: marker, map });
+                infoWindow.open({
+                    anchor: marker,
+                    map,
+                });
+                map.setZoom(15);
+                map.setCenter(marker.position as google.maps.LatLng);
             });
             newMarkers.push(marker);
-            bounds.extend(customer.coordinates);
         });
 
         // Add Employee Markers
@@ -142,7 +138,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
             if (!employee.coordinates || (employee.coordinates.lat === 0 && employee.coordinates.lng === 0)) return;
 
             const crewPin = new google.maps.marker.PinElement({
-                background: '#16a34a', // Green for crew
+                background: '#f97316', // Orange for crew
                 borderColor: '#fff',
                 glyph: new URL('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-1.458a9.337 9.337 0 004.121 1.458c1.61.296 3.023-.423 3.023-2.622v-3.023a9.337 9.337 0 00-1.458-4.121a9.337 9.337 0 001.458-4.121V6.523c0-2.199-1.414-2.918-3.023-2.622a9.337 9.337 0 00-4.121 1.458A9.337 9.337 0 0015 3.872a9.38 9.38 0 00-2.625-.372M15 19.128v-3.023c0-2.199-1.414-2.918-3.023-2.622a9.337 9.337 0 00-4.121 1.458A9.337 9.337 0 003 16.105v3.023c0 2.199 1.414 2.918 3.023 2.622a9.337 9.337 0 004.121-1.458 9.337 9.337 0 004.121 1.458zM15 19.128a9.38 9.38 0 00-2.625-.372M15 19.128a9.38 9.38 0 002.625.372M6.75 8.25A3.75 3.75 0 0110.5 4.5a3.75 3.75 0 013.75 3.75v.375c0 1.023-.428 1.948-1.125 2.625a3.75 3.75 0 11-5.25 0 3.75 3.75 0 01-1.125-2.625V8.25z"/></svg>')
             });
@@ -155,31 +151,24 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
             });
 
             const content = `
-                <div style="font-family: sans-serif; color: #334155; padding: 5px; max-width: 250px;">
-                    <h3 style="font-weight: 600; font-size: 1rem; margin: 0 0 8px 0; color: #1e293b;">Crew: ${employee.name}</h3>
-                    <p style="margin: 2px 0; font-size: 0.875rem;"><strong>Title:</strong> ${employee.role}</p>
+                <div style="font-family: sans-serif; color: #334155; padding: 5px;">
+                    <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Crew: ${employee.name}</h3>
+                    <p style="margin: 2px 0;"><strong>Title:</strong> ${employee.jobTitle}</p>
                 </div>`;
             
             marker.addListener('click', () => {
                 infoWindow.setContent(content);
-                infoWindow.open({ anchor: marker, map });
+                infoWindow.open({
+                    anchor: marker,
+                    map,
+                });
+                map.setZoom(15);
+                map.setCenter(marker.position as google.maps.LatLng);
             });
             newMarkers.push(marker);
-            bounds.extend(employee.coordinates);
         });
 
         markersRef.current = newMarkers;
-
-        // Auto-zoom and center the map
-        if (newMarkers.length > 0) {
-            map.fitBounds(bounds);
-            // Don't zoom in too far if there's only one marker
-            if (newMarkers.length === 1) {
-                google.maps.event.addListenerOnce(map, 'idle', () => {
-                    map.setZoom(14);
-                });
-            }
-        }
 
     }, [jobs, employees, customers, mapLoaded]);
 
@@ -206,8 +195,8 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers }) => {
     if (!mapLoaded) {
         return (
             <div className="flex items-center justify-center h-full">
-                <SpinnerIcon className="h-8 w-8 text-brand-cyan-600" />
-                <p className="ml-3 text-brand-navy-600">Loading Map...</p>
+                <SpinnerIcon className="h-8 w-8 text-brand-green-600" />
+                <p className="ml-3 text-brand-gray-600">Loading Map...</p>
             </div>
         );
     }

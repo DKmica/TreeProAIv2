@@ -1,116 +1,93 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AIEstimate, SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, LeadScoreSuggestion, JobScheduleSuggestion, MaintenanceAlert } from "../types";
+import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
-const newEstimateSchema = {
-    type: Type.OBJECT,
-    properties: {
-        tree_species: { type: Type.STRING, description: "Identification of the tree species." },
-        estimated_height_feet: { type: Type.NUMBER, description: "Estimation of the tree's height in feet." },
-        estimated_diameter_inches: { type: Type.NUMBER, description: "Estimation of the tree's DBH (Diameter at Breast Height) in inches." },
-        hazards: {
-            type: Type.ARRAY,
-            description: "A list of identified health or structural hazards.",
-            items: {
+export const generateTreeEstimate = async (files: { mimeType: string, data: string }[]): Promise<AITreeEstimate> => {
+    const aiTreeEstimateSchema = {
+        type: Type.OBJECT,
+        properties: {
+            tree_identification: { type: Type.STRING, description: "The species of the tree(s) identified in the media." },
+            health_assessment: { type: Type.STRING, description: "A detailed assessment of the tree's health, noting any diseases, pests, or decay." },
+            measurements: {
                 type: Type.OBJECT,
                 properties: {
-                    name: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    severity: { type: Type.STRING, enum: ["Low", "Medium", "High"] }
+                    height_feet: { type: Type.NUMBER, description: "Estimated height of the tree in feet." },
+                    canopy_width_feet: { type: Type.NUMBER, description: "Estimated width of the tree's canopy in feet." },
+                    trunk_diameter_inches: { type: Type.NUMBER, description: "Estimated diameter of the trunk at breast height in inches." }
                 },
-                required: ["name", "description", "severity"]
-            }
-        },
-        obstacles: {
-            type: Type.ARRAY,
-            description: "A list of physical obstacles near the tree.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    name: { type: Type.STRING },
-                    description: { type: Type.STRING }
-                },
-                required: ["name", "description"]
-            }
-        },
-        detailed_assessment: { type: Type.STRING, description: "A comprehensive assessment of the tree's condition and the job requirements." },
-        job_details: {
-            type: Type.OBJECT,
-            properties: {
-                methodology: { type: Type.STRING, description: "The suggested methodology for the job (e.g., 'Technical rigging', 'Crane removal')." },
-                equipment_needed: { type: Type.ARRAY, items: { type: Type.STRING } },
-                manpower_needed: { type: Type.STRING, description: "e.g., '2-person crew', '3-person crew with crane operator'." },
-                certifications_needed: { type: Type.ARRAY, items: { type: Type.STRING } },
-                estimated_duration: { type: Type.STRING, description: "e.g., '4-6 hours', '1 full day'." }
+                required: ["height_feet", "canopy_width_feet", "trunk_diameter_inches"]
             },
-            required: ["methodology", "equipment_needed", "manpower_needed", "certifications_needed", "estimated_duration"]
+            hazards_obstacles: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "A list of potential hazards (e.g., power lines, proximity to structures, dead branches) or obstacles."
+            },
+            detailed_assessment: { type: Type.STRING, description: "A comprehensive summary explaining how the job would be performed, including access considerations and specific techniques." },
+            suggested_services: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        service_name: { type: Type.STRING, description: "A clear name for the suggested service (e.g., 'Tree Removal', 'Crown Reduction')." },
+                        description: { type: Type.STRING, description: "A brief explanation of what the service entails." },
+                        price_range: {
+                            type: Type.OBJECT,
+                            properties: {
+                                min: { type: Type.NUMBER, description: "The low end of the estimated price for this service." },
+                                max: { type: Type.NUMBER, description: "The high end of the estimated price for this service." }
+                            },
+                            required: ["min", "max"]
+                        }
+                    },
+                    required: ["service_name", "description", "price_range"]
+                }
+            },
+            required_equipment: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of major equipment needed (e.g., 'Bucket Truck', 'Stump Grinder')." },
+            required_manpower: { type: Type.NUMBER, description: "Estimated number of crew members needed." },
+            estimated_duration_hours: { type: Type.NUMBER, description: "Estimated time to complete the job in hours." }
         },
-        service_estimates: {
-            type: Type.ARRAY,
-            description: "A list of cost estimates for different service options.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    service_name: { type: Type.STRING, description: "e.g., 'Removal', 'Pruning', 'Stump Grinding'." },
-                    min_usd: { type: Type.NUMBER },
-                    max_usd: { type: Type.NUMBER },
-                    description: { type: Type.STRING }
-                },
-                required: ["service_name", "min_usd", "max_usd", "description"]
+        required: ["tree_identification", "health_assessment", "measurements", "hazards_obstacles", "detailed_assessment", "suggested_services", "required_equipment", "required_manpower", "estimated_duration_hours"]
+    };
+
+    const prompt = `You are an expert ISA Certified Arborist providing a detailed assessment and quote estimate for a potential tree service job based on the provided images and/or videos.
+
+    Analyze the media and provide the following information in a structured JSON format:
+    1.  **tree_identification**: Identify the tree's species.
+    2.  **health_assessment**: Assess the tree's overall health.
+    3.  **measurements**: Estimate height (ft), canopy width (ft), and trunk diameter (in).
+    4.  **hazards_obstacles**: List any hazards like power lines, structures, fences, etc.
+    5.  **detailed_assessment**: Describe the scope of work and how the job would be executed.
+    6.  **suggested_services**: Propose specific services (e.g., removal, pruning, cabling). For each service, provide a name, a brief description, and a tight, realistic price range with a 30-50% difference between min and max.
+    7.  **required_equipment**: List the necessary equipment.
+    8.  **required_manpower**: Estimate the number of crew needed.
+    9.  **estimated_duration_hours**: Estimate the job duration in hours.
+
+    Return ONLY the JSON object.`;
+
+    const imageParts = files.map(file => ({
+        inlineData: {
+            mimeType: file.mimeType,
+            data: file.data,
+        },
+    }));
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: { parts: [{ text: prompt }, ...imageParts] },
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: aiTreeEstimateSchema
             }
-        }
-    },
-    required: ["tree_species", "estimated_height_feet", "estimated_diameter_inches", "hazards", "obstacles", "detailed_assessment", "job_details", "service_estimates"]
-};
-
-export const generateAIEstimate = async (
-  images: { mimeType: string; data: string }[],
-  description: string
-): Promise<AIEstimate> => {
-  const imageParts = images.map(image => ({
-    inlineData: {
-      mimeType: image.mimeType,
-      data: image.data
+        });
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        return JSON.parse(cleanedJsonText) as AITreeEstimate;
+    } catch (error) {
+        console.error("Error generating tree estimate:", error);
+        throw new Error("Failed to generate AI tree estimate.");
     }
-  }));
-
-  const textPart = {
-    text: `
-      You are an expert ISA Certified Arborist and estimator for a tree service company called TreePro AI.
-      Your task is to perform a detailed visual assessment of the tree(s) in the user-provided images and generate a comprehensive job analysis and quote estimate.
-
-      Customer's Description: "${description}"
-
-      Analyze the images and description to produce a detailed report in the specified JSON format. Your analysis should be thorough and professional.
-      - Identify the tree species, estimate its size.
-      - Detail any hazards (e.g., decay, weak limbs) and obstacles (e.g., power lines, structures).
-      - Provide a detailed assessment of the tree's condition and the work required.
-      - Outline the job details: methodology, equipment, manpower, and estimated duration.
-      - Provide cost estimates for key services (e.g., Removal, Pruning, Stump Grinding), including a min/max price range in USD and a description for each. A standard 2-person crew costs $250/hour. High-risk or complex jobs will be more expensive.
-    `
-  };
-
-  try {
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [textPart, ...imageParts] },
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: newEstimateSchema
-        }
-    });
-
-    const jsonText = response.text.trim();
-    const cleanedJsonText = jsonText.replace(/^```json\s*|```$/g, '');
-    return JSON.parse(cleanedJsonText) as AIEstimate;
-
-  } catch (error) {
-    console.error("Error generating AI estimate with Gemini:", error);
-    throw new Error("Failed to generate AI estimate. Please check the console for details.");
-  }
 };
-
 
 export const generateSocialMediaPost = async (topic: string, platform: string): Promise<string> => {
     const prompt = `
@@ -131,7 +108,7 @@ export const generateSocialMediaPost = async (topic: string, platform: string): 
     `;
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.5-flash',
             contents: prompt
         });
         return response.text;
@@ -248,112 +225,55 @@ export const generateEmailCampaign = async (goal: string, audience: string): Pro
     }
 };
 
-// --- AI Core Sub-Functions ---
 
-const _generateLeadScores = async (leads: Lead[]): Promise<LeadScoreSuggestion[]> => {
-    if (leads.length === 0) return [];
-    const prompt = `
-        You are an AI assistant for a tree service company. Score the following new leads from 1-100 based on potential value and urgency.
-        Analyze the 'notes' field for keywords like 'emergency', 'ASAP', 'fallen branch', 'storm damage', 'leaning tree', 'on my house'.
-        If such keywords are present, set urgency to 'High' and the score to 90+.
-        
-        Leads: ${JSON.stringify(leads)}
-
-        Return a JSON array of lead scores.
-    `;
-    const schema = {
-        type: Type.ARRAY,
-        items: {
-            type: Type.OBJECT,
-            properties: {
-                leadId: { type: Type.STRING }, customerName: { type: Type.STRING }, score: { type: Type.NUMBER },
-                reasoning: { type: Type.STRING }, recommendedAction: { type: Type.STRING, enum: ['Prioritize Follow-up', 'Standard Follow-up', 'Nurture'] },
-                urgency: { type: Type.STRING, enum: ['None', 'Medium', 'High'] }
-            },
-            required: ["leadId", "customerName", "score", "reasoning", "recommendedAction", "urgency"]
+const aiCoreSchema = {
+    type: Type.OBJECT,
+    properties: {
+        businessSummary: { type: Type.STRING, description: "A brief, 1-2 sentence summary of the current business status." },
+        leadScores: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    leadId: { type: Type.STRING },
+                    customerName: { type: Type.STRING },
+                    score: { type: Type.NUMBER, description: "Score from 1-100." },
+                    reasoning: { type: Type.STRING },
+                    recommendedAction: { type: Type.STRING, enum: ['Prioritize Follow-up', 'Standard Follow-up', 'Nurture'] }
+                },
+                required: ["leadId", "customerName", "score", "reasoning", "recommendedAction"]
+            }
+        },
+        jobSchedules: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    quoteId: { type: Type.STRING },
+                    customerName: { type: Type.STRING },
+                    suggestedDate: { type: Type.STRING, description: "Suggested date in YYYY-MM-DD format." },
+                    suggestedCrew: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    reasoning: { type: Type.STRING }
+                },
+                required: ["quoteId", "customerName", "suggestedDate", "suggestedCrew", "reasoning"]
+            }
+        },
+        maintenanceAlerts: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    equipmentId: { type: Type.STRING },
+                    equipmentName: { type: Type.STRING },
+                    reasoning: { type: Type.STRING },
+                    recommendedAction: { type: Type.STRING, enum: ['Schedule Service Immediately', 'Schedule Routine Check-up'] }
+                },
+                 required: ["equipmentId", "equipmentName", "reasoning", "recommendedAction"]
+            }
         }
-    };
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro', contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema: schema }
-    });
-    return JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, '')) as LeadScoreSuggestion[];
+    },
+    required: ["businessSummary", "leadScores", "jobSchedules", "maintenanceAlerts"]
 };
-
-const _generateJobSchedules = async (quotes: Quote[], employees: Partial<Employee>[]): Promise<JobScheduleSuggestion[]> => {
-    if (quotes.length === 0) return [];
-    const today = new Date().toISOString().split('T')[0];
-    const prompt = `
-        You are an AI scheduler for a tree service company. Today is ${today}.
-        Suggest a schedule date (a weekday in the near future) and a crew (list of employee names) for each of the following accepted quotes.
-        
-        Accepted Quotes: ${JSON.stringify(quotes)}
-        Available Employees: ${JSON.stringify(employees)}
-
-        Return a JSON array of job schedule suggestions.
-    `;
-    const schema = {
-        type: Type.ARRAY,
-        items: {
-            type: Type.OBJECT,
-            properties: {
-                quoteId: { type: Type.STRING }, customerName: { type: Type.STRING },
-                suggestedDate: { type: Type.STRING, description: "YYYY-MM-DD format" },
-                suggestedCrew: { type: Type.ARRAY, items: { type: Type.STRING } },
-                reasoning: { type: Type.STRING }
-            },
-            required: ["quoteId", "customerName", "suggestedDate", "suggestedCrew", "reasoning"]
-        }
-    };
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro', contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema: schema }
-    });
-    return JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, '')) as JobScheduleSuggestion[];
-};
-
-const _generateMaintenanceAlerts = async (equipment: Equipment[]): Promise<MaintenanceAlert[]> => {
-    if (equipment.length === 0) return [];
-    const today = new Date().toISOString().split('T')[0];
-    const prompt = `
-        You are an AI maintenance manager for a tree service company. Today is ${today}.
-        Analyze the following equipment list. Flag items that need maintenance.
-        An item needs maintenance if its status is 'Needs Maintenance' or if its 'last_maintenance' date was more than 6 months ago.
-        
-        Equipment: ${JSON.stringify(equipment)}
-
-        Return a JSON array of maintenance alerts.
-    `;
-    const schema = {
-        type: Type.ARRAY,
-        items: {
-            type: Type.OBJECT,
-            properties: {
-                equipmentId: { type: Type.STRING }, equipmentName: { type: Type.STRING },
-                reasoning: { type: Type.STRING },
-                recommendedAction: { type: Type.STRING, enum: ['Schedule Service Immediately', 'Schedule Routine Check-up'] }
-            },
-            required: ["equipmentId", "equipmentName", "reasoning", "recommendedAction"]
-        }
-    };
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro', contents: prompt,
-        config: { responseMimeType: 'application/json', responseSchema: schema }
-    });
-    return JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, '')) as MaintenanceAlert[];
-};
-
-const _generateBusinessSummary = async (leads: Lead[], quotes: Quote[]): Promise<string> => {
-    if (leads.length === 0 && quotes.length === 0) return "No new activity to summarize.";
-    const prompt = `
-        You are an AI business analyst. Briefly summarize the current situation in 1-2 sentences based on this data.
-        New Leads: ${leads.length}
-        Quotes to Schedule: ${quotes.length}
-    `;
-    const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
-    return response.text;
-};
-
 
 export const getAiCoreInsights = async (
     leads: Lead[],
@@ -362,34 +282,39 @@ export const getAiCoreInsights = async (
     employees: Employee[],
     equipment: Equipment[]
 ): Promise<AICoreInsights> => {
+
+    const today = new Date().toISOString().split('T')[0];
+    const prompt = `
+        You are the AI Core for TreePro AI, a business management platform for tree service companies. Your function is to analyze all operational data and provide actionable, intelligent insights to automate and optimize the business. Today's date is ${today}.
+
+        Analyze the following business data:
+        - All Leads: ${JSON.stringify(leads)}
+        - All Jobs: ${JSON.stringify(jobs)}
+        - All Quotes: ${JSON.stringify(quotes)}
+        - All Employees: ${JSON.stringify(employees.map(e => ({id: e.id, name: e.name, jobTitle: e.jobTitle})))}
+        - All Equipment: ${JSON.stringify(equipment)}
+
+        Based on this data, generate a JSON object with the following insights:
+        1.  **businessSummary**: A brief, 1-2 sentence summary of the current business status. Mention any urgent items.
+        2.  **leadScores**: Analyze all leads with status 'New'. Score each lead from 1 to 100 based on potential value, urgency (keywords like 'emergency', 'ASAP'), and likelihood to convert. An 'Emergency Call' should have a very high score.
+        3.  **jobSchedules**: Find all quotes with status 'Accepted' that do not yet have a corresponding job in the jobs list. For each, suggest an optimal schedule date (a weekday in the near future) and a crew assignment (list of employee names). Consider crew composition (e.g., a leader and groundsman). Provide reasoning for your suggestion.
+        4.  **maintenanceAlerts**: Analyze the equipment list. Flag any equipment where status is 'Needs Maintenance'. Also, flag equipment where 'lastServiceDate' was more than 6 months ago from today's date (${today}). Provide a recommended action.
+
+        Return ONLY a valid JSON object adhering to the provided schema. Do not include any other text or markdown formatting.
+    `;
+    
     try {
-        // --- Data Optimization ---
-        const newLeads = leads.filter(lead => lead.status === 'New');
-        const jobQuoteIds = new Set(jobs.map(job => job.quote_id));
-        const quotesToSchedule = quotes.filter(quote => quote.status === 'Accepted' && !jobQuoteIds.has(quote.id));
-        const relevantEmployees = employees.map(e => ({ id: e.id, name: e.name, role: e.role }));
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: aiCoreSchema
+            }
+        });
 
-        // --- Parallel AI Calls ---
-        const [
-            leadScores,
-            jobSchedules,
-            maintenanceAlerts,
-            businessSummary
-        ] = await Promise.all([
-            _generateLeadScores(newLeads),
-            _generateJobSchedules(quotesToSchedule, relevantEmployees),
-            _generateMaintenanceAlerts(equipment),
-            _generateBusinessSummary(newLeads, quotesToSchedule)
-        ]);
-
-        return {
-            businessSummary,
-            leadScores,
-            jobSchedules,
-            maintenanceAlerts,
-            financialForecasts: [],
-            anomalies: [],
-        };
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        return JSON.parse(cleanedJsonText) as AICoreInsights;
 
     } catch (error) {
         console.error("Error getting AI Core insights:", error);

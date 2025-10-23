@@ -20,12 +20,8 @@ export const loadGoogleMapsScript = (): Promise<void> => {
 
     const script = document.createElement('script');
     
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-        const errorMessage = 'Google Maps API key is missing. Please set GOOGLE_MAPS_API_KEY in your environment variables.';
-        console.error(errorMessage);
-        return reject(new Error(errorMessage));
-    }
+    // Hardcoded Google Maps API key as requested.
+    const apiKey = 'AIzaSyCweyegNcdWPO53GqYFIelJ2YXIHYFkImM';
 
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker`;
     script.async = true;
