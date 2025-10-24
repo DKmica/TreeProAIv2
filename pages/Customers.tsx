@@ -79,7 +79,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onSave, onCancel, initialDa
 
 interface CustomersProps {
     customers: Customer[];
-    // FIX: Correctly type the `setCustomers` prop to match `useState` setter.
     setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
 }
 

@@ -240,7 +240,6 @@ export const useGeminiChat = ({ appState, pageContext }: UseGeminiChatProps) => 
                         } else {
                             const newMsgId = self.crypto.randomUUID();
                             finalModelMessageId = newMsgId;
-                            // FIX: Object literal may only specify known properties, and 'id' does not exist in type 'Omit<ChatMessage, "id">'.
                             setMessages(prev => [...prev, { id: newMsgId, role: 'model', text: finalModelResponse }]);
                         }
                     }
@@ -259,7 +258,6 @@ export const useGeminiChat = ({ appState, pageContext }: UseGeminiChatProps) => 
                          } else {
                              const newMsgId = self.crypto.randomUUID();
                              modelMessageId = newMsgId;
-                             // FIX: Object literal may only specify known properties, and 'id' does not exist in type 'Omit<ChatMessage, "id">'.
                              setMessages(prev => [...prev, { id: newMsgId, role: 'model', text: currentModelResponse }]);
                          }
                      }

@@ -30,7 +30,6 @@ const TemplateViewer: React.FC = () => {
         <p className="text-brand-gray-600">{template.description}</p>
         <div className="mt-6 border-t pt-6">
             <h2 className="text-lg font-semibold">Template Editor (Placeholder)</h2>
-            {/* FIX: The `{{...}}` syntax was likely confusing the JSX parser, causing a compile-time error. Explicitly treating it as a string within an expression and wrapping it in a `code` tag resolves the issue. */}
             <p className="mt-2 text-sm text-brand-gray-500">A full-featured template editor would appear here, allowing you to customize the layout, add variables like <code>{`{{customer.name}}`}</code>, and style the document.</p>
             <div className="mt-4 p-4 bg-brand-gray-100 rounded-md border text-sm text-brand-gray-700">
                 <pre><code>{template.content}</code></pre>

@@ -8,7 +8,6 @@ import { syncJobsToGoogleCalendar } from '../services/googleCalendarService';
 interface CalendarProps {
     jobs: Job[];
     employees: Employee[];
-    // FIX: Correctly type the `setJobs` prop to match `useState` setter.
     setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
 }
 

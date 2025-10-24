@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getAiCoreInsights } from '../services/geminiService';
 import { AICoreInsights, Lead, Job, Quote, Employee, Equipment as EquipmentType, JobScheduleSuggestion } from '../types';
@@ -110,7 +111,6 @@ interface AICoreProps {
     quotes: Quote[];
     employees: Employee[];
     equipment: EquipmentType[];
-    // FIX: Correctly type the `setJobs` prop to match `useState` setter.
     setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
 }
 

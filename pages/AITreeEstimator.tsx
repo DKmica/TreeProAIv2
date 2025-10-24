@@ -18,8 +18,6 @@ const AITreeEstimator: React.FC = () => {
             const newFiles = Array.from(event.target.files);
             setFiles(prev => [...prev, ...newFiles]);
 
-            // FIX: Explicitly cast file to Blob to resolve a TypeScript type inference issue.
-            // The `file` object from mapping over a FileList was being inferred as `unknown`.
             const newPreviews = newFiles.map(file => URL.createObjectURL(file as Blob));
             setPreviews(prev => [...prev, ...newPreviews]);
         }

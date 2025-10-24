@@ -115,7 +115,6 @@ const EmployeeForm: React.FC<{
 
 interface EmployeesProps {
     employees: Employee[];
-    // FIX: Correctly type the `setEmployees` prop to match `useState` setter.
     setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
 }
 
