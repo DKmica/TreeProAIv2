@@ -1,6 +1,8 @@
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog } from '../types';
 
-const BASE_URL = 'http://localhost:3001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const BASE_URL = `${API_URL}/api`;
+
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -30,7 +32,7 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 const createApiService = <T extends { id: string }>(resource: string) => ({
   getAll: (): Promise<T[]> => apiFetch(`/${resource}`),
   getById: (id: string): Promise<T> => apiFetch(`/${resource}/${id}`),
-  create: (data: Omit<T, 'id'>): Promise<T> => apiFetch(`/${resource}`, { method: 'POST', body: JSON.stringify(data) }),
+  create: (data: Partial<Omit<T, 'id'>>): Promise<T> => apiFetch(`/${resource}`, { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<T>): Promise<T> => apiFetch(`/${resource}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id: string): Promise<void> => apiFetch<void>(`/${resource}/${id}`, { method: 'DELETE' }),
 });

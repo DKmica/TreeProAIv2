@@ -73,7 +73,7 @@ const App: React.FC = () => {
         setEquipment(equipmentData);
       } catch (e: any) {
         console.error("Failed to fetch initial data:", e);
-        setError(`Failed to connect to the backend server. Please ensure the server is running by executing 'node server.js' in your terminal. Error: ${e.message}`);
+        setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the README.md. Error: ${e.message}`);
       } finally {
         setIsLoading(false);
       }
