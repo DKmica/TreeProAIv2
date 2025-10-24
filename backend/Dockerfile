@@ -1,5 +1,5 @@
 # --- Build Stage (Frontend) ---
-FROM node:18-slim as frontend-build
+FROM node:18-slim as treepro_frontend_build_stage
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -40,8 +40,8 @@ COPY backend/db.js .
 # Add any other .js files your backend needs, referencing their path from the root
 # e.g., COPY backend/some-other-file.js .
 
-# Copy built frontend assets from the build stage into a 'public' folder
-COPY --from=frontend-build /app/dist ./public
+# Copy built frontend assets from the renamed build stage
+COPY --from=treepro_frontend_build_stage /app/dist ./public
 
 # Expose the port the Node server will run on (Cloud Run default is 8080)
 EXPOSE 8080
