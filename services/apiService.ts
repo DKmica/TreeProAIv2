@@ -1,8 +1,11 @@
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog } from '../types';
 
-// Use a relative path for API calls, assuming the backend serves the frontend
-const API_URL = ''; // No need for REACT_APP_API_URL anymore when combined
-const BASE_URL = `${API_URL}/api`; // Requests will go to /api on the same host
+// In local development, frontend and backend are on different ports.
+// In production (Cloud Run), the backend serves the frontend, so requests are relative.
+const isLocalDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const API_URL = isLocalDev ? 'http://localhost:8080' : '';
+
+const BASE_URL = `${API_URL}/api`; // Will be http://localhost:8080/api locally, or /api in production
 
 
 async function handleResponse<T>(response: Response): Promise<T> {
