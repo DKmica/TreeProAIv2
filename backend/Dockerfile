@@ -9,22 +9,38 @@ ARG REACT_APP_API_URL=/api
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 RUN npm run build
 
+# --- Build Stage (Frontend) ---
+# This stage runs with the root directory as context
+FROM node:18-slim as frontend-build
+WORKDIR /app
+# Copy root package files first
+COPY package*.json ./
+RUN npm install
+# Copy the rest of the project (including frontend source)
+COPY . .
+# Set build-time env var for API URL to be relative
+ARG REACT_APP_API_URL=/api
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+# Build the frontend (output goes to /app/dist)
+RUN npm run build
+
 # --- Backend Stage ---
 FROM node:18-slim
 WORKDIR /usr/src/app
 
-# Copy backend dependencies manifests
+# Copy backend dependencies manifests *from the backend subfolder*
 COPY backend/package*.json ./
 
 # Install backend dependencies
 RUN npm install --only=production
 
-# Copy backend code
+# Copy backend code *from the backend subfolder*
 COPY backend/server.js .
 COPY backend/db.js .
-# Add any other .js files your backend needs
+# Add any other .js files your backend needs, referencing their path from the root
+# e.g., COPY backend/some-other-file.js .
 
-# Copy built frontend assets from the build stage
+# Copy built frontend assets from the build stage into a 'public' folder
 COPY --from=frontend-build /app/dist ./public
 
 # Expose the port the Node server will run on (Cloud Run default is 8080)
