@@ -1,9 +1,5 @@
-
-
-
-
 import React, { useState } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
@@ -29,6 +25,9 @@ import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentTy
 import Profitability from './pages/Profitability';
 import EquipmentDetail from './pages/EquipmentDetail';
 import JobStatusPortal from './pages/portal/JobStatusPortal';
+import Settings from './pages/Settings';
+import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 const App: React.FC = () => {
@@ -43,9 +42,12 @@ const App: React.FC = () => {
   const appData = { customers, leads, quotes, jobs, invoices, employees, equipment };
 
   return (
-    <HashRouter>
-      <Routes>
-        {/* Main App Layout */}
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      
+      {/* Main App Protected Routes */}
+      <Route element={<ProtectedRoute />}>
         <Route element={<Layout appData={appData} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
@@ -63,22 +65,23 @@ const App: React.FC = () => {
           <Route path="/equipment/:equipmentId" element={<EquipmentDetail equipment={equipment} setEquipment={setEquipment} />} />
           <Route path="/marketing" element={<Marketing />} />
           <Route path="/profitability" element={<Profitability jobs={jobs} quotes={quotes} employees={employees} />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
-        
-        {/* Crew App Layout */}
-        <Route path="/crew" element={<CrewLayout />}>
-           <Route index element={<CrewDashboard jobs={jobs} />} />
-           <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} />} />
-        </Route>
+      </Route>
+      
+      {/* Crew App Layout */}
+      <Route path="/crew" element={<CrewLayout />}>
+          <Route index element={<CrewDashboard jobs={jobs} />} />
+          <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} />} />
+      </Route>
 
-        {/* Customer Portal Layout */}
-        <Route path="/portal" element={<CustomerPortalLayout />}>
-          <Route path="quote/:quoteId" element={<QuotePortal quotes={quotes} setQuotes={setQuotes} />} />
-          <Route path="invoice/:invoiceId" element={<InvoicePortal invoices={invoices} setInvoices={setInvoices} />} />
-          <Route path="job/:jobId" element={<JobStatusPortal jobs={jobs} quotes={quotes} employees={employees} setJobs={setJobs} />} />
-        </Route>
-      </Routes>
-    </HashRouter>
+      {/* Customer Portal Layout */}
+      <Route path="/portal" element={<CustomerPortalLayout />}>
+        <Route path="quote/:quoteId" element={<QuotePortal quotes={quotes} setQuotes={setQuotes} />} />
+        <Route path="invoice/:invoiceId" element={<InvoicePortal invoices={invoices} setInvoices={setInvoices} />} />
+        <Route path="job/:jobId" element={<JobStatusPortal jobs={jobs} quotes={quotes} employees={employees} setJobs={setJobs} />} />
+      </Route>
+    </Routes>
   );
 };
 

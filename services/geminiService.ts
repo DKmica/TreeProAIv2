@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type, FunctionDeclaration, Chat } from "@google/genai";
 import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate, UpsellSuggestion, JobHazardAnalysis, MaintenanceAdvice } from "../types";
 
@@ -17,7 +15,7 @@ const appFunctions: FunctionDeclaration[] = [
                 path: {
                     type: Type.STRING,
                     description: 'The path to navigate to (e.g., "/quotes", "/jobs").',
-                    enum: ['/dashboard', '/ai-core', '/leads', '/quotes', '/jobs', '/customers', '/invoices', '/calendar', '/employees', '/equipment', '/marketing']
+                    enum: ['/dashboard', '/ai-core', '/leads', '/quotes', '/jobs', '/customers', '/invoices', '/calendar', '/employees', '/equipment', '/marketing', '/settings']
                 },
             },
             required: ['path'],

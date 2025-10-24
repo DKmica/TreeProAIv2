@@ -15,6 +15,7 @@ import AICoreIcon from './icons/AICoreIcon';
 import SparklesIcon from './icons/SparklesIcon';
 import ChatIcon from './icons/ChatIcon';
 import DollarIcon from './icons/DollarIcon';
+import CogIcon from './icons/CogIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Employees', href: '/employees', icon: EmployeeIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
   { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
+  { name: 'Settings', href: '/settings', icon: CogIcon },
 ];
 
 const Sidebar: React.FC<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }> = ({ sidebarOpen, setSidebarOpen }) => {

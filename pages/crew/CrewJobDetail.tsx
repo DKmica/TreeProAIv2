@@ -158,7 +158,8 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newPhotoUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file));
+      // FIX: Explicitly cast `file` to `Blob` for `URL.createObjectURL` to resolve TypeScript type error.
+      const newPhotoUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file as Blob));
       const existingPhotos = job.photos || [];
       handleStatusUpdate({ photos: [...existingPhotos, ...newPhotoUrls] });
       // Reset file input value to allow uploading the same file again

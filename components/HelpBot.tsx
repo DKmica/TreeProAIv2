@@ -29,6 +29,7 @@ const getPageContext = (pathname: string): string => {
   if (pathname.startsWith('/employees')) return "The user is on the Employees page, managing staff.";
   if (pathname.startsWith('/equipment')) return "The user is on the Equipment page, tracking company assets.";
   if (pathname.startsWith('/marketing')) return "The user is on the Marketing page, using AI tools for promotion.";
+  if (pathname.startsWith('/settings')) return "The user is on the Settings page, managing their profile, company info, and integrations.";
   if (pathname.startsWith('/chat')) return "The user is on the dedicated Chat page.";
   return "The user is on an unknown page.";
 };

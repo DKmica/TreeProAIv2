@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+// FIX: Import React to use the `React` namespace for types like `React.FormEvent`.
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Chat } from '@google/genai';
 import { ChatMessage, GroundingSource, Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../types';
