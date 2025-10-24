@@ -1,11 +1,12 @@
 steps:
-# Build the container image using the backend directory as context
+# Build the combined frontend and backend container image
+# Use the root Dockerfile and the entire project directory as context
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/treepro-ai-backend:$COMMIT_SHA', '-f', 'backend/Dockerfile', './backend'] # Use backend/Dockerfile and backend context
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/treepro-ai-app:$COMMIT_SHA', '.', '-f', 'Dockerfile'] # Changed Dockerfile path
 
 # Push the container image to Container Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/treepro-ai-backend:$COMMIT_SHA']
+  args: ['push', 'gcr.io/$PROJECT_ID/treepro-ai-app:$COMMIT_SHA']
 
 # Deploy container image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -13,22 +14,24 @@ steps:
   args:
   - 'run'
   - 'deploy'
-  - 'treepro-ai-backend' # Your Cloud Run service name
+  - 'treepro-ai-app' # New Cloud Run service name (or keep old if preferred)
   - '--image'
-  - 'gcr.io/$PROJECT_ID/treepro-ai-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/treepro-ai-app:$COMMIT_SHA'
   - '--region'
   - 'us-central1' # Your preferred region
   - '--platform'
   - 'managed'
-  - '--allow-unauthenticated' # Allows public access - review if this is needed
-  - '--port'
-  - '3001' # Matches your server.js
+  - '--allow-unauthenticated' # Allows public access - review security needs
+  # Cloud Run defaults to port 8080, which matches our server.js
+  # Remove the explicit --port unless you change the default in server.js
   # IMPORTANT: Set database environment variables here or via Secret Manager
   - '--set-env-vars'
-  - '^##^DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE' # Use Cloud Run's format (^##^ for delimiters)
+  - '^##^DATABASE_URL=postgresql://postgres:Dk126977!@HOST:PORT/DATABASE##NODE_ENV=production' # Use Cloud Run's format (^##^); Added NODE_ENV
+  # Add other necessary env vars like GEMINI_API_KEY
+  # - '--set-env-vars=GEMINI_API_KEY=YOUR_API_KEY_HERE' # Or use secrets
 
 images:
-- 'gcr.io/$PROJECT_ID/treepro-ai-backend:$COMMIT_SHA'
+- 'gcr.io/$PROJECT_ID/treepro-ai-app:$COMMIT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY

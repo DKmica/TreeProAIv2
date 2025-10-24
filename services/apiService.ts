@@ -1,7 +1,8 @@
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog } from '../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-const BASE_URL = `${API_URL}/api`;
+// Use a relative path for API calls, assuming the backend serves the frontend
+const API_URL = ''; // No need for REACT_APP_API_URL anymore when combined
+const BASE_URL = `${API_URL}/api`; // Requests will go to /api on the same host
 
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -50,14 +51,10 @@ export const addMaintenanceLog = (equipmentId: string, log: Omit<MaintenanceLog,
     return apiFetch(`/equipment/${equipmentId}`, {
         method: 'PUT',
         body: JSON.stringify({
-            // This is a simplified approach. A real backend might have a dedicated endpoint like /equipment/:id/logs
-            // For now, we fetch the item, add the log, and PUT the whole thing back.
-            // Our server.js PUT logic merges, so this is just sending the part to be merged.
-            // Let's make it simpler and assume the backend can handle appending to a nested array.
-            // This is a mock, so the backend will need to be smart.
-            // Let's change the pattern: we will update the parent `Equipment` object
-            // by adding the log to its `maintenanceHistory`
-            // Let's adjust the frontend logic to handle this instead. The API service will be simpler.
+            // Frontend logic will handle fetching the equipment, adding the log,
+            // and then using equipmentService.update to save the whole object.
+            // This API service function might not even be strictly necessary anymore
+            // depending on how you structure the component logic.
         })
     });
 };

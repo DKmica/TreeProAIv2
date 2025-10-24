@@ -9,18 +9,21 @@ const { v4: uuidv4 } = require('uuid');
 
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+// Use the PORT environment variable provided by Cloud Run, default to 8080
+const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(cors()); // Keep CORS for local development if needed, Cloud Run handles origins via ingress
 app.use(express.json());
 
-// Health check endpoint
-app.get('/', (req, res) => {
+// --- API Routes ---
+const apiRouter = express.Router();
+// Mount the API router under /api
+app.use('/api', apiRouter);
+
+// Health check endpoint (moved under /api for clarity)
+apiRouter.get('/health', (req, res) => {
   res.status(200).send('TreePro AI Backend is running.');
 });
-
-const apiRouter = express.Router();
-app.use('/api', apiRouter);
 
 // Generic function to handle errors
 const handleError = (res, err) => {
@@ -50,9 +53,9 @@ const setupCrudEndpoints = (router, tableName) => {
       handleError(res, err);
     }
   });
-  
+
   // POST new
-  apiRouter.post(`/${tableName}`, async (req, res) => {
+  router.post(`/${tableName}`, async (req, res) => { // Changed from apiRouter to router
     try {
         const columns = Object.keys(req.body);
         const values = Object.values(req.body);
@@ -60,8 +63,9 @@ const setupCrudEndpoints = (router, tableName) => {
 
         const newId = uuidv4();
 
+        // Ensure column names are quoted if they might contain special characters or keywords
         const queryText = `INSERT INTO ${tableName} (id, ${columns.map(c => `"${c}"`).join(', ')}) VALUES ($1, ${placeholders}) RETURNING *`;
-        
+
         const { rows } = await db.query(queryText, [newId, ...values]);
         res.status(201).json(rows[0]);
     } catch (err) {
@@ -74,11 +78,12 @@ const setupCrudEndpoints = (router, tableName) => {
     try {
       const columns = Object.keys(req.body);
       const values = Object.values(req.body);
+      // Ensure column names are quoted
       const setString = columns.map((col, i) => `"${col}" = $${i + 2}`).join(', ');
 
       const queryText = `UPDATE ${tableName} SET ${setString} WHERE id = $1 RETURNING *`;
       const { rows } = await db.query(queryText, [req.params.id, ...values]);
-      
+
       if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
       res.json(rows[0]);
     } catch (err) {
@@ -101,10 +106,19 @@ const setupCrudEndpoints = (router, tableName) => {
 // Setup CRUD endpoints for all resources
 const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment'];
 resources.forEach(resource => {
-  setupCrudEndpoints(apiRouter, resource);
+  setupCrudEndpoints(apiRouter, resource); // Use apiRouter here
+});
+
+// --- Static File Serving ---
+// Serve static files from the 'public' directory (where frontend build is copied)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Handle SPA routing: for any request that doesn't match API or static file, serve index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 
 app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Backend server running on http://localhost:${PORT}, serving API at /api and frontend static files.`);
 });

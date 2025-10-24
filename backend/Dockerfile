@@ -1,23 +1,34 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18-slim
+# --- Build Stage (Frontend) ---
+FROM node:18-slim as frontend-build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+# Set build-time env var for API URL to be relative
+ARG REACT_APP_API_URL=/api
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+RUN npm run build
 
-# Set the working directory in the container
+# --- Backend Stage ---
+FROM node:18-slim
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Copy backend dependencies manifests
+COPY backend/package*.json ./
 
 # Install backend dependencies
 RUN npm install --only=production
 
-# Copy the necessary backend code
-# Only copy what's needed for the backend to run
-COPY server.js .
-COPY db.js .
+# Copy backend code
+COPY backend/server.js .
+COPY backend/db.js .
 # Add any other .js files your backend needs
 
-# Make port 3001 available
-EXPOSE 3001
+# Copy built frontend assets from the build stage
+COPY --from=frontend-build /app/dist ./public
 
-# Run server.js when the container launches
+# Expose the port the Node server will run on (Cloud Run default is 8080)
+EXPOSE 8080
+
+# Run the backend server
 CMD [ "node", "server.js" ]
