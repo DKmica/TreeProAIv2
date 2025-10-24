@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -20,7 +20,6 @@ import CrewJobDetail from './pages/crew/CrewJobDetail';
 import CustomerPortalLayout from './components/CustomerPortalLayout';
 import QuotePortal from './pages/portal/QuotePortal';
 import InvoicePortal from './pages/portal/InvoicePortal';
-import { mockCustomers, mockLeads, mockQuotes, mockJobs, mockInvoices, mockEmployees, mockEquipment } from './data/mockData';
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
 import Profitability from './pages/Profitability';
 import EquipmentDetail from './pages/EquipmentDetail';
@@ -29,20 +28,85 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import TemplateViewer from './pages/TemplateViewer';
-
+import * as api from './services/apiService';
+import SpinnerIcon from './components/icons/SpinnerIcon';
 
 const App: React.FC = () => {
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
-  const [leads, setLeads] = useState<Lead[]>(mockLeads);
-  const [quotes, setQuotes] = useState<Quote[]>(mockQuotes);
-  const [jobs, setJobs] = useState<Job[]>(mockJobs);
-  const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
-  const [equipment, setEquipment] = useState<EquipmentType[]>(mockEquipment);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [equipment, setEquipment] = useState<EquipmentType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [
+          customersData,
+          leadsData,
+          quotesData,
+          jobsData,
+          invoicesData,
+          employeesData,
+          equipmentData
+        ] = await Promise.all([
+          api.customerService.getAll(),
+          api.leadService.getAll(),
+          api.quoteService.getAll(),
+          api.jobService.getAll(),
+          api.invoiceService.getAll(),
+          api.employeeService.getAll(),
+          api.equipmentService.getAll(),
+        ]);
+
+        setCustomers(customersData);
+        setLeads(leadsData);
+        setQuotes(quotesData);
+        setJobs(jobsData);
+        setInvoices(invoicesData);
+        setEmployees(employeesData);
+        setEquipment(equipmentData);
+      } catch (e: any) {
+        console.error("Failed to fetch initial data:", e);
+        setError(`Failed to connect to the backend server. Please ensure the server is running by executing 'node server.js' in your terminal. Error: ${e.message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const appData = { customers, leads, quotes, jobs, invoices, employees, equipment };
   const appSetters = { setCustomers, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
   const appState = { data: appData, setters: appSetters };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-brand-gray-50">
+        <div className="text-center">
+            <SpinnerIcon className="h-12 w-12 text-brand-green-600 mx-auto" />
+            <h1 className="mt-4 text-xl font-semibold text-brand-gray-700">Loading TreePro AI...</h1>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+     return (
+        <div className="flex items-center justify-center h-screen bg-red-50 p-8">
+            <div className="text-center max-w-2xl">
+                 <h1 className="text-2xl font-bold text-red-800">Connection Error</h1>
+                 <p className="mt-4 text-red-700 whitespace-pre-wrap">{error}</p>
+                 <p className="mt-4 text-sm text-brand-gray-600">Please make sure you have followed the instructions in the `README.md` file to start both the frontend and backend servers.</p>
+            </div>
+        </div>
+     );
+  }
 
   return (
     <Routes>

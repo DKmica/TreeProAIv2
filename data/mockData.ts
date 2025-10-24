@@ -1,5 +1,3 @@
-
-
 import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem, JobCost, PortalMessage, CustomFieldDefinition, DocumentTemplate } from '../types';
 
 export const mockCustomers: Customer[] = [
@@ -127,3 +125,19 @@ export const mockDocumentTemplates: DocumentTemplate[] = [
         content: `<h1>Arborist Health Report for {{customer.name}}</h1>...`
     },
 ];
+
+// FIX: Replaced CommonJS `module.exports` with ES module `export` statements above.
+// This resolves TypeScript errors in the frontend build process while maintaining compatibility.
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        mockCustomers,
+        mockLeads,
+        mockQuotes,
+        mockJobs,
+        mockInvoices,
+        mockEmployees,
+        mockEquipment,
+        mockCustomFields,
+        mockDocumentTemplates,
+    };
+}

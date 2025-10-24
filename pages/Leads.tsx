@@ -1,9 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Lead, Customer } from '../types';
+import * as api from '../services/apiService';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
+
 
 interface AddLeadFormProps {
-    onSave: (leadData: Partial<Lead>, customerData: Partial<Customer>) => void;
+    onSave: (leadData: Partial<Lead>, customerData: Partial<Customer>) => Promise<void>;
     onCancel: () => void;
     initialData?: Lead | null;
 }
@@ -15,7 +18,9 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
         customerPhone: '',
         source: 'Website',
         status: 'New' as Lead['status'],
+        description: ''
     });
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -25,6 +30,7 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
                 customerPhone: initialData.customer.phone,
                 source: initialData.source,
                 status: initialData.status,
+                description: initialData.description || '',
             });
         } else {
             // Reset for new entry
@@ -34,19 +40,21 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
                 customerPhone: '',
                 source: 'Website',
                 status: 'New' as Lead['status'],
+                description: '',
             });
         }
     }, [initialData]);
 
     const isEditing = !!initialData;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         const customerData = {
             name: formData.customerName,
             email: formData.customerEmail,
@@ -55,9 +63,17 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
         const leadData = {
             source: formData.source,
             status: formData.status,
+            description: formData.description,
             createdAt: new Date().toISOString().split('T')[0],
         };
-        onSave(leadData, customerData);
+        try {
+            await onSave(leadData, customerData);
+        } catch (error) {
+            console.error("Failed to save lead:", error);
+            alert(`Error: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -90,10 +106,17 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
                             <option>Lost</option>
                         </select>
                     </div>
+                     <div className="col-span-full">
+                        <label htmlFor="description" className="block text-sm font-medium leading-6 text-brand-gray-900">Description</label>
+                        <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={3} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                     <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
-                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">{isEditing ? 'Save Changes' : 'Save Lead'}</button>
+                    <button type="submit" disabled={isSaving} className="flex items-center justify-center rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600 disabled:bg-brand-gray-400">
+                        {isSaving && <SpinnerIcon className="h-5 w-5 mr-2" />}
+                        {isSaving ? 'Saving...' : (isEditing ? 'Save Changes' : 'Save Lead')}
+                    </button>
                 </div>
             </form>
         </div>
@@ -103,13 +126,12 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
 
 interface LeadsProps {
     leads: Lead[];
-    // FIX: Correctly type the `setLeads` and `setCustomers` props to match `useState` setters.
     setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
     customers: Customer[];
     setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
 }
 
-const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
+const Leads: React.FC<LeadsProps> = ({ leads, setLeads, customers, setCustomers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -136,63 +158,65 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
   
   const handleMainButtonClick = () => {
       if (showAddForm) {
-          // If form is open, cancel and close
           handleCancel();
       } else {
-          // If form is closed, open for new lead
           setEditingLead(null);
           setShowAddForm(true);
       }
   };
 
-  const handleArchiveLead = (leadId: string) => {
+  const handleArchiveLead = async (leadId: string) => {
     if (window.confirm('Are you sure you want to archive this lead?')) {
-      setLeads(prev => prev.filter(lead => lead.id !== leadId));
+      try {
+        await api.leadService.remove(leadId);
+        setLeads(prev => prev.filter(lead => lead.id !== leadId));
+      } catch (error) {
+         console.error("Failed to archive lead:", error);
+         alert(`Error: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
+      }
     }
   };
   
-  const handleSaveLead = (leadData: Partial<Lead>, customerData: Partial<Customer>) => {
+  const handleSaveLead = async (leadData: Partial<Lead>, customerData: Partial<Customer>) => {
     if (editingLead) {
         // Update logic
-        setLeads(prev => prev.map(lead => {
-            if (lead.id === editingLead.id) {
-                const updatedCustomer = {
-                    ...lead.customer,
-                    name: customerData.name || lead.customer.name,
-                    email: customerData.email || lead.customer.email,
-                    phone: customerData.phone || lead.customer.phone,
-                };
-                
-                setCustomers(prevCust => prevCust.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
+        const updatedCustomerData = { 
+            name: customerData.name, 
+            email: customerData.email,
+            phone: customerData.phone
+        };
+        const updatedCustomer = await api.customerService.update(editingLead.customer.id, updatedCustomerData);
+        setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
 
-                return {
-                    ...lead,
-                    customer: updatedCustomer,
-                    source: leadData.source || lead.source,
-                    status: leadData.status || lead.status,
-                };
-            }
-            return lead;
-        }));
+        const updatedLeadData = {
+            source: leadData.source,
+            status: leadData.status,
+            description: leadData.description,
+            customer: updatedCustomer // Embed the updated customer
+        };
+        const updatedLead = await api.leadService.update(editingLead.id, updatedLeadData);
+        setLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
+
     } else {
         // Create new logic
-        const newCustomer: Customer = {
-          id: `cust-${Date.now()}`,
-          name: customerData.name || 'N/A',
-          email: customerData.email || 'N/A',
-          phone: customerData.phone || 'N/A',
-          address: '',
-          coordinates: { lat: 0, lng: 0 },
-        };
-        setCustomers(prev => [newCustomer, ...prev]);
+        let customer = customers.find(c => c.email.toLowerCase() === customerData.email?.toLowerCase());
+        if (!customer) {
+            customer = await api.customerService.create({
+                name: customerData.name || 'N/A',
+                email: customerData.email || 'N/A',
+                phone: customerData.phone || '',
+                address: '',
+                coordinates: {lat: 0, lng: 0}
+            });
+            setCustomers(prev => [customer!, ...prev]);
+        }
 
-        const newLead: Lead = {
-          id: `lead-${Date.now()}`,
-          customer: newCustomer,
-          source: leadData.source || 'N/A',
-          status: leadData.status || 'New',
-          createdAt: leadData.createdAt || new Date().toISOString().split('T')[0],
-        };
+        const newLeadData = {
+            ...leadData,
+            customer: customer
+        } as Omit<Lead, 'id'>;
+
+        const newLead = await api.leadService.create(newLeadData);
         setLeads(prev => [newLead, ...prev]);
     }
     
