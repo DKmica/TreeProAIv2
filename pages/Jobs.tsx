@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessage } from '../types';
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
@@ -172,6 +172,16 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   const [linkCopied, setLinkCopied] = useState('');
   const [viewingMessages, setViewingMessages] = useState<Job | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openCreateForm) {
+        setEditingJob(null);
+        setShowForm(true);
+        window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
 
   const handleCancel = () => {
     setShowForm(false);

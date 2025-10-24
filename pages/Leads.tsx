@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Lead, Customer } from '../types';
 
 interface AddLeadFormProps {
@@ -112,6 +113,16 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, setCustomers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openCreateForm) {
+        setEditingLead(null);
+        setShowAddForm(true);
+        window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
 
   const handleEditClick = (lead: Lead) => {
       setEditingLead(lead);

@@ -1,6 +1,6 @@
 
 
-import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem, JobCost, PortalMessage } from '../types';
+import { Lead, Quote, Job, Customer, Invoice, Employee, Equipment, LineItem, JobCost, PortalMessage, CustomFieldDefinition, DocumentTemplate } from '../types';
 
 export const mockCustomers: Customer[] = [
   { id: 'cust1', name: 'John Doe', email: 'john.doe@example.com', phone: '555-1234', address: '123 Oak St, Los Angeles, CA', coordinates: { lat: 34.0522, lng: -118.2437 } },
@@ -82,4 +82,48 @@ export const mockEquipment: Equipment[] = [
     ]
    },
   { id: 'equip3', name: 'Chainsaw', make: 'Stihl', model: 'MS 462', purchaseDate: '2023-03-20', lastServiceDate: '2023-10-10', status: 'Operational', maintenanceHistory: [] },
+];
+
+export const mockCustomFields: CustomFieldDefinition[] = [
+    { id: 'cf_cust_gatecode', name: 'Gate Code', type: 'text', entity: 'customer' },
+    { id: 'cf_cust_preferredcontact', name: 'Preferred Contact Method', type: 'text', entity: 'customer' },
+    { id: 'cf_job_followup', name: 'Follow-up Required', type: 'checkbox', entity: 'job' },
+];
+
+export const mockDocumentTemplates: DocumentTemplate[] = [
+    { 
+        id: 'tpl_quote_standard', 
+        name: 'Standard Customer Quote', 
+        type: 'Quote', 
+        description: 'A clean, standard quote format for most residential jobs. Includes line items, total, and signature line.',
+        content: `<h1>Quote for {{customer.name}}</h1><p>Thank you for the opportunity to provide a quote for your tree care needs.</p>...`
+    },
+    { 
+        id: 'tpl_quote_commercial', 
+        name: 'Commercial Project Proposal', 
+        type: 'Quote', 
+        description: 'A detailed proposal for large-scale commercial projects, including scope of work, terms, and insurance details.',
+        content: `<h1>Project Proposal for {{customer.name}}</h1><h2>Scope of Work</h2>...`
+    },
+    { 
+        id: 'tpl_invoice_basic', 
+        name: 'Basic Service Invoice', 
+        type: 'Invoice', 
+        description: 'A simple invoice for completed work, showing services rendered and total amount due.',
+        content: `<h1>Invoice</h1><h2>Amount Due: {{invoice.amount}}</h2>...`
+    },
+    { 
+        id: 'tpl_report_risk', 
+        name: 'Tree Risk Assessment', 
+        type: 'Report', 
+        description: 'A formal report detailing a tree risk assessment (TRAQ) for insurance or municipal purposes.',
+        content: `<h1>Tree Risk Assessment Report</h1><h3>Property: {{customer.address}}</h3>...`
+    },
+     { 
+        id: 'tpl_report_health', 
+        name: 'Arborist Health Report', 
+        type: 'Report', 
+        description: 'Provides a detailed analysis of a tree\'s health, including disease diagnosis and treatment recommendations.',
+        content: `<h1>Arborist Health Report for {{customer.name}}</h1>...`
+    },
 ];

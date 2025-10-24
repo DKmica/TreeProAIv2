@@ -22,6 +22,21 @@ const appFunctions: FunctionDeclaration[] = [
         },
     },
     {
+        name: 'openCreationForm',
+        description: 'Navigate to the appropriate page and open the creation form for a new item, such as a quote, customer, job, or lead.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                itemType: {
+                    type: Type.STRING,
+                    description: 'The type of item to create.',
+                    enum: ['quote', 'customer', 'job', 'lead', 'employee', 'equipment']
+                },
+            },
+            required: ['itemType'],
+        },
+    },
+    {
         name: 'findCustomer',
         description: 'Find a customer by their name and get their contact details.',
         parameters: {
@@ -35,16 +50,72 @@ const appFunctions: FunctionDeclaration[] = [
     {
         name: 'summarizeOpenJobs',
         description: 'Get a summary of all jobs that are currently "Scheduled" or "In Progress".',
-        parameters: { type: Type.OBJECT, properties: {} },
     },
+    {
+        name: 'createCustomer',
+        description: 'Create a new customer record in the system.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                name: { type: Type.STRING, description: 'The full name of the customer.' },
+                email: { type: Type.STRING, description: 'The email address of the customer.' },
+                phone: { type: Type.STRING, description: 'The phone number of the customer.' },
+                address: { type: Type.STRING, description: 'The full address of the customer.' },
+            },
+            required: ['name', 'email'],
+        },
+    },
+    {
+        name: 'createQuote',
+        description: 'Create a new quote for a customer.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                customerName: { type: Type.STRING, description: 'The name of the existing customer for whom the quote is being created.' },
+                lineItems: {
+                    type: Type.ARRAY,
+                    description: 'A list of services and their prices.',
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            description: { type: Type.STRING, description: 'The description of the service.' },
+                            price: { type: Type.NUMBER, description: 'The price of the service.' },
+                        },
+                        required: ['description', 'price'],
+                    },
+                },
+                stumpGrindingPrice: { type: Type.NUMBER, description: 'Optional price for stump grinding if not included in line items.' },
+            },
+            required: ['customerName', 'lineItems'],
+        },
+    },
+    {
+        name: 'createJob',
+        description: 'Create and schedule a new job from an existing, accepted quote.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                quoteId: { type: Type.STRING, description: 'The ID of the accepted quote to create the job from.' },
+                scheduledDate: { type: Type.STRING, description: 'The date to schedule the job for, in YYYY-MM-DD format.' },
+                assignedCrew: {
+                    type: Type.ARRAY,
+                    description: 'A list of employee names to assign to the job.',
+                    items: { type: Type.STRING },
+                },
+            },
+            required: ['quoteId', 'scheduledDate', 'assignedCrew'],
+        },
+    }
 ];
 
 export const startChatSession = (systemInstruction: string): Chat => {
     return ai.chats.create({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-pro',
         config: {
             systemInstruction: systemInstruction,
-            tools: [{ functionDeclarations: appFunctions }],
+            tools: [
+                { functionDeclarations: appFunctions },
+            ],
         }
     });
 };

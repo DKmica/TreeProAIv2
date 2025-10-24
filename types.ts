@@ -217,3 +217,18 @@ export interface MaintenanceAdvice {
   next_service_recommendation: string;
   common_issues: string[];
 }
+
+export interface CustomFieldDefinition {
+  id: string;
+  name: string;
+  type: 'text' | 'number' | 'date' | 'checkbox';
+  entity: 'customer' | 'lead' | 'quote' | 'job' | 'invoice' | 'employee' | 'equipment';
+}
+
+export interface DocumentTemplate {
+  id: string;
+  name: string;
+  type: 'Quote' | 'Invoice' | 'Report';
+  description: string;
+  content: string; // For now, this will be a simple string, maybe Markdown or HTML
+}

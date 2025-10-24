@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Equipment as EquipmentType } from '../types';
 
 interface AddEquipmentFormProps {
@@ -112,6 +112,16 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingEquipment, setEditingEquipment] = useState<EquipmentType | null>(null);
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.openCreateForm) {
+            setEditingEquipment(null);
+            setShowAddForm(true);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
 
     const handleCancel = () => {
         setShowAddForm(false);

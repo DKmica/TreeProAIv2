@@ -1,29 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useGeminiChat } from '../hooks/useGeminiChat';
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../types';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ToolIcon from '../components/icons/ToolIcon';
 import FunctionCallIcon from '../components/icons/FunctionCallIcon';
+import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
+import MicrophoneIcon from '../components/icons/MicrophoneIcon';
+import BroadcastIcon from '../components/icons/BroadcastIcon';
 
-interface AppData {
-  customers: Customer[];
-  leads: Lead[];
-  quotes: Quote[];
-  jobs: Job[];
-  invoices: Invoice[];
-  employees: Employee[];
-  equipment: Equipment[];
-}
-
-interface ChatPageProps {
-    appData: AppData;
-}
-
-const ChatPage: React.FC<ChatPageProps> = ({ appData }) => {
-    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = useGeminiChat({
-        appData: appData,
+const ChatPage: React.FC = () => {
+    const appState = useOutletContext<any>();
+    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef, sendMessage } = useGeminiChat({
+        appState: appState,
         pageContext: "The user is on the dedicated full-screen Chat page. They may ask about any aspect of the application."
     });
+
+    const voice = useVoiceRecognition({ onCommand: sendMessage });
+
+    useEffect(() => {
+        if (voice.transcript) {
+            setInputValue(voice.transcript);
+        }
+    }, [voice.transcript, setInputValue]);
+
+    const handleMicClick = () => {
+        if (voice.isListening) {
+            voice.stopListening();
+        } else {
+            voice.startListening();
+        }
+    };
+
+    const getPlaceholder = () => {
+        if (voice.isAwaitingCommand) return "Listening for command...";
+        if (voice.isListening) return "Listening...";
+        if (voice.isWakeWordEnabled) return 'Say "Yo, Probot" or ask me to find a customer, summarize jobs, etc...';
+        return "Ask me to find a customer, summarize open jobs, or ask a question...";
+    };
 
     return (
         <div>
@@ -63,7 +77,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ appData }) => {
                                     <div className="flex items-center gap-2 border rounded-full px-3 py-1 bg-brand-gray-50">
                                         {msg.text.includes('Searching the web') ? <ToolIcon className="w-4 h-4" /> : <FunctionCallIcon className="w-4 h-4" />}
                                         <span>{msg.text}</span>
-                                        <SpinnerIcon className="w-4 h-4" />
+                                        {msg.isThinking && <SpinnerIcon className="w-4 h-4" />}
                                     </div>
                                 </div>
                             )}
@@ -83,15 +97,41 @@ const ChatPage: React.FC<ChatPageProps> = ({ appData }) => {
 
                 <div className="border-t border-brand-gray-200 p-4 bg-white rounded-b-lg">
                     <form onSubmit={handleSubmit} className="flex items-center space-x-3">
+                         {voice.hasSupport && (
+                            <button
+                                type="button"
+                                onClick={voice.toggleWakeWord}
+                                title={voice.isWakeWordEnabled ? 'Disable wake word "Yo, Probot"' : 'Enable wake word "Yo, Probot"'}
+                                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-green-500 ${
+                                    voice.isWakeWordEnabled ? 'bg-brand-green-100 text-brand-green-600' : 'text-brand-gray-400 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                <span className="sr-only">{voice.isWakeWordEnabled ? 'Disable wake word' : 'Enable wake word'}</span>
+                                <BroadcastIcon className="h-5 w-5" />
+                            </button>
+                        )}
                         <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Ask me to find a customer, summarize open jobs, or ask a question about trees..."
+                            placeholder={getPlaceholder()}
                             className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                             aria-label="Chat input"
                             disabled={isLoading}
                         />
+                         {voice.hasSupport && (
+                            <button
+                                type="button"
+                                onClick={handleMicClick}
+                                title={voice.isListening ? 'Stop listening' : 'Start listening with your microphone'}
+                                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-green-500 ${
+                                    voice.isListening || voice.isAwaitingCommand ? 'bg-red-100 text-red-600 animate-pulse' : 'text-brand-gray-500 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                <span className="sr-only">{voice.isListening ? 'Stop listening' : 'Start listening'}</span>
+                                <MicrophoneIcon className="h-5 w-5" />
+                            </button>
+                        )}
                         <button
                             type="submit"
                             disabled={isLoading || !inputValue.trim()}
@@ -104,6 +144,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ appData }) => {
                            )}
                         </button>
                     </form>
+                    {voice.error && <p className="text-xs text-red-600 mt-2 text-center">{voice.error}</p>}
                 </div>
             </div>
         </div>

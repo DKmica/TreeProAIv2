@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Employee } from '../types';
 
 const EmployeeForm: React.FC<{
@@ -124,6 +125,16 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [jobTitleFilter, setJobTitleFilter] = useState('all');
     const [sortConfig, setSortConfig] = useState<{ key: keyof Employee, direction: 'ascending' | 'descending' } | null>({ key: 'name', direction: 'ascending' });
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.openCreateForm) {
+            setEditingEmployee(null);
+            setShowForm(true);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
 
     const uniqueJobTitles = useMemo(() => [...new Set(employees.map(e => e.jobTitle))], [employees]);
 

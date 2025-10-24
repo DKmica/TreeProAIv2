@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Quote, Customer, LineItem, AITreeEstimate, UpsellSuggestion, PortalMessage } from '../types';
@@ -225,6 +224,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
     const location = useLocation();
 
     useEffect(() => {
+        // Handle opening form from AI Tree Estimator
         const aiEstimate = location.state?.aiEstimate as AITreeEstimate | undefined;
         if (aiEstimate) {
             const transformedLineItems: LineItem[] = aiEstimate.suggested_services.map(service => ({
@@ -238,7 +238,16 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                 stumpGrindingPrice: 0,
             });
             setShowAddForm(true);
-            window.history.replaceState({}, document.title)
+            window.history.replaceState({}, document.title);
+            return; 
+        }
+
+        // Handle opening form from voice command
+        if (location.state?.openCreateForm) {
+            setEditingQuote(null);
+            setAiEstimateData(undefined);
+            setShowAddForm(true);
+            window.history.replaceState({}, document.title);
         }
     }, [location.state]);
     

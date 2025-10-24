@@ -3,6 +3,7 @@
   "description": "A Gemini-powered platform for tree service businesses, automating quotes, scheduling, and management.",
   "requestFramePermissions": [
     "camera",
-    "geolocation"
+    "geolocation",
+    "microphone"
   ]
 }

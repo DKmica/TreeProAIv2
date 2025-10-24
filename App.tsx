@@ -28,6 +28,7 @@ import JobStatusPortal from './pages/portal/JobStatusPortal';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import TemplateViewer from './pages/TemplateViewer';
 
 
 const App: React.FC = () => {
@@ -40,6 +41,8 @@ const App: React.FC = () => {
   const [equipment, setEquipment] = useState<EquipmentType[]>(mockEquipment);
 
   const appData = { customers, leads, quotes, jobs, invoices, employees, equipment };
+  const appSetters = { setCustomers, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
+  const appState = { data: appData, setters: appSetters };
 
   return (
     <Routes>
@@ -48,12 +51,12 @@ const App: React.FC = () => {
       
       {/* Main App Protected Routes */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<Layout appData={appData} />}>
+        <Route element={<Layout appState={appState} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
-          <Route path="/chat" element={<ChatPage appData={appData} />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
           <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
           <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
@@ -66,6 +69,7 @@ const App: React.FC = () => {
           <Route path="/marketing" element={<Marketing />} />
           <Route path="/profitability" element={<Profitability jobs={jobs} quotes={quotes} employees={employees} />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/template/:templateId" element={<TemplateViewer />} />
         </Route>
       </Route>
       

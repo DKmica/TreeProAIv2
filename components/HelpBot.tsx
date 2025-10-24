@@ -1,48 +1,40 @@
-import React, { useState, useRef } from 'react';
-import { useGeminiChat } from '../hooks/useGeminiChat';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, ChatMessage } from '../types';
+import React, { useEffect } from 'react';
 import SpinnerIcon from './icons/SpinnerIcon';
 import ChatIcon from './icons/ChatIcon';
 import XIcon from './icons/XIcon';
 import ToolIcon from './icons/ToolIcon';
 import FunctionCallIcon from './icons/FunctionCallIcon';
+import MicrophoneIcon from './icons/MicrophoneIcon';
+import BroadcastIcon from './icons/BroadcastIcon';
 
-interface AppData {
-  customers: Customer[];
-  leads: Lead[];
-  quotes: Quote[];
-  jobs: Job[];
-  invoices: Invoice[];
-  employees: Employee[];
-  equipment: Equipment[];
+// Forward-declare the types from the hooks to avoid circular dependencies
+type UseGeminiChatReturnType = ReturnType<typeof import('../hooks/useGeminiChat').useGeminiChat>;
+type UseVoiceRecognitionReturnType = ReturnType<typeof import('../hooks/useVoiceRecognition').useVoiceRecognition>;
+
+interface HelpBotProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  chat: UseGeminiChatReturnType;
+  voice: UseVoiceRecognitionReturnType;
 }
 
-const getPageContext = (pathname: string): string => {
-  if (pathname.startsWith('/dashboard')) return "The user is on the Dashboard, viewing business KPIs and a live map.";
-  if (pathname.startsWith('/ai-core')) return "The user is on the AI Core page, viewing intelligent insights and suggestions.";
-  if (pathname.startsWith('/leads')) return "The user is on the Leads page, managing potential customer inquiries.";
-  if (pathname.startsWith('/quotes')) return "The user is on the Quotes page, creating and managing price estimates.";
-  if (pathname.startsWith('/jobs')) return "The user is on the Jobs page, managing scheduled work.";
-  if (pathname.startsWith('/customers')) return "The user is on the Customers page, viewing their client list.";
-  if (pathname.startsWith('/invoices')) return "The user is on the Invoices page, managing billing.";
-  if (pathname.startsWith('/calendar')) return "The user is on the Calendar page, scheduling jobs.";
-  if (pathname.startsWith('/employees')) return "The user is on the Employees page, managing staff.";
-  if (pathname.startsWith('/equipment')) return "The user is on the Equipment page, tracking company assets.";
-  if (pathname.startsWith('/marketing')) return "The user is on the Marketing page, using AI tools for promotion.";
-  if (pathname.startsWith('/settings')) return "The user is on the Settings page, managing their profile, company info, and integrations.";
-  if (pathname.startsWith('/chat')) return "The user is on the dedicated Chat page.";
-  return "The user is on an unknown page.";
-};
+const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => {
+    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = chat;
 
+    useEffect(() => {
+        if (voice.transcript) {
+            setInputValue(voice.transcript);
+        }
+    }, [voice.transcript, setInputValue]);
 
-const HelpBot: React.FC<{ currentLocation: string; appData: AppData }> = ({ currentLocation, appData }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    
-    const pageContext = getPageContext(currentLocation);
-    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = useGeminiChat({
-        appData: isOpen ? appData : undefined, // Only pass data when the bot is open to avoid unnecessary processing
-        pageContext: pageContext
-    });
+    const handleMicClick = () => {
+        if (voice.isListening) {
+            voice.stopListening();
+        } else {
+            voice.startListening();
+        }
+    };
+
 
     if (!isOpen) {
         return (
@@ -55,6 +47,13 @@ const HelpBot: React.FC<{ currentLocation: string; appData: AppData }> = ({ curr
             </button>
         );
     }
+
+    const getPlaceholder = () => {
+        if (voice.isAwaitingCommand) return "Listening for command...";
+        if (voice.isListening) return "Listening...";
+        if (voice.isWakeWordEnabled) return 'Say "Yo, Probot" or type...';
+        return "Ask a question...";
+    };
 
 
     return (
@@ -99,7 +98,7 @@ const HelpBot: React.FC<{ currentLocation: string; appData: AppData }> = ({ curr
                                     <div className="flex items-center gap-2 border rounded-full px-3 py-1 bg-brand-gray-50">
                                         {msg.text.includes('Searching the web') ? <ToolIcon className="w-4 h-4" /> : <FunctionCallIcon className="w-4 h-4" />}
                                         <span>{msg.text}</span>
-                                        <SpinnerIcon className="w-4 h-4" />
+                                        {msg.isThinking && <SpinnerIcon className="w-4 h-4" />}
                                     </div>
                                 </div>
                             )}
@@ -118,16 +117,42 @@ const HelpBot: React.FC<{ currentLocation: string; appData: AppData }> = ({ curr
                 {error && <div className="p-2 border-t border-brand-gray-200 text-center text-xs text-red-600">{error}</div>}
 
                 <div className="border-t border-brand-gray-200 p-4 bg-white rounded-b-lg">
-                    <form onSubmit={handleSubmit} className="flex items-center space-x-3">
+                    <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+                        {voice.hasSupport && (
+                            <button
+                                type="button"
+                                onClick={voice.toggleWakeWord}
+                                title={voice.isWakeWordEnabled ? 'Disable wake word "Yo, Probot"' : 'Enable wake word "Yo, Probot"'}
+                                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-green-500 ${
+                                    voice.isWakeWordEnabled ? 'bg-brand-green-100 text-brand-green-600' : 'text-brand-gray-400 hover:bg-brand-gray-100'
+                                }`}
+                                aria-label={voice.isWakeWordEnabled ? 'Disable wake word' : 'Enable wake word'}
+                            >
+                                <BroadcastIcon className="h-5 w-5" />
+                            </button>
+                        )}
                         <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Ask a question..."
+                            placeholder={getPlaceholder()}
                             className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                             aria-label="Chat input"
                             disabled={isLoading}
                         />
+                         {voice.hasSupport && (
+                            <button
+                                type="button"
+                                onClick={handleMicClick}
+                                title={voice.isListening ? 'Stop listening' : 'Start listening'}
+                                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-green-500 ${
+                                    voice.isListening || voice.isAwaitingCommand ? 'bg-red-100 text-red-600 animate-pulse' : 'text-brand-gray-500 hover:bg-brand-gray-100'
+                                }`}
+                                aria-label={voice.isListening ? 'Stop listening' : 'Start listening'}
+                            >
+                                <MicrophoneIcon className="h-5 w-5" />
+                            </button>
+                        )}
                         <button
                             type="submit"
                             disabled={isLoading || !inputValue.trim()}
@@ -141,6 +166,7 @@ const HelpBot: React.FC<{ currentLocation: string; appData: AppData }> = ({ curr
                            )}
                         </button>
                     </form>
+                     {voice.error && <p className="text-xs text-red-600 mt-2">{voice.error}</p>}
                 </div>
             </div>
         </div>

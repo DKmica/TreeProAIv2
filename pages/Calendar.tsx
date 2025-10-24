@@ -209,15 +209,30 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
                                         )}
                                         <div className="mt-2 space-y-1">
                                             {jobsForDay.map(job => (
-                                                <div 
-                                                    key={job.id} 
+                                                <div
+                                                    key={job.id}
+                                                    className="group relative"
                                                     draggable="true"
                                                     onDragStart={(e) => handleDragStart(e, job.id)}
                                                     onDragEnd={handleDragEnd}
-                                                    className={`text-left text-xs bg-brand-green-100 p-1.5 rounded-md overflow-hidden cursor-move hover:shadow-md transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-lg' : ''}`}
                                                 >
-                                                    <p className="font-medium text-brand-green-800 truncate">{job.id}</p>
-                                                    <p className="text-brand-green-700 truncate">{job.customerName}</p>
+                                                    <div className={`text-left text-xs bg-brand-green-100 p-1.5 rounded-md cursor-move hover:shadow-md transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-lg' : ''}`}>
+                                                        <p className="font-medium text-brand-green-800 truncate">{job.id}</p>
+                                                        <p className="text-brand-green-700 truncate">{job.customerName}</p>
+                                                    </div>
+                                                    
+                                                    {/* Tooltip */}
+                                                    <div className="absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-xs -translate-x-1/2 transform rounded-lg bg-brand-gray-900 px-3 py-2 text-sm font-normal text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 pointer-events-none">
+                                                        <p className="font-bold text-white">{job.customerName}</p>
+                                                        <p className="text-brand-gray-300"><span className="font-semibold">Status:</span> {job.status}</p>
+                                                        <p className="text-brand-gray-300"><span className="font-semibold">Crew:</span> {
+                                                            job.assignedCrew
+                                                                .map(empId => employees.find(e => e.id === empId)?.name)
+                                                                .filter(Boolean)
+                                                                .join(', ') || 'Not Assigned'
+                                                        }</p>
+                                                        <div className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-4 border-x-transparent border-t-4 border-t-brand-gray-900"></div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

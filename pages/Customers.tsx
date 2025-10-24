@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Customer } from '../types';
 
 interface CustomerFormProps {
@@ -86,6 +87,16 @@ const Customers: React.FC<CustomersProps> = ({ customers, setCustomers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openCreateForm) {
+        setEditingCustomer(null);
+        setShowForm(true);
+        window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
 
   const handleCancel = () => {
     setShowForm(false);
