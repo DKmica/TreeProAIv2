@@ -2,7 +2,7 @@ import { GoogleGenAI, Type, FunctionDeclaration, Chat } from "@google/genai";
 import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate, UpsellSuggestion, JobHazardAnalysis, MaintenanceAdvice } from "../types";
 
 // Use environment variable injected by Vite
-const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const geminiApiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
 if (!geminiApiKey) {
     console.error("VITE_GEMINI_API_KEY is not set!");

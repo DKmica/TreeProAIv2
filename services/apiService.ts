@@ -2,6 +2,8 @@ import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLo
 
 async function handleResponse<T>(response: Response): Promise<T> {
   // ... (handleResponse function remains the same)
+  // Adding a return statement to fix TS2355
+  return response.json() as Promise<T>;
 }
 
 // Generic fetch function - Simplified
@@ -17,9 +19,6 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     },
   });
   return handleResponse<T>(response);
-}
-
-// ... (rest of the file remains the same - createApiService, exports)
 }
 
 // Generic CRUD operations
