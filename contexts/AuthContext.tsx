@@ -14,21 +14,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const navigate = useNavigate();
 
   const login = async (email: string, pass: string): Promise<void> => {
-    // In a real app, you'd make an API call here.
-    // For this demo, we'll use a hardcoded user.
-    if (email === 'admin@tree-pro.ai') {
-      const authToken = 'fake-jwt-token';
+    // Demo mode: Accept any email/password combination
+    // In production, this would make an API call to verify credentials
+    if (email && pass) {
+      const authToken = `demo-token-${Date.now()}`;
       sessionStorage.setItem('authToken', authToken);
+      sessionStorage.setItem('userEmail', email);
       setIsAuthenticated(true);
       navigate('/dashboard');
       return Promise.resolve();
     } else {
-      return Promise.reject(new Error('Invalid email or password.'));
+      return Promise.reject(new Error('Please enter both email and password.'));
     }
   };
 
   const logout = () => {
     sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('userEmail');
     setIsAuthenticated(false);
     navigate('/login');
   };
