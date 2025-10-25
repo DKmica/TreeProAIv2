@@ -5,7 +5,6 @@ export const mockCustomers: Customer[] = [
   { id: 'cust2', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '555-5678', address: '456 Pine Ave, New York, NY', coordinates: { lat: 40.7128, lng: -74.0060 } },
   { id: 'cust3', name: 'Sarah Wilson', email: 'sarah.w@example.com', phone: '555-8888', address: '789 Birch Rd, Chicago, IL', coordinates: { lat: 41.8781, lng: -87.6298 } },
   { id: 'cust4', name: 'Michael Brown', email: 'michael.b@example.com', phone: '555-4444', address: '101 Maple Ln, Miami, FL', coordinates: { lat: 25.7617, lng: -80.1918 } },
-
 ];
 
 export const mockLeads: Lead[] = [
@@ -32,10 +31,10 @@ export const mockQuotes: Quote[] = [
 ];
 
 const mockJob1Costs: JobCost = {
-  labor: 448, // 2 crew * 8 hours * ($22 + $35)/2 avg rate
-  equipment: 100, // Simulated
-  materials: 20, // Simulated
-  disposal: 80, // Simulated
+  labor: 448,
+  equipment: 100,
+  materials: 20,
+  disposal: 80,
   total: 648,
 };
 
@@ -53,7 +52,6 @@ export const mockJobs: Job[] = [
 const quote2LineItems: LineItem[] = mockQuotes.find(q => q.id === 'quote2')?.lineItems || [];
 const quote1LineItems: LineItem[] = mockQuotes.find(q => q.id === 'quote1')?.lineItems || [];
 
-
 export const mockInvoices: Invoice[] = [
     { id: 'inv1', jobId: 'job1', customerName: 'Jane Smith', status: 'Paid', amount: 850, lineItems: quote2LineItems, dueDate: '2023-11-20', paidAt: '2023-11-15T14:25:00Z' },
     { id: 'inv2', jobId: 'job2', customerName: 'John Doe', status: 'Sent', amount: 1200, lineItems: quote1LineItems, dueDate: '2024-01-15' },
@@ -63,7 +61,6 @@ export const mockEmployees: Employee[] = [
   { id: 'emp1', name: 'Mike Miller', phone: '555-8765', address: '789 Maple Dr, Los Angeles, CA', coordinates: { lat: 34.0550, lng: -118.2450 }, ssn: 'XXX-XX-1234', dob: '1985-05-15', jobTitle: 'Crew Leader', payRate: 35, hireDate: '2020-03-01', certifications: 'ISA Certified Arborist, First Aid/CPR', performanceMetrics: { jobsCompleted: 152, safetyIncidents: 0, customerRating: 4.9 } },
   { id: 'emp2', name: 'Carlos Ray', phone: '555-4321', address: '321 Birch Ln, New York, NY', coordinates: { lat: 40.7150, lng: -74.0080 }, ssn: 'XXX-XX-5678', dob: '1992-11-20', jobTitle: 'Groundsman', payRate: 22, hireDate: '2022-06-15', certifications: 'Chainsaw Safety', performanceMetrics: { jobsCompleted: 88, safetyIncidents: 1, customerRating: 4.6 } },
   { id: 'emp3', name: 'David Chen', phone: '555-9999', address: '555 Willow Way, Chicago, IL', coordinates: { lat: 41.8800, lng: -87.6300 }, ssn: 'XXX-XX-9999', dob: '1995-01-30', jobTitle: 'Arborist Climber', payRate: 28, hireDate: '2021-08-01', certifications: 'ISA Certified Tree Worker, Aerial Rescue', performanceMetrics: { jobsCompleted: 115, safetyIncidents: 0, customerRating: 4.8 } },
-
 ];
 
 export const mockEquipment: Equipment[] = [

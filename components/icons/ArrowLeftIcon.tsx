@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const ArrowLeftIcon: React.FC<{ className?: string }> = ({ className }) => (
