@@ -1,175 +1,162 @@
--- Enable UUID generation if not already enabled
+-- TreePro AI Database Schema
+
+-- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing tables in reverse order of dependency (optional, for clean setup)
-DROP TABLE IF EXISTS invoices;
-DROP TABLE IF EXISTS jobs;
-DROP TABLE IF EXISTS quotes;
-DROP TABLE IF EXISTS leads;
-DROP TABLE IF EXISTS equipment;
-DROP TABLE IF EXISTS employees;
-DROP TABLE IF EXISTS customers;
-
 -- Customers Table
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE,
-    phone VARCHAR(50),
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
     address TEXT,
-    latitude DECIMAL(9, 6), -- For coordinates
-    longitude DECIMAL(9, 6),
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    lat DOUBLE PRECISION,
+    lon DOUBLE PRECISION,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-CREATE INDEX idx_customers_email ON customers(email);
+
+-- Leads Table
+CREATE TABLE IF NOT EXISTS leads (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
+    source TEXT,
+    status TEXT NOT NULL DEFAULT 'New',
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Quotes Table
+CREATE TABLE IF NOT EXISTS quotes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
+    customer_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Draft',
+    line_items JSONB NOT NULL DEFAULT '[]',
+    stump_grinding_price NUMERIC DEFAULT 0,
+    signature TEXT,
+    accepted_at TIMESTAMP WITH TIME ZONE,
+    messages JSONB DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Jobs Table
+CREATE TABLE IF NOT EXISTS jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
+    customer_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Unscheduled',
+    scheduled_date TEXT,
+    assigned_crew JSONB DEFAULT '[]',
+    stump_grinding_price NUMERIC DEFAULT 0,
+    work_started_at TIMESTAMP WITH TIME ZONE,
+    work_ended_at TIMESTAMP WITH TIME ZONE,
+    photos JSONB DEFAULT '[]',
+    clock_in_lat DOUBLE PRECISION,
+    clock_in_lon DOUBLE PRECISION,
+    clock_out_lat DOUBLE PRECISION,
+    clock_out_lon DOUBLE PRECISION,
+    jha JSONB,
+    costs JSONB,
+    messages JSONB DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Invoices Table
+CREATE TABLE IF NOT EXISTS invoices (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+    customer_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Draft',
+    amount NUMERIC NOT NULL,
+    line_items JSONB NOT NULL DEFAULT '[]',
+    due_date TEXT NOT NULL,
+    paid_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 -- Employees Table
-CREATE TABLE employees (
+CREATE TABLE IF NOT EXISTS employees (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    phone VARCHAR(50),
+    name TEXT NOT NULL,
+    phone TEXT,
     address TEXT,
-    latitude DECIMAL(9, 6),
-    longitude DECIMAL(9, 6),
-    ssn VARCHAR(11), -- Consider encryption or hashing in a real application
-    dob DATE,
-    job_title VARCHAR(100),
-    pay_rate DECIMAL(10, 2),
-    hire_date DATE,
+    lat DOUBLE PRECISION,
+    lon DOUBLE PRECISION,
+    ssn TEXT,
+    dob TEXT,
+    job_title TEXT,
+    pay_rate NUMERIC,
+    hire_date TEXT,
     certifications TEXT,
-    performance_metrics JSONB, -- Store JSON object { jobsCompleted, safetyIncidents, customerRating }
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    performance_metrics JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Equipment Table
-CREATE TABLE equipment (
+CREATE TABLE IF NOT EXISTS equipment (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) NOT NULL,
-    make VARCHAR(100),
-    model VARCHAR(100),
-    purchase_date DATE,
-    last_service_date DATE,
-    status VARCHAR(50) CHECK (status IN ('Operational', 'Needs Maintenance', 'Out of Service')),
-    assigned_to TEXT, -- Could be employee name/ID or crew name
-    maintenance_history JSONB, -- Store array of JSON objects { id, date, description, cost }
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    name TEXT NOT NULL,
+    make TEXT,
+    model TEXT,
+    purchase_date TEXT,
+    last_service_date TEXT,
+    status TEXT NOT NULL DEFAULT 'Operational',
+    assigned_to TEXT,
+    maintenance_history JSONB DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-CREATE INDEX idx_equipment_status ON equipment(status);
 
--- Leads Table
-CREATE TABLE leads (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    customer_id UUID REFERENCES customers(id) ON DELETE SET NULL, -- Link to customer
-    source VARCHAR(100),
-    status VARCHAR(50) CHECK (status IN ('New', 'Contacted', 'Qualified', 'Lost')),
-    created_at DATE DEFAULT CURRENT_DATE,
-    description TEXT,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_leads_status ON leads(status);
-CREATE INDEX idx_leads_customer_id ON leads(customer_id);
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_leads_customer_id ON leads(customer_id);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+CREATE INDEX IF NOT EXISTS idx_quotes_lead_id ON quotes(lead_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
+CREATE INDEX IF NOT EXISTS idx_jobs_quote_id ON jobs(quote_id);
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_job_id ON invoices(job_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
 
--- Quotes Table
-CREATE TABLE quotes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    lead_id UUID REFERENCES leads(id) ON DELETE SET NULL, -- Optional link to lead
-    customer_id UUID REFERENCES customers(id) ON DELETE CASCADE, -- Link to customer (more reliable)
-    customer_name VARCHAR(255), -- Denormalized for convenience
-    status VARCHAR(50) CHECK (status IN ('Draft', 'Sent', 'Accepted', 'Declined')),
-    line_items JSONB, -- Store array of JSON objects { description, price, selected }
-    stump_grinding_price DECIMAL(10, 2) DEFAULT 0,
-    created_at DATE DEFAULT CURRENT_DATE,
-    signature TEXT, -- Store Base64 data URI or path to stored file
-    accepted_at TIMESTAMPTZ,
-    messages JSONB, -- Store array of JSON objects { sender, text, timestamp }
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_quotes_status ON quotes(status);
-CREATE INDEX idx_quotes_customer_id ON quotes(customer_id);
+-- Insert sample data for development
+INSERT INTO customers (id, name, email, phone, address, lat, lon) VALUES
+    ('cust1', 'John Doe', 'john.doe@example.com', '555-1234', '123 Oak St, Los Angeles, CA', 34.0522, -118.2437),
+    ('cust2', 'Jane Smith', 'jane.smith@example.com', '555-5678', '456 Pine Ave, New York, NY', 40.7128, -74.0060),
+    ('cust3', 'Sarah Wilson', 'sarah.w@example.com', '555-8888', '789 Birch Rd, Chicago, IL', 41.8781, -87.6298),
+    ('cust4', 'Michael Brown', 'michael.b@example.com', '555-4444', '101 Maple Ln, Miami, FL', 25.7617, -80.1918)
+ON CONFLICT (id) DO NOTHING;
 
--- Jobs Table
-CREATE TABLE jobs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    quote_id UUID REFERENCES quotes(id) ON DELETE CASCADE, -- Link to the accepted quote
-    customer_id UUID REFERENCES customers(id) ON DELETE CASCADE, -- Link to customer
-    customer_name VARCHAR(255), -- Denormalized
-    status VARCHAR(50) CHECK (status IN ('Unscheduled', 'Scheduled', 'In Progress', 'Completed', 'Cancelled')),
-    scheduled_date DATE,
-    assigned_crew TEXT[], -- Array of employee IDs or names
-    stump_grinding_price DECIMAL(10, 2), -- Copied from quote?
-    work_started_at TIMESTAMPTZ,
-    work_ended_at TIMESTAMPTZ,
-    photos TEXT[], -- Array of photo URLs or identifiers
-    clock_in_latitude DECIMAL(9, 6),
-    clock_in_longitude DECIMAL(9, 6),
-    clock_out_latitude DECIMAL(9, 6),
-    clock_out_longitude DECIMAL(9, 6),
-    jha JSONB, -- Store JSON object { identified_hazards, recommended_ppe, analysis_timestamp }
-    costs JSONB, -- Store JSON object { labor, equipment, materials, disposal, total }
-    messages JSONB, -- Store array of JSON objects { sender, text, timestamp }
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_jobs_status ON jobs(status);
-CREATE INDEX idx_jobs_scheduled_date ON jobs(scheduled_date);
-CREATE INDEX idx_jobs_quote_id ON jobs(quote_id);
-CREATE INDEX idx_jobs_customer_id ON jobs(customer_id);
+INSERT INTO leads (id, customer_id, source, status, description, created_at) VALUES
+    ('lead1', 'cust1', 'Website', 'New', 'Wants a quote for trimming a large maple tree.', '2023-10-26'),
+    ('lead2', 'cust2', 'Referral', 'Contacted', NULL, '2023-10-25'),
+    ('lead3', 'cust3', 'Emergency Call', 'New', 'A large branch has fallen on my garage. Need it removed ASAP!', NOW()),
+    ('lead4', 'cust4', 'Website', 'Qualified', 'Request for quote for various services.', '2023-10-28')
+ON CONFLICT (id) DO NOTHING;
 
--- Invoices Table
-CREATE TABLE invoices (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    job_id UUID REFERENCES jobs(id) ON DELETE CASCADE, -- Link to the completed job
-    customer_id UUID REFERENCES customers(id) ON DELETE CASCADE, -- Link to customer
-    customer_name VARCHAR(255), -- Denormalized
-    status VARCHAR(50) CHECK (status IN ('Draft', 'Sent', 'Paid', 'Overdue')),
-    amount DECIMAL(10, 2) NOT NULL,
-    line_items JSONB, -- Can be copied from quote/job or generated
-    due_date DATE,
-    paid_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX idx_invoices_status ON invoices(status);
-CREATE INDEX idx_invoices_job_id ON invoices(job_id);
-CREATE INDEX idx_invoices_customer_id ON invoices(customer_id);
+INSERT INTO quotes (id, lead_id, customer_name, status, line_items, stump_grinding_price, signature, accepted_at, created_at) VALUES
+    ('quote1', 'lead1', 'John Doe', 'Accepted', '[{"description": "Trimming large maple tree", "price": 1200, "selected": true}]', 0, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', '2023-10-27T10:00:00Z', '2023-10-26'),
+    ('quote2', 'lead2', 'Jane Smith', 'Accepted', '[{"description": "Oak tree removal", "price": 850, "selected": true}]', 0, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', '2023-10-26T11:30:00Z', '2023-10-25'),
+    ('quote3', 'lead3', 'Sarah Wilson', 'Accepted', '[{"description": "Emergency branch removal from garage", "price": 2100, "selected": true}]', 400, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', NOW(), NOW()),
+    ('quote4', 'lead4', 'Michael Brown', 'Sent', '[{"description": "Remove large pine tree near house", "price": 1800, "selected": true}, {"description": "Prune two front yard oak trees", "price": 650, "selected": true}, {"description": "Fertilization treatment for all trees", "price": 250, "selected": false}]', 350, NULL, NULL, '2023-10-28')
+ON CONFLICT (id) DO NOTHING;
 
--- Function to automatically update 'updated_at' timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-   NEW.updated_at = NOW();
-   RETURN NEW;
-END;
-$$ language 'plpgsql';
+INSERT INTO jobs (id, quote_id, customer_name, status, scheduled_date, assigned_crew, work_started_at, work_ended_at, clock_in_lat, clock_in_lon, clock_out_lat, clock_out_lon, costs) VALUES
+    ('job1', 'quote2', 'Jane Smith', 'Completed', '2023-11-05', '["emp2", "emp3"]', '2023-11-05T08:00:00Z', '2023-11-05T16:00:00Z', 40.7128, -74.0060, 40.7130, -74.0062, '{"labor": 448, "equipment": 100, "materials": 20, "disposal": 80, "total": 648}'),
+    ('job2', 'quote1', 'John Doe', 'In Progress', NOW()::date::text, '["emp1"]', NOW() - INTERVAL '2 hours', NULL, 34.0522, -118.2437, NULL, NULL, NULL),
+    ('job3', 'quote3', 'Sarah Wilson', 'Unscheduled', '', '["emp1", "emp3"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
 
--- Apply the trigger to all tables that have 'updated_at'
-DO $$
-DECLARE
-    t_name TEXT;
-BEGIN
-    FOR t_name IN (SELECT table_name FROM information_schema.columns WHERE column_name = 'updated_at')
-    LOOP
-        EXECUTE format('CREATE TRIGGER update_%I_updated_at BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();', t_name, t_name);
-    END LOOP;
-END;
-$$;
+INSERT INTO invoices (id, job_id, customer_name, status, amount, line_items, due_date, paid_at) VALUES
+    ('inv1', 'job1', 'Jane Smith', 'Paid', 850, '[{"description": "Oak tree removal", "price": 850, "selected": true}]', '2023-11-20', '2023-11-15T14:25:00Z'),
+    ('inv2', 'job2', 'John Doe', 'Sent', 1200, '[{"description": "Trimming large maple tree", "price": 1200, "selected": true}]', '2024-01-15', NULL)
+ON CONFLICT (id) DO NOTHING;
 
--- Optional: Add some initial mock data (based on your mockData.ts)
--- Note: UUIDs need to be generated or copied if you want exact matches. These are examples.
--- Customers
-INSERT INTO customers (id, name, email, phone, address, latitude, longitude) VALUES
-('a1b2c3d4-e5f6-7890-1234-567890abcdef', 'John Doe', 'john.doe@example.com', '555-1234', '123 Oak St, Los Angeles, CA', 34.0522, -118.2437),
-('b2c3d4e5-f6a7-8901-2345-67890abcdef1', 'Jane Smith', 'jane.smith@example.com', '555-5678', '456 Pine Ave, New York, NY', 40.7128, -74.0060),
-('c3d4e5f6-a7b8-9012-3456-7890abcdef12', 'Sarah Wilson', 'sarah.w@example.com', '555-8888', '789 Birch Rd, Chicago, IL', 41.8781, -87.6298),
-('d4e5f6a7-b8c9-0123-4567-890abcdef123', 'Michael Brown', 'michael.b@example.com', '555-4444', '101 Maple Ln, Miami, FL', 25.7617, -80.1918);
+INSERT INTO employees (id, name, phone, address, lat, lon, ssn, dob, job_title, pay_rate, hire_date, certifications, performance_metrics) VALUES
+    ('emp1', 'Mike Miller', '555-8765', '789 Maple Dr, Los Angeles, CA', 34.0550, -118.2450, 'XXX-XX-1234', '1985-05-15', 'Crew Leader', 35, '2020-03-01', 'ISA Certified Arborist, First Aid/CPR', '{"jobsCompleted": 152, "safetyIncidents": 0, "customerRating": 4.9}'),
+    ('emp2', 'Carlos Ray', '555-4321', '321 Birch Ln, New York, NY', 40.7150, -74.0080, 'XXX-XX-5678', '1992-11-20', 'Groundsman', 22, '2022-06-15', 'Chainsaw Safety', '{"jobsCompleted": 88, "safetyIncidents": 1, "customerRating": 4.6}'),
+    ('emp3', 'David Chen', '555-9999', '555 Willow Way, Chicago, IL', 41.8800, -87.6300, 'XXX-XX-9999', '1995-01-30', 'Arborist Climber', 28, '2021-08-01', 'ISA Certified Tree Worker, Aerial Rescue', '{"jobsCompleted": 115, "safetyIncidents": 0, "customerRating": 4.8}')
+ON CONFLICT (id) DO NOTHING;
 
--- Employees (example)
-INSERT INTO employees (id, name, phone, job_title, pay_rate, hire_date) VALUES
-('e1f2a3b4-c5d6-7890-1234-abcdef987654', 'Mike Miller', '555-8765', 'Crew Leader', 35.00, '2020-03-01'),
-('f2a3b4c5-d6e7-8901-2345-bcdefa987654', 'Carlos Ray', '555-4321', 'Groundsman', 22.00, '2022-06-15'),
-('a3b4c5d6-e7f8-9012-3456-cdefab987654', 'David Chen', '555-9999', 'Arborist Climber', 28.00, '2021-08-01');
-
--- (Add more mock data for other tables as needed, ensuring foreign key constraints are met)
+INSERT INTO equipment (id, name, make, model, purchase_date, last_service_date, status, assigned_to, maintenance_history) VALUES
+    ('equip1', 'Stump Grinder', 'Vermeer', 'SC30TX', '2021-02-10', '2023-05-15', 'Operational', 'Mike Miller', '[{"id": "maint1", "date": "2023-05-15", "description": "Replaced grinder teeth and changed oil.", "cost": 450}, {"id": "maint2", "date": "2022-11-01", "description": "Annual engine service.", "cost": 220}]'),
+    ('equip2', 'Wood Chipper', 'Bandit', '15XP', '2020-01-15', '2023-08-15', 'Needs Maintenance', 'Crew 1', '[{"id": "maint3", "date": "2023-08-15", "description": "Sharpened blades.", "cost": 300}, {"id": "maint4", "date": "2023-02-20", "description": "Replaced hydraulic fluid.", "cost": 150}]'),
+    ('equip3', 'Chainsaw', 'Stihl', 'MS 462', '2023-03-20', '2023-10-10', 'Operational', NULL, '[]')
+ON CONFLICT (id) DO NOTHING;
