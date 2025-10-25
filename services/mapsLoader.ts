@@ -28,7 +28,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
 
     // Use environment variable injected by Vite during build
     // Vite automatically replaces import.meta.env.VITE_VARIABLE_NAME
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+    const apiKey = (import.meta as any).env.VITE_GOOGLE_MAPS_KEY;
 
     if (!apiKey) {
       // This error will likely show during build if the variable isn't set
