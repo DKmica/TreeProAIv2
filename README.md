@@ -402,10 +402,13 @@ The built files will be in the `dist/` directory.
 
 ### Deploy to Google Cloud Run
 
-1. **Build Docker image:**
+1. **Build Docker image (injecting frontend API keys at build time):**
    ```bash
    cd backend
-   docker build -t gcr.io/YOUR_PROJECT_ID/treeproai .
+   docker build \
+     --build-arg GEMINI_API_KEY=your_gemini_api_key \
+     --build-arg GOOGLE_MAPS_KEY=your_google_maps_key \
+     -t gcr.io/YOUR_PROJECT_ID/treeproai ..
    ```
 
 2. **Push to Container Registry:**
@@ -424,17 +427,18 @@ The built files will be in the `dist/` directory.
 
 4. **Set environment variables in Cloud Run console:**
    - `DATABASE_URL`
-   - `GEMINI_API_KEY`
-   - `GOOGLE_MAPS_KEY`
    - `NODE_ENV=production`
+   - (optional) `PORT=8080` if you change the default
+   - (optional) `GEMINI_API_KEY` and `GOOGLE_MAPS_KEY` if you also need them at runtime
 
 ### Environment Variables for Production
 
 ```env
 DATABASE_URL=postgresql://user:pass@host:5432/treeproai
+NODE_ENV=production
+# Optional runtime overrides (frontend keys are baked in during docker build)
 GEMINI_API_KEY=your_production_key
 GOOGLE_MAPS_KEY=your_production_key
-NODE_ENV=production
 PORT=8080
 ```
 

@@ -19,9 +19,9 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [dyadComponentTagger(), react()],
       define: {
-        // Expose environment variables to the client
-        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'import.meta.env.VITE_GOOGLE_MAPS_KEY': JSON.stringify(env.GOOGLE_MAPS_KEY),
+        // Expose environment variables to the client while respecting Vite's VITE_ prefix convention
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY ?? ''),
+        'import.meta.env.VITE_GOOGLE_MAPS_KEY': JSON.stringify(env.VITE_GOOGLE_MAPS_KEY ?? ''),
       },
       resolve: {
         alias: {
