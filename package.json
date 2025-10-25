@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "npm run dev --prefix backend",
     "build": "vite build",
     "preview": "vite preview",
     "verify": "node verify-setup.js"
