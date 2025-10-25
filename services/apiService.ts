@@ -1,15 +1,22 @@
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
-  // ... (handleResponse function remains the same)
-  // Adding a return statement to fix TS2355
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error: ${response.status} - ${errorText}`);
+  }
+  
+  // Handle empty responses (e.g., DELETE operations)
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return undefined as T;
+  }
+  
   return response.json() as Promise<T>;
 }
 
-// Generic fetch function - Simplified
+// Generic fetch function
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  // Always use a relative path for the API endpoint
-  const url = `/api/${endpoint}`; // Assumes backend API is at /api
+  const url = `/api/${endpoint}`;
 
   const response = await fetch(url, {
     ...options,
@@ -18,6 +25,7 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
       ...options.headers,
     },
   });
+  
   return handleResponse<T>(response);
 }
 
@@ -38,15 +46,28 @@ export const invoiceService = createApiService<Invoice>('invoices');
 export const employeeService = createApiService<Employee>('employees');
 export const equipmentService = createApiService<Equipment>('equipment');
 
-// Special case for maintenance logs, which are part of an equipment item
-export const addMaintenanceLog = (equipmentId: string, log: Omit<MaintenanceLog, 'id'>): Promise<Equipment> => {
-    return apiFetch(`equipment/${equipmentId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            // Frontend logic will handle fetching the equipment, adding the log,
-            // and then using equipmentService.update to save the whole object.
-            // This API service function might not even be strictly necessary anymore
-            // depending on how you structure the component logic.
-        })
+// Special case for maintenance logs
+export const addMaintenanceLog = async (equipmentId: string, log: Omit<MaintenanceLog, 'id'>): Promise<Equipment> => {
+    // Fetch current equipment
+    const equipment = await equipmentService.getById(equipmentId);
+    
+    // Add new log with generated ID
+    const newLog: MaintenanceLog = {
+        id: `maint-${Date.now()}`,
+        ...log
+    };
+    
+    const updatedHistory = [...(equipment.maintenanceHistory || []), newLog];
+    
+    // Update the last service date if the new log date is the most recent
+    const mostRecentDate = updatedHistory.reduce(
+        (latest, current) => new Date(current.date) > new Date(latest) ? current.date : latest, 
+        equipment.lastServiceDate
+    );
+    
+    // Update equipment with new maintenance log
+    return equipmentService.update(equipmentId, {
+        maintenanceHistory: updatedHistory,
+        lastServiceDate: mostRecentDate
     });
 };
