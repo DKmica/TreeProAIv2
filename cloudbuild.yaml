@@ -27,7 +27,7 @@ steps:
   # IMPORTANT: Set database environment variables here or via Secret Manager
   - '--set-env-vars'
   # Ensure ^##^ delimiters are used correctly
-  - '^##^DATABASE_URL=postgresql://postgres:Dk126977!@HOST:PORT/DATABASE##NODE_ENV=production' # Replace with actual or use Secret Manager
+  - '^##^DATABASE_URL=postgresql://postgres:Dk126977!@34.16.6.71:5432/postgres##NODE_ENV=production' # Replace with actual or use Secret Manager
   # Add other necessary env vars like GEMINI_API_KEY
   # - '--update-secrets=GEMINI_API_KEY=your-secret-name:latest' # Example using Secret Manager
 

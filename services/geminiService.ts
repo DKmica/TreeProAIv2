@@ -1,7 +1,19 @@
 import { GoogleGenAI, Type, FunctionDeclaration, Chat } from "@google/genai";
 import { SEOSuggestions, EmailCampaign, AICoreInsights, Lead, Job, Quote, Employee, Equipment, AITreeEstimate, UpsellSuggestion, JobHazardAnalysis, MaintenanceAdvice } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Use environment variable injected by Vite
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!geminiApiKey) {
+    console.error("VITE_GEMINI_API_KEY is not set!");
+    // You might want to throw an error or handle this case appropriately
+}
+
+const ai = new GoogleGenAI({ apiKey: geminiApiKey as string });
+
+// ... rest of the file remains the same ...
+
+// Ensure no other references to process.env remain in this file
 
 // --- New Advanced Chat Service ---
 

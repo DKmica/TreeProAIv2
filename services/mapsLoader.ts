@@ -25,18 +25,19 @@ export const loadGoogleMapsScript = (): Promise<void> => {
     }
 
     const script = document.createElement('script');
-    
-    // FIX: Directly use the provided Maps API key to resolve the InvalidKeyMapError.
-    // The previous implementation might have been falling back to the general Gemini API key,
-    // which is not authorized for the Google Maps JavaScript API.
-    const apiKey = 'AIzaSyAJ3NuxhCMIXciZXo9V6vvDM96WhpjRzcQ';
+
+    // Use environment variable injected by Vite during build
+    // Vite automatically replaces import.meta.env.VITE_VARIABLE_NAME
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+
     if (!apiKey) {
-      return reject(new Error('MAPS_API_KEY or API_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured.'));
+      // This error will likely show during build if the variable isn't set
+      return reject(new Error('VITE_GOOGLE_MAPS_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured in your root .env file and passed during build.'));
     }
 
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker`;
     script.async = true;
-    
+
     script.onload = () => {
         if (window.google && window.google.maps) {
             delete (window as any).gm_authFailure; // Clean up the global handler on success
@@ -50,7 +51,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
         console.error("Failed to load Google Maps script:", error);
         reject(new Error('Failed to load Google Maps script. Check your network connection and browser console for more details.'));
     };
-    
+
     document.head.appendChild(script);
   });
 };
