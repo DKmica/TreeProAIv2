@@ -215,9 +215,13 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     wakeWordRec.interimResults = false;
     wakeWordRec.lang = 'en-US';
 
+    wakeWordRec.onstart = () => {
+        console.log("🎤 Wake word listener is now active and listening for 'Yo Probot'");
+    };
+
     wakeWordRec.onresult = (event: SpeechRecognitionEvent) => {
         const lastResult = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-        console.log("Heard:", lastResult);
+        console.log("👂 Heard:", lastResult);
         if (lastResult.includes(WAKE_WORD)) {
             console.log("✅ Wake word 'Yo Probot' detected! Switching to command mode...");
             isSwitchingModesRef.current = true;
@@ -238,11 +242,13 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     };
 
     wakeWordRec.onerror = (event: SpeechRecognitionErrorEvent) => {
-        if (event.error !== 'aborted' && event.error !== 'no-speech') {
-            console.error('Wake word recognition error:', event.error, event.message);
-            if (event.error === 'not-allowed') {
-                setError('Microphone access denied. Please allow microphone access in your browser settings.');
-            }
+        console.error('🚨 Wake word recognition error:', event.error, event.message);
+        if (event.error === 'not-allowed') {
+            setError('⚠️ Microphone access denied. Please click the lock/info icon in your browser address bar and allow microphone access.');
+        } else if (event.error === 'no-speech') {
+            console.log('⏸️ No speech detected, continuing to listen...');
+        } else if (event.error !== 'aborted') {
+            setError(`Voice recognition error: ${event.error}`);
         }
     };
     wakeWordRecognitionRef.current = wakeWordRec;
