@@ -66,7 +66,8 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
 
   const [isWakeWordEnabled, setIsWakeWordEnabled] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem(WAKE_WORD_STORAGE_KEY) === 'true';
+    const stored = localStorage.getItem(WAKE_WORD_STORAGE_KEY);
+    return stored === null ? true : stored === 'true';
   });
   const [isAwaitingCommand, setIsAwaitingCommand] = useState(false);
   const [isWakeWordListening, setIsWakeWordListening] = useState(false);
