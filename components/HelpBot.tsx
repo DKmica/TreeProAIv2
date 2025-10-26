@@ -75,13 +75,24 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                     <div className="flex items-center gap-2">
                         {voice.hasSupport && (
                             <button
-                                onClick={voice.toggleWakeWord}
+                                onClick={() => {
+                                    console.log("🎤 Requesting microphone permission...");
+                                    if (!voice.isWakeWordEnabled) {
+                                        voice.toggleWakeWord();
+                                    } else {
+                                        voice.startListening();
+                                        setTimeout(() => {
+                                            voice.stopListening();
+                                            voice.startWakeWordListener();
+                                        }, 100);
+                                    }
+                                }}
                                 className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                                     voice.isWakeWordEnabled
                                         ? 'bg-white text-brand-green-700 hover:bg-gray-100'
                                         : 'bg-brand-green-600 text-white hover:bg-brand-green-500'
                                 }`}
-                                title={voice.isWakeWordEnabled ? 'Wake word "Yo Probot" is ON' : 'Wake word is OFF - click to enable'}
+                                title={voice.isWakeWordEnabled ? 'Wake word "Yo Probot" is ON - click to restart' : 'Wake word is OFF - click to enable'}
                             >
                                 <BroadcastIcon className="h-4 w-4 inline mr-1" />
                                 {voice.isWakeWordEnabled ? 'ON' : 'OFF'}
