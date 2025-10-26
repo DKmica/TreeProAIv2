@@ -1,0 +1,216 @@
+  cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64
+ Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+ 🚀 Starting data fetch from backend...
+ 🚀 Starting data fetch from backend...
+  [chrome-extension://jmjjnhpacphpjmnnlnccpfmhkcloaade/content_scripts/nif2_main.js:352:9]: Initialization failed!
+error @ log.js:122
+ ✅ Data fetched successfully
+ ⏹️ Fetch complete, setting isLoading to false
+ ✅ Speech recognition is supported. Wake word feature available.
+ ✅ Speech recognition is supported. Wake word feature available.
+ ✅ Speech recognition is supported. Wake word feature available.
+  Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
+lea @ js?key=AIzaSyAJ3Nuxh…braries=marker:1031
+ ✅ Data fetched successfully
+ ⏹️ Fetch complete, setting isLoading to false
+ ✅ Speech recognition is supported. Wake word feature available.
+ ✅ Speech recognition is supported. Wake word feature available.
+  Google Maps JavaScript API error: BillingNotEnabledMapError
+https://developers.google.com/maps/documentation/javascript/error-messages#billing-not-enabled-map-error
+(anonymous) @ js?key=AIzaSyAJ3Nuxh…ibraries=marker:904
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+  🚨 Wake word recognition error: aborted 
+wakeWordRec.onerror @ useVoiceRecognition.…t=1761447028407:160
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🔍 startWakeWordListener called with: Object
+ ⚠️ Not starting wake word listener - conditions not met
+ 🔍 startWakeWordListener called with: Object
+ ✅ Starting wake word listener for 'Yo Probot'...
+ 🎤 Wake word listener is now active and listening for 'Yo Probot'
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+ 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+ ✅ Speech recognition is supported. Wake word feature available.
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:113 ⚠️ Not starting wake word listener - conditions not met
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:103 ✅ Starting wake word listener for 'Yo Probot'...
+useVoiceRecognition.ts:220 🎤 Wake word listener is now active and listening for 'Yo Probot'
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:113 ⚠️ Not starting wake word listener - conditions not met
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:103 ✅ Starting wake word listener for 'Yo Probot'...
+useVoiceRecognition.ts:220 🎤 Wake word listener is now active and listening for 'Yo Probot'
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:113 ⚠️ Not starting wake word listener - conditions not met
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:103 ✅ Starting wake word listener for 'Yo Probot'...
+useVoiceRecognition.ts:220 🎤 Wake word listener is now active and listening for 'Yo Probot'
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:113 ⚠️ Not starting wake word listener - conditions not met
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:103 ✅ Starting wake word listener for 'Yo Probot'...
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:113 ⚠️ Not starting wake word listener - conditions not met
+useVoiceRecognition.ts:220 🎤 Wake word listener is now active and listening for 'Yo Probot'
+HelpBot.tsx:32 🎤 HelpBot opened - requesting microphone permission and starting wake word listener...
+useVoiceRecognition.ts:145 ✅ Speech recognition is supported. Wake word feature available.
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:103 ✅ Starting wake word listener for 'Yo Probot'...
+useVoiceRecognition.ts:220 🎤 Wake word listener is now active and listening for 'Yo Probot'
+useVoiceRecognition.ts:91 🔍 startWakeWordListener called with: Object
+useVoiceRecognition.ts:113 ⚠️ Not starting wake word listener - conditions not met
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again

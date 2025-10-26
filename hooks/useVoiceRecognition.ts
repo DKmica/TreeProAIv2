@@ -13,6 +13,8 @@ interface SpeechRecognition extends EventTarget {
   onend: (() => void) | null;
   onstart: (() => void) | null;
   onaudiostart: (() => void) | null;
+  onsoundstart: (() => void) | null;
+  onspeechstart: (() => void) | null;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -218,6 +220,22 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
 
     wakeWordRec.onstart = () => {
         console.log("🎤 Wake word listener is now active and listening for 'Yo Probot'");
+        console.log("💡 TIP: If you don't see any audio being detected, check:");
+        console.log("   1. Chrome address bar - click the lock/camera icon and ensure microphone is 'Allowed'");
+        console.log("   2. System microphone is working and not muted");
+        console.log("   3. You're using Chrome or Edge (Firefox doesn't support wake words)");
+    };
+
+    wakeWordRec.onaudiostart = () => {
+        console.log("🔊 Audio detection started - microphone is capturing sound!");
+    };
+
+    wakeWordRec.onsoundstart = () => {
+        console.log("🎵 Sound detected by microphone!");
+    };
+
+    wakeWordRec.onspeechstart = () => {
+        console.log("🗣️ Speech detected - processing...");
     };
 
     wakeWordRec.onresult = (event: SpeechRecognitionEvent) => {

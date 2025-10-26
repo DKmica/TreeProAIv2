@@ -105,6 +105,18 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                 </header>
                 
                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {voice.error && (
+                        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded text-sm">
+                            <p className="font-semibold">⚠️ Microphone Error:</p>
+                            <p>{voice.error}</p>
+                        </div>
+                    )}
+                    {voice.isWakeWordEnabled && !voice.error && (
+                        <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded text-sm">
+                            <p className="font-semibold">🎤 Voice Recognition Active</p>
+                            <p>Say "Yo Probot" to activate voice commands, or click the microphone button below to test your microphone.</p>
+                        </div>
+                    )}
                     {messages.map((msg) => (
                          <div key={msg.id}>
                             {msg.role === 'user' && (
