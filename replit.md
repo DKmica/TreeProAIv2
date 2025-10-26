@@ -6,6 +6,29 @@ TreePro AI is a comprehensive business management platform for tree service comp
 **Status**: Fully configured and running on Replit  
 **Last Updated**: October 26, 2025
 
+## Recent Changes
+
+### October 26, 2025 - Critical Bug Fixes & Data Seeding
+1. **Fixed Leads Page Crash** (pages/Leads.tsx)
+   - Added optional chaining (`?.`) to safely access `lead.customer.name` and `lead.customer.email`
+   - Prevents "Cannot read properties of undefined (reading 'name')" error
+   - Added fallback values ('N/A') for missing customer data
+
+2. **Fixed Backend API - Leads Endpoint** (backend/server.js)
+   - Added custom `/api/leads` endpoint with SQL JOIN to include full customer objects
+   - Leads now return nested `customer` object instead of just `customer_id`
+   - Matches the Lead type definition: `customer: Customer`
+   - Removed redundant customer fields from response
+
+3. **Database Seeding Completed**
+   - Successfully seeded database with realistic test data:
+     - 10 employees with certifications and performance metrics
+     - 15 equipment items with maintenance schedules
+     - 50 customers across Los Angeles area with GPS coordinates
+     - 20 leads with various statuses (New, Contacted, Qualified, Lost)
+     - 30 quotes with line items and pricing
+     - 15 jobs with scheduling and crew assignments
+
 ## Project Architecture
 
 ### Frontend

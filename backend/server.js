@@ -222,6 +222,40 @@ const setupCrudEndpoints = (router, tableName) => {
   });
 };
 
+apiRouter.get('/leads', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT l.*, 
+             c.id as customer_id, c.name as customer_name, c.email as customer_email, 
+             c.phone as customer_phone, c.address as customer_address
+      FROM leads l
+      LEFT JOIN customers c ON l.customer_id = c.id
+    `);
+    
+    const transformed = rows.map(row => {
+      const lead = transformRow(row, 'leads');
+      lead.customer = {
+        id: row.customer_id,
+        name: row.customer_name,
+        email: row.customer_email,
+        phone: row.customer_phone,
+        address: row.customer_address
+      };
+      delete lead.customer_id;
+      delete lead.customer_name;
+      delete lead.customer_email;
+      delete lead.customer_phone;
+      delete lead.customer_address;
+      return lead;
+    });
+    
+    res.json(transformed);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+
 const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);

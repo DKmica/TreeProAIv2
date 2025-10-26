@@ -224,7 +224,7 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, customers, setCustomers 
   };
 
   const filteredLeads = useMemo(() => leads.filter(lead =>
-    lead.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.status.toLowerCase().includes(searchTerm.toLowerCase())
   ), [leads, searchTerm]);
@@ -277,8 +277,8 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, customers, setCustomers 
                   {filteredLeads.map((lead) => (
                     <tr key={lead.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                        <div className="font-medium text-brand-gray-900">{lead.customer.name}</div>
-                        <div className="text-brand-gray-500">{lead.customer.email}</div>
+                        <div className="font-medium text-brand-gray-900">{lead.customer?.name || 'N/A'}</div>
+                        <div className="text-brand-gray-500">{lead.customer?.email || 'N/A'}</div>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{lead.source}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{lead.status}</td>
