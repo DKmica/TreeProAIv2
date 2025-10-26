@@ -81,7 +81,7 @@ export const optimizeSEOContent = async (content: string, keyword: string): Prom
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
@@ -131,7 +131,7 @@ export const generateEmailCampaign = async (goal: string, audience: string): Pro
     `;
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',

@@ -81,7 +81,7 @@ export const generateTreeEstimate = async (files: { mimeType: string, data: stri
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.0-flash',
             contents: { parts: [{ text: prompt }, ...imageParts] },
             config: {
                 responseMimeType: 'application/json',
@@ -90,9 +90,10 @@ export const generateTreeEstimate = async (files: { mimeType: string, data: stri
         });
         const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
         return JSON.parse(cleanedJsonText) as AITreeEstimate;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating tree estimate:", error);
-        throw new Error("Failed to generate AI tree estimate.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate AI tree estimate: ${errorMessage}`);
     }
 };
 
@@ -147,7 +148,7 @@ export const generateJobHazardAnalysis = async (files: { mimeType: string, data:
 
      try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.0-flash',
             contents: { parts: [{ text: prompt }, ...imageParts] },
             config: {
                 responseMimeType: 'application/json',
@@ -156,8 +157,9 @@ export const generateJobHazardAnalysis = async (files: { mimeType: string, data:
         });
         const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
         return JSON.parse(cleanedJsonText) as JobHazardAnalysis;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating JHA:", error);
-        throw new Error("Failed to generate AI Job Hazard Analysis.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate AI Job Hazard Analysis: ${errorMessage}`);
     }
 };

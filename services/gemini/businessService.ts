@@ -89,7 +89,7 @@ export const getAiCoreInsights = async (
     
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
@@ -142,7 +142,7 @@ export const generateUpsellSuggestions = async (existingServices: string[]): Pro
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.0-flash',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',

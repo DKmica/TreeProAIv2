@@ -8,7 +8,14 @@ TreePro AI is a comprehensive business management platform for tree service comp
 
 ## Recent Changes
 
-### October 26, 2025 - Comprehensive API & Data Fixes
+### October 26, 2025 - Comprehensive API & Data Fixes + AI Estimator Fix
+
+#### AI Estimator Fix (Latest)
+1. **Fixed Invalid Gemini Model Names**
+   - Updated all Gemini API calls from invalid `gemini-2.5-pro` to `gemini-2.0-flash`
+   - Fixed AI Tree Estimator, AI Core, Chat Service, Marketing Tools
+   - Added better error messages to display actual API errors
+   - All AI features now working correctly
 
 #### Critical Bug Fixes
 1. **Fixed Leads Page Crash** (pages/Leads.tsx)
