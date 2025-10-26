@@ -261,12 +261,15 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     };
 
     wakeWordRec.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('🚨 Wake word recognition error:', event.error, event.message);
         if (event.error === 'not-allowed') {
-            setError('⚠️ Microphone access denied. Please click the lock/info icon in your browser address bar and allow microphone access.');
+            console.error('🚨 Microphone access denied');
+            setError('⚠️ Microphone access denied. Please grant microphone permission to use voice recognition.');
         } else if (event.error === 'no-speech') {
             console.log('⏸️ No speech detected, continuing to listen...');
-        } else if (event.error !== 'aborted') {
+        } else if (event.error === 'aborted') {
+            console.log('⏹️ Wake word listener stopped (expected)');
+        } else {
+            console.error('🚨 Wake word recognition error:', event.error, event.message);
             setError(`Voice recognition error: ${event.error}`);
         }
     };
@@ -316,6 +319,7 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     stopListening: manualStopListening,
     hasSupport,
     isWakeWordEnabled,
+    isWakeWordListening,
     toggleWakeWord,
     isAwaitingCommand,
     startWakeWordListener,

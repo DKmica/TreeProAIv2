@@ -27,16 +27,6 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
         }
     }, [voice.transcript, setInputValue]);
 
-    useEffect(() => {
-        if (isOpen && voice.isWakeWordEnabled && voice.hasSupport) {
-            console.log("🎤 HelpBot opened - requesting microphone permission and starting wake word listener...");
-            voice.startListening();
-            setTimeout(() => {
-                voice.stopListening();
-                voice.startWakeWordListener();
-            }, 100);
-        }
-    }, [isOpen, voice]);
 
     const handleMicClick = () => {
         if (voice.isListening) {
@@ -109,12 +99,36 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded text-sm">
                             <p className="font-semibold">⚠️ Microphone Error:</p>
                             <p>{voice.error}</p>
+                            <button 
+                                onClick={() => {
+                                    voice.startListening();
+                                    setTimeout(() => voice.stopListening(), 100);
+                                }}
+                                className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                            >
+                                Grant Microphone Access
+                            </button>
                         </div>
                     )}
-                    {voice.isWakeWordEnabled && !voice.error && (
+                    {voice.isWakeWordEnabled && !voice.isWakeWordListening && !voice.error && (
                         <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded text-sm">
-                            <p className="font-semibold">🎤 Voice Recognition Active</p>
-                            <p>Say "Yo Probot" to activate voice commands, or click the microphone button below to test your microphone.</p>
+                            <p className="font-semibold">🎤 Wake Word Ready</p>
+                            <p className="mb-2">Click the button below to start listening for "Yo Probot"</p>
+                            <button
+                                onClick={() => {
+                                    console.log("👆 User clicked to start wake word listener");
+                                    voice.startWakeWordListener();
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                            >
+                                🎤 Start Voice Recognition
+                            </button>
+                        </div>
+                    )}
+                    {voice.isWakeWordEnabled && voice.isWakeWordListening && !voice.error && (
+                        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded text-sm">
+                            <p className="font-semibold">✅ Listening for "Yo Probot"</p>
+                            <p>Voice recognition is active. Say "Yo Probot" to activate commands.</p>
                         </div>
                     )}
                     {messages.map((msg) => (
