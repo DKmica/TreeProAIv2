@@ -100,9 +100,11 @@ export const getAiCoreInsights = async (
         const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
         return JSON.parse(cleanedJsonText) as AICoreInsights;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error getting AI Core insights:", error);
-        throw new Error("Failed to generate AI Core insights.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        const errorDetails = error?.status ? ` (Status: ${error.status})` : '';
+        throw new Error(`Failed to generate AI Core insights: ${errorMessage}${errorDetails}`);
     }
 };
 
@@ -155,9 +157,10 @@ export const generateUpsellSuggestions = async (existingServices: string[]): Pro
             return [];
         }
         return JSON.parse(cleanedJsonText) as UpsellSuggestion[];
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating upsell suggestions:", error);
-        throw new Error("Failed to generate AI upsell suggestions.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate AI upsell suggestions: ${errorMessage}`);
     }
 };
 
@@ -206,8 +209,9 @@ export const generateMaintenanceAdvice = async (equipment: Equipment): Promise<M
         });
         const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
         return JSON.parse(cleanedJsonText) as MaintenanceAdvice;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating maintenance advice:", error);
-        throw new Error("Failed to generate AI maintenance advice.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate AI maintenance advice: ${errorMessage}`);
     }
 };

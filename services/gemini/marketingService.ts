@@ -29,13 +29,14 @@ export const generateSocialMediaPost = async (topic: string, platform: string): 
     `;
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.0-flash',
             contents: prompt
         });
         return response.text;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating social media post:", error);
-        throw new Error("Failed to generate social media post.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate social media post: ${errorMessage}`);
     }
 };
 
@@ -90,9 +91,10 @@ export const optimizeSEOContent = async (content: string, keyword: string): Prom
         });
         const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
         return JSON.parse(cleanedJsonText) as SEOSuggestions;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error optimizing SEO content:", error);
-        throw new Error("Failed to generate SEO optimizations.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate SEO optimizations: ${errorMessage}`);
     }
 };
 
@@ -140,8 +142,9 @@ export const generateEmailCampaign = async (goal: string, audience: string): Pro
         });
         const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
         return JSON.parse(cleanedJsonText) as EmailCampaign;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating email campaign:", error);
-        throw new Error("Failed to generate email campaign.");
+        const errorMessage = error?.message || error?.toString() || "Unknown error";
+        throw new Error(`Failed to generate email campaign: ${errorMessage}`);
     }
 };
