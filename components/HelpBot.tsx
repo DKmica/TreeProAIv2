@@ -61,9 +61,25 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
             <div className="flex flex-col w-96 max-h-[70vh] h-[550px] bg-white rounded-lg shadow-2xl border border-brand-gray-200">
                 <header className="flex items-center justify-between p-4 bg-brand-green-700 text-white rounded-t-lg">
                     <h2 className="text-lg font-semibold">AI Assistant</h2>
-                    <button onClick={() => setIsOpen(false)} className="hover:bg-brand-green-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
-                        <XIcon className="h-6 w-6" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {voice.hasSupport && (
+                            <button
+                                onClick={voice.toggleWakeWord}
+                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                    voice.isWakeWordEnabled
+                                        ? 'bg-white text-brand-green-700 hover:bg-gray-100'
+                                        : 'bg-brand-green-600 text-white hover:bg-brand-green-500'
+                                }`}
+                                title={voice.isWakeWordEnabled ? 'Wake word "Yo Probot" is ON' : 'Wake word is OFF - click to enable'}
+                            >
+                                <BroadcastIcon className="h-4 w-4 inline mr-1" />
+                                {voice.isWakeWordEnabled ? 'ON' : 'OFF'}
+                            </button>
+                        )}
+                        <button onClick={() => setIsOpen(false)} className="hover:bg-brand-green-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
+                            <XIcon className="h-6 w-6" />
+                        </button>
+                    </div>
                 </header>
                 
                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
