@@ -89,11 +89,13 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
   const startWakeWordListener = useCallback(() => {
     if (hasSupport && isWakeWordEnabled && !isWakeWordListening && !isListening && !isAwaitingCommand && wakeWordRecognitionRef.current && enabled) {
         try {
+            console.log("Starting wake word listener for 'Yo Probot'...");
             wakeWordRecognitionRef.current.start();
             setIsWakeWordListening(true);
         } catch (e: any) {
             if (e.name !== 'InvalidStateError') {
               console.error("Error starting wake word listener:", e);
+              setError(`Microphone error: ${e.message}. Please allow microphone access.`);
             }
         }
     }
@@ -120,8 +122,14 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
 
 
   useEffect(() => {
-    if (!hasSupport || !enabled) return;
+    if (!hasSupport || !enabled) {
+      if (!hasSupport) {
+        console.warn('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+      }
+      return;
+    }
 
+    console.log('✅ Speech recognition is supported. Wake word feature available.');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     const commandRec = new SpeechRecognition();
@@ -191,8 +199,9 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
 
     wakeWordRec.onresult = (event: SpeechRecognitionEvent) => {
         const lastResult = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+        console.log("Heard:", lastResult);
         if (lastResult.includes(WAKE_WORD)) {
-            console.log("Wake word detected!");
+            console.log("✅ Wake word 'Yo Probot' detected! Switching to command mode...");
             isSwitchingModesRef.current = true;
             try { wakeWordRecognitionRef.current?.stop(); } catch(e) {/* ignore */}
         }
@@ -213,6 +222,9 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     wakeWordRec.onerror = (event: SpeechRecognitionErrorEvent) => {
         if (event.error !== 'aborted' && event.error !== 'no-speech') {
             console.error('Wake word recognition error:', event.error, event.message);
+            if (event.error === 'not-allowed') {
+                setError('Microphone access denied. Please allow microphone access in your browser settings.');
+            }
         }
     };
     wakeWordRecognitionRef.current = wakeWordRec;
