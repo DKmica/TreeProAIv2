@@ -61,14 +61,14 @@ const Layout: React.FC<LayoutProps> = ({ appState }) => {
   
   const voice = useVoiceRecognition({
     onCommand: chat.sendMessage, 
-    enabled: !onChatPage 
+    enabled: true
   });
 
   useEffect(() => {
-    if (voice.isAwaitingCommand && !isBotOpen && !onChatPage) {
+    if (voice.isAwaitingCommand && !isBotOpen) {
       setIsBotOpen(true);
     }
-  }, [voice.isAwaitingCommand, isBotOpen, onChatPage]);
+  }, [voice.isAwaitingCommand, isBotOpen]);
 
 
   return (

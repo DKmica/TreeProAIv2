@@ -45,6 +45,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log("🚀 Starting data fetch from backend...");
       try {
         const [
           customersData,
@@ -64,6 +65,7 @@ const App: React.FC = () => {
           api.equipmentService.getAll(),
         ]);
 
+        console.log("✅ Data fetched successfully");
         setCustomers(customersData);
         setLeads(leadsData);
         setQuotes(quotesData);
@@ -72,9 +74,10 @@ const App: React.FC = () => {
         setEmployees(employeesData);
         setEquipment(equipmentData);
       } catch (e: any) {
-        console.error("Failed to fetch initial data:", e);
+        console.error("❌ Failed to fetch initial data:", e);
         setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the README.md. Error: ${e.message}`);
       } finally {
+        console.log("⏹️ Fetch complete, setting isLoading to false");
         setIsLoading(false);
       }
     };

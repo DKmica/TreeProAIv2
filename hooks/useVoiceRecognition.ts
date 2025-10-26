@@ -87,17 +87,29 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
   const hasSupport = !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
 
   const startWakeWordListener = useCallback(() => {
+    console.log("🔍 startWakeWordListener called with:", {
+      hasSupport,
+      isWakeWordEnabled,
+      isWakeWordListening,
+      isListening,
+      isAwaitingCommand,
+      hasRef: !!wakeWordRecognitionRef.current,
+      enabled
+    });
+    
     if (hasSupport && isWakeWordEnabled && !isWakeWordListening && !isListening && !isAwaitingCommand && wakeWordRecognitionRef.current && enabled) {
         try {
-            console.log("Starting wake word listener for 'Yo Probot'...");
+            console.log("✅ Starting wake word listener for 'Yo Probot'...");
             wakeWordRecognitionRef.current.start();
             setIsWakeWordListening(true);
         } catch (e: any) {
             if (e.name !== 'InvalidStateError') {
-              console.error("Error starting wake word listener:", e);
+              console.error("❌ Error starting wake word listener:", e);
               setError(`Microphone error: ${e.message}. Please allow microphone access.`);
             }
         }
+    } else {
+      console.log("⚠️ Not starting wake word listener - conditions not met");
     }
   }, [hasSupport, isWakeWordEnabled, isWakeWordListening, isListening, isAwaitingCommand, enabled]);
 
@@ -130,6 +142,12 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     }
 
     console.log('✅ Speech recognition is supported. Wake word feature available.');
+    
+    // Reset states on mount
+    setIsWakeWordListening(false);
+    setIsListening(false);
+    setIsAwaitingCommand(false);
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     const commandRec = new SpeechRecognition();
@@ -230,7 +248,12 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     wakeWordRecognitionRef.current = wakeWordRec;
 
     if (isWakeWordEnabled && enabled) {
-      startWakeWordListener();
+      console.log("🎯 Attempting to start wake word listener on mount...");
+      setTimeout(() => {
+        startWakeWordListener();
+      }, 100);
+    } else {
+      console.log("⚠️ Wake word listener not started:", { isWakeWordEnabled, enabled });
     }
 
     return () => {
