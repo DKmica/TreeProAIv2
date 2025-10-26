@@ -27,6 +27,17 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
         }
     }, [voice.transcript, setInputValue]);
 
+    useEffect(() => {
+        if (isOpen && voice.isWakeWordEnabled && voice.hasSupport) {
+            console.log("🎤 HelpBot opened - requesting microphone permission and starting wake word listener...");
+            voice.startListening();
+            setTimeout(() => {
+                voice.stopListening();
+                voice.startWakeWordListener();
+            }, 100);
+        }
+    }, [isOpen, voice]);
+
     const handleMicClick = () => {
         if (voice.isListening) {
             voice.stopListening();

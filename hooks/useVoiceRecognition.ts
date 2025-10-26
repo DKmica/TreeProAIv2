@@ -254,15 +254,6 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     };
     wakeWordRecognitionRef.current = wakeWordRec;
 
-    if (isWakeWordEnabled && enabled) {
-      console.log("🎯 Attempting to start wake word listener on mount...");
-      setTimeout(() => {
-        startWakeWordListener();
-      }, 100);
-    } else {
-      console.log("⚠️ Wake word listener not started:", { isWakeWordEnabled, enabled });
-    }
-
     return () => {
         commandRec.onend = null;
         wakeWordRec.onend = null;
@@ -309,5 +300,6 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     isWakeWordEnabled,
     toggleWakeWord,
     isAwaitingCommand,
+    startWakeWordListener,
   };
 };
