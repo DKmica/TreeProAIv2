@@ -47,3 +47,12 @@ outputType = "console"
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 40691
+externalPort = 3000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["node", "backend/server.js"]
+build = ["bash", "-c", "npm run build && cp -r dist/* backend/public/"]
