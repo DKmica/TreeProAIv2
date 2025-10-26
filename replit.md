@@ -8,17 +8,22 @@ TreePro AI is a comprehensive business management platform for tree service comp
 
 ## Recent Changes
 
-### October 26, 2025 - Critical Bug Fixes & Data Seeding
+### October 26, 2025 - Comprehensive API & Data Fixes
+
+#### Critical Bug Fixes
 1. **Fixed Leads Page Crash** (pages/Leads.tsx)
    - Added optional chaining (`?.`) to safely access `lead.customer.name` and `lead.customer.email`
    - Prevents "Cannot read properties of undefined (reading 'name')" error
    - Added fallback values ('N/A') for missing customer data
 
-2. **Fixed Backend API - Leads Endpoint** (backend/server.js)
-   - Added custom `/api/leads` endpoint with SQL JOIN to include full customer objects
-   - Leads now return nested `customer` object instead of just `customer_id`
-   - Matches the Lead type definition: `customer: Customer`
-   - Removed redundant customer fields from response
+2. **Fixed Backend API - Complete snake_case to camelCase Transformation** (backend/server.js)
+   - **Quotes API**: `customer_name` → `customerName`, `line_items` → `lineItems`, `stump_grinding_price` → `stumpGrindingPrice`, `lead_id` → `leadId`
+   - **Employees API**: `job_title` → `jobTitle`, `pay_rate` → `payRate`, `hire_date` → `hireDate`, `performance_metrics` → `performanceMetrics`
+   - **Equipment API**: `purchase_date` → `purchaseDate`, `last_service_date` → `lastServiceDate`, `assigned_to` → `assignedTo`, `maintenance_history` → `maintenanceHistory`
+   - **Leads API**: Custom endpoint with SQL JOIN to embed full customer objects, `customer_id` → `customerId`
+   - **Jobs API**: All job-related fields properly transformed
+   - Added proper null handling to prevent data corruption (preserves null values instead of converting to 0)
+   - Added bidirectional transformations (transformRow & transformToDb) for all resources
 
 3. **Database Seeding Completed**
    - Successfully seeded database with realistic test data:
@@ -28,6 +33,12 @@ TreePro AI is a comprehensive business management platform for tree service comp
      - 20 leads with various statuses (New, Contacted, Qualified, Lost)
      - 30 quotes with line items and pricing
      - 15 jobs with scheduling and crew assignments
+
+#### Technical Improvements
+- All API responses now match TypeScript type definitions
+- Numeric fields (payRate, stumpGrindingPrice) properly parsed as numbers
+- NULL preservation prevents accidental data overwriting
+- Complete CRUD support with proper field transformations
 
 ## Project Architecture
 

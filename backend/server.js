@@ -40,6 +40,78 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform employees fields
+  if (tableName === 'employees') {
+    if (row.job_title !== undefined) {
+      transformed.jobTitle = row.job_title;
+      delete transformed.job_title;
+    }
+    if (row.pay_rate !== undefined) {
+      transformed.payRate = (row.pay_rate !== null && row.pay_rate !== '') ? parseFloat(row.pay_rate) : row.pay_rate;
+      delete transformed.pay_rate;
+    }
+    if (row.hire_date !== undefined) {
+      transformed.hireDate = row.hire_date;
+      delete transformed.hire_date;
+    }
+    if (row.performance_metrics !== undefined) {
+      transformed.performanceMetrics = row.performance_metrics;
+      delete transformed.performance_metrics;
+    }
+  }
+  
+  // Transform equipment fields
+  if (tableName === 'equipment') {
+    if (row.purchase_date !== undefined) {
+      transformed.purchaseDate = row.purchase_date;
+      delete transformed.purchase_date;
+    }
+    if (row.last_service_date !== undefined) {
+      transformed.lastServiceDate = row.last_service_date;
+      delete transformed.last_service_date;
+    }
+    if (row.assigned_to !== undefined) {
+      transformed.assignedTo = row.assigned_to;
+      delete transformed.assigned_to;
+    }
+    if (row.maintenance_history !== undefined) {
+      transformed.maintenanceHistory = row.maintenance_history;
+      delete transformed.maintenance_history;
+    }
+  }
+  
+  // Transform quotes fields
+  if (tableName === 'quotes') {
+    if (row.lead_id !== undefined) {
+      transformed.leadId = row.lead_id;
+      delete transformed.lead_id;
+    }
+    if (row.customer_name !== undefined) {
+      transformed.customerName = row.customer_name;
+      delete transformed.customer_name;
+    }
+    if (row.line_items !== undefined) {
+      transformed.lineItems = row.line_items;
+      delete transformed.line_items;
+    }
+    if (row.stump_grinding_price !== undefined) {
+      transformed.stumpGrindingPrice = (row.stump_grinding_price !== null && row.stump_grinding_price !== '') ? parseFloat(row.stump_grinding_price) : row.stump_grinding_price;
+      delete transformed.stump_grinding_price;
+    }
+    if (row.accepted_at !== undefined) {
+      transformed.acceptedAt = row.accepted_at;
+      delete transformed.accepted_at;
+    }
+  }
+  
+  // Transform leads fields
+  if (tableName === 'leads') {
+    if (row.customer_id !== undefined) {
+      transformed.customerId = row.customer_id;
+      delete transformed.customer_id;
+    }
+  }
+  
   if (tableName === 'jobs') {
     if (row.clock_in_lat !== undefined && row.clock_in_lon !== undefined) {
       transformed.clockInCoordinates = { lat: row.clock_in_lat, lng: row.clock_in_lon };
@@ -65,7 +137,7 @@ const transformRow = (row, tableName) => {
       delete transformed.assigned_crew;
     }
     if (row.stump_grinding_price !== undefined) {
-      transformed.stumpGrindingPrice = row.stump_grinding_price;
+      transformed.stumpGrindingPrice = (row.stump_grinding_price !== null && row.stump_grinding_price !== '') ? parseFloat(row.stump_grinding_price) : row.stump_grinding_price;
       delete transformed.stump_grinding_price;
     }
     if (row.quote_id !== undefined) {
@@ -100,6 +172,78 @@ const transformToDb = (data, tableName) => {
     transformed.lat = data.coordinates.lat;
     transformed.lon = data.coordinates.lng;
     delete transformed.coordinates;
+  }
+  
+  // Transform employees fields
+  if (tableName === 'employees') {
+    if (data.jobTitle !== undefined) {
+      transformed.job_title = data.jobTitle;
+      delete transformed.jobTitle;
+    }
+    if (data.payRate !== undefined) {
+      transformed.pay_rate = data.payRate;
+      delete transformed.payRate;
+    }
+    if (data.hireDate !== undefined) {
+      transformed.hire_date = data.hireDate;
+      delete transformed.hireDate;
+    }
+    if (data.performanceMetrics !== undefined) {
+      transformed.performance_metrics = data.performanceMetrics;
+      delete transformed.performanceMetrics;
+    }
+  }
+  
+  // Transform equipment fields
+  if (tableName === 'equipment') {
+    if (data.purchaseDate !== undefined) {
+      transformed.purchase_date = data.purchaseDate;
+      delete transformed.purchaseDate;
+    }
+    if (data.lastServiceDate !== undefined) {
+      transformed.last_service_date = data.lastServiceDate;
+      delete transformed.lastServiceDate;
+    }
+    if (data.assignedTo !== undefined) {
+      transformed.assigned_to = data.assignedTo;
+      delete transformed.assignedTo;
+    }
+    if (data.maintenanceHistory !== undefined) {
+      transformed.maintenance_history = data.maintenanceHistory;
+      delete transformed.maintenanceHistory;
+    }
+  }
+  
+  // Transform quotes fields
+  if (tableName === 'quotes') {
+    if (data.leadId !== undefined) {
+      transformed.lead_id = data.leadId;
+      delete transformed.leadId;
+    }
+    if (data.customerName !== undefined) {
+      transformed.customer_name = data.customerName;
+      delete transformed.customerName;
+    }
+    if (data.lineItems !== undefined) {
+      transformed.line_items = data.lineItems;
+      delete transformed.lineItems;
+    }
+    if (data.stumpGrindingPrice !== undefined) {
+      transformed.stump_grinding_price = data.stumpGrindingPrice;
+      delete transformed.stumpGrindingPrice;
+    }
+    if (data.acceptedAt !== undefined) {
+      transformed.accepted_at = data.acceptedAt;
+      delete transformed.acceptedAt;
+    }
+  }
+  
+  // Transform leads fields
+  if (tableName === 'leads') {
+    if (data.customerId !== undefined) {
+      transformed.customer_id = data.customerId;
+      delete transformed.customerId;
+    }
   }
   
   if (tableName === 'jobs') {
