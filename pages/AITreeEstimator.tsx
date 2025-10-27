@@ -113,7 +113,7 @@ const AITreeEstimator: React.FC = () => {
 
                     <div>
                         <h2 className="text-lg font-semibold text-brand-gray-800">2. Analyze</h2>
-                        <button onClick={handleAnalyze} disabled={isLoading || files.length === 0} className="mt-4 w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-green-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
+                        <button onClick={handleAnalyze} disabled={isLoading || files.length === 0} className="mt-4 w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
                             {isLoading ? <><SpinnerIcon className="h-5 w-5 mr-2" />Analyzing...</> : 'Analyze Media'}
                         </button>
                         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
@@ -182,7 +182,7 @@ const AITreeEstimator: React.FC = () => {
                                     ))}
                                 </div>
                             </div>
-                            <button onClick={handleCreateQuote} className="w-full mt-6 inline-flex justify-center items-center rounded-md border border-transparent bg-brand-green-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2">
+                            <button onClick={handleCreateQuote} className="w-full mt-6 inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2">
                                 Create Quote from Results
                             </button>
                         </div>

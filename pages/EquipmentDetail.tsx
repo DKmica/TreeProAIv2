@@ -32,10 +32,10 @@ const AddMaintenanceLogForm: React.FC<{ onSave: (log: Omit<MaintenanceLog, 'id'>
         <form onSubmit={handleSubmit} className="p-4 bg-brand-gray-50 rounded-lg border border-brand-gray-200 mt-4">
             <h4 className="font-semibold text-brand-gray-800 mb-2">Add New Maintenance Log</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm" />
-                <input type="text" placeholder="Service description" value={description} onChange={e => setDescription(e.target.value)} required className="md:col-span-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm" />
-                <input type="number" placeholder="Cost" value={cost} onChange={e => setCost(parseFloat(e.target.value) || 0)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm" />
-                <button type="submit" className="md:col-start-3 rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500">Save Log</button>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm" />
+                <input type="text" placeholder="Service description" value={description} onChange={e => setDescription(e.target.value)} required className="md:col-span-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm" />
+                <input type="number" placeholder="Cost" value={cost} onChange={e => setCost(parseFloat(e.target.value) || 0)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm" />
+                <button type="submit" className="md:col-start-3 rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700">Save Log</button>
             </div>
         </form>
     );

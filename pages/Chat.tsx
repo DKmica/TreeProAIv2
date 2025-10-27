@@ -50,7 +50,7 @@ const ChatPage: React.FC = () => {
                         <div key={msg.id}>
                             {msg.role === 'user' && (
                                 <div className="flex justify-end">
-                                    <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-green-600 text-white">
+                                    <div className="max-w-lg px-4 py-2 rounded-xl bg-brand-cyan-600 text-white">
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     </div>
                                 </div>
@@ -135,7 +135,7 @@ const ChatPage: React.FC = () => {
                         <button
                             type="submit"
                             disabled={isLoading || !inputValue.trim()}
-                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
                         >
                            {isLoading ? <SpinnerIcon className="h-5 w-5" /> : (
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">

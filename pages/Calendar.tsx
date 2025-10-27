@@ -202,7 +202,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
                                         onDragLeave={handleDragLeave}
                                     >
                                         {day && (
-                                            <time dateTime={dateString} className={`font-semibold ${isToday ? 'bg-brand-green-600 text-white rounded-full flex h-6 w-6 items-center justify-center' : ''}`}>
+                                            <time dateTime={dateString} className={`font-semibold ${isToday ? 'bg-brand-cyan-600 text-white rounded-full flex h-6 w-6 items-center justify-center' : ''}`}>
                                                 {day.getDate()}
                                             </time>
                                         )}

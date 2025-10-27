@@ -66,7 +66,7 @@ const ModifyScheduleModal: React.FC<{
                 <div className="mt-6 space-y-6">
                   <div>
                       <label htmlFor="scheduledDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Scheduled Date</label>
-                      <input type="date" name="scheduledDate" id="scheduledDate" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} required className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                      <input type="date" name="scheduledDate" id="scheduledDate" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} required className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                   </div>
                   <div>
                       <h4 className="text-sm font-medium leading-6 text-brand-gray-900">Assign Crew</h4>
@@ -81,7 +81,7 @@ const ModifyScheduleModal: React.FC<{
                                           type="checkbox" 
                                           checked={selectedCrew.includes(emp.id)}
                                           onChange={() => handleCrewChange(emp.id)}
-                                          className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-green-600" 
+                                          className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-cyan-500" 
                                       />
                                   </div>
                                   <div className="ml-3 text-sm leading-6">
@@ -95,7 +95,7 @@ const ModifyScheduleModal: React.FC<{
                 </div>
               </div>
               <div className="bg-brand-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                <button type="button" onClick={handleSave} className="inline-flex w-full justify-center rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 sm:ml-3 sm:w-auto">Save & Schedule Job</button>
+                <button type="button" onClick={handleSave} className="inline-flex w-full justify-center rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 sm:ml-3 sm:w-auto">Save & Schedule Job</button>
                 <button type="button" onClick={onClose} className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
               </div>
             </div>
@@ -232,7 +232,7 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                                 </div>
                                 <p className="mt-2 text-xs italic text-brand-gray-500">AI Rationale: {job.reasoning}</p>
                                 <div className="mt-4 flex items-center space-x-3">
-                                  <button onClick={() => handleAcceptSuggestion(job)} className="rounded-md bg-brand-green-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">
+                                  <button onClick={() => handleAcceptSuggestion(job)} className="rounded-md bg-brand-cyan-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500">
                                       Accept Suggestion
                                   </button>
                                   <button onClick={() => setEditingSchedule(job)} className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50">

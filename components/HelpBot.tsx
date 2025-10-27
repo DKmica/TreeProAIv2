@@ -41,7 +41,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 bg-brand-green-600 text-white p-4 rounded-full shadow-lg hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 transition-transform transform hover:scale-110"
+                className="fixed bottom-6 right-6 bg-brand-cyan-600 text-white p-4 rounded-full shadow-lg hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 transition-transform transform hover:scale-110"
                 aria-label="Open AI Assistant"
             >
                 <ChatIcon className="h-8 w-8" />
@@ -80,7 +80,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                                 className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                                     voice.isWakeWordEnabled
                                         ? 'bg-white text-brand-green-700 hover:bg-gray-100'
-                                        : 'bg-brand-green-600 text-white hover:bg-brand-green-500'
+                                        : 'bg-brand-cyan-600 text-white hover:bg-brand-cyan-700'
                                 }`}
                                 title={voice.isWakeWordEnabled ? 'Wake word "Yo Probot" is ON - click to restart' : 'Wake word is OFF - click to enable'}
                             >
@@ -88,7 +88,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                                 {voice.isWakeWordEnabled ? 'ON' : 'OFF'}
                             </button>
                         )}
-                        <button onClick={() => setIsOpen(false)} className="hover:bg-brand-green-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
+                        <button onClick={() => setIsOpen(false)} className="hover:bg-brand-cyan-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
                             <XIcon className="h-6 w-6" />
                         </button>
                     </div>
@@ -135,7 +135,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                          <div key={msg.id}>
                             {msg.role === 'user' && (
                                 <div className="flex justify-end">
-                                    <div className="max-w-xs px-4 py-2 rounded-xl bg-brand-green-600 text-white">
+                                    <div className="max-w-xs px-4 py-2 rounded-xl bg-brand-cyan-600 text-white">
                                         <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                                     </div>
                                 </div>
@@ -220,7 +220,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                         <button
                             type="submit"
                             disabled={isLoading || !inputValue.trim()}
-                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 p-2 text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 p-2 text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
                             aria-label="Send message"
                         >
                            {isLoading ? <SpinnerIcon className="h-5 w-5" /> : (

@@ -30,7 +30,7 @@ const PortalMessaging: React.FC<PortalMessagingProps> = ({ messages, onSendMessa
       <div className="flex-1 overflow-y-auto px-6 space-y-4">
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.sender === senderType ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-xl ${msg.sender === senderType ? 'bg-brand-green-600 text-white' : 'bg-brand-gray-100 text-brand-gray-800'}`}>
+            <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-xl ${msg.sender === senderType ? 'bg-brand-cyan-600 text-white' : 'bg-brand-gray-100 text-brand-gray-800'}`}>
               <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
               <p className={`text-xs mt-1 opacity-70 ${msg.sender === senderType ? 'text-right' : 'text-left'}`}>
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -54,7 +54,7 @@ const PortalMessaging: React.FC<PortalMessagingProps> = ({ messages, onSendMessa
           <button
             type="submit"
             disabled={isLoading || !newMessage.trim()}
-            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
           >
             {isLoading ? <SpinnerIcon className="h-5 w-5" /> : 'Send'}
           </button>

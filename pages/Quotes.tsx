@@ -116,14 +116,14 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
                         <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-gray-900">Customer</label>
-                        <select id="customerName" name="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                        <select id="customerName" name="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                              {customers.length === 0 && <option disabled>No customers available</option>}
                             {customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                         </select>
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-gray-900">Status</label>
-                        <select id="status" name="status" value={status} onChange={e => setStatus(e.target.value as Quote['status'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                        <select id="status" name="status" value={status} onChange={e => setStatus(e.target.value as Quote['status'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                             <option>Draft</option>
                             <option>Sent</option>
                             <option>Accepted</option>
@@ -137,7 +137,7 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
                      <div className="mt-2 space-y-4">
                         {lineItems.map((item, index) => (
                              <div key={index} className="flex items-center space-x-2 p-2 bg-brand-gray-50 rounded-md">
-                                <input type="checkbox" checked={item.selected} onChange={e => handleLineItemChange(index, 'selected', e.target.checked)} className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-green-600"/>
+                                <input type="checkbox" checked={item.selected} onChange={e => handleLineItemChange(index, 'selected', e.target.checked)} className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-cyan-500"/>
                                 <input type="text" placeholder="Service description" value={item.description} onChange={e => handleLineItemChange(index, 'description', e.target.value)} className="flex-grow rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 sm:text-sm" />
                                 <input type="number" placeholder="Price" value={item.price} onChange={e => handleLineItemChange(index, 'price', parseFloat(e.target.value) || 0)} className="w-28 rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 sm:text-sm" />
                                 <button type="button" onClick={() => removeLineItem(index)} className="text-red-500 hover:text-red-700 p-1">
@@ -187,7 +187,7 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
                  <div>
                     <div className="relative flex items-start">
                         <div className="flex h-6 items-center">
-                            <input id="stumpGrinding" type="checkbox" checked={stumpGrindingPrice > 0} onChange={e => setStumpGrindingPrice(e.target.checked ? 1 : 0)} className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-green-600" />
+                            <input id="stumpGrinding" type="checkbox" checked={stumpGrindingPrice > 0} onChange={e => setStumpGrindingPrice(e.target.checked ? 1 : 0)} className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-cyan-500" />
                         </div>
                         <div className="ml-3 text-sm leading-6">
                             <label htmlFor="stumpGrinding" className="font-medium text-brand-gray-900">Stump Grinding</label>
@@ -200,7 +200,7 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
                     <h3 className="text-lg font-bold text-brand-gray-900">Total: ${totalAmount.toFixed(2)}</h3>
                      <div className="flex items-center justify-end gap-x-6">
                         <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
-                        <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">{isEditing ? 'Save Changes' : 'Save Quote'}</button>
+                        <button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500">{isEditing ? 'Save Changes' : 'Save Quote'}</button>
                     </div>
                 </div>
             </form>
@@ -341,7 +341,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                      <button 
                         type="button" 
                         onClick={handleMainButtonClick}
-                        className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
+                        className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
                         {showAddForm ? 'Cancel' : 'Create Quote'}
                     </button>
                 </div>

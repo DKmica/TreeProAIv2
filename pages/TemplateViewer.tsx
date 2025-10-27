@@ -11,7 +11,7 @@ const TemplateViewer: React.FC = () => {
     return (
         <div className="text-center p-8 bg-white rounded-lg shadow">
              <h2 className="text-xl font-bold text-red-600">Template Not Found</h2>
-             <Link to="/settings" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-green-600 hover:bg-brand-green-700">
+             <Link to="/settings" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-cyan-600 hover:bg-brand-green-700">
                 <ArrowLeftIcon className="w-5 h-5 mr-2" />
                 Back to Settings
             </Link>

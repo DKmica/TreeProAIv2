@@ -103,7 +103,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave }) => {
         <button
           onClick={handleSave}
           disabled={!hasSignature}
-          className="rounded-md bg-brand-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+          className="rounded-md bg-brand-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
         >
           Confirm & Save Signature
         </button>

@@ -43,7 +43,7 @@ const SocialMediaGenerator: React.FC = () => {
                     <option>Twitter</option>
                 </select>
             </div>
-            <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
+            <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
                 {isLoading && <SpinnerIcon className="h-5 w-5 mr-2" />}
                 {isLoading ? 'Generating...' : 'Generate Post'}
             </button>
@@ -89,7 +89,7 @@ const SEOOptimizer: React.FC = () => {
                 <label htmlFor="keyword" className="block text-sm font-medium text-brand-gray-700">Target Keyword</label>
                 <input type="text" id="keyword" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="e.g., emergency tree removal" className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
             </div>
-            <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
+            <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
                 {isLoading && <SpinnerIcon className="h-5 w-5 mr-2" />}
                 {isLoading ? 'Optimizing...' : 'Optimize Content'}
             </button>
@@ -152,7 +152,7 @@ const EmailCampaignCreator: React.FC = () => {
                 <label htmlFor="audience" className="block text-sm font-medium text-brand-gray-700">Target Audience</label>
                 <input type="text" id="audience" value={audience} onChange={e => setAudience(e.target.value)} placeholder="e.g., Past customers who didn't get stump grinding" className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
             </div>
-            <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
+            <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
                 {isLoading && <SpinnerIcon className="h-5 w-5 mr-2" />}
                 {isLoading ? 'Generating...' : 'Generate Email'}
             </button>

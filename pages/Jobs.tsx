@@ -97,7 +97,7 @@ const JobForm: React.FC<{
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
                         <label htmlFor="quoteId" className="block text-sm font-medium leading-6 text-brand-gray-900">Accepted Quote</label>
-                        <select id="quoteId" name="quoteId" value={formData.quoteId} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                        <select id="quoteId" name="quoteId" value={formData.quoteId} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                             {availableQuotes.length === 0 && <option disabled>No accepted quotes available</option>}
                             {availableQuotes.map(quote => (<option key={quote.id} value={quote.id}>{`${quote.id} - ${quote.customerName}`}</option>))}
                         </select>
@@ -108,11 +108,11 @@ const JobForm: React.FC<{
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="scheduledDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Scheduled Date</label>
-                        <input type="date" name="scheduledDate" id="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                        <input type="date" name="scheduledDate" id="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-gray-900">Status</label>
-                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                             <option>Unscheduled</option>
                             <option>Scheduled</option>
                             <option>In Progress</option>
@@ -122,7 +122,7 @@ const JobForm: React.FC<{
                     </div>
                      <div className="sm:col-span-3">
                         <label htmlFor="stumpGrindingPrice" className="block text-sm font-medium leading-6 text-brand-gray-900">Stump Grinding Price</label>
-                        <input type="number" name="stumpGrindingPrice" id="stumpGrindingPrice" value={formData.stumpGrindingPrice} onChange={e => setFormData(prev => ({...prev, stumpGrindingPrice: parseFloat(e.target.value) || 0 }))} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                        <input type="number" name="stumpGrindingPrice" id="stumpGrindingPrice" value={formData.stumpGrindingPrice} onChange={e => setFormData(prev => ({...prev, stumpGrindingPrice: parseFloat(e.target.value) || 0 }))} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="col-span-full">
                         <label className="block text-sm font-medium leading-6 text-brand-gray-900">Assign Crew</label>
@@ -135,7 +135,7 @@ const JobForm: React.FC<{
                                             type="checkbox"
                                             checked={formData.assignedCrew.includes(emp.id)}
                                             onChange={() => handleCrewChange(emp.id)}
-                                            className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-green-600"
+                                            className="h-4 w-4 rounded border-brand-gray-300 text-brand-green-600 focus:ring-brand-cyan-500"
                                         />
                                     </div>
                                     <div className="ml-3 text-sm leading-6">
@@ -148,7 +148,7 @@ const JobForm: React.FC<{
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                     <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-900">Cancel</button>
-                    <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Job</button>
+                    <button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500">Save Job</button>
                 </div>
             </form>
         </div>
@@ -321,7 +321,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
           <p className="mt-2 text-sm text-brand-gray-700">A list of all scheduled and active jobs.</p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <button type="button" onClick={handleMainButtonClick} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
+          <button type="button" onClick={handleMainButtonClick} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
               {showForm ? 'Cancel' : 'Create Job'}
           </button>
         </div>
@@ -366,7 +366,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.customerName}</td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
-                             <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className="block w-full rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6">
+                             <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className="block w-full rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                                 <option>Unscheduled</option>
                                 <option>Scheduled</option>
                                 <option>In Progress</option>

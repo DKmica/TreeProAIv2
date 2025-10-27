@@ -64,27 +64,27 @@ const Settings: React.FC = () => {
               <div className="sm:col-span-3">
                 <label htmlFor="first-name" className="block text-sm font-medium leading-6 text-brand-gray-900">First name</label>
                 <div className="mt-2">
-                  <input type="text" name="first-name" id="first-name" autoComplete="given-name" defaultValue="Admin" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                  <input type="text" name="first-name" id="first-name" autoComplete="given-name" defaultValue="Admin" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                 </div>
               </div>
 
               <div className="sm:col-span-3">
                 <label htmlFor="last-name" className="block text-sm font-medium leading-6 text-brand-gray-900">Last name</label>
                 <div className="mt-2">
-                  <input type="text" name="last-name" id="last-name" autoComplete="family-name" defaultValue="User" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                  <input type="text" name="last-name" id="last-name" autoComplete="family-name" defaultValue="User" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                 </div>
               </div>
 
               <div className="sm:col-span-4">
                 <label htmlFor="email" className="block text-sm font-medium leading-6 text-brand-gray-900">Email address</label>
                 <div className="mt-2">
-                  <input id="email" name="email" type="email" autoComplete="email" defaultValue="admin@tree-pro.ai" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                  <input id="email" name="email" type="email" autoComplete="email" defaultValue="admin@tree-pro.ai" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                 </div>
               </div>
             </div>
             <div className="mt-6 flex items-center justify-end gap-x-6">
                 <button type="button" className="text-sm font-semibold leading-6 text-brand-gray-900">Change Password</button>
-                <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Profile</button>
+                <button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500">Save Profile</button>
             </div>
           </form>
         </div>
@@ -102,11 +102,11 @@ const Settings: React.FC = () => {
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                 <div className="sm:col-span-4">
                     <label htmlFor="company-name" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Name</label>
-                    <input type="text" name="company-name" id="company-name" defaultValue="TreePro AI Services" className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    <input type="text" name="company-name" id="company-name" defaultValue="TreePro AI Services" className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                 </div>
                 <div className="col-span-full">
                     <label htmlFor="company-address" className="block text-sm font-medium leading-6 text-brand-gray-900">Address</label>
-                    <input type="text" name="company-address" id="company-address" defaultValue="123 Arborist Ave, Suite 100, Greendale, USA" className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm sm:leading-6" />
+                    <input type="text" name="company-address" id="company-address" defaultValue="123 Arborist Ave, Suite 100, Greendale, USA" className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                 </div>
                  <div className="col-span-full">
                     <label htmlFor="photo" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Logo</label>
@@ -119,7 +119,7 @@ const Settings: React.FC = () => {
                 </div>
             </div>
              <div className="mt-6 flex items-center justify-end gap-x-6">
-                <button type="submit" className="rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600">Save Company Info</button>
+                <button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500">Save Company Info</button>
             </div>
           </form>
         </div>
@@ -167,8 +167,8 @@ const Settings: React.FC = () => {
                   <div className="mt-4 p-3 bg-brand-gray-50 rounded-md border space-y-3">
                     <h4 className="font-medium text-sm">New Field Details</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input type="text" placeholder="Field Name (e.g., Gate Code)" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm" />
-                      <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as CustomFieldDefinition['type'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-green-600 sm:text-sm">
+                      <input type="text" placeholder="Field Name (e.g., Gate Code)" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm" />
+                      <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as CustomFieldDefinition['type'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm">
                         <option value="text">Text</option>
                         <option value="number">Number</option>
                         <option value="date">Date</option>
@@ -177,7 +177,7 @@ const Settings: React.FC = () => {
                     </div>
                     <div className="flex justify-end gap-x-3">
                       <button onClick={() => setIsAddingField(false)} className="text-sm font-semibold">Cancel</button>
-                      <button onClick={handleSaveField} className="rounded-md bg-brand-green-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-500">Save Field</button>
+                      <button onClick={handleSaveField} className="rounded-md bg-brand-cyan-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700">Save Field</button>
                     </div>
                   </div>
                 )}

@@ -8,9 +8,21 @@ TreePro AI is a comprehensive business management platform for tree service comp
 
 ## Recent Changes
 
-### October 27, 2025 - Custom Branding & Dashboard Enhancements
+### October 27, 2025 - Custom Branding, Address Fields & Dashboard Enhancements
 
-#### Custom Logo & Color Scheme Integration (Latest)
+#### Address Field Added to All Forms (Latest)
+1. **Added address field to Lead form** - Now captures customer address when creating/editing leads
+2. **Updated all form styling to cyan branding**:
+   - Changed all green focus rings to cyan (#00c2ff)
+   - Updated all green buttons to cyan
+   - Consistent cyan theme across all forms
+3. **Forms with address fields:**
+   - Customer Form: ✅ Has address field
+   - Employee Form: ✅ Has address field
+   - Lead Form: ✅ Now has address field (new!)
+   - Quote/Job Forms: Get address from customer relationship
+
+#### Custom Logo & Color Scheme Integration
 1. **Added custom TreePro AI logo** - Futuristic AI circuit tree design
 2. **Updated color scheme** from green to cyan/turquoise:
    - Primary: Bright cyan (#00c2ff) matching the logo
