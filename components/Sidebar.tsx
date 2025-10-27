@@ -29,6 +29,7 @@ const navigation = [
   { name: 'Profitability', href: '/profitability', icon: DollarIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'Employees', href: '/employees', icon: EmployeeIcon },
+  { name: 'Payroll', href: '/payroll', icon: DollarIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
   { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
   { name: 'Settings', href: '/settings', icon: CogIcon },

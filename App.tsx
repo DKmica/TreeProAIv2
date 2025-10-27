@@ -28,6 +28,7 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import TemplateViewer from './pages/TemplateViewer';
+import Payroll from './pages/Payroll';
 import * as api from './services/apiService';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 
@@ -131,6 +132,7 @@ const App: React.FC = () => {
           <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
           <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} />} />
           <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
+          <Route path="/payroll" element={<Payroll />} />
           <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
           <Route path="/equipment/:equipmentId" element={<EquipmentDetail equipment={equipment} setEquipment={setEquipment} />} />
           <Route path="/marketing" element={<Marketing />} />

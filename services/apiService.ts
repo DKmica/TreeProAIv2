@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -45,6 +45,9 @@ export const jobService = createApiService<Job>('jobs');
 export const invoiceService = createApiService<Invoice>('invoices');
 export const employeeService = createApiService<Employee>('employees');
 export const equipmentService = createApiService<Equipment>('equipment');
+export const payPeriodService = createApiService<PayPeriod>('pay_periods');
+export const timeEntryService = createApiService<TimeEntry>('time_entries');
+export const payrollRecordService = createApiService<PayrollRecord>('payroll_records');
 
 // Special case for maintenance logs
 export const addMaintenanceLog = async (equipmentId: string, log: Omit<MaintenanceLog, 'id'>): Promise<Equipment> => {
