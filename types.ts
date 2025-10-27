@@ -241,3 +241,62 @@ export interface DocumentTemplate {
   description: string;
   content: string; // For now, this will be a simple string, maybe Markdown or HTML
 }
+
+// Payroll Types
+export interface PayPeriod {
+  id: string;
+  startDate: string;
+  endDate: string;
+  periodType: 'weekly' | 'bi-weekly' | 'monthly';
+  status: 'Open' | 'Processing' | 'Closed';
+  processedAt?: string;
+  createdAt: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  employeeId: string;
+  jobId?: string;
+  date: string;
+  hoursWorked: number;
+  hourlyRate: number;
+  overtimeHours?: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface PayrollDeduction {
+  type: string; // e.g., "Federal Tax", "State Tax", "Social Security", "Medicare", "Health Insurance"
+  amount: number;
+  percentage?: number;
+}
+
+export interface PayrollRecord {
+  id: string;
+  employeeId: string;
+  payPeriodId: string;
+  regularHours: number;
+  overtimeHours: number;
+  hourlyRate: number;
+  regularPay: number;
+  overtimePay: number;
+  bonuses: number;
+  deductions: PayrollDeduction[];
+  totalDeductions: number;
+  grossPay: number;
+  netPay: number;
+  paidAt?: string;
+  paymentMethod: 'Check' | 'Direct Deposit' | 'Cash';
+  notes?: string;
+  createdAt: string;
+}
+
+export interface PayrollSummary {
+  totalEmployees: number;
+  totalRegularHours: number;
+  totalOvertimeHours: number;
+  totalGrossPay: number;
+  totalDeductions: number;
+  totalNetPay: number;
+  averageHourlyRate: number;
+}

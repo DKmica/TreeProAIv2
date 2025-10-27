@@ -115,6 +115,51 @@ CREATE TABLE IF NOT EXISTS equipment (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Pay Periods Table
+CREATE TABLE IF NOT EXISTS pay_periods (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    period_type TEXT NOT NULL DEFAULT 'bi-weekly',
+    status TEXT NOT NULL DEFAULT 'Open',
+    processed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Time Entries Table
+CREATE TABLE IF NOT EXISTS time_entries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
+    job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+    date DATE NOT NULL,
+    hours_worked NUMERIC NOT NULL DEFAULT 0,
+    hourly_rate NUMERIC NOT NULL,
+    overtime_hours NUMERIC DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Payroll Records Table
+CREATE TABLE IF NOT EXISTS payroll_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    employee_id UUID REFERENCES employees(id) ON DELETE CASCADE,
+    pay_period_id UUID REFERENCES pay_periods(id) ON DELETE CASCADE,
+    regular_hours NUMERIC NOT NULL DEFAULT 0,
+    overtime_hours NUMERIC DEFAULT 0,
+    hourly_rate NUMERIC NOT NULL,
+    regular_pay NUMERIC NOT NULL DEFAULT 0,
+    overtime_pay NUMERIC DEFAULT 0,
+    bonuses NUMERIC DEFAULT 0,
+    deductions JSONB DEFAULT '[]',
+    total_deductions NUMERIC DEFAULT 0,
+    gross_pay NUMERIC NOT NULL DEFAULT 0,
+    net_pay NUMERIC NOT NULL DEFAULT 0,
+    paid_at TIMESTAMP WITH TIME ZONE,
+    payment_method TEXT DEFAULT 'Check',
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_leads_customer_id ON leads(customer_id);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
@@ -124,6 +169,12 @@ CREATE INDEX IF NOT EXISTS idx_jobs_quote_id ON jobs(quote_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_job_id ON invoices(job_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_pay_periods_status ON pay_periods(status);
+CREATE INDEX IF NOT EXISTS idx_time_entries_employee_id ON time_entries(employee_id);
+CREATE INDEX IF NOT EXISTS idx_time_entries_job_id ON time_entries(job_id);
+CREATE INDEX IF NOT EXISTS idx_time_entries_date ON time_entries(date);
+CREATE INDEX IF NOT EXISTS idx_payroll_records_employee_id ON payroll_records(employee_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_records_pay_period_id ON payroll_records(pay_period_id);
 
 -- Insert sample data for development
 INSERT INTO customers (id, name, email, phone, address, lat, lon) VALUES

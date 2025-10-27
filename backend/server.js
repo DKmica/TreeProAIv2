@@ -190,6 +190,102 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform pay_periods fields
+  if (tableName === 'pay_periods') {
+    if (row.start_date !== undefined) {
+      transformed.startDate = row.start_date;
+      delete transformed.start_date;
+    }
+    if (row.end_date !== undefined) {
+      transformed.endDate = row.end_date;
+      delete transformed.end_date;
+    }
+    if (row.period_type !== undefined) {
+      transformed.periodType = row.period_type;
+      delete transformed.period_type;
+    }
+    if (row.processed_at !== undefined) {
+      transformed.processedAt = row.processed_at;
+      delete transformed.processed_at;
+    }
+  }
+  
+  // Transform time_entries fields
+  if (tableName === 'time_entries') {
+    if (row.employee_id !== undefined) {
+      transformed.employeeId = row.employee_id;
+      delete transformed.employee_id;
+    }
+    if (row.job_id !== undefined) {
+      transformed.jobId = row.job_id;
+      delete transformed.job_id;
+    }
+    if (row.hours_worked !== undefined) {
+      transformed.hoursWorked = (row.hours_worked !== null && row.hours_worked !== '') ? parseFloat(row.hours_worked) : row.hours_worked;
+      delete transformed.hours_worked;
+    }
+    if (row.hourly_rate !== undefined) {
+      transformed.hourlyRate = (row.hourly_rate !== null && row.hourly_rate !== '') ? parseFloat(row.hourly_rate) : row.hourly_rate;
+      delete transformed.hourly_rate;
+    }
+    if (row.overtime_hours !== undefined) {
+      transformed.overtimeHours = (row.overtime_hours !== null && row.overtime_hours !== '') ? parseFloat(row.overtime_hours) : row.overtime_hours;
+      delete transformed.overtime_hours;
+    }
+  }
+  
+  // Transform payroll_records fields
+  if (tableName === 'payroll_records') {
+    if (row.employee_id !== undefined) {
+      transformed.employeeId = row.employee_id;
+      delete transformed.employee_id;
+    }
+    if (row.pay_period_id !== undefined) {
+      transformed.payPeriodId = row.pay_period_id;
+      delete transformed.pay_period_id;
+    }
+    if (row.regular_hours !== undefined) {
+      transformed.regularHours = (row.regular_hours !== null && row.regular_hours !== '') ? parseFloat(row.regular_hours) : row.regular_hours;
+      delete transformed.regular_hours;
+    }
+    if (row.overtime_hours !== undefined) {
+      transformed.overtimeHours = (row.overtime_hours !== null && row.overtime_hours !== '') ? parseFloat(row.overtime_hours) : row.overtime_hours;
+      delete transformed.overtime_hours;
+    }
+    if (row.hourly_rate !== undefined) {
+      transformed.hourlyRate = (row.hourly_rate !== null && row.hourly_rate !== '') ? parseFloat(row.hourly_rate) : row.hourly_rate;
+      delete transformed.hourly_rate;
+    }
+    if (row.regular_pay !== undefined) {
+      transformed.regularPay = (row.regular_pay !== null && row.regular_pay !== '') ? parseFloat(row.regular_pay) : row.regular_pay;
+      delete transformed.regular_pay;
+    }
+    if (row.overtime_pay !== undefined) {
+      transformed.overtimePay = (row.overtime_pay !== null && row.overtime_pay !== '') ? parseFloat(row.overtime_pay) : row.overtime_pay;
+      delete transformed.overtime_pay;
+    }
+    if (row.total_deductions !== undefined) {
+      transformed.totalDeductions = (row.total_deductions !== null && row.total_deductions !== '') ? parseFloat(row.total_deductions) : row.total_deductions;
+      delete transformed.total_deductions;
+    }
+    if (row.gross_pay !== undefined) {
+      transformed.grossPay = (row.gross_pay !== null && row.gross_pay !== '') ? parseFloat(row.gross_pay) : row.gross_pay;
+      delete transformed.gross_pay;
+    }
+    if (row.net_pay !== undefined) {
+      transformed.netPay = (row.net_pay !== null && row.net_pay !== '') ? parseFloat(row.net_pay) : row.net_pay;
+      delete transformed.net_pay;
+    }
+    if (row.paid_at !== undefined) {
+      transformed.paidAt = row.paid_at;
+      delete transformed.paid_at;
+    }
+    if (row.payment_method !== undefined) {
+      transformed.paymentMethod = row.payment_method;
+      delete transformed.payment_method;
+    }
+  }
+  
   // Transform other snake_case fields
   if (row.created_at !== undefined) {
     transformed.createdAt = row.created_at;
@@ -360,6 +456,102 @@ const transformToDb = (data, tableName) => {
     }
   }
   
+  // Transform pay_periods fields
+  if (tableName === 'pay_periods') {
+    if (data.startDate !== undefined) {
+      transformed.start_date = data.startDate;
+      delete transformed.startDate;
+    }
+    if (data.endDate !== undefined) {
+      transformed.end_date = data.endDate;
+      delete transformed.endDate;
+    }
+    if (data.periodType !== undefined) {
+      transformed.period_type = data.periodType;
+      delete transformed.periodType;
+    }
+    if (data.processedAt !== undefined) {
+      transformed.processed_at = data.processedAt;
+      delete transformed.processedAt;
+    }
+  }
+  
+  // Transform time_entries fields
+  if (tableName === 'time_entries') {
+    if (data.employeeId !== undefined) {
+      transformed.employee_id = data.employeeId;
+      delete transformed.employeeId;
+    }
+    if (data.jobId !== undefined) {
+      transformed.job_id = data.jobId;
+      delete transformed.jobId;
+    }
+    if (data.hoursWorked !== undefined) {
+      transformed.hours_worked = data.hoursWorked;
+      delete transformed.hoursWorked;
+    }
+    if (data.hourlyRate !== undefined) {
+      transformed.hourly_rate = data.hourlyRate;
+      delete transformed.hourlyRate;
+    }
+    if (data.overtimeHours !== undefined) {
+      transformed.overtime_hours = data.overtimeHours;
+      delete transformed.overtimeHours;
+    }
+  }
+  
+  // Transform payroll_records fields
+  if (tableName === 'payroll_records') {
+    if (data.employeeId !== undefined) {
+      transformed.employee_id = data.employeeId;
+      delete transformed.employeeId;
+    }
+    if (data.payPeriodId !== undefined) {
+      transformed.pay_period_id = data.payPeriodId;
+      delete transformed.payPeriodId;
+    }
+    if (data.regularHours !== undefined) {
+      transformed.regular_hours = data.regularHours;
+      delete transformed.regularHours;
+    }
+    if (data.overtimeHours !== undefined) {
+      transformed.overtime_hours = data.overtimeHours;
+      delete transformed.overtimeHours;
+    }
+    if (data.hourlyRate !== undefined) {
+      transformed.hourly_rate = data.hourlyRate;
+      delete transformed.hourlyRate;
+    }
+    if (data.regularPay !== undefined) {
+      transformed.regular_pay = data.regularPay;
+      delete transformed.regularPay;
+    }
+    if (data.overtimePay !== undefined) {
+      transformed.overtime_pay = data.overtimePay;
+      delete transformed.overtimePay;
+    }
+    if (data.totalDeductions !== undefined) {
+      transformed.total_deductions = data.totalDeductions;
+      delete transformed.totalDeductions;
+    }
+    if (data.grossPay !== undefined) {
+      transformed.gross_pay = data.grossPay;
+      delete transformed.grossPay;
+    }
+    if (data.netPay !== undefined) {
+      transformed.net_pay = data.netPay;
+      delete transformed.netPay;
+    }
+    if (data.paidAt !== undefined) {
+      transformed.paid_at = data.paidAt;
+      delete transformed.paidAt;
+    }
+    if (data.paymentMethod !== undefined) {
+      transformed.payment_method = data.paymentMethod;
+      delete transformed.paymentMethod;
+    }
+  }
+  
   if (data.createdAt !== undefined) {
     transformed.created_at = data.createdAt;
     delete transformed.createdAt;
@@ -472,7 +664,7 @@ apiRouter.get('/leads', async (req, res) => {
 });
 
 
-const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment'];
+const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
 });
