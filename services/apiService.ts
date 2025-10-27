@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -78,4 +78,10 @@ export const addMaintenanceLog = async (equipmentId: string, log: Omit<Maintenan
         maintenanceHistory: updatedHistory,
         lastServiceDate: mostRecentDate
     });
+};
+
+// Company Profile Service (singleton pattern)
+export const companyProfileService = {
+  get: (): Promise<CompanyProfile> => apiFetch('company-profile'),
+  update: (data: Partial<CompanyProfile>): Promise<CompanyProfile> => apiFetch('company-profile', { method: 'PUT', body: JSON.stringify(data) }),
 };

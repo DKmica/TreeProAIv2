@@ -308,3 +308,23 @@ export interface PayrollSummary {
   totalNetPay: number;
   averageHourlyRate: number;
 }
+
+export interface CompanyProfile {
+  id: string;
+  companyName: string;
+  phoneNumber?: string;
+  taxEin?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  logoUrl?: string;
+  tagline?: string;
+  businessHours?: string;
+  licenseNumber?: string;
+  insurancePolicyNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}

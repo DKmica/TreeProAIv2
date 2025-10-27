@@ -286,6 +286,46 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform company_profile fields
+  if (tableName === 'company_profile') {
+    if (row.company_name !== undefined) {
+      transformed.companyName = row.company_name;
+      delete transformed.company_name;
+    }
+    if (row.phone_number !== undefined) {
+      transformed.phoneNumber = row.phone_number;
+      delete transformed.phone_number;
+    }
+    if (row.tax_ein !== undefined) {
+      transformed.taxEin = row.tax_ein;
+      delete transformed.tax_ein;
+    }
+    if (row.zip_code !== undefined) {
+      transformed.zipCode = row.zip_code;
+      delete transformed.zip_code;
+    }
+    if (row.logo_url !== undefined) {
+      transformed.logoUrl = row.logo_url;
+      delete transformed.logo_url;
+    }
+    if (row.business_hours !== undefined) {
+      transformed.businessHours = row.business_hours;
+      delete transformed.business_hours;
+    }
+    if (row.license_number !== undefined) {
+      transformed.licenseNumber = row.license_number;
+      delete transformed.license_number;
+    }
+    if (row.insurance_policy_number !== undefined) {
+      transformed.insurancePolicyNumber = row.insurance_policy_number;
+      delete transformed.insurance_policy_number;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+  }
+  
   // Transform other snake_case fields
   if (row.created_at !== undefined) {
     transformed.createdAt = row.created_at;
@@ -552,6 +592,46 @@ const transformToDb = (data, tableName) => {
     }
   }
   
+  // Transform company_profile fields
+  if (tableName === 'company_profile') {
+    if (data.companyName !== undefined) {
+      transformed.company_name = data.companyName;
+      delete transformed.companyName;
+    }
+    if (data.phoneNumber !== undefined) {
+      transformed.phone_number = data.phoneNumber;
+      delete transformed.phoneNumber;
+    }
+    if (data.taxEin !== undefined) {
+      transformed.tax_ein = data.taxEin;
+      delete transformed.taxEin;
+    }
+    if (data.zipCode !== undefined) {
+      transformed.zip_code = data.zipCode;
+      delete transformed.zipCode;
+    }
+    if (data.logoUrl !== undefined) {
+      transformed.logo_url = data.logoUrl;
+      delete transformed.logoUrl;
+    }
+    if (data.businessHours !== undefined) {
+      transformed.business_hours = data.businessHours;
+      delete transformed.businessHours;
+    }
+    if (data.licenseNumber !== undefined) {
+      transformed.license_number = data.licenseNumber;
+      delete transformed.licenseNumber;
+    }
+    if (data.insurancePolicyNumber !== undefined) {
+      transformed.insurance_policy_number = data.insurancePolicyNumber;
+      delete transformed.insurancePolicyNumber;
+    }
+    if (data.updatedAt !== undefined) {
+      transformed.updated_at = data.updatedAt;
+      delete transformed.updatedAt;
+    }
+  }
+  
   if (data.createdAt !== undefined) {
     transformed.created_at = data.createdAt;
     delete transformed.createdAt;
@@ -779,6 +859,40 @@ apiRouter.post('/pay_periods/:id/process', async (req, res) => {
         totalNetPay: totalNetPay
       }
     });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// Company Profile Endpoints (singleton pattern)
+apiRouter.get('/company-profile', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM company_profile LIMIT 1');
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Company profile not found' });
+    }
+    res.json(transformRow(rows[0], 'company_profile'));
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.put('/company-profile', async (req, res) => {
+  try {
+    const { rows: existingRows } = await db.query('SELECT * FROM company_profile LIMIT 1');
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: 'Company profile not found' });
+    }
+    
+    const data = transformToDb(req.body, 'company_profile');
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+    const setString = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+    
+    const queryText = `UPDATE company_profile SET ${setString}, updated_at = NOW() WHERE id = $1 RETURNING *`;
+    const { rows } = await db.query(queryText, [existingRows[0].id, ...values]);
+    
+    res.json(transformRow(rows[0], 'company_profile'));
   } catch (err) {
     handleError(res, err);
   }

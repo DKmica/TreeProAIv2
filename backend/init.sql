@@ -220,3 +220,29 @@ INSERT INTO equipment (id, name, make, model, purchase_date, last_service_date, 
     ('equip2', 'Wood Chipper', 'Bandit', '15XP', '2020-01-15', '2023-08-15', 'Needs Maintenance', 'Crew 1', '[{"id": "maint3", "date": "2023-08-15", "description": "Sharpened blades.", "cost": 300}, {"id": "maint4", "date": "2023-02-20", "description": "Replaced hydraulic fluid.", "cost": 150}]'),
     ('equip3', 'Chainsaw', 'Stihl', 'MS 462', '2023-03-20', '2023-10-10', 'Operational', NULL, '[]')
 ON CONFLICT (id) DO NOTHING;
+
+-- Company Profile Table
+CREATE TABLE IF NOT EXISTS company_profile (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    company_name TEXT NOT NULL,
+    phone_number TEXT,
+    tax_ein TEXT,
+    email TEXT,
+    website TEXT,
+    address TEXT,
+    city TEXT,
+    state TEXT,
+    zip_code TEXT,
+    logo_url TEXT,
+    tagline TEXT,
+    business_hours TEXT,
+    license_number TEXT,
+    insurance_policy_number TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Insert default company profile
+INSERT INTO company_profile (company_name, phone_number, email, tagline, business_hours) 
+SELECT 'TreePro AI', '(555) 123-4567', 'info@treeproai.com', 'Professional Tree Care Services', 'Monday - Friday: 8:00 AM - 6:00 PM, Saturday: 9:00 AM - 4:00 PM'
+WHERE NOT EXISTS (SELECT 1 FROM company_profile LIMIT 1);
