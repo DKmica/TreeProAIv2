@@ -1,15 +1,17 @@
 
 import React, { useState, useMemo } from 'react';
 import MapView from '../components/MapView';
-import { Job, Employee, Customer } from '../types';
+import { Job, Employee, Customer, Lead, Quote } from '../types';
 
 interface DashboardProps {
     jobs: Job[];
     employees: Employee[];
     customers: Customer[];
+    leads: Lead[];
+    quotes: Quote[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers }) => {
+const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads, quotes }) => {
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
     const activeJobs = useMemo(() => 
@@ -17,6 +19,35 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers }) => 
             .sort((a, b) => (a.scheduledDate || '').localeCompare(b.scheduledDate || '')), 
         [jobs]
     );
+
+    const newLeadsCount = useMemo(() => 
+        leads.filter(lead => lead.status === 'New').length,
+        [leads]
+    );
+
+    const quotesSentCount = useMemo(() => 
+        quotes.filter(quote => quote.status === 'Sent' || quote.status === 'Accepted').length,
+        [quotes]
+    );
+
+    const activeJobsCount = useMemo(() => 
+        jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress').length,
+        [jobs]
+    );
+
+    const monthlyRevenue = useMemo(() => {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        return jobs
+            .filter(job => {
+                if (job.status !== 'Completed' || !job.completedDate) return false;
+                const completedDate = new Date(job.completedDate);
+                return completedDate.getMonth() === currentMonth && completedDate.getFullYear() === currentYear;
+            })
+            .reduce((sum, job) => sum + (job.totalCost || 0), 0);
+    }, [jobs]);
 
     const getStatusColor = (status: Job['status']) => {
         switch (status) {
@@ -41,19 +72,21 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers }) => 
        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-gray-500">New Leads</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">12</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{newLeadsCount}</dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-gray-500">Quotes Sent</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">8</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{quotesSentCount}</dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-gray-500">Active Jobs</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">3</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{activeJobsCount}</dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-brand-gray-500">Revenue (Month)</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">$12,450</dd>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">
+              ${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </dd>
           </div>
         </div>
         

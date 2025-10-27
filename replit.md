@@ -8,9 +8,35 @@ TreePro AI is a comprehensive business management platform for tree service comp
 
 ## Recent Changes
 
-### October 27, 2025 - AI Estimator Enhancement
+### October 27, 2025 - Custom Branding & Dashboard Enhancements
 
-#### AI Tree Estimator - Always Include Removal Price (Latest)
+#### Custom Logo & Color Scheme Integration (Latest)
+1. **Added custom TreePro AI logo** - Futuristic AI circuit tree design
+2. **Updated color scheme** from green to cyan/turquoise:
+   - Primary: Bright cyan (#00c2ff) matching the logo
+   - Background: Dark navy/gray (#0a1628 to #102a43)
+   - Accent colors: Cyan with glow effects
+3. **Updated all UI components:**
+   - Login page: Dark gradient background with glowing logo
+   - Sidebar: Dark theme with cyan highlights
+   - Buttons: Cyan instead of green
+   - Active states: Cyan with shadow effects
+4. **Logo placement:**
+   - Login page: Large centered logo with cyan ring
+   - Sidebar (desktop & mobile): Smaller logo in header
+   - All instances use the custom uploaded logo
+
+#### Dashboard Live Data Fix
+1. **Fixed hardcoded dashboard statistics** - Now displays real data from database
+2. **Stat Cards now show:**
+   - New Leads: Count of leads with status "New"
+   - Quotes Sent: Count of quotes with status "Sent" or "Accepted"
+   - Active Jobs: Count of jobs with status "Scheduled" or "In Progress"
+   - Monthly Revenue: Total revenue from completed jobs in current month
+3. **Updated Dashboard component** to receive leads and quotes data
+4. **Real-time calculations** using useMemo for performance
+
+#### AI Tree Estimator - Always Include Removal Price
 1. **Modified estimator prompt** to always include "Tree Removal" as the first service
 2. Removal price now reflects tree size, location, hazards, and complexity
 3. Additional services (pruning, stump grinding, etc.) suggested after removal

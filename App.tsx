@@ -120,7 +120,7 @@ const App: React.FC = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout appState={appState} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} />} />
+          <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} leads={leads} quotes={quotes} />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
           <Route path="/chat" element={<ChatPage />} />
