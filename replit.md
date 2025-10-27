@@ -8,9 +8,17 @@ TreePro AI is a comprehensive business management platform for tree service comp
 
 ## Recent Changes
 
+### October 27, 2025 - AI Estimator Enhancement
+
+#### AI Tree Estimator - Always Include Removal Price (Latest)
+1. **Modified estimator prompt** to always include "Tree Removal" as the first service
+2. Removal price now reflects tree size, location, hazards, and complexity
+3. Additional services (pruning, stump grinding, etc.) suggested after removal
+4. Ensures customers always get a complete removal quote for comparison
+
 ### October 26, 2025 - Comprehensive API & Data Fixes + AI Estimator Fix
 
-#### AI Features Fix (Latest - All Services Updated)
+#### AI Features Fix (All Services Updated)
 1. **Fixed Invalid Gemini Model Names**
    - Updated all Gemini API calls from invalid `gemini-2.5-pro` and `gemini-2.5-flash` to `gemini-2.0-flash`
    - Fixed AI Tree Estimator, AI Core, Chat Service, Marketing Tools, Business Service
