@@ -36,6 +36,11 @@ CREATE TABLE IF NOT EXISTS quotes (
     signature TEXT,
     accepted_at TIMESTAMP WITH TIME ZONE,
     messages JSONB DEFAULT '[]',
+    job_location TEXT,
+    special_instructions TEXT,
+    valid_until TEXT,
+    deposit_amount NUMERIC DEFAULT 0,
+    payment_terms TEXT DEFAULT 'Net 30',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -58,6 +63,10 @@ CREATE TABLE IF NOT EXISTS jobs (
     jha JSONB,
     costs JSONB,
     messages JSONB DEFAULT '[]',
+    job_location TEXT,
+    special_instructions TEXT,
+    equipment_needed JSONB DEFAULT '[]',
+    estimated_hours NUMERIC DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

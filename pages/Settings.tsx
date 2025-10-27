@@ -10,13 +10,17 @@ import DocumentTextIcon from '../components/icons/DocumentTextIcon';
 
 const Settings: React.FC = () => {
   const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>(mockCustomFields);
-  const [documentTemplates] = useState<DocumentTemplate[]>(mockDocumentTemplates);
+  const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>(mockDocumentTemplates);
 
   // State for the custom field form
   const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entity']>('customer');
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldType, setNewFieldType] = useState<CustomFieldDefinition['type']>('text');
+
+  // State for template editing
+  const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
+  const [templateContent, setTemplateContent] = useState('');
 
   const filteredFields = useMemo(() => {
     return customFields.filter(field => field.entity === selectedEntity);
@@ -43,6 +47,29 @@ const Settings: React.FC = () => {
     if (window.confirm('Are you sure you want to delete this custom field?')) {
       setCustomFields(prev => prev.filter(field => field.id !== fieldId));
     }
+  };
+
+  const handleEditTemplate = (template: DocumentTemplate) => {
+    setEditingTemplate(template);
+    setTemplateContent(template.content || '');
+  };
+
+  const handleSaveTemplate = () => {
+    if (editingTemplate) {
+      setDocumentTemplates(prev => 
+        prev.map(t => t.id === editingTemplate.id 
+          ? { ...t, content: templateContent } 
+          : t
+        )
+      );
+      setEditingTemplate(null);
+      setTemplateContent('');
+    }
+  };
+
+  const handleCancelEditTemplate = () => {
+    setEditingTemplate(null);
+    setTemplateContent('');
   };
 
 
@@ -187,20 +214,68 @@ const Settings: React.FC = () => {
             {/* Document Templates */}
             <div>
                <h3 className="text-md font-semibold flex items-center text-brand-gray-800"><DocumentTextIcon className="w-5 h-5 mr-2" /> Document Templates</h3>
-               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 {documentTemplates.map(template => (
-                   <div key={template.id} className="p-4 border rounded-lg bg-white flex flex-col">
-                     <div className="flex-grow">
-                        <span className="text-xs uppercase font-semibold text-brand-gray-500 bg-brand-gray-100 px-2 py-0.5 rounded-full">{template.type}</span>
-                        <h4 className="mt-2 font-semibold text-brand-gray-800">{template.name}</h4>
-                        <p className="mt-1 text-sm text-brand-gray-600">{template.description}</p>
+               <p className="mt-1 text-sm text-brand-gray-600">Customize your quote, invoice, and report templates with dynamic variables.</p>
+               
+               {editingTemplate ? (
+                 <div className="mt-4 p-6 border rounded-lg bg-white">
+                   <div className="flex items-center justify-between mb-4">
+                     <div>
+                       <span className="text-xs uppercase font-semibold text-brand-gray-500 bg-brand-gray-100 px-2 py-0.5 rounded-full">{editingTemplate.type}</span>
+                       <h4 className="mt-2 text-lg font-semibold text-brand-gray-800">{editingTemplate.name}</h4>
                      </div>
-                     <div className="mt-4">
-                        <Link to={`/settings/template/${template.id}`} className="text-sm font-semibold text-brand-green-600 hover:text-brand-green-800">View &amp; Edit &rarr;</Link>
+                     <button onClick={handleCancelEditTemplate} className="text-sm text-brand-gray-600 hover:text-brand-gray-900">✕ Close</button>
+                   </div>
+                   
+                   <div className="mb-4">
+                     <label className="block text-sm font-medium text-brand-gray-700 mb-2">Template Content</label>
+                     <textarea 
+                       value={templateContent} 
+                       onChange={e => setTemplateContent(e.target.value)}
+                       rows={12}
+                       className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm font-mono"
+                       placeholder="Enter template content..."
+                     />
+                   </div>
+                   
+                   <div className="mb-4 p-3 bg-brand-gray-50 rounded-md border">
+                     <p className="text-xs font-semibold text-brand-gray-700 mb-2">Available Variables:</p>
+                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-brand-gray-600">
+                       <code>{'{{customer_name}}'}</code>
+                       <code>{'{{customer_email}}'}</code>
+                       <code>{'{{customer_phone}}'}</code>
+                       <code>{'{{customer_address}}'}</code>
+                       <code>{'{{total_amount}}'}</code>
+                       <code>{'{{date}}'}</code>
+                       <code>{'{{quote_id}}'}</code>
+                       <code>{'{{job_location}}'}</code>
+                       <code>{'{{line_items}}'}</code>
+                       <code>{'{{payment_terms}}'}</code>
+                       <code>{'{{deposit_amount}}'}</code>
+                       <code>{'{{company_name}}'}</code>
                      </div>
                    </div>
-                 ))}
-               </div>
+                   
+                   <div className="flex justify-end gap-x-3">
+                     <button onClick={handleCancelEditTemplate} className="text-sm font-semibold text-brand-gray-900">Cancel</button>
+                     <button onClick={handleSaveTemplate} className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700">Save Template</button>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   {documentTemplates.map(template => (
+                     <div key={template.id} className="p-4 border rounded-lg bg-white flex flex-col hover:border-brand-cyan-300 transition-colors">
+                       <div className="flex-grow">
+                          <span className="text-xs uppercase font-semibold text-brand-gray-500 bg-brand-gray-100 px-2 py-0.5 rounded-full">{template.type}</span>
+                          <h4 className="mt-2 font-semibold text-brand-gray-800">{template.name}</h4>
+                          <p className="mt-1 text-sm text-brand-gray-600">{template.description}</p>
+                       </div>
+                       <div className="mt-4">
+                          <button onClick={() => handleEditTemplate(template)} className="text-sm font-semibold text-brand-cyan-600 hover:text-brand-cyan-800">Edit Template &rarr;</button>
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
             </div>
           </div>
         </div>
