@@ -9,7 +9,9 @@
     "dev:backend": "npm run dev --prefix backend",
     "build": "vite build",
     "preview": "vite preview",
-    "verify": "node verify-setup.js"
+    "verify": "node verify-setup.js",
+    "install:all": "npm install && cd backend && npm install && cd ..",
+    "build:production": "npm run install:all && npm run build && cp -r dist/* backend/public/"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.4",

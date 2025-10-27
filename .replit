@@ -49,14 +49,10 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 34487
-externalPort = 3001
-
-[[ports]]
 localPort = 46015
 externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
 run = ["node", "backend/server.js"]
-build = ["bash", "-c", "npm run build && cp -r dist/* backend/public/"]
+build = ["bash", "-c", "npm install && cd backend && npm install && cd .. && npm run build && cp -r dist/* backend/public/"]

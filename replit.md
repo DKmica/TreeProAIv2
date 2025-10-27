@@ -211,15 +211,20 @@ All endpoints are prefixed with `/api`:
 ## Production Deployment
 
 ### Build Process
-1. `npm run build` - Builds frontend to `dist/` directory
-2. Copy `dist/*` to `backend/public/`
-3. Backend serves static files and API
+1. `npm install` - Install root dependencies
+2. `cd backend && npm install` - Install backend dependencies
+3. `npm run build` - Build frontend to `dist/` directory
+4. `cp -r dist/* backend/public/` - Copy built files to backend public folder
 
 ### Deployment Configuration
 - **Target**: Autoscale (stateless web app)
-- **Build**: `npm run build && cp -r dist/* backend/public/`
+- **Build**: `bash -c "npm install && cd backend && npm install && cd .. && npm run build && cp -r dist/* backend/public/"`
 - **Run**: `node backend/server.js`
 - **Port**: 5000 (environment variable PORT)
+
+### Helper Scripts
+- `npm run install:all` - Install all dependencies (root + backend)
+- `npm run build:production` - Complete production build process
 
 ### Production Server
 - Backend serves both static frontend files and API endpoints
