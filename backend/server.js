@@ -898,25 +898,25 @@ apiRouter.put('/company-profile', async (req, res) => {
   }
 });
 
-// Angi Webhook Endpoint
+// Angi Ads Webhook Endpoint
 apiRouter.post('/webhooks/angi', async (req, res) => {
   try {
     const apiKey = req.headers['x-api-key'];
-    const expectedApiKey = process.env.ANGI_WEBHOOK_SECRET;
+    const expectedApiKey = process.env.ANGI_ADS_WEBHOOK_SECRET;
 
     if (!apiKey || apiKey !== expectedApiKey) {
-      console.log('Angi webhook: Invalid or missing API key');
+      console.log('Angi Ads webhook: Invalid or missing API key');
       return res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing API key' });
     }
 
     const { name, phone, email, comments, description, address, location, timestamp, leadId } = req.body;
 
     if (!name || !phone || !email) {
-      console.log('Angi webhook: Missing required fields');
+      console.log('Angi Ads webhook: Missing required fields');
       return res.status(400).json({ error: 'Bad Request', message: 'Missing required fields: name, phone, email' });
     }
 
-    console.log(`Angi webhook: Received lead from Angi - ${name} (${email})`);
+    console.log(`Angi Ads webhook: Received lead from Angi Ads - ${name} (${email})`);
 
     const customerAddress = address || location || '';
     const leadDescription = comments || description || '';
@@ -931,7 +931,7 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
     if (existingCustomers.length > 0) {
       customerId = existingCustomers[0].id;
       customerName = existingCustomers[0].name;
-      console.log(`Angi webhook: Found existing customer ${customerId}`);
+      console.log(`Angi Ads webhook: Found existing customer ${customerId}`);
     } else {
       customerId = uuidv4();
       const { rows: newCustomerRows } = await db.query(
@@ -939,7 +939,7 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
         [customerId, name, email, phone, customerAddress, 0, 0]
       );
-      console.log(`Angi webhook: Created new customer ${customerId}`);
+      console.log(`Angi Ads webhook: Created new customer ${customerId}`);
     }
 
     const newLeadId = uuidv4();
@@ -950,10 +950,10 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
     const { rows: newLeadRows } = await db.query(
       `INSERT INTO leads (id, customer_id, source, status, description, created_at) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [newLeadId, customerId, 'Angi', 'New', leadDescriptionWithAngiId, new Date().toISOString()]
+      [newLeadId, customerId, 'Angi Ads', 'New', leadDescriptionWithAngiId, new Date().toISOString()]
     );
 
-    console.log(`Angi webhook: Created new lead ${newLeadId} for customer ${customerId}`);
+    console.log(`Angi Ads webhook: Created new lead ${newLeadId} for customer ${customerId}`);
 
     res.status(200).json({
       success: true,
@@ -962,7 +962,7 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Angi webhook error:', err);
+    console.error('Angi Ads webhook error:', err);
     res.status(500).json({ 
       error: 'Internal Server Error', 
       message: err.message 

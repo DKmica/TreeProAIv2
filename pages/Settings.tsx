@@ -324,11 +324,11 @@ const Settings: React.FC = () => {
 
         <div className="border-t border-brand-gray-200"></div>
 
-        {/* Angi Integration Section */}
+        {/* Angi Ads Integration Section */}
         <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
           <div>
-            <h2 className="text-base font-semibold leading-7 text-brand-gray-900">Angi Integration</h2>
-            <p className="mt-1 text-sm leading-6 text-brand-gray-600">Automatically receive leads from Angi (formerly Angie's List).</p>
+            <h2 className="text-base font-semibold leading-7 text-brand-gray-900">Angi Ads Integration</h2>
+            <p className="mt-1 text-sm leading-6 text-brand-gray-600">Automatically receive leads from Angi Ads (formerly Angie's List).</p>
           </div>
           <div className="md:col-span-2 space-y-6">
             <div className="p-6 border rounded-lg bg-gradient-to-br from-brand-cyan-50 to-white">
@@ -362,10 +362,10 @@ const Settings: React.FC = () => {
                   <h4 className="text-sm font-semibold text-brand-gray-900 mb-2">Setup Instructions</h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-brand-gray-700">
                     <li>Log in to your Angi Pro account at <a href="https://office.angi.com" target="_blank" rel="noopener noreferrer" className="text-brand-cyan-600 hover:text-brand-cyan-700 underline">office.angi.com</a></li>
-                    <li>Navigate to <strong>Settings → Integrations → Webhooks</strong></li>
+                    <li>Navigate to <strong>Ads → Settings → Integrations → Webhooks</strong></li>
                     <li>Click <strong>"Add Webhook"</strong> and paste the webhook URL above</li>
                     <li>Set the event type to <strong>"New Lead"</strong></li>
-                    <li>Add your API key in the <strong>X-API-KEY</strong> header (set this in your environment variables as ANGI_WEBHOOK_SECRET)</li>
+                    <li>Add your API key in the <strong>X-API-KEY</strong> header (set this in your environment variables as ANGI_ADS_WEBHOOK_SECRET)</li>
                     <li>Save the webhook configuration</li>
                   </ol>
                 </div>
@@ -377,7 +377,7 @@ const Settings: React.FC = () => {
                     </svg>
                     <div className="text-sm text-yellow-800">
                       <p className="font-semibold mb-1">Important:</p>
-                      <p>Make sure to set the <code className="bg-yellow-100 px-1 py-0.5 rounded">ANGI_WEBHOOK_SECRET</code> environment variable with a secure API key. This key must match the one you configure in the Angi dashboard.</p>
+                      <p>Make sure to set the <code className="bg-yellow-100 px-1 py-0.5 rounded">ANGI_ADS_WEBHOOK_SECRET</code> environment variable with a secure API key. This key must match the one you configure in the Angi Ads dashboard.</p>
                     </div>
                   </div>
                 </div>
@@ -390,7 +390,7 @@ const Settings: React.FC = () => {
                           name: "Test Customer",
                           phone: "555-0123",
                           email: "test@example.com",
-                          comments: "This is a test lead from the Angi integration",
+                          comments: "This is a test lead from the Angi Ads integration",
                           address: "123 Test St, Test City, TS 12345",
                           timestamp: new Date().toISOString(),
                           leadId: `TEST-${Date.now()}`
@@ -426,14 +426,14 @@ const Settings: React.FC = () => {
                     rel="noopener noreferrer"
                     className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50"
                   >
-                    Open Angi Dashboard →
+                    Open Angi Ads Dashboard →
                   </a>
                 </div>
               </div>
             </div>
 
             <div className="text-sm text-brand-gray-600">
-              <p><strong>How it works:</strong> When you receive a new lead on Angi, it will automatically create a new customer (or link to an existing one) and add a lead with source "Angi" in your TreePro AI system. You'll be able to see these leads in your Leads page and follow up accordingly.</p>
+              <p><strong>How it works:</strong> When you receive a new lead on Angi Ads, it will automatically create a new customer (or link to an existing one) and add a lead with source "Angi Ads" in your TreePro AI system. You'll be able to see these leads in your Leads page and follow up accordingly.</p>
             </div>
           </div>
         </div>
