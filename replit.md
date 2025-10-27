@@ -218,7 +218,7 @@ All endpoints are prefixed with `/api`:
 
 ### Deployment Configuration
 - **Target**: Autoscale (stateless web app - Cloud Run)
-- **Build**: `bash -c "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/"`
+- **Build**: `pnpm run build:production` (runs the build:production script from package.json)
 - **Run**: `node backend/server.js`
 - **Port**: 5000 (uses PORT environment variable from Cloud Run)
 - **Host**: 0.0.0.0 (binds to all interfaces for Cloud Run)

@@ -14,7 +14,7 @@ Your TreePro AI application is now properly configured for deployment on Replit'
 
 ### Build Command
 ```bash
-pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/
+pnpm run build:production
 ```
 
 **What it does:**
@@ -22,6 +22,8 @@ pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r d
 2. Installs backend dependencies with pnpm
 3. Builds the React frontend to `dist/`
 4. Copies built files to `backend/public/`
+
+(This runs the `build:production` script from package.json)
 
 ### Run Command
 ```bash
