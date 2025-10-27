@@ -322,6 +322,122 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
+        <div className="border-t border-brand-gray-200"></div>
+
+        {/* Angi Integration Section */}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+          <div>
+            <h2 className="text-base font-semibold leading-7 text-brand-gray-900">Angi Integration</h2>
+            <p className="mt-1 text-sm leading-6 text-brand-gray-600">Automatically receive leads from Angi (formerly Angie's List).</p>
+          </div>
+          <div className="md:col-span-2 space-y-6">
+            <div className="p-6 border rounded-lg bg-gradient-to-br from-brand-cyan-50 to-white">
+              <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Webhook Configuration</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-brand-gray-700 mb-2">
+                    Webhook URL
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`https://${window.location.hostname}/api/webhooks/angi`}
+                      className="flex-1 block w-full rounded-md border-0 py-2 px-3 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 bg-brand-gray-50 sm:text-sm font-mono"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://${window.location.hostname}/api/webhooks/angi`);
+                        alert('Webhook URL copied to clipboard!');
+                      }}
+                      className="rounded-md bg-brand-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-md border border-brand-cyan-200">
+                  <h4 className="text-sm font-semibold text-brand-gray-900 mb-2">Setup Instructions</h4>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-brand-gray-700">
+                    <li>Log in to your Angi Pro account at <a href="https://office.angi.com" target="_blank" rel="noopener noreferrer" className="text-brand-cyan-600 hover:text-brand-cyan-700 underline">office.angi.com</a></li>
+                    <li>Navigate to <strong>Settings → Integrations → Webhooks</strong></li>
+                    <li>Click <strong>"Add Webhook"</strong> and paste the webhook URL above</li>
+                    <li>Set the event type to <strong>"New Lead"</strong></li>
+                    <li>Add your API key in the <strong>X-API-KEY</strong> header (set this in your environment variables as ANGI_WEBHOOK_SECRET)</li>
+                    <li>Save the webhook configuration</li>
+                  </ol>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                  <div className="flex">
+                    <svg className="h-5 w-5 text-yellow-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <div className="text-sm text-yellow-800">
+                      <p className="font-semibold mb-1">Important:</p>
+                      <p>Make sure to set the <code className="bg-yellow-100 px-1 py-0.5 rounded">ANGI_WEBHOOK_SECRET</code> environment variable with a secure API key. This key must match the one you configure in the Angi dashboard.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={async () => {
+                      try {
+                        const testPayload = {
+                          name: "Test Customer",
+                          phone: "555-0123",
+                          email: "test@example.com",
+                          comments: "This is a test lead from the Angi integration",
+                          address: "123 Test St, Test City, TS 12345",
+                          timestamp: new Date().toISOString(),
+                          leadId: `TEST-${Date.now()}`
+                        };
+                        
+                        const response = await fetch('/api/webhooks/angi', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-KEY': 'test-key'
+                          },
+                          body: JSON.stringify(testPayload)
+                        });
+                        
+                        if (response.ok) {
+                          const data = await response.json();
+                          alert(`Test webhook successful! Lead ID: ${data.leadId}\nCustomer ID: ${data.customerId}`);
+                        } else {
+                          const error = await response.json();
+                          alert(`Test webhook failed: ${error.message || error.error}`);
+                        }
+                      } catch (error) {
+                        alert(`Test webhook error: ${error.message}`);
+                      }
+                    }}
+                    className="rounded-md bg-brand-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700"
+                  >
+                    Test Webhook
+                  </button>
+                  <a
+                    href="https://office.angi.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50"
+                  >
+                    Open Angi Dashboard →
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-sm text-brand-gray-600">
+              <p><strong>How it works:</strong> When you receive a new lead on Angi, it will automatically create a new customer (or link to an existing one) and add a lead with source "Angi" in your TreePro AI system. You'll be able to see these leads in your Leads page and follow up accordingly.</p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

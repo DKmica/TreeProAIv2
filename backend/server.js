@@ -784,6 +784,78 @@ apiRouter.post('/pay_periods/:id/process', async (req, res) => {
   }
 });
 
+// Angi Webhook Endpoint
+apiRouter.post('/webhooks/angi', async (req, res) => {
+  try {
+    const apiKey = req.headers['x-api-key'];
+    const expectedApiKey = process.env.ANGI_WEBHOOK_SECRET;
+
+    if (!apiKey || apiKey !== expectedApiKey) {
+      console.log('Angi webhook: Invalid or missing API key');
+      return res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing API key' });
+    }
+
+    const { name, phone, email, comments, description, address, location, timestamp, leadId } = req.body;
+
+    if (!name || !phone || !email) {
+      console.log('Angi webhook: Missing required fields');
+      return res.status(400).json({ error: 'Bad Request', message: 'Missing required fields: name, phone, email' });
+    }
+
+    console.log(`Angi webhook: Received lead from Angi - ${name} (${email})`);
+
+    const customerAddress = address || location || '';
+    const leadDescription = comments || description || '';
+    let customerId;
+    let customerName = name;
+
+    const { rows: existingCustomers } = await db.query(
+      `SELECT * FROM customers WHERE email = $1 OR phone = $2 LIMIT 1`,
+      [email, phone]
+    );
+
+    if (existingCustomers.length > 0) {
+      customerId = existingCustomers[0].id;
+      customerName = existingCustomers[0].name;
+      console.log(`Angi webhook: Found existing customer ${customerId}`);
+    } else {
+      customerId = uuidv4();
+      const { rows: newCustomerRows } = await db.query(
+        `INSERT INTO customers (id, name, email, phone, address, lat, lon) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [customerId, name, email, phone, customerAddress, 0, 0]
+      );
+      console.log(`Angi webhook: Created new customer ${customerId}`);
+    }
+
+    const newLeadId = uuidv4();
+    const leadDescriptionWithAngiId = leadDescription 
+      ? `${leadDescription}\n\nAngi Lead ID: ${leadId || 'N/A'}` 
+      : `Angi Lead ID: ${leadId || 'N/A'}`;
+
+    const { rows: newLeadRows } = await db.query(
+      `INSERT INTO leads (id, customer_id, source, status, description, created_at) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [newLeadId, customerId, 'Angi', 'New', leadDescriptionWithAngiId, new Date().toISOString()]
+    );
+
+    console.log(`Angi webhook: Created new lead ${newLeadId} for customer ${customerId}`);
+
+    res.status(200).json({
+      success: true,
+      leadId: newLeadId,
+      customerId: customerId
+    });
+
+  } catch (err) {
+    console.error('Angi webhook error:', err);
+    res.status(500).json({ 
+      error: 'Internal Server Error', 
+      message: err.message 
+    });
+  }
+});
+
 
 const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records'];
 resources.forEach(resource => {
