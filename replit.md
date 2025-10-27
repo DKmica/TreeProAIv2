@@ -303,7 +303,11 @@ treepro-ai/
 Vite HMR is configured to work with Replit's proxy environment. No custom WebSocket configuration needed.
 
 ### Authentication
-Demo mode - accepts any email/password for login (development only).
+**Owner Accounts:**
+- dakoenig4@gmail.com - Password: 12Tree45
+- nullgbow@gmail.com - Password: 12Tree45
+
+Both accounts have full owner access to all features.
 
 ## Resources
 - [Google Gemini API](https://aistudio.google.com/apikey)
