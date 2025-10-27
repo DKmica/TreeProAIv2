@@ -55,4 +55,4 @@ externalPort = 3000
 [deployment]
 deploymentTarget = "autoscale"
 run = ["node", "backend/server.js"]
-build = ["bash", "-c", "npm install && cd backend && npm install && cd .. && npm run build && cp -r dist/* backend/public/"]
+build = ["bash", "-c", "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/"]

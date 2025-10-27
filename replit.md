@@ -211,20 +211,27 @@ All endpoints are prefixed with `/api`:
 ## Production Deployment
 
 ### Build Process
-1. `npm install` - Install root dependencies
-2. `cd backend && npm install` - Install backend dependencies
-3. `npm run build` - Build frontend to `dist/` directory
+1. `pnpm install` - Install root dependencies (uses pnpm in deployment)
+2. `cd backend && pnpm install` - Install backend dependencies
+3. `pnpm run build` - Build frontend to `dist/` directory
 4. `cp -r dist/* backend/public/` - Copy built files to backend public folder
 
 ### Deployment Configuration
-- **Target**: Autoscale (stateless web app)
-- **Build**: `bash -c "npm install && cd backend && npm install && cd .. && npm run build && cp -r dist/* backend/public/"`
+- **Target**: Autoscale (stateless web app - Cloud Run)
+- **Build**: `bash -c "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/"`
 - **Run**: `node backend/server.js`
-- **Port**: 5000 (environment variable PORT)
+- **Port**: 5000 (uses PORT environment variable from Cloud Run)
+- **Host**: 0.0.0.0 (binds to all interfaces for Cloud Run)
 
 ### Helper Scripts
-- `npm run install:all` - Install all dependencies (root + backend)
-- `npm run build:production` - Complete production build process
+- `pnpm run install:all` - Install all dependencies (root + backend)
+- `pnpm run build:production` - Complete production build process
+
+### Required Deployment Secrets
+These secrets must be configured in Replit's deployment secrets:
+- `VITE_GEMINI_API_KEY` - Google Gemini API key for AI features ✅ Configured
+- `VITE_GOOGLE_MAPS_KEY` - Google Maps API key for location features ✅ Configured
+- `DATABASE_URL` - PostgreSQL connection string ✅ Auto-configured by Replit
 
 ### Production Server
 - Backend serves both static frontend files and API endpoints
