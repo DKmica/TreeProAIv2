@@ -110,6 +110,192 @@ const appFunctions: FunctionDeclaration[] = [
             },
             required: ['quoteId', 'scheduledDate', 'assignedCrew'],
         },
+    },
+    {
+        name: 'rescheduleJob',
+        description: 'Reschedule a job to a new date.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                jobId: {
+                    type: Type.STRING,
+                    description: 'The ID of the job to reschedule.'
+                },
+                newDate: {
+                    type: Type.STRING,
+                    description: 'The new date to schedule the job for, in YYYY-MM-DD format.'
+                },
+            },
+            required: ['jobId', 'newDate'],
+        },
+    },
+    {
+        name: 'generateInvoice',
+        description: 'Generate an invoice for a completed job.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                jobId: {
+                    type: Type.STRING,
+                    description: 'The ID of the completed job to generate an invoice for.'
+                },
+            },
+            required: ['jobId'],
+        },
+    },
+    {
+        name: 'addMaintenanceLog',
+        description: 'Add a maintenance log entry for equipment.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                equipmentId: {
+                    type: Type.STRING,
+                    description: 'The ID of the equipment to add the maintenance log for.'
+                },
+                description: {
+                    type: Type.STRING,
+                    description: 'The description of the maintenance performed.'
+                },
+                cost: {
+                    type: Type.NUMBER,
+                    description: 'The cost of the maintenance.'
+                },
+                date: {
+                    type: Type.STRING,
+                    description: 'The date of the maintenance, in YYYY-MM-DD format.'
+                },
+            },
+            required: ['equipmentId', 'description', 'cost', 'date'],
+        },
+    },
+    {
+        name: 'summarizeRevenue',
+        description: 'Get revenue summary for a time period.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                period: {
+                    type: Type.STRING,
+                    description: 'The time period to summarize revenue for.',
+                    enum: ['this-month', 'last-month', 'this-year', 'last-year', 'custom']
+                },
+                startDate: {
+                    type: Type.STRING,
+                    description: 'The start date for custom period, in YYYY-MM-DD format. Required when period is "custom".'
+                },
+                endDate: {
+                    type: Type.STRING,
+                    description: 'The end date for custom period, in YYYY-MM-DD format. Required when period is "custom".'
+                },
+            },
+            required: ['period'],
+        },
+    },
+    {
+        name: 'summarizeLeads',
+        description: 'Get lead summary with optional filters.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                source: {
+                    type: Type.STRING,
+                    description: 'Optional filter by lead source (e.g., "Website", "Referral", "Social Media").'
+                },
+                status: {
+                    type: Type.STRING,
+                    description: 'Optional filter by lead status.',
+                    enum: ['New', 'Contacted', 'Qualified', 'Lost']
+                },
+                period: {
+                    type: Type.STRING,
+                    description: 'Optional filter by time period.',
+                    enum: ['this-month', 'last-month', 'this-year', 'last-year', 'custom']
+                },
+            },
+        },
+    },
+    {
+        name: 'getJobDetails',
+        description: 'Get detailed information about a specific job.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                jobId: {
+                    type: Type.STRING,
+                    description: 'The ID of the job to get details for.'
+                },
+            },
+            required: ['jobId'],
+        },
+    },
+    {
+        name: 'updateJobStatus',
+        description: 'Update the status of a job.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                jobId: {
+                    type: Type.STRING,
+                    description: 'The ID of the job to update.'
+                },
+                newStatus: {
+                    type: Type.STRING,
+                    description: 'The new status for the job.',
+                    enum: ['Unscheduled', 'Scheduled', 'In Progress', 'Completed', 'Cancelled']
+                },
+            },
+            required: ['jobId', 'newStatus'],
+        },
+    },
+    {
+        name: 'searchCustomers',
+        description: 'Search for customers by name, email, or phone number.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                searchQuery: {
+                    type: Type.STRING,
+                    description: 'The search query to find customers by name, email, or phone.'
+                },
+            },
+            required: ['searchQuery'],
+        },
+    },
+    {
+        name: 'getEquipmentStatus',
+        description: 'Get status and maintenance information for equipment.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                equipmentId: {
+                    type: Type.STRING,
+                    description: 'Optional equipment ID. If not provided, returns status for all equipment.'
+                },
+            },
+        },
+    },
+    {
+        name: 'createLead',
+        description: 'Create a new lead in the system.',
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                customerId: {
+                    type: Type.STRING,
+                    description: 'The ID of the customer for this lead.'
+                },
+                source: {
+                    type: Type.STRING,
+                    description: 'The source of the lead (e.g., "Website", "Referral", "Social Media").'
+                },
+                description: {
+                    type: Type.STRING,
+                    description: 'Description of the lead and customer needs.'
+                },
+            },
+            required: ['customerId', 'source', 'description'],
+        },
     }
 ];
 

@@ -17,6 +17,7 @@ const Payroll: React.FC = () => {
 
   const [filterPayPeriod, setFilterPayPeriod] = useState<string>('');
   const [filterEmployee, setFilterEmployee] = useState<string>('');
+  const [processingPayroll, setProcessingPayroll] = useState(false);
 
   const [periodForm, setPeriodForm] = useState({
     startDate: '',
@@ -143,17 +144,28 @@ const Payroll: React.FC = () => {
 
   const handleProcessPayroll = async (periodId: string) => {
     if (!window.confirm('Are you sure you want to process payroll for this period?')) return;
+    
+    setProcessingPayroll(true);
     try {
-      await payPeriodService.update(periodId, {
-        status: 'Processing',
-        processedAt: new Date().toISOString()
-      });
+      const response = await payPeriodService.process(periodId);
+      
       setPayPeriods(payPeriods.map(p => 
-        p.id === periodId ? { ...p, status: 'Processing', processedAt: new Date().toISOString() } : p
+        p.id === periodId ? response.payPeriod : p
       ));
+      
+      setPayrollRecords([...payrollRecords, ...response.payrollRecords]);
+      
+      const totalAmount = response.payrollRecords.reduce((sum, record) => sum + record.netPay, 0);
+      const employeeCount = response.payrollRecords.length;
+      
+      alert(`✓ Processed payroll for ${employeeCount} employee${employeeCount !== 1 ? 's' : ''}. Total: ${formatCurrency(totalAmount)}`);
+      
+      setActiveTab('records');
     } catch (error) {
       console.error('Error processing payroll:', error);
-      alert('Failed to process payroll');
+      alert(`Failed to process payroll: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setProcessingPayroll(false);
     }
   };
 
@@ -298,9 +310,10 @@ const Payroll: React.FC = () => {
                             {period.status === 'Open' && (
                               <button
                                 onClick={() => handleProcessPayroll(period.id)}
-                                className="text-brand-cyan-600 hover:text-brand-cyan-900 font-medium mr-4"
+                                disabled={processingPayroll}
+                                className={`font-medium mr-4 ${processingPayroll ? 'text-brand-gray-400 cursor-not-allowed' : 'text-brand-cyan-600 hover:text-brand-cyan-900'}`}
                               >
-                                Process Payroll
+                                {processingPayroll ? 'Processing...' : 'Process Payroll'}
                               </button>
                             )}
                             <button className="text-brand-gray-600 hover:text-brand-gray-900 font-medium">

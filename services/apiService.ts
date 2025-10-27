@@ -45,7 +45,12 @@ export const jobService = createApiService<Job>('jobs');
 export const invoiceService = createApiService<Invoice>('invoices');
 export const employeeService = createApiService<Employee>('employees');
 export const equipmentService = createApiService<Equipment>('equipment');
-export const payPeriodService = createApiService<PayPeriod>('pay_periods');
+export const payPeriodService = {
+  ...createApiService<PayPeriod>('pay_periods'),
+  process: async (id: string): Promise<{ payPeriod: PayPeriod; payrollRecords: PayrollRecord[] }> => {
+    return apiFetch(`pay_periods/${id}/process`, { method: 'POST' });
+  }
+};
 export const timeEntryService = createApiService<TimeEntry>('time_entries');
 export const payrollRecordService = createApiService<PayrollRecord>('payroll_records');
 

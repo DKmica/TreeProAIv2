@@ -183,11 +183,19 @@ export interface MaintenanceAlert {
   recommendedAction: 'Schedule Service Immediately' | 'Schedule Routine Check-up';
 }
 
+export interface PayrollInsight {
+  totalLaborCost: number;
+  laborCostPercentage: number;
+  overtimeCostImpact: number;
+  recommendations: string[];
+}
+
 export interface AICoreInsights {
   businessSummary: string;
   leadScores: LeadScoreSuggestion[];
   jobSchedules: JobScheduleSuggestion[];
   maintenanceAlerts: MaintenanceAlert[];
+  payrollInsights: PayrollInsight;
 }
 
 // AI Tree Estimator Types

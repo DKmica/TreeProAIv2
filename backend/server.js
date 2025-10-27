@@ -663,6 +663,127 @@ apiRouter.get('/leads', async (req, res) => {
   }
 });
 
+apiRouter.post('/pay_periods/:id/process', async (req, res) => {
+  try {
+    const { rows: payPeriodRows } = await db.query(
+      'SELECT * FROM pay_periods WHERE id = $1',
+      [req.params.id]
+    );
+    
+    if (payPeriodRows.length === 0) {
+      return res.status(404).json({ error: 'Pay period not found' });
+    }
+    
+    const payPeriod = payPeriodRows[0];
+    
+    if (payPeriod.status === 'Closed') {
+      return res.status(400).json({ error: 'Pay period already processed' });
+    }
+    
+    const { rows: timeEntries } = await db.query(
+      `SELECT * FROM time_entries 
+       WHERE date >= $1 AND date <= $2`,
+      [payPeriod.start_date, payPeriod.end_date]
+    );
+    
+    const employeeEntries = {};
+    for (const entry of timeEntries) {
+      if (!employeeEntries[entry.employee_id]) {
+        employeeEntries[entry.employee_id] = [];
+      }
+      employeeEntries[entry.employee_id].push(entry);
+    }
+    
+    const payrollRecords = [];
+    let totalGrossPay = 0;
+    let totalNetPay = 0;
+    
+    for (const employeeId in employeeEntries) {
+      const entries = employeeEntries[employeeId];
+      
+      const { rows: employeeRows } = await db.query(
+        'SELECT * FROM employees WHERE id = $1',
+        [employeeId]
+      );
+      
+      if (employeeRows.length === 0) {
+        continue;
+      }
+      
+      const employee = employeeRows[0];
+      const hourlyRate = parseFloat(employee.pay_rate || 0);
+      
+      let totalHoursWorked = 0;
+      let totalOvertimeHours = 0;
+      
+      for (const entry of entries) {
+        totalHoursWorked += parseFloat(entry.hours_worked || 0);
+        totalOvertimeHours += parseFloat(entry.overtime_hours || 0);
+      }
+      
+      const regularHours = Math.max(totalHoursWorked - totalOvertimeHours, 0);
+      const overtimeHours = totalOvertimeHours;
+      
+      const regularPay = regularHours * hourlyRate;
+      const overtimePay = overtimeHours * (hourlyRate * 1.5);
+      const bonuses = 0;
+      const grossPay = regularPay + overtimePay + bonuses;
+      
+      const federalTax = grossPay * 0.15;
+      const stateTax = grossPay * 0.05;
+      const socialSecurity = grossPay * 0.062;
+      const medicare = grossPay * 0.0145;
+      
+      const deductions = [
+        { type: 'Federal Tax', amount: federalTax, percentage: 15 },
+        { type: 'State Tax', amount: stateTax, percentage: 5 },
+        { type: 'Social Security', amount: socialSecurity, percentage: 6.2 },
+        { type: 'Medicare', amount: medicare, percentage: 1.45 }
+      ];
+      
+      const totalDeductions = federalTax + stateTax + socialSecurity + medicare;
+      const netPay = grossPay - totalDeductions;
+      
+      const payrollId = uuidv4();
+      const { rows: payrollRows } = await db.query(
+        `INSERT INTO payroll_records (
+          id, employee_id, pay_period_id, regular_hours, overtime_hours,
+          hourly_rate, regular_pay, overtime_pay, bonuses, deductions,
+          total_deductions, gross_pay, net_pay, payment_method
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *`,
+        [
+          payrollId, employeeId, req.params.id, regularHours, overtimeHours,
+          hourlyRate, regularPay, overtimePay, bonuses, JSON.stringify(deductions),
+          totalDeductions, grossPay, netPay, 'Direct Deposit'
+        ]
+      );
+      
+      payrollRecords.push(transformRow(payrollRows[0], 'payroll_records'));
+      totalGrossPay += grossPay;
+      totalNetPay += netPay;
+    }
+    
+    const now = new Date().toISOString();
+    const { rows: updatedPayPeriodRows } = await db.query(
+      `UPDATE pay_periods SET status = $1, processed_at = $2 WHERE id = $3 RETURNING *`,
+      ['Closed', now, req.params.id]
+    );
+    
+    res.json({
+      payPeriod: transformRow(updatedPayPeriodRows[0], 'pay_periods'),
+      payrollRecords: payrollRecords,
+      summary: {
+        totalEmployees: payrollRecords.length,
+        totalGrossPay: totalGrossPay,
+        totalNetPay: totalNetPay
+      }
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 
 const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records'];
 resources.forEach(resource => {
