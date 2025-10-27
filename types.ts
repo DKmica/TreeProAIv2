@@ -41,6 +41,11 @@ export interface Quote {
   signature?: string; // Base64 encoded image
   acceptedAt?: string; // ISO date string
   messages?: PortalMessage[];
+  jobLocation?: string;
+  specialInstructions?: string;
+  validUntil?: string;
+  depositAmount?: number;
+  paymentTerms?: string;
 }
 
 export interface JobHazardAnalysis {
@@ -73,6 +78,10 @@ export interface Job {
   jha?: JobHazardAnalysis;
   costs?: JobCost;
   messages?: PortalMessage[];
+  jobLocation?: string;
+  specialInstructions?: string;
+  equipmentNeeded?: string[];
+  estimatedHours?: number;
 }
 
 

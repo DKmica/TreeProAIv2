@@ -30,6 +30,10 @@ const JobForm: React.FC<{
         status: initialData?.status || ('Unscheduled' as Job['status']),
         assignedCrew: initialData?.assignedCrew || [],
         stumpGrindingPrice: initialData?.stumpGrindingPrice || 0,
+        jobLocation: initialData?.jobLocation || '',
+        specialInstructions: initialData?.specialInstructions || '',
+        equipmentNeeded: initialData?.equipmentNeeded || [],
+        estimatedHours: initialData?.estimatedHours || 0,
     });
 
     useEffect(() => {
@@ -42,6 +46,10 @@ const JobForm: React.FC<{
                 status: initialData.status,
                 assignedCrew: initialData.assignedCrew,
                 stumpGrindingPrice: initialData.stumpGrindingPrice || 0,
+                jobLocation: initialData.jobLocation || '',
+                specialInstructions: initialData.specialInstructions || '',
+                equipmentNeeded: initialData.equipmentNeeded || [],
+                estimatedHours: initialData.estimatedHours || 0,
             });
         } else {
             const defaultQuote = availableQuotes.length > 0 ? availableQuotes[0] : null;
@@ -53,6 +61,10 @@ const JobForm: React.FC<{
                 status: 'Unscheduled',
                 assignedCrew: [],
                 stumpGrindingPrice: defaultQuote?.stumpGrindingPrice || 0,
+                jobLocation: '',
+                specialInstructions: '',
+                equipmentNeeded: [],
+                estimatedHours: 0,
             });
         }
     }, [initialData, quotes]);
@@ -123,6 +135,22 @@ const JobForm: React.FC<{
                      <div className="sm:col-span-3">
                         <label htmlFor="stumpGrindingPrice" className="block text-sm font-medium leading-6 text-brand-gray-900">Stump Grinding Price</label>
                         <input type="number" name="stumpGrindingPrice" id="stumpGrindingPrice" value={formData.stumpGrindingPrice} onChange={e => setFormData(prev => ({...prev, stumpGrindingPrice: parseFloat(e.target.value) || 0 }))} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="col-span-full">
+                        <label htmlFor="jobLocation" className="block text-sm font-medium leading-6 text-brand-gray-900">Job Location</label>
+                        <input type="text" name="jobLocation" id="jobLocation" value={formData.jobLocation} onChange={e => setFormData(prev => ({...prev, jobLocation: e.target.value }))} placeholder="e.g. 123 Oak St, Los Angeles, CA" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="estimatedHours" className="block text-sm font-medium leading-6 text-brand-gray-900">Estimated Hours</label>
+                        <input type="number" name="estimatedHours" id="estimatedHours" value={formData.estimatedHours} onChange={e => setFormData(prev => ({...prev, estimatedHours: parseFloat(e.target.value) || 0 }))} min="0" step="0.5" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="equipmentNeeded" className="block text-sm font-medium leading-6 text-brand-gray-900">Equipment Needed</label>
+                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={formData.equipmentNeeded.join(', ')} onChange={e => setFormData(prev => ({...prev, equipmentNeeded: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} placeholder="e.g. Chainsaw, Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="col-span-full">
+                        <label htmlFor="specialInstructions" className="block text-sm font-medium leading-6 text-brand-gray-900">Special Instructions / Notes</label>
+                        <textarea name="specialInstructions" id="specialInstructions" value={formData.specialInstructions} onChange={e => setFormData(prev => ({...prev, specialInstructions: e.target.value }))} rows={3} placeholder="Gate code, parking instructions, special considerations, etc." className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="col-span-full">
                         <label className="block text-sm font-medium leading-6 text-brand-gray-900">Assign Crew</label>

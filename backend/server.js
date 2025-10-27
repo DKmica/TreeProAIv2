@@ -102,6 +102,26 @@ const transformRow = (row, tableName) => {
       transformed.acceptedAt = row.accepted_at;
       delete transformed.accepted_at;
     }
+    if (row.job_location !== undefined) {
+      transformed.jobLocation = row.job_location;
+      delete transformed.job_location;
+    }
+    if (row.special_instructions !== undefined) {
+      transformed.specialInstructions = row.special_instructions;
+      delete transformed.special_instructions;
+    }
+    if (row.valid_until !== undefined) {
+      transformed.validUntil = row.valid_until;
+      delete transformed.valid_until;
+    }
+    if (row.deposit_amount !== undefined) {
+      transformed.depositAmount = (row.deposit_amount !== null && row.deposit_amount !== '') ? parseFloat(row.deposit_amount) : row.deposit_amount;
+      delete transformed.deposit_amount;
+    }
+    if (row.payment_terms !== undefined) {
+      transformed.paymentTerms = row.payment_terms;
+      delete transformed.payment_terms;
+    }
   }
   
   // Transform leads fields
@@ -151,6 +171,22 @@ const transformRow = (row, tableName) => {
     if (row.scheduled_date !== undefined) {
       transformed.scheduledDate = row.scheduled_date;
       delete transformed.scheduled_date;
+    }
+    if (row.job_location !== undefined) {
+      transformed.jobLocation = row.job_location;
+      delete transformed.job_location;
+    }
+    if (row.special_instructions !== undefined) {
+      transformed.specialInstructions = row.special_instructions;
+      delete transformed.special_instructions;
+    }
+    if (row.equipment_needed !== undefined) {
+      transformed.equipmentNeeded = row.equipment_needed;
+      delete transformed.equipment_needed;
+    }
+    if (row.estimated_hours !== undefined) {
+      transformed.estimatedHours = (row.estimated_hours !== null && row.estimated_hours !== '') ? parseFloat(row.estimated_hours) : row.estimated_hours;
+      delete transformed.estimated_hours;
     }
   }
   
@@ -236,6 +272,26 @@ const transformToDb = (data, tableName) => {
       transformed.accepted_at = data.acceptedAt;
       delete transformed.acceptedAt;
     }
+    if (data.jobLocation !== undefined) {
+      transformed.job_location = data.jobLocation;
+      delete transformed.jobLocation;
+    }
+    if (data.specialInstructions !== undefined) {
+      transformed.special_instructions = data.specialInstructions;
+      delete transformed.specialInstructions;
+    }
+    if (data.validUntil !== undefined) {
+      transformed.valid_until = data.validUntil;
+      delete transformed.validUntil;
+    }
+    if (data.depositAmount !== undefined) {
+      transformed.deposit_amount = data.depositAmount;
+      delete transformed.depositAmount;
+    }
+    if (data.paymentTerms !== undefined) {
+      transformed.payment_terms = data.paymentTerms;
+      delete transformed.paymentTerms;
+    }
   }
   
   // Transform leads fields
@@ -285,6 +341,22 @@ const transformToDb = (data, tableName) => {
     if (data.scheduledDate !== undefined) {
       transformed.scheduled_date = data.scheduledDate;
       delete transformed.scheduledDate;
+    }
+    if (data.jobLocation !== undefined) {
+      transformed.job_location = data.jobLocation;
+      delete transformed.jobLocation;
+    }
+    if (data.specialInstructions !== undefined) {
+      transformed.special_instructions = data.specialInstructions;
+      delete transformed.specialInstructions;
+    }
+    if (data.equipmentNeeded !== undefined) {
+      transformed.equipment_needed = data.equipmentNeeded;
+      delete transformed.equipmentNeeded;
+    }
+    if (data.estimatedHours !== undefined) {
+      transformed.estimated_hours = data.estimatedHours;
+      delete transformed.estimatedHours;
     }
   }
   

@@ -28,6 +28,11 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
     const [status, setStatus] = useState<Quote['status']>('Draft');
     const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', price: 0, selected: true }]);
     const [stumpGrindingPrice, setStumpGrindingPrice] = useState(0);
+    const [jobLocation, setJobLocation] = useState('');
+    const [specialInstructions, setSpecialInstructions] = useState('');
+    const [validUntil, setValidUntil] = useState('');
+    const [depositAmount, setDepositAmount] = useState(0);
+    const [paymentTerms, setPaymentTerms] = useState('Net 30');
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [suggestions, setSuggestions] = useState<UpsellSuggestion[]>([]);
     const [suggestionError, setSuggestionError] = useState('');
@@ -38,12 +43,22 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
             setStatus(initialData.status || 'Draft');
             setLineItems(initialData.lineItems && initialData.lineItems.length > 0 ? initialData.lineItems : [{ description: '', price: 0, selected: true }]);
             setStumpGrindingPrice(initialData.stumpGrindingPrice || 0);
+            setJobLocation(initialData.jobLocation || '');
+            setSpecialInstructions(initialData.specialInstructions || '');
+            setValidUntil(initialData.validUntil || '');
+            setDepositAmount(initialData.depositAmount || 0);
+            setPaymentTerms(initialData.paymentTerms || 'Net 30');
         } else {
             // Reset for new entry
             setCustomerName(customers.length > 0 ? customers[0].name : '');
             setStatus('Draft');
             setLineItems([{ description: '', price: 0, selected: true }]);
             setStumpGrindingPrice(0);
+            setJobLocation('');
+            setSpecialInstructions('');
+            setValidUntil('');
+            setDepositAmount(0);
+            setPaymentTerms('Net 30');
         }
     }, [initialData, customers]);
 
@@ -103,6 +118,11 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
             status,
             lineItems,
             stumpGrindingPrice,
+            jobLocation,
+            specialInstructions,
+            validUntil,
+            depositAmount,
+            paymentTerms,
             createdAt: initialData?.createdAt || new Date().toISOString().split('T')[0]
         });
     };
@@ -129,6 +149,32 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
                             <option>Accepted</option>
                             <option>Declined</option>
                         </select>
+                    </div>
+                    <div className="col-span-full">
+                        <label htmlFor="jobLocation" className="block text-sm font-medium leading-6 text-brand-gray-900">Job Location</label>
+                        <input type="text" name="jobLocation" id="jobLocation" value={jobLocation} onChange={e => setJobLocation(e.target.value)} placeholder="e.g. 123 Oak St, Los Angeles, CA" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="validUntil" className="block text-sm font-medium leading-6 text-brand-gray-900">Valid Until</label>
+                        <input type="date" name="validUntil" id="validUntil" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="depositAmount" className="block text-sm font-medium leading-6 text-brand-gray-900">Deposit Amount ($)</label>
+                        <input type="number" name="depositAmount" id="depositAmount" value={depositAmount} onChange={e => setDepositAmount(parseFloat(e.target.value) || 0)} min="0" step="0.01" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                    </div>
+                    <div className="col-span-full">
+                        <label htmlFor="paymentTerms" className="block text-sm font-medium leading-6 text-brand-gray-900">Payment Terms</label>
+                        <select id="paymentTerms" name="paymentTerms" value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
+                            <option>Net 30</option>
+                            <option>Net 60</option>
+                            <option>Due on Receipt</option>
+                            <option>50% Deposit, 50% on Completion</option>
+                            <option>Payment Plan Available</option>
+                        </select>
+                    </div>
+                    <div className="col-span-full">
+                        <label htmlFor="specialInstructions" className="block text-sm font-medium leading-6 text-brand-gray-900">Special Instructions / Notes</label>
+                        <textarea name="specialInstructions" id="specialInstructions" value={specialInstructions} onChange={e => setSpecialInstructions(e.target.value)} rows={3} placeholder="Gate code, parking instructions, special customer requests, etc." className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                 </div>
 
