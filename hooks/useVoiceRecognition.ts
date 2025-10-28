@@ -69,6 +69,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
   const modeRef = useRef<VoiceMode>('off');
   const onCommandRef = useRef(onCommand);
   const isActiveRef = useRef(false);
+  const hasRemovedWakeWordRef = useRef(false);
 
   const hasSupport = !!(
     typeof window !== 'undefined' && 
@@ -131,15 +132,39 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
           setMode('command');
           setTranscript('');
           currentTranscriptRef.current = '';
+          hasRemovedWakeWordRef.current = false;
           setError(null);
         }
       }
       // COMMAND MODE: Capture the user's command
       else if (modeRef.current === 'command') {
-        const displayTranscript = finalTranscript || interimTranscript;
-        currentTranscriptRef.current = displayTranscript;
-        setTranscript(displayTranscript);
-        console.log(`💬 Capturing command: "${displayTranscript}"`);
+        // Get all new final results from this event
+        let newFinalText = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            newFinalText += event.results[i][0].transcript + ' ';
+          }
+        }
+        
+        // Remove wake word from the first chunk if present and not yet removed
+        if (newFinalText.trim() && !hasRemovedWakeWordRef.current) {
+          const lowerNewFinal = newFinalText.toLowerCase();
+          if (lowerNewFinal.includes(WAKE_WORD)) {
+            const wakeWordIndex = lowerNewFinal.indexOf(WAKE_WORD);
+            newFinalText = newFinalText.substring(wakeWordIndex + WAKE_WORD.length).trim() + ' ';
+            hasRemovedWakeWordRef.current = true;
+          }
+        }
+        
+        // Accumulate (append) new final text
+        if (newFinalText.trim()) {
+          currentTranscriptRef.current += newFinalText;
+        }
+        
+        // Update display with accumulated + interim
+        const displayText = currentTranscriptRef.current + interimTranscript;
+        setTranscript(displayText.trim());
+        console.log(`💬 Capturing command: "${displayText.trim()}"`);
         
         // Clear existing silence timeout
         if (silenceTimeoutRef.current) {
@@ -162,6 +187,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
           setMode('wake');
           setTranscript('');
           currentTranscriptRef.current = '';
+          hasRemovedWakeWordRef.current = false;
         }, COMMAND_SILENCE_TIMEOUT);
       }
     };
