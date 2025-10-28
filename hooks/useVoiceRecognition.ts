@@ -283,6 +283,18 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
     };
   }, [hasSupport, isWakeWordEnabled, enabled, onCommand, startCommandListener, startWakeWordListener, autoSubmitDelay]);
 
+  // Auto-start wake word listener when enabled
+  useEffect(() => {
+    if (hasSupport && isWakeWordEnabled && enabled && !isListening && !isAwaitingCommand && !isWakeWordListening) {
+      console.log("🚀 Auto-starting wake word listener...");
+      // Small delay to ensure recognizer is ready
+      const timer = setTimeout(() => {
+        startWakeWordListener();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasSupport, isWakeWordEnabled, enabled, isListening, isAwaitingCommand, isWakeWordListening, startWakeWordListener]);
+
 
   const manualStartListening = useCallback(() => {
     isSwitchingModesRef.current = false;
