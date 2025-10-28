@@ -7,14 +7,13 @@ import FunctionCallIcon from './icons/FunctionCallIcon';
 import MicrophoneIcon from './icons/MicrophoneIcon';
 import BroadcastIcon from './icons/BroadcastIcon';
 
-// Forward-declare the types from the hooks to avoid circular dependencies
-type UseGeminiChatReturnType = ReturnType<typeof import('../hooks/useGeminiChat').useGeminiChat>;
+type UseAICoreReturnType = ReturnType<typeof import('../hooks/useAICore').useAICore>;
 type UseVoiceRecognitionReturnType = ReturnType<typeof import('../hooks/useVoiceRecognition').useVoiceRecognition>;
 
 interface HelpBotProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  chat: UseGeminiChatReturnType;
+  chat: UseAICoreReturnType;
   voice: UseVoiceRecognitionReturnType;
 }
 
@@ -22,19 +21,10 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
     const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = chat;
 
     useEffect(() => {
-        if (voice.transcript) {
+        if (voice.transcript && voice.isAwaitingCommand) {
             setInputValue(voice.transcript);
         }
-    }, [voice.transcript, setInputValue]);
-
-
-    const handleMicClick = () => {
-        if (voice.isListening) {
-            voice.stopListening();
-        } else {
-            voice.startListening();
-        }
-    };
+    }, [voice.transcript, voice.isAwaitingCommand, setInputValue]);
 
 
     if (!isOpen) {
@@ -50,10 +40,9 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
     }
 
     const getPlaceholder = () => {
-        if (voice.isAwaitingCommand) return "Listening for command...";
-        if (voice.isListening) return "Listening...";
-        if (voice.isWakeWordEnabled) return 'Say "Yo, Probot" or type...';
-        return "Ask a question...";
+        if (voice.isAwaitingCommand) return "🎤 Listening for command...";
+        if (voice.isWakeWordListening) return '🔍 Listening for "Yo Probot"...';
+        return "Ask a question or click mic to start voice...";
     };
 
 
@@ -61,32 +50,16 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
         <div className="fixed bottom-6 right-6 z-50">
             <div className="flex flex-col w-96 max-h-[70vh] h-[550px] bg-white rounded-lg shadow-2xl border border-brand-gray-200">
                 <header className="flex items-center justify-between p-4 bg-brand-green-700 text-white rounded-t-lg">
-                    <h2 className="text-lg font-semibold">AI Assistant</h2>
+                    <h2 className="text-lg font-semibold">ProBot AI Assistant</h2>
                     <div className="flex items-center gap-2">
-                        {voice.hasSupport && (
-                            <button
-                                onClick={() => {
-                                    console.log("🎤 Requesting microphone permission...");
-                                    if (!voice.isWakeWordEnabled) {
-                                        voice.toggleWakeWord();
-                                    } else {
-                                        voice.startListening();
-                                        setTimeout(() => {
-                                            voice.stopListening();
-                                            voice.startWakeWordListener();
-                                        }, 100);
-                                    }
-                                }}
-                                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                                    voice.isWakeWordEnabled
-                                        ? 'bg-white text-brand-green-700 hover:bg-gray-100'
-                                        : 'bg-brand-cyan-600 text-white hover:bg-brand-cyan-700'
-                                }`}
-                                title={voice.isWakeWordEnabled ? 'Wake word "Yo Probot" is ON - click to restart' : 'Wake word is OFF - click to enable'}
-                            >
-                                <BroadcastIcon className="h-4 w-4 inline mr-1" />
-                                {voice.isWakeWordEnabled ? 'ON' : 'OFF'}
-                            </button>
+                        {voice.hasSupport && voice.isListening && (
+                            <span className={`px-3 py-1 rounded text-xs font-medium ${
+                                voice.isAwaitingCommand
+                                    ? 'bg-red-100 text-red-700 animate-pulse'
+                                    : 'bg-green-100 text-green-700'
+                            }`}>
+                                {voice.isAwaitingCommand ? '🎤 Command' : '🔍 Wake Word'}
+                            </span>
                         )}
                         <button onClick={() => setIsOpen(false)} className="hover:bg-brand-cyan-600 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-white" aria-label="Close chat">
                             <XIcon className="h-6 w-6" />
@@ -100,35 +73,40 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                             <p className="font-semibold">⚠️ Microphone Error:</p>
                             <p>{voice.error}</p>
                             <button 
-                                onClick={() => {
-                                    voice.startListening();
-                                    setTimeout(() => voice.stopListening(), 100);
-                                }}
+                                onClick={() => voice.startListening()}
                                 className="mt-2 px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
                             >
                                 Grant Microphone Access
                             </button>
                         </div>
                     )}
-                    {voice.isWakeWordEnabled && !voice.isWakeWordListening && !voice.error && (
+                    {voice.hasSupport && !voice.isListening && !voice.error && (
                         <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded text-sm">
-                            <p className="font-semibold">🎤 Wake Word Ready</p>
-                            <p className="mb-2">Click the button below to start listening for "Yo Probot"</p>
+                            <p className="font-semibold">🎤 Voice Control Available</p>
+                            <p className="mb-2">Click the microphone button to start voice recognition:</p>
+                            <ol className="text-xs list-decimal list-inside space-y-1 mb-3">
+                                <li>Say <strong>"Yo Probot"</strong> to activate</li>
+                                <li>Speak your command or question</li>
+                                <li>ProBot will respond automatically</li>
+                            </ol>
                             <button
-                                onClick={() => {
-                                    console.log("👆 User clicked to start wake word listener");
-                                    voice.startWakeWordListener();
-                                }}
-                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+                                onClick={() => voice.startListening()}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium w-full"
                             >
                                 🎤 Start Voice Recognition
                             </button>
                         </div>
                     )}
-                    {voice.isWakeWordEnabled && voice.isWakeWordListening && !voice.error && (
+                    {voice.isWakeWordListening && (
                         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded text-sm">
-                            <p className="font-semibold">✅ Listening for "Yo Probot"</p>
-                            <p>Voice recognition is active. Say "Yo Probot" to activate commands.</p>
+                            <p className="font-semibold">🔍 Listening for "Yo Probot"</p>
+                            <p>Say the wake word to activate command mode.</p>
+                        </div>
+                    )}
+                    {voice.isAwaitingCommand && (
+                        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm animate-pulse">
+                            <p className="font-semibold">🎤 Listening for Your Command</p>
+                            <p>Speak now... {voice.transcript && <span className="font-mono">"{voice.transcript}"</span>}</p>
                         </div>
                     )}
                     {messages.map((msg) => (
@@ -143,26 +121,20 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                             {msg.role === 'model' && (
                                 <div className="flex justify-start">
                                     <div className="max-w-xs px-4 py-2 rounded-xl bg-brand-gray-100 text-brand-gray-800">
-                                        <p className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{__html: msg.text.replace(/\n/g, '<br />')}}></p>
-                                         {msg.sources && msg.sources.length > 0 && (
-                                            <div className="mt-3 border-t pt-2">
-                                                <h4 className="text-xs font-semibold text-brand-gray-600">Sources:</h4>
-                                                <ol className="list-decimal list-inside text-xs space-y-1 mt-1">
-                                                    {msg.sources.map(source => (
-                                                        <li key={source.uri}><a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-brand-green-700 hover:underline">{source.title}</a></li>
-                                                    ))}
-                                                </ol>
-                                            </div>
-                                        )}
+                                        <div className="text-sm prose prose-sm" dangerouslySetInnerHTML={{
+                                            __html: msg.text
+                                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                                .replace(/\n/g, '<br />')
+                                        }}></div>
                                     </div>
                                 </div>
                             )}
                             {msg.role === 'tool' && (
-                                <div className="flex justify-center items-center my-4 text-xs text-brand-gray-500">
-                                    <div className="flex items-center gap-2 border rounded-full px-3 py-1 bg-brand-gray-50">
-                                        {msg.text.includes('Searching the web') ? <ToolIcon className="w-4 h-4" /> : <FunctionCallIcon className="w-4 h-4" />}
-                                        <span>{msg.text}</span>
-                                        {msg.isThinking && <SpinnerIcon className="w-4 h-4" />}
+                                <div className="flex justify-center items-center my-2 text-xs text-brand-gray-600">
+                                    <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-brand-gray-50">
+                                        <FunctionCallIcon className="w-4 h-4 text-brand-cyan-600" />
+                                        <div className="font-mono text-xs whitespace-pre-wrap">{msg.text}</div>
+                                        {msg.isThinking && <SpinnerIcon className="w-4 h-4 text-brand-cyan-600" />}
                                     </div>
                                 </div>
                             )}
@@ -182,19 +154,6 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
 
                 <div className="border-t border-brand-gray-200 p-4 bg-white rounded-b-lg">
                     <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-                        {voice.hasSupport && (
-                            <button
-                                type="button"
-                                onClick={voice.toggleWakeWord}
-                                title={voice.isWakeWordEnabled ? 'Disable wake word "Yo, Probot"' : 'Enable wake word "Yo, Probot"'}
-                                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-green-500 ${
-                                    voice.isWakeWordEnabled ? 'bg-brand-green-100 text-brand-green-600' : 'text-brand-gray-400 hover:bg-brand-gray-100'
-                                }`}
-                                aria-label={voice.isWakeWordEnabled ? 'Disable wake word' : 'Enable wake word'}
-                            >
-                                <BroadcastIcon className="h-5 w-5" />
-                            </button>
-                        )}
                         <input
                             type="text"
                             value={inputValue}
@@ -204,13 +163,23 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                             aria-label="Chat input"
                             disabled={isLoading}
                         />
-                         {voice.hasSupport && (
+                        {voice.hasSupport && (
                             <button
                                 type="button"
-                                onClick={handleMicClick}
-                                title={voice.isListening ? 'Stop listening' : 'Start listening'}
+                                onClick={() => {
+                                    if (voice.isListening) {
+                                        voice.stopListening();
+                                    } else {
+                                        voice.startListening();
+                                    }
+                                }}
+                                title={voice.isListening ? 'Stop voice recognition' : 'Start voice recognition'}
                                 className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-green-500 ${
-                                    voice.isListening || voice.isAwaitingCommand ? 'bg-red-100 text-red-600 animate-pulse' : 'text-brand-gray-500 hover:bg-brand-gray-100'
+                                    voice.isAwaitingCommand 
+                                        ? 'bg-red-100 text-red-600 animate-pulse' 
+                                        : voice.isWakeWordListening
+                                        ? 'bg-green-100 text-green-600'
+                                        : 'text-brand-gray-500 hover:bg-brand-gray-100'
                                 }`}
                                 aria-label={voice.isListening ? 'Stop listening' : 'Start listening'}
                             >
@@ -230,7 +199,6 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                            )}
                         </button>
                     </form>
-                     {voice.error && <p className="text-xs text-red-600 mt-2">{voice.error}</p>}
                 </div>
             </div>
         </div>

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// TypeScript definitions for the Web Speech API for cross-browser compatibility
 interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -12,9 +11,6 @@ interface SpeechRecognition extends EventTarget {
   onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
   onend: (() => void) | null;
   onstart: (() => void) | null;
-  onaudiostart: (() => void) | null;
-  onsoundstart: (() => void) | null;
-  onspeechstart: (() => void) | null;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -53,112 +49,47 @@ declare global {
 }
 
 const WAKE_WORD = "yo probot";
-const WAKE_WORD_STORAGE_KEY = 'treeProAi_wakeWordEnabled';
+const COMMAND_SILENCE_TIMEOUT = 1500;
+
+type VoiceMode = 'off' | 'wake' | 'command';
 
 interface VoiceRecognitionOptions {
   onCommand: (command: string) => void;
-  autoSubmitDelay?: number;
   enabled?: boolean;
 }
 
-
-export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled = true }: VoiceRecognitionOptions) => {
-  const [isListening, setIsListening] = useState(false);
+export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognitionOptions) => {
+  const [mode, setMode] = useState<VoiceMode>('off');
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const silenceTimeoutRef = useRef<number | null>(null);
+  const currentTranscriptRef = useRef('');
 
-  const [isWakeWordEnabled, setIsWakeWordEnabled] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const stored = localStorage.getItem(WAKE_WORD_STORAGE_KEY);
-    return stored === null ? true : stored === 'true';
-  });
-  const [isAwaitingCommand, setIsAwaitingCommand] = useState(false);
-  const [isWakeWordListening, setIsWakeWordListening] = useState(false);
-
-  const commandRecognitionRef = useRef<SpeechRecognition | null>(null);
-  const wakeWordRecognitionRef = useRef<SpeechRecognition | null>(null);
-  const autoSubmitTimeoutRef = useRef<number | null>(null);
-  const commandTranscriptRef = useRef('');
-  const isSwitchingModesRef = useRef(false);
-
-  // Ref to hold the latest value of isAwaitingCommand for use in callback closures
-  const isAwaitingCommandRef = useRef(isAwaitingCommand);
-  useEffect(() => {
-    isAwaitingCommandRef.current = isAwaitingCommand;
-  }, [isAwaitingCommand]);
-
-  const hasSupport = !!(typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
-
-  const startWakeWordListener = useCallback(() => {
-    console.log("🔍 startWakeWordListener called with:", {
-      hasSupport,
-      isWakeWordEnabled,
-      isWakeWordListening,
-      isListening,
-      isAwaitingCommand,
-      hasRef: !!wakeWordRecognitionRef.current,
-      enabled
-    });
-    
-    if (hasSupport && isWakeWordEnabled && !isWakeWordListening && !isListening && !isAwaitingCommand && wakeWordRecognitionRef.current && enabled) {
-        try {
-            console.log("✅ Starting wake word listener for 'Yo Probot'...");
-            wakeWordRecognitionRef.current.start();
-            setIsWakeWordListening(true);
-        } catch (e: any) {
-            if (e.name !== 'InvalidStateError') {
-              console.error("❌ Error starting wake word listener:", e);
-              setError(`Microphone error: ${e.message}. Please allow microphone access.`);
-            }
-        }
-    } else {
-      console.log("⚠️ Not starting wake word listener - conditions not met");
-    }
-  }, [hasSupport, isWakeWordEnabled, isWakeWordListening, isListening, isAwaitingCommand, enabled]);
-
-  const startCommandListener = useCallback(() => {
-    if (hasSupport && !isListening && commandRecognitionRef.current && enabled) {
-        setTranscript('');
-        commandTranscriptRef.current = '';
-        try {
-            commandRecognitionRef.current.start();
-            setIsListening(true);
-            setError(null);
-        } catch (e: any) {
-             if (e.name !== 'InvalidStateError') {
-                console.error("Error starting command recognition:", e);
-                setError("Could not start voice recognition. Please check microphone permissions.");
-                setIsAwaitingCommand(false);
-                startWakeWordListener();
-            }
-        }
-    }
-  }, [hasSupport, isListening, startWakeWordListener, enabled]);
-
+  const hasSupport = !!(
+    typeof window !== 'undefined' && 
+    (window.SpeechRecognition || window.webkitSpeechRecognition)
+  );
 
   useEffect(() => {
     if (!hasSupport || !enabled) {
-      if (!hasSupport) {
-        console.warn('Speech recognition not supported in this browser. Please use Chrome or Edge.');
-      }
+      console.log('⚠️ Voice recognition not supported or disabled');
       return;
     }
 
-    console.log('✅ Speech recognition is supported. Wake word feature available.');
-    
-    // Reset states on mount
-    setIsWakeWordListening(false);
-    setIsListening(false);
-    setIsAwaitingCommand(false);
-    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
 
-    const commandRec = new SpeechRecognition();
-    commandRec.continuous = true; 
-    commandRec.interimResults = true;
-    commandRec.lang = 'en-US';
+    recognition.onstart = () => {
+      console.log(`🎤 Recognition started in ${mode === 'wake' ? 'WAKE' : 'COMMAND'} mode`);
+    };
 
-    commandRec.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = '';
       let finalTranscript = '';
       
@@ -171,169 +102,157 @@ export const useVoiceRecognition = ({ onCommand, autoSubmitDelay = 1200, enabled
         }
       }
       
-      const fullTranscript = (finalTranscript + interimTranscript).trim();
-      commandTranscriptRef.current = fullTranscript;
-      setTranscript(fullTranscript);
-
-      if (autoSubmitTimeoutRef.current) clearTimeout(autoSubmitTimeoutRef.current);
-      autoSubmitTimeoutRef.current = window.setTimeout(() => {
-        try { commandRecognitionRef.current?.stop(); } catch (e) { /* ignore */ }
-      }, autoSubmitDelay);
-    };
-
-    commandRec.onend = () => {
-      setIsListening(false);
-      if (autoSubmitTimeoutRef.current) clearTimeout(autoSubmitTimeoutRef.current);
+      const fullTranscript = (finalTranscript + interimTranscript).trim().toLowerCase();
+      currentTranscriptRef.current = fullTranscript;
       
-      const command = commandTranscriptRef.current.trim();
-      commandTranscriptRef.current = '';
-      setTranscript('');
-
-      if (command) {
-        // Case 1: Command successfully captured.
-        setIsAwaitingCommand(false); 
-        onCommand(command);
-        startWakeWordListener(); // Return to wake word mode.
-      } else if (isAwaitingCommandRef.current) {
-        // Case 2: 'no-speech' timeout, but we should still be awaiting a command.
-        // Restart the command listener to give the user another chance.
-        startCommandListener();
-      } else {
-        // Case 3: Ended for another reason (e.g., manual stop) and we were not awaiting a command.
-        setIsAwaitingCommand(false); // Ensure it's false.
-        startWakeWordListener(); // Safely return to wake word mode.
-      }
-    };
-
-    commandRec.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error !== 'aborted' && event.error !== 'no-speech') {
-        console.error('Command recognition error:', event.error, event.message);
-        setError(`Error: ${event.error}. Check mic permissions.`);
-      }
-    };
-    commandRecognitionRef.current = commandRec;
-
-    const wakeWordRec = new SpeechRecognition();
-    wakeWordRec.continuous = true;
-    wakeWordRec.interimResults = false;
-    wakeWordRec.lang = 'en-US';
-
-    wakeWordRec.onstart = () => {
-        console.log("🎤 Wake word listener is now active and listening for 'Yo Probot'");
-        console.log("💡 TIP: If you don't see any audio being detected, check:");
-        console.log("   1. Chrome address bar - click the lock/camera icon and ensure microphone is 'Allowed'");
-        console.log("   2. System microphone is working and not muted");
-        console.log("   3. You're using Chrome or Edge (Firefox doesn't support wake words)");
-    };
-
-    wakeWordRec.onaudiostart = () => {
-        console.log("🔊 Audio detection started - microphone is capturing sound!");
-    };
-
-    wakeWordRec.onsoundstart = () => {
-        console.log("🎵 Sound detected by microphone!");
-    };
-
-    wakeWordRec.onspeechstart = () => {
-        console.log("🗣️ Speech detected - processing...");
-    };
-
-    wakeWordRec.onresult = (event: SpeechRecognitionEvent) => {
-        const lastResult = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-        console.log("👂 Heard:", lastResult);
-        if (lastResult.includes(WAKE_WORD)) {
-            console.log("✅ Wake word 'Yo Probot' detected! Switching to command mode...");
-            isSwitchingModesRef.current = true;
-            try { wakeWordRecognitionRef.current?.stop(); } catch(e) {/* ignore */}
+      if (mode === 'wake') {
+        console.log(`🔍 Wake word mode - heard: "${fullTranscript}"`);
+        
+        if (fullTranscript.includes(WAKE_WORD)) {
+          console.log('✅ Wake word detected! Switching to command mode...');
+          
+          try {
+            recognition.stop();
+          } catch (e) {
+            console.error('Error stopping recognition:', e);
+          }
+          
+          setMode('command');
+          setTranscript('');
+          currentTranscriptRef.current = '';
+          setError(null);
         }
-    };
-
-    wakeWordRec.onend = () => {
-      setIsWakeWordListening(false);
-
-      if (isSwitchingModesRef.current) {
-        isSwitchingModesRef.current = false;
-        setIsAwaitingCommand(true);
-        startCommandListener();
-      } else if (isWakeWordEnabled && enabled) {
-        setTimeout(startWakeWordListener, 100);
+      } else if (mode === 'command') {
+        const displayTranscript = finalTranscript || interimTranscript;
+        setTranscript(displayTranscript);
+        console.log(`💬 Command mode - transcript: "${displayTranscript}"`);
+        
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current);
+        }
+        
+        silenceTimeoutRef.current = window.setTimeout(() => {
+          console.log('⏰ Silence timeout - submitting command');
+          
+          const command = currentTranscriptRef.current.trim();
+          if (command) {
+            console.log(`✅ Submitting command: "${command}"`);
+            onCommand(command);
+          }
+          
+          try {
+            recognition.stop();
+          } catch (e) {
+            console.error('Error stopping recognition:', e);
+          }
+          
+          setMode('off');
+          setTranscript('');
+          currentTranscriptRef.current = '';
+        }, COMMAND_SILENCE_TIMEOUT);
       }
     };
 
-    wakeWordRec.onerror = (event: SpeechRecognitionErrorEvent) => {
-        if (event.error === 'not-allowed') {
-            console.error('🚨 Microphone access denied');
-            setError('⚠️ Microphone access denied. Please grant microphone permission to use voice recognition.');
-        } else if (event.error === 'no-speech') {
-            console.log('⏸️ No speech detected, continuing to listen...');
-        } else if (event.error === 'aborted') {
-            console.log('⏹️ Wake word listener stopped (expected)');
-        } else {
-            console.error('🚨 Wake word recognition error:', event.error, event.message);
-            setError(`Voice recognition error: ${event.error}`);
-        }
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('🚨 Speech recognition error:', event.error);
+      
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setError('Microphone access denied. Please allow microphone access in your browser settings.');
+        setMode('off');
+      } else if (event.error === 'no-speech') {
+        console.log('⚠️ No speech detected - continuing to listen');
+      } else if (event.error !== 'aborted') {
+        setError(`Voice recognition error: ${event.error}`);
+        setMode('off');
+      }
     };
-    wakeWordRecognitionRef.current = wakeWordRec;
+
+    recognition.onend = () => {
+      console.log(`⏹️ Recognition ended in ${mode === 'wake' ? 'WAKE' : 'COMMAND'} mode`);
+      
+      if (mode === 'command') {
+        console.log('🔄 Restarting in wake word mode...');
+        setMode('wake');
+        setTranscript('');
+        currentTranscriptRef.current = '';
+      }
+      
+      if (mode === 'wake' || mode === 'command') {
+        try {
+          console.log('🔄 Auto-restarting recognition...');
+          recognition.start();
+        } catch (e: any) {
+          if (e.name !== 'InvalidStateError') {
+            console.error('Error restarting recognition:', e);
+          }
+        }
+      }
+    };
+
+    recognitionRef.current = recognition;
 
     return () => {
-        commandRec.onend = null;
-        wakeWordRec.onend = null;
-        try { commandRec.abort(); } catch (e) {/*ignore*/}
-        try { wakeWordRec.abort(); } catch (e) {/*ignore*/}
+      console.log('🧹 Cleaning up voice recognition');
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
+      try {
+        recognition.stop();
+      } catch (e) {
+        console.error('Error stopping recognition on cleanup:', e);
+      }
     };
-  }, [hasSupport, isWakeWordEnabled, enabled, onCommand, startCommandListener, startWakeWordListener, autoSubmitDelay]);
+  }, [hasSupport, enabled, mode, onCommand]);
 
-  // Auto-start wake word listener when enabled
-  useEffect(() => {
-    if (hasSupport && isWakeWordEnabled && enabled && !isListening && !isAwaitingCommand && !isWakeWordListening) {
-      console.log("🚀 Auto-starting wake word listener...");
-      // Small delay to ensure recognizer is ready
-      const timer = setTimeout(() => {
-        startWakeWordListener();
-      }, 500);
-      return () => clearTimeout(timer);
+  const startListening = useCallback(() => {
+    if (!hasSupport || !recognitionRef.current) {
+      console.error('❌ Cannot start - no speech recognition support');
+      return;
     }
-  }, [hasSupport, isWakeWordEnabled, enabled, isListening, isAwaitingCommand, isWakeWordListening, startWakeWordListener]);
 
+    console.log('🎤 User activated voice recognition - starting wake word mode');
+    setMode('wake');
+    setTranscript('');
+    setError(null);
+    currentTranscriptRef.current = '';
 
-  const manualStartListening = useCallback(() => {
-    isSwitchingModesRef.current = false;
-    try { wakeWordRecognitionRef.current?.stop(); } catch(e) {/*ignore*/}
-    setIsAwaitingCommand(false);
-    startCommandListener();
-  }, [startCommandListener]);
-  
-  const manualStopListening = useCallback(() => {
-    setIsAwaitingCommand(false); // Manually stopping should cancel the "awaiting" state.
-    try { commandRecognitionRef.current?.stop(); } catch(e) {/*ignore*/}
+    try {
+      recognitionRef.current.start();
+    } catch (e: any) {
+      if (e.name !== 'InvalidStateError') {
+        console.error('❌ Error starting recognition:', e);
+        setError('Failed to start voice recognition. Please try again.');
+      }
+    }
+  }, [hasSupport]);
+
+  const stopListening = useCallback(() => {
+    console.log('⏹️ User stopped voice recognition');
+    
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    
+    setMode('off');
+    setTranscript('');
+    currentTranscriptRef.current = '';
+    
+    try {
+      recognitionRef.current?.stop();
+    } catch (e) {
+      console.error('Error stopping recognition:', e);
+    }
   }, []);
 
-  const toggleWakeWord = useCallback(() => {
-    const newValue = !isWakeWordEnabled;
-    setIsWakeWordEnabled(newValue);
-    localStorage.setItem(WAKE_WORD_STORAGE_KEY, String(newValue));
-    
-    isSwitchingModesRef.current = false;
-    try { wakeWordRecognitionRef.current?.stop(); } catch(e) {/*ignore*/}
-    try { commandRecognitionRef.current?.stop(); } catch(e) {/*ignore*/}
-    setIsAwaitingCommand(false);
-
-    if (newValue && enabled) {
-      startWakeWordListener();
-    }
-  }, [isWakeWordEnabled, enabled, startWakeWordListener]);
-
   return {
-    isListening,
+    mode,
     transcript,
     error,
-    startListening: manualStartListening,
-    stopListening: manualStopListening,
     hasSupport,
-    isWakeWordEnabled,
-    isWakeWordListening,
-    toggleWakeWord,
-    isAwaitingCommand,
-    startWakeWordListener,
+    isListening: mode !== 'off',
+    isWakeWordListening: mode === 'wake',
+    isAwaitingCommand: mode === 'command',
+    startListening,
+    stopListening,
   };
 };

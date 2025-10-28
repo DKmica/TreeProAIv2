@@ -4,7 +4,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import HelpBot from './HelpBot';
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../types';
-import { useGeminiChat } from '../hooks/useGeminiChat';
+import { useAICore } from '../hooks/useAICore';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 
 
@@ -50,12 +50,9 @@ const Layout: React.FC<LayoutProps> = ({ appState }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isBotOpen, setIsBotOpen] = useState(false);
   const location = useLocation();
-  const onChatPage = location.pathname === '/chat';
-  
   const pageContext = getPageContext(location.pathname);
 
-  const chat = useGeminiChat({
-      appState: appState,
+  const chat = useAICore({
       pageContext: pageContext,
   });
   
