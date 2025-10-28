@@ -68,12 +68,14 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
   const currentTranscriptRef = useRef('');
   const modeRef = useRef<VoiceMode>('off');
   const onCommandRef = useRef(onCommand);
+  const isActiveRef = useRef(false);
 
   const hasSupport = !!(
     typeof window !== 'undefined' && 
     (window.SpeechRecognition || window.webkitSpeechRecognition)
   );
 
+  // Keep refs in sync
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -82,6 +84,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     onCommandRef.current = onCommand;
   }, [onCommand]);
 
+  // Initialize speech recognition
   useEffect(() => {
     if (!hasSupport) {
       console.log('⚠️ Voice recognition not supported');
@@ -91,12 +94,13 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     
+    // Continuous listening - never stops until user clicks stop
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
-      console.log(`🎤 Recognition started in ${modeRef.current === 'wake' ? 'WAKE' : 'COMMAND'} mode`);
+      console.log(`🎤 Recognition started in ${modeRef.current.toUpperCase()} mode`);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -113,37 +117,38 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
       }
       
       const fullTranscript = (finalTranscript + interimTranscript).trim().toLowerCase();
-      currentTranscriptRef.current = fullTranscript;
       
+      // WAKE MODE: Listen for "yo probot"
       if (modeRef.current === 'wake') {
-        console.log(`🔍 Wake word mode - heard: "${fullTranscript}"`);
+        console.log(`🔍 Listening for wake word... heard: "${fullTranscript}"`);
         
+        // Check if wake word is detected
         if (fullTranscript.includes(WAKE_WORD)) {
-          console.log('✅ Wake word detected! Switching to command mode...');
+          console.log('✅ WAKE WORD DETECTED! Switching to command mode');
           
+          // Switch to command mode - DON'T stop recognition
           modeRef.current = 'command';
           setMode('command');
           setTranscript('');
           currentTranscriptRef.current = '';
           setError(null);
-          
-          try {
-            recognition.stop();
-          } catch (e) {
-            console.error('Error stopping recognition:', e);
-          }
         }
-      } else if (modeRef.current === 'command') {
+      }
+      // COMMAND MODE: Capture the user's command
+      else if (modeRef.current === 'command') {
         const displayTranscript = finalTranscript || interimTranscript;
+        currentTranscriptRef.current = displayTranscript;
         setTranscript(displayTranscript);
-        console.log(`💬 Command mode - transcript: "${displayTranscript}"`);
+        console.log(`💬 Capturing command: "${displayTranscript}"`);
         
+        // Clear existing silence timeout
         if (silenceTimeoutRef.current) {
           clearTimeout(silenceTimeoutRef.current);
         }
         
+        // Set new silence timeout
         silenceTimeoutRef.current = window.setTimeout(() => {
-          console.log('⏰ Silence timeout - submitting command');
+          console.log('⏰ Silence detected - submitting command');
           
           const command = currentTranscriptRef.current.trim();
           if (command) {
@@ -151,16 +156,12 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
             onCommandRef.current(command);
           }
           
-          modeRef.current = 'off';
-          setMode('off');
+          // Go back to wake word mode
+          console.log('🔄 Going back to wake word mode');
+          modeRef.current = 'wake';
+          setMode('wake');
           setTranscript('');
           currentTranscriptRef.current = '';
-          
-          try {
-            recognition.stop();
-          } catch (e) {
-            console.error('Error stopping recognition:', e);
-          }
         }, COMMAND_SILENCE_TIMEOUT);
       }
     };
@@ -171,28 +172,20 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         modeRef.current = 'off';
         setMode('off');
+        isActiveRef.current = false;
         setError('Microphone access denied. Please allow microphone access in your browser settings.');
       } else if (event.error === 'no-speech') {
         console.log('⚠️ No speech detected - continuing to listen');
       } else if (event.error !== 'aborted') {
-        modeRef.current = 'off';
-        setMode('off');
-        setError(`Voice recognition error: ${event.error}`);
+        console.log(`⚠️ Recognition error: ${event.error} - will auto-restart`);
       }
     };
 
     recognition.onend = () => {
-      console.log(`⏹️ Recognition ended in ${modeRef.current === 'wake' ? 'WAKE' : modeRef.current === 'command' ? 'COMMAND' : 'OFF'} mode`);
+      console.log(`⏹️ Recognition ended - mode: ${modeRef.current.toUpperCase()}, active: ${isActiveRef.current}`);
       
-      if (modeRef.current === 'command') {
-        console.log('🔄 Switching back to wake word mode...');
-        modeRef.current = 'wake';
-        setMode('wake');
-        setTranscript('');
-        currentTranscriptRef.current = '';
-      }
-      
-      if (modeRef.current === 'wake' || modeRef.current === 'command') {
+      // Auto-restart if still active
+      if (isActiveRef.current && modeRef.current !== 'off') {
         try {
           console.log('🔄 Auto-restarting recognition...');
           recognition.start();
@@ -202,7 +195,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
           }
         }
       } else {
-        console.log('⏸️ Mode is OFF - not restarting');
+        console.log('⏸️ Voice recognition stopped');
       }
     };
 
@@ -210,6 +203,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
 
     return () => {
       console.log('🧹 Cleaning up voice recognition');
+      isActiveRef.current = false;
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
       }
@@ -227,7 +221,10 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
       return;
     }
 
-    console.log('🎤 User activated voice recognition - starting wake word mode');
+    console.log('🎤 Starting voice recognition - listening for "Yo Probot"');
+    
+    // Set to active and wake mode
+    isActiveRef.current = true;
     modeRef.current = 'wake';
     setMode('wake');
     setTranscript('');
@@ -245,12 +242,15 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
   }, [hasSupport]);
 
   const stopListening = useCallback(() => {
-    console.log('⏹️ User stopped voice recognition');
+    console.log('⏹️ Stopping voice recognition');
     
+    // Clear active flag and silence timeout
+    isActiveRef.current = false;
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
     }
     
+    // Set to off mode
     modeRef.current = 'off';
     setMode('off');
     setTranscript('');
