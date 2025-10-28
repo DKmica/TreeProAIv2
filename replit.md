@@ -1,316 +1,46 @@
 # TreePro AI - Replit Project Documentation
 
 ## Overview
-TreePro AI is a comprehensive business management platform for tree service companies, powered by Google Gemini AI. This is a full-stack application with React frontend and Node.js/Express backend.
+TreePro AI is a comprehensive business management platform for tree service companies, powered by Google Gemini AI. This full-stack application features a React frontend and a Node.js/Express backend, designed to streamline operations for tree care businesses. Its purpose is to provide AI-powered tools for estimating, lead management, job scheduling, and overall business intelligence, aiming to enhance efficiency and decision-making for tree service professionals.
 
-**Status**: Fully configured and running on Replit  
-**Last Updated**: October 26, 2025
+## User Preferences
+I prefer that the AI assistant prioritizes clear and concise explanations. When proposing code changes, please provide a high-level overview of the approach first and ask for confirmation before implementing detailed modifications. I value iterative development, so small, reviewable changes are preferred over large, monolithic updates. For any significant architectural decisions or third-party integrations, please consult me beforehand. I prefer to use the latest stable versions of frameworks and libraries unless there's a compelling reason otherwise.
 
-## Recent Changes
+## System Architecture
 
-### October 27, 2025 - Custom Branding, Address Fields & Dashboard Enhancements
+### UI/UX Decisions
+The application utilizes a modern, dark theme with a primary color palette of bright cyan (#00c2ff) for accents and highlights, set against a dark navy/gray background (#0a1628 to #102a43). The design incorporates a custom "futuristic AI circuit tree" logo, consistent across the login page, sidebar, and other UI components. All form stylings and active states have been updated to reflect the cyan branding.
 
-#### Address Field Added to All Forms (Latest)
-1. **Added address field to Lead form** - Now captures customer address when creating/editing leads
-2. **Updated all form styling to cyan branding**:
-   - Changed all green focus rings to cyan (#00c2ff)
-   - Updated all green buttons to cyan
-   - Consistent cyan theme across all forms
-3. **Forms with address fields:**
-   - Customer Form: ✅ Has address field
-   - Employee Form: ✅ Has address field
-   - Lead Form: ✅ Now has address field (new!)
-   - Quote/Job Forms: Get address from customer relationship
+### Technical Implementations
+- **Frontend**: Built with React 19, TypeScript, and Vite for a fast development experience. Styling is handled with TailwindCSS (CDN for development). React Router DOM (HashRouter) manages client-side navigation.
+- **Backend**: Developed using Node.js and Express, providing a RESTful API.
+- **Database**: PostgreSQL 14+ is used as the primary data store, managed by Replit. The schema is initialized from `backend/init.sql`.
+- **AI Core**: A centralized AI Core service (`services/gemini/aiCore.ts`) loads all business data (customers, leads, quotes, jobs, employees, equipment, company profile) on initialization to maintain real-time context. It integrates an extensive arborist knowledge base covering tree species, pruning techniques, safety protocols, equipment, seasonal recommendations, and disease/pest knowledge. This core powers 30 distinct function calls for navigation, customer/lead management, financial operations, employee/payroll, equipment, and analytics.
+- **AI Assistant Integration**: The `useAICore.ts` hook manages conversational chat history with Gemini 2.0 Flash, executes AI function calls, and handles navigation requests.
+- **Voice Recognition**: A rebuilt `useVoiceRecognition.ts` hook provides stable voice commands, featuring a "Yo Probot" wake word, command capture, and clear state management.
+- **Data Flow**: Backend APIs handle `snake_case` to `camelCase` transformations for consistency with frontend expectations and embed related objects (e.g., customer data in leads) to simplify data access.
 
-#### Custom Logo & Color Scheme Integration
-1. **Added custom TreePro AI logo** - Futuristic AI circuit tree design
-2. **Updated color scheme** from green to cyan/turquoise:
-   - Primary: Bright cyan (#00c2ff) matching the logo
-   - Background: Dark navy/gray (#0a1628 to #102a43)
-   - Accent colors: Cyan with glow effects
-3. **Updated all UI components:**
-   - Login page: Dark gradient background with glowing logo
-   - Sidebar: Dark theme with cyan highlights
-   - Buttons: Cyan instead of green
-   - Active states: Cyan with shadow effects
-4. **Logo placement:**
-   - Login page: Large centered logo with cyan ring
-   - Sidebar (desktop & mobile): Smaller logo in header
-   - All instances use the custom uploaded logo
+### Feature Specifications
+- **AI-Powered Tree Estimating**: Utilizes Gemini to generate detailed tree service estimates, always including removal prices and suggesting additional services.
+- **AI Assistant**: Provides contextual help, answers business-related questions, offers arborist expertise, and can perform actions like creating/updating records and navigating the app.
+- **Lead and Job Management**: Comprehensive CRUD operations for customers, leads, quotes, and jobs, with features like lead status tracking, quote conversion to jobs, and crew assignment.
+- **Financial Tools**: Includes revenue tracking, outstanding invoices management, and payroll processing.
+- **Business Analytics**: Provides metrics like lead conversion rates, crew utilization, and upsell opportunity identification.
+- **Authentication**: Owner accounts (`dakoenig4@gmail.com`, `nullgbow@gmail.com` with password `12Tree45`) provide full access.
 
-#### Dashboard Live Data Fix
-1. **Fixed hardcoded dashboard statistics** - Now displays real data from database
-2. **Stat Cards now show:**
-   - New Leads: Count of leads with status "New"
-   - Quotes Sent: Count of quotes with status "Sent" or "Accepted"
-   - Active Jobs: Count of jobs with status "Scheduled" or "In Progress"
-   - Monthly Revenue: Total revenue from completed jobs in current month
-3. **Updated Dashboard component** to receive leads and quotes data
-4. **Real-time calculations** using useMemo for performance
+### System Design Choices
+- **Microservice-like Structure**: AI functionalities are modularized into distinct services (e.g., `estimateService.ts`, `businessService.ts`, `chatService.ts`, `marketingService.ts`) to promote separation of concerns.
+- **Environment Agnostic Configuration**: Frontend and backend are configured to run seamlessly in both development (using `localhost` and specific ports) and production (using `0.0.0.0` and port 5000) environments, leveraging Replit's infrastructure.
+- **Scalability**: Designed for stateless deployment (e.g., Cloud Run) with a `pnpm run build:production` script for optimized builds.
 
-#### AI Tree Estimator - Always Include Removal Price
-1. **Modified estimator prompt** to always include "Tree Removal" as the first service
-2. Removal price now reflects tree size, location, hazards, and complexity
-3. Additional services (pruning, stump grinding, etc.) suggested after removal
-4. Ensures customers always get a complete removal quote for comparison
+## External Dependencies
 
-### October 26, 2025 - Comprehensive API & Data Fixes + AI Estimator Fix
-
-#### AI Features Fix (All Services Updated)
-1. **Fixed Invalid Gemini Model Names**
-   - Updated all Gemini API calls from invalid `gemini-2.5-pro` and `gemini-2.5-flash` to `gemini-2.0-flash`
-   - Fixed AI Tree Estimator, AI Core, Chat Service, Marketing Tools, Business Service
-   - Added comprehensive error messages to display actual API errors with status codes
-   - Error messages now show detailed information to help diagnose issues
-   
-2. **Services Updated:**
-   - estimateService.ts: AI Tree Estimator, Job Hazard Analysis
-   - businessService.ts: AI Core Insights, Upsell Suggestions, Maintenance Advice
-   - chatService.ts: Voice Help Bot
-   - marketingService.ts: Social Media Posts, SEO Optimization, Email Campaigns
-
-#### Critical Bug Fixes
-1. **Fixed Leads Page Crash** (pages/Leads.tsx)
-   - Added optional chaining (`?.`) to safely access `lead.customer.name` and `lead.customer.email`
-   - Prevents "Cannot read properties of undefined (reading 'name')" error
-   - Added fallback values ('N/A') for missing customer data
-
-2. **Fixed Backend API - Complete snake_case to camelCase Transformation** (backend/server.js)
-   - **Quotes API**: `customer_name` → `customerName`, `line_items` → `lineItems`, `stump_grinding_price` → `stumpGrindingPrice`, `lead_id` → `leadId`
-   - **Employees API**: `job_title` → `jobTitle`, `pay_rate` → `payRate`, `hire_date` → `hireDate`, `performance_metrics` → `performanceMetrics`
-   - **Equipment API**: `purchase_date` → `purchaseDate`, `last_service_date` → `lastServiceDate`, `assigned_to` → `assignedTo`, `maintenance_history` → `maintenanceHistory`
-   - **Leads API**: Custom endpoint with SQL JOIN to embed full customer objects, `customer_id` → `customerId`
-   - **Jobs API**: All job-related fields properly transformed
-   - Added proper null handling to prevent data corruption (preserves null values instead of converting to 0)
-   - Added bidirectional transformations (transformRow & transformToDb) for all resources
-
-3. **Database Seeding Completed**
-   - Successfully seeded database with realistic test data:
-     - 10 employees with certifications and performance metrics
-     - 15 equipment items with maintenance schedules
-     - 50 customers across Los Angeles area with GPS coordinates
-     - 20 leads with various statuses (New, Contacted, Qualified, Lost)
-     - 30 quotes with line items and pricing
-     - 15 jobs with scheduling and crew assignments
-
-#### Technical Improvements
-- All API responses now match TypeScript type definitions
-- Numeric fields (payRate, stumpGrindingPrice) properly parsed as numbers
-- NULL preservation prevents accidental data overwriting
-- Complete CRUD support with proper field transformations
-
-## Project Architecture
-
-### Frontend
-- **Framework**: React 19 + TypeScript + Vite
-- **Styling**: TailwindCSS (via CDN in development)
-- **Routing**: React Router DOM (HashRouter)
-- **Port**: 5000 (production and development)
-- **Host**: 0.0.0.0 (allows Replit proxy access)
-
-### Backend
-- **Framework**: Node.js + Express
-- **Database**: PostgreSQL (Replit-managed)
-- **Port**: 3001 (development), 5000 (production)
-- **Host**: localhost (development), 0.0.0.0 (production)
-
-### Database
-- **Type**: PostgreSQL 14+
-- **Provider**: Replit managed database
-- **Schema**: Initialized from `backend/init.sql`
-- **Tables**: customers, leads, quotes, jobs, invoices, employees, equipment
-
-## Key Features
-1. AI-Powered Tree Estimating (Gemini 2.5)
-2. Smart Lead Scoring
-3. Intelligent Job Scheduling
-4. Job Hazard Analysis
-5. Marketing Automation
-6. Customer Portal with public links
-7. Crew Mobile App with GPS tracking
-8. Real-time Maps (Google Maps)
-
-## Environment Variables
-
-### Required Secrets (Configured in Replit)
-- `VITE_GEMINI_API_KEY` - Google Gemini API key for AI features
-- `VITE_GOOGLE_MAPS_KEY` - Google Maps API key for location features
-- `DATABASE_URL` - PostgreSQL connection string (auto-configured by Replit)
-
-### Backend Environment (backend/.env)
-- `DATABASE_URL` - Uses Replit's DATABASE_URL
-- `PORT` - Backend server port (3001 for dev, 5000 for production)
-- `NODE_ENV` - Environment mode (development/production)
-
-## Development Setup
-
-### Workflows
-Two workflows are configured:
-
-1. **Frontend** (Port 5000)
-   - Command: `npm run dev:frontend`
-   - Runs Vite development server
-   - Proxies `/api` requests to backend at localhost:3001
-   - Configured with `allowedHosts: true` for Replit proxy
-
-2. **Backend** (Port 3001)
-   - Command: `npm run dev:backend`
-   - Runs Express server with nodemon (auto-restart)
-   - Serves REST API at `/api/*` endpoints
-   - Connects to PostgreSQL database
-
-### Important Configuration
-
-#### Vite Configuration (vite.config.ts)
-- **Port**: 5000
-- **Host**: 0.0.0.0 (required for Replit)
-- **allowedHosts**: true (required for Replit proxy)
-- **Proxy**: /api → http://localhost:3001
-- API keys injected via environment variables
-
-#### Backend Server (backend/server.js)
-- Uses environment-based host binding
-- Development: localhost (for frontend proxy)
-- Production: 0.0.0.0 (for direct access)
-- Serves static files from `backend/public` in production
-
-## Database Schema
-
-### Tables
-- `customers` - Customer information with coordinates
-- `leads` - Lead tracking and status
-- `quotes` - Quote management with line items
-- `jobs` - Job scheduling and tracking
-- `invoices` - Invoice generation and payment tracking
-- `employees` - Employee management
-- `equipment` - Equipment tracking and maintenance
-
-### Initialization
-Database schema is initialized from `backend/init.sql` which includes:
-- Table definitions with UUID primary keys
-- Indexes for performance
-- Foreign key relationships
-
-## API Endpoints
-
-All endpoints are prefixed with `/api`:
-
-### CRUD Operations (for each resource)
-- GET `/api/{resource}` - List all
-- GET `/api/{resource}/:id` - Get by ID
-- POST `/api/{resource}` - Create new
-- PUT `/api/{resource}/:id` - Update
-- DELETE `/api/{resource}/:id` - Delete
-
-### Resources
-- customers, leads, quotes, jobs, invoices, employees, equipment
-
-### Health Check
-- GET `/api/health` - Server status check
-
-## Production Deployment
-
-### Build Process
-1. `pnpm install` - Install root dependencies (uses pnpm in deployment)
-2. `cd backend && pnpm install` - Install backend dependencies
-3. `pnpm run build` - Build frontend to `dist/` directory
-4. `cp -r dist/* backend/public/` - Copy built files to backend public folder
-
-### Deployment Configuration
-- **Target**: Autoscale (stateless web app - Cloud Run)
-- **Build**: `pnpm run build:production` (runs the build:production script from package.json)
-- **Run**: `node backend/server.js`
-- **Port**: 5000 (uses PORT environment variable from Cloud Run)
-- **Host**: 0.0.0.0 (binds to all interfaces for Cloud Run)
-
-### Helper Scripts
-- `pnpm run install:all` - Install all dependencies (root + backend)
-- `pnpm run build:production` - Complete production build process
-
-### Required Deployment Secrets
-These secrets must be configured in Replit's deployment secrets:
-- `VITE_GEMINI_API_KEY` - Google Gemini API key for AI features ✅ Configured
-- `VITE_GOOGLE_MAPS_KEY` - Google Maps API key for location features ✅ Configured
-- `DATABASE_URL` - PostgreSQL connection string ✅ Auto-configured by Replit
-
-### Production Server
-- Backend serves both static frontend files and API endpoints
-- All non-API routes serve `index.html` (SPA routing)
-- CORS enabled for API access
-
-## Known Issues & Solutions
-
-### Vite Cache Issues
-If you see "chunk file not found" errors:
-```bash
-rm -rf node_modules/.vite
-```
-Then restart the Frontend workflow.
-
-### TailwindCSS CDN Warning
-The project uses TailwindCSS via CDN in development. This is intentional for rapid development and works fine, though production builds should use PostCSS plugin.
-
-## File Structure
-```
-treepro-ai/
-├── components/         # React components
-│   ├── icons/         # SVG icon components
-│   └── ...           # Layout, Header, Sidebar, etc.
-├── contexts/          # React contexts (Auth)
-├── hooks/            # Custom React hooks
-├── pages/            # Page components
-│   ├── crew/         # Crew mobile app pages
-│   └── portal/       # Customer portal pages
-├── services/         # API and AI services
-│   └── gemini/       # Modular Gemini AI services
-├── backend/          # Express backend
-│   ├── server.js     # Main server file
-│   ├── db.js         # Database connection
-│   └── init.sql      # Database schema
-├── index.html        # HTML entry point
-├── index.tsx         # React entry point
-├── App.tsx           # Main app component
-└── vite.config.ts    # Vite configuration
-```
-
-## Troubleshooting
-
-### Frontend Not Loading
-1. Check Frontend workflow is running
-2. Verify `allowedHosts: true` in vite.config.ts
-3. Clear Vite cache: `rm -rf node_modules/.vite`
-4. Restart Frontend workflow
-
-### Backend API Errors
-1. Check Backend workflow is running
-2. Verify DATABASE_URL environment variable is set
-3. Check backend logs for connection errors
-4. Test health endpoint: `/api/health`
-
-### Database Connection Issues
-1. Verify Replit PostgreSQL database is provisioned
-2. Check DATABASE_URL in backend/.env
-3. Re-initialize schema: `psql $DATABASE_URL -f backend/init.sql`
-
-## Development Notes
-
-### Port Configuration
-- Frontend: 5000 (user-facing)
-- Backend: 3001 (internal, proxied by frontend)
-- Production: Backend serves everything on port 5000
-
-### Hot Module Reload (HMR)
-Vite HMR is configured to work with Replit's proxy environment. No custom WebSocket configuration needed.
-
-### Authentication
-**Owner Accounts:**
-- dakoenig4@gmail.com - Password: 12Tree45
-- nullgbow@gmail.com - Password: 12Tree45
-
-Both accounts have full owner access to all features.
-
-## Resources
-- [Google Gemini API](https://aistudio.google.com/apikey)
-- [Google Maps API](https://console.cloud.google.com/)
-- [Project README](./README.md)
-- [Quick Start Guide](./QUICK_START.md)
+- **Google Gemini API**: Used for all AI functionalities, including tree estimating, AI assistant, and various business intelligence features. The `gemini-2.0-flash` model is currently in use.
+- **Google Maps API**: Integrated for location-based features, likely customer coordinates and potentially future crew tracking.
+- **PostgreSQL**: The primary database system, managed directly by Replit.
+- **React**: Frontend JavaScript library.
+- **Node.js/Express**: Backend runtime and web framework.
+- **TailwindCSS**: CSS framework for styling.
+- **React Router DOM**: For client-side routing.
+- **Vite**: Frontend build tool.
+- **Nodemon**: For automatic backend server restarts during development.
