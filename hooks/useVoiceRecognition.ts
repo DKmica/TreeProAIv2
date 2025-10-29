@@ -48,7 +48,8 @@ declare global {
   }
 }
 
-const WAKE_WORD = "yo probot";
+// Accept multiple variations since speech recognition may mishear
+const WAKE_WORDS = ["yo probot", "your probot", "hey probot", "yo robot", "your robot"];
 const COMMAND_SILENCE_TIMEOUT = 1500;
 
 type VoiceMode = 'off' | 'wake' | 'command';
@@ -119,13 +120,14 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
       
       const fullTranscript = (finalTranscript + interimTranscript).trim().toLowerCase();
       
-      // WAKE MODE: Listen for "yo probot"
+      // WAKE MODE: Listen for "yo probot" (or variations)
       if (modeRef.current === 'wake') {
         console.log(`🔍 Listening for wake word... heard: "${fullTranscript}"`);
         
-        // Check if wake word is detected
-        if (fullTranscript.includes(WAKE_WORD)) {
-          console.log('✅ WAKE WORD DETECTED! Switching to command mode');
+        // Check if any wake word variation is detected
+        const detectedWakeWord = WAKE_WORDS.find(word => fullTranscript.includes(word));
+        if (detectedWakeWord) {
+          console.log(`✅ WAKE WORD DETECTED ("${detectedWakeWord}")! Switching to command mode`);
           
           // Switch to command mode - DON'T stop recognition
           modeRef.current = 'command';
@@ -149,10 +151,14 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
         // Remove wake word from the first chunk if present and not yet removed
         if (newFinalText.trim() && !hasRemovedWakeWordRef.current) {
           const lowerNewFinal = newFinalText.toLowerCase();
-          if (lowerNewFinal.includes(WAKE_WORD)) {
-            const wakeWordIndex = lowerNewFinal.indexOf(WAKE_WORD);
-            newFinalText = newFinalText.substring(wakeWordIndex + WAKE_WORD.length).trim() + ' ';
-            hasRemovedWakeWordRef.current = true;
+          // Check for any wake word variation
+          for (const wakeWord of WAKE_WORDS) {
+            if (lowerNewFinal.includes(wakeWord)) {
+              const wakeWordIndex = lowerNewFinal.indexOf(wakeWord);
+              newFinalText = newFinalText.substring(wakeWordIndex + wakeWord.length).trim() + ' ';
+              hasRemovedWakeWordRef.current = true;
+              break;
+            }
           }
         }
         
