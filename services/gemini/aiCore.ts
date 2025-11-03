@@ -1273,6 +1273,27 @@ async function initialize(): Promise<void> {
   console.log('✅ AI Core initialized with full business context');
 }
 
+async function getRagContext(query: string): Promise<string> {
+  try {
+    const response = await fetch('/api/rag/context', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, maxResults: 8 })
+    });
+
+    if (!response.ok) {
+      console.warn('RAG context fetch failed:', response.status);
+      return '';
+    }
+
+    const data = await response.json();
+    return data.context || '';
+  } catch (error) {
+    console.warn('RAG context unavailable:', error);
+    return '';
+  }
+}
+
 async function chat(message: string, history: ChatMessage[] = []): Promise<{ response: string; functionCalls?: any[] }> {
   await checkRateLimit();
 
@@ -1281,7 +1302,15 @@ async function chat(message: string, history: ChatMessage[] = []): Promise<{ res
   }
 
   try {
-    const result = await chatSession!.sendMessage({ message });
+    const ragContext = await getRagContext(message);
+    
+    const enrichedMessage = ragContext 
+      ? `User Question: ${message}\n\n---\nContext from Vector Database (use this data to answer accurately):\n${ragContext}\n---`
+      : message;
+
+    console.log('🔍 RAG Context:', ragContext ? 'Added' : 'Not available');
+    
+    const result = await chatSession!.sendMessage({ message: enrichedMessage });
     
     let responseText = '';
     const functionCalls: any[] = [];
