@@ -36,19 +36,13 @@ class RAGService {
         db.query(`
           SELECT l.*, 
                  c.name as customer_name,
-                 c.address, c.city, c.state, c.zip,
+                 c.address,
                  c.phone, c.email
           FROM leads l
           LEFT JOIN customers c ON l.customer_id = c.id
         `),
         db.query('SELECT * FROM quotes'),
-        db.query(`
-          SELECT j.*, 
-                 c.name as customer_name,
-                 c.address, c.city, c.state
-          FROM jobs j
-          LEFT JOIN customers c ON j.customer_id = c.id
-        `),
+        db.query('SELECT * FROM jobs'),
         db.query('SELECT * FROM employees'),
         db.query('SELECT * FROM equipment')
       ]);
@@ -80,8 +74,7 @@ class RAGService {
         type: 'customer',
         id: customer.id,
         name: customer.name,
-        city: customer.city,
-        state: customer.state
+        address: customer.address
       }
     }));
 
@@ -144,9 +137,7 @@ class RAGService {
         ...job,
         customer: {
           name: job.customer_name,
-          address: job.address,
-          city: job.city,
-          state: job.state
+          address: job.job_location
         }
       }),
       metadata: {

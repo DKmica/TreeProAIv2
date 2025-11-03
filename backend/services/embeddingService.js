@@ -1,17 +1,38 @@
-const { GoogleGenerativeAI } = require('@google/genai');
+const { GoogleGenAI } = require('@google/genai');
 
-const genAI = new GoogleGenerativeAI(process.env.VITE_GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY });
 
 class EmbeddingService {
   constructor() {
-    this.model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
-    this.batchSize = 100;
+    this.batchSize = 10;
+    this.apiKey = process.env.VITE_GEMINI_API_KEY;
   }
 
   async embedText(text) {
     try {
-      const result = await this.model.embedContent(text);
-      return result.embedding.values;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${this.apiKey}`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'models/text-embedding-004',
+          content: {
+            parts: [{
+              text: text
+            }]
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Embedding API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.embedding.values;
     } catch (error) {
       console.error('Error generating embedding:', error);
       throw error;
@@ -28,8 +49,10 @@ class EmbeddingService {
       embeddings.push(...batchEmbeddings);
       
       if (i + this.batchSize < texts.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
+      
+      console.log(`✅ Embedded ${Math.min(i + this.batchSize, texts.length)}/${texts.length} texts`);
     }
     return embeddings;
   }
