@@ -971,6 +971,63 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
 });
 
 
+// RAG Service endpoints
+const ragService = require('./services/ragService');
+
+apiRouter.post('/rag/search', async (req, res) => {
+  try {
+    const { query, collections, limit } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    const results = await ragService.search(query, { collections, limit });
+    res.json({ results });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.post('/rag/context', async (req, res) => {
+  try {
+    const { query, maxResults } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+
+    const context = await ragService.getContextForQuery(query, maxResults);
+    res.json({ context });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.post('/rag/build', async (req, res) => {
+  try {
+    console.log('🔄 Starting vector database build...');
+    const stats = await ragService.buildVectorDatabase();
+    res.json({ 
+      success: true, 
+      message: 'Vector database built successfully',
+      stats 
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.get('/rag/stats', async (req, res) => {
+  try {
+    const vectorStore = require('./services/vectorStore');
+    const stats = await vectorStore.getCollectionStats();
+    res.json({ stats });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
@@ -984,6 +1041,14 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, HOST, () => {
+app.listen(PORT, HOST, async () => {
   console.log(`Backend server running on http://${HOST}:${PORT}`);
+  
+  try {
+    await ragService.initialize();
+    console.log('🤖 RAG Service ready');
+  } catch (error) {
+    console.error('⚠️ RAG Service initialization failed:', error);
+    console.log('💡 Run POST /api/rag/build to build the vector database');
+  }
 });
