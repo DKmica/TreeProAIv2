@@ -65,10 +65,18 @@ export const generateTreeEstimate = async (files: { mimeType: string, data: stri
     3.  **measurements**: Estimate height (ft), canopy width (ft), and trunk diameter (in).
     4.  **hazards_obstacles**: List any hazards like power lines, structures, fences, etc.
     5.  **detailed_assessment**: Describe the scope of work and how the job would be executed.
-    6.  **suggested_services**: ALWAYS include "Tree Removal" as the first service, then propose additional services if applicable (e.g., pruning, stump grinding, debris removal, cabling). For each service, provide a name, a brief description, and a tight, realistic price range with a 30-50% difference between min and max. The removal price should reflect the tree's size, location, hazards, and complexity.
+    6.  **suggested_services**: ALWAYS include "Tree Removal (Including Debris Removal & Haul-Away)" as the first service. The removal price MUST include ALL costs: cutting, rigging, chipping, hauling debris to disposal site, and cleanup. Debris removal typically costs $200-800 for small trees (under 30ft), $500-1500 for medium trees (30-60ft), and $1000-3000+ for large trees (60ft+) - these costs MUST be included in the total removal price. Then propose additional services if applicable (e.g., pruning, stump grinding, cabling, brush clearing). For each service, provide a name, a brief description, and a tight, realistic price range with a 30-50% difference between min and max. The removal price should reflect the tree's size, location, hazards, complexity, AND debris removal/haul-away costs.
     7.  **required_equipment**: List the necessary equipment.
     8.  **required_manpower**: Estimate the number of crew needed.
     9.  **estimated_duration_hours**: Estimate the job duration in hours.
+
+    IMPORTANT PRICING GUIDELINES:
+    - Small tree (under 30ft): $300-1200 total removal including debris
+    - Medium tree (30-60ft): $800-2500 total removal including debris
+    - Large tree (60-80ft): $1500-4500 total removal including debris
+    - Extra-large tree (80ft+): $3000-8000+ total removal including debris
+    - Add 20-50% for hazards (power lines, near structures, limited access)
+    - Debris removal is NEVER a separate service - it's included in removal price
 
     Return ONLY the JSON object.`;
 
