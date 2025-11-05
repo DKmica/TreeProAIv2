@@ -15,11 +15,13 @@ import SparklesIcon from './icons/SparklesIcon';
 import ChatIcon from './icons/ChatIcon';
 import DollarIcon from './icons/DollarIcon';
 import CogIcon from './icons/CogIcon';
+import DocumentTextIcon from './icons/DocumentTextIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
   { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
   { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
+  { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon },
   { name: 'Chat', href: '/chat', icon: ChatIcon },
   { name: 'Leads', href: '/leads', icon: LeadIcon },
   { name: 'Quotes', href: '/quotes', icon: QuoteIcon },

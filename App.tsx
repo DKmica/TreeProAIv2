@@ -13,6 +13,7 @@ import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
 import AICore from './pages/AICore';
 import AITreeEstimator from './pages/AITreeEstimator';
+import EstimateFeedbackAnalytics from './pages/EstimateFeedbackAnalytics';
 import ChatPage from './pages/Chat';
 import CrewLayout from './components/CrewLayout';
 import CrewDashboard from './pages/crew/CrewDashboard';
@@ -124,6 +125,7 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} leads={leads} quotes={quotes} />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
+          <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
           <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />

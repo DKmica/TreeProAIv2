@@ -4,6 +4,8 @@ import { generateTreeEstimate } from '../services/geminiService';
 import { AITreeEstimate } from '../types';
 import { fileToBase64 } from '../utils/fileUtils';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
+import CheckCircleIcon from '../components/icons/CheckCircleIcon';
+import { estimateFeedbackService } from '../services/apiService';
 
 const AITreeEstimator: React.FC = () => {
     const [files, setFiles] = useState<File[]>([]);
@@ -12,6 +14,13 @@ const AITreeEstimator: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [results, setResults] = useState<AITreeEstimate | null>(null);
     const navigate = useNavigate();
+    
+    const [feedbackRating, setFeedbackRating] = useState<'accurate' | 'too_low' | 'too_high' | null>(null);
+    const [actualPrice, setActualPrice] = useState<string>('');
+    const [correctionReasons, setCorrectionReasons] = useState<string[]>([]);
+    const [additionalNotes, setAdditionalNotes] = useState<string>('');
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
@@ -64,6 +73,52 @@ const AITreeEstimator: React.FC = () => {
         if (results) {
             navigate('/quotes', { state: { aiEstimate: results } });
         }
+    };
+
+    const handleCorrectionReasonToggle = (reason: string) => {
+        setCorrectionReasons(prev => 
+            prev.includes(reason) 
+                ? prev.filter(r => r !== reason)
+                : [...prev, reason]
+        );
+    };
+
+    const handleFeedbackSubmit = async () => {
+        if (!results || !feedbackRating) return;
+
+        setSubmittingFeedback(true);
+        try {
+            const priceMin = results.suggested_services.reduce((min, s) => Math.min(min, s.price_range.min), Infinity);
+            const priceMax = results.suggested_services.reduce((max, s) => Math.max(max, s.price_range.max), 0);
+
+            await estimateFeedbackService.submitEstimateFeedback({
+                aiEstimateData: results,
+                aiSuggestedPriceMin: priceMin,
+                aiSuggestedPriceMax: priceMax,
+                actualPriceQuoted: actualPrice ? parseFloat(actualPrice) : undefined,
+                feedbackRating,
+                correctionReasons,
+                userNotes: additionalNotes || undefined,
+                treeSpecies: results.tree_identification,
+                treeHeight: results.measurements.height_feet,
+                trunkDiameter: results.measurements.trunk_diameter_inches,
+                hazards: results.hazards_obstacles,
+            });
+
+            setFeedbackSubmitted(true);
+        } catch (err: any) {
+            alert('Failed to submit feedback: ' + err.message);
+        } finally {
+            setSubmittingFeedback(false);
+        }
+    };
+
+    const resetFeedback = () => {
+        setFeedbackRating(null);
+        setActualPrice('');
+        setCorrectionReasons([]);
+        setAdditionalNotes('');
+        setFeedbackSubmitted(false);
     };
 
     return (
@@ -185,6 +240,116 @@ const AITreeEstimator: React.FC = () => {
                             <button onClick={handleCreateQuote} className="w-full mt-6 inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2">
                                 Create Quote from Results
                             </button>
+
+                            {!feedbackSubmitted && (
+                                <div className="mt-8 pt-6 border-t border-brand-gray-200">
+                                    <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Was this estimate accurate?</h3>
+                                    
+                                    <div className="flex gap-3 mb-4">
+                                        <button
+                                            onClick={() => { setFeedbackRating('accurate'); resetFeedback(); setFeedbackRating('accurate'); }}
+                                            className={`flex-1 py-2 px-4 rounded-md border transition-colors ${
+                                                feedbackRating === 'accurate'
+                                                    ? 'bg-green-100 border-green-500 text-green-800'
+                                                    : 'bg-white border-brand-gray-300 text-brand-gray-700 hover:bg-brand-gray-50'
+                                            }`}
+                                        >
+                                            ✅ Accurate
+                                        </button>
+                                        <button
+                                            onClick={() => setFeedbackRating('too_low')}
+                                            className={`flex-1 py-2 px-4 rounded-md border transition-colors ${
+                                                feedbackRating === 'too_low'
+                                                    ? 'bg-yellow-100 border-yellow-500 text-yellow-800'
+                                                    : 'bg-white border-brand-gray-300 text-brand-gray-700 hover:bg-brand-gray-50'
+                                            }`}
+                                        >
+                                            ⚠️ Too Low
+                                        </button>
+                                        <button
+                                            onClick={() => setFeedbackRating('too_high')}
+                                            className={`flex-1 py-2 px-4 rounded-md border transition-colors ${
+                                                feedbackRating === 'too_high'
+                                                    ? 'bg-orange-100 border-orange-500 text-orange-800'
+                                                    : 'bg-white border-brand-gray-300 text-brand-gray-700 hover:bg-brand-gray-50'
+                                            }`}
+                                        >
+                                            ⚠️ Too High
+                                        </button>
+                                    </div>
+
+                                    {(feedbackRating === 'too_low' || feedbackRating === 'too_high') && (
+                                        <div className="space-y-4 mt-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-brand-gray-700 mb-1">
+                                                    What should the price have been?
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={actualPrice}
+                                                    onChange={(e) => setActualPrice(e.target.value)}
+                                                    placeholder="Enter actual price"
+                                                    className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-brand-gray-700 mb-2">
+                                                    Correction reasons:
+                                                </label>
+                                                <div className="space-y-2">
+                                                    {['Tree size underestimated', 'Didn\'t account for hazards', 'Debris cost too low', 'Trunk diameter underestimated', 'Other'].map(reason => (
+                                                        <label key={reason} className="flex items-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={correctionReasons.includes(reason)}
+                                                                onChange={() => handleCorrectionReasonToggle(reason)}
+                                                                className="h-4 w-4 text-brand-cyan-600 focus:ring-brand-cyan-500 border-brand-gray-300 rounded"
+                                                            />
+                                                            <span className="ml-2 text-sm text-brand-gray-700">{reason}</span>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-brand-gray-700 mb-1">
+                                                    Additional notes (optional):
+                                                </label>
+                                                <textarea
+                                                    value={additionalNotes}
+                                                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                                                    placeholder="Any additional feedback..."
+                                                    rows={3}
+                                                    className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {feedbackRating && (
+                                        <button
+                                            onClick={handleFeedbackSubmit}
+                                            disabled={submittingFeedback}
+                                            className="w-full mt-4 inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 disabled:bg-brand-gray-400"
+                                        >
+                                            {submittingFeedback ? <><SpinnerIcon className="h-4 w-4 mr-2" />Submitting...</> : 'Submit Feedback'}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {feedbackSubmitted && (
+                                <div className="mt-8 pt-6 border-t border-brand-gray-200">
+                                    <div className="bg-green-50 border border-green-200 rounded-md p-4 flex items-center">
+                                        <CheckCircleIcon className="h-6 w-6 text-green-600 mr-3" />
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-green-800">Feedback Submitted!</h4>
+                                            <p className="text-sm text-green-700">Thank you for helping us improve our estimates.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                      )}
                      {!isLoading && !results && <p className="text-center text-sm text-brand-gray-500 pt-10">Analysis results will appear here.</p>}

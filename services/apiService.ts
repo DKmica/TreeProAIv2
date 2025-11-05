@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -84,4 +84,13 @@ export const addMaintenanceLog = async (equipmentId: string, log: Omit<Maintenan
 export const companyProfileService = {
   get: (): Promise<CompanyProfile> => apiFetch('company-profile'),
   update: (data: Partial<CompanyProfile>): Promise<CompanyProfile> => apiFetch('company-profile', { method: 'PUT', body: JSON.stringify(data) }),
+};
+
+// Estimate Feedback Service
+export const estimateFeedbackService = {
+  submitEstimateFeedback: async (feedback: Omit<EstimateFeedback, 'id' | 'createdAt'>): Promise<EstimateFeedback> => {
+    return apiFetch('estimate_feedback', { method: 'POST', body: JSON.stringify(feedback) });
+  },
+  getEstimateFeedback: (): Promise<EstimateFeedback[]> => apiFetch('estimate_feedback'),
+  getEstimateFeedbackStats: (): Promise<EstimateFeedbackStats> => apiFetch('estimate_feedback/stats'),
 };
