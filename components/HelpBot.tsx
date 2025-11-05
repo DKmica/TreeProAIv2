@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import SpinnerIcon from './icons/SpinnerIcon';
 import ChatIcon from './icons/ChatIcon';
 import XIcon from './icons/XIcon';
@@ -17,8 +17,81 @@ interface HelpBotProps {
   voice: UseVoiceRecognitionReturnType;
 }
 
+const WIDGET_WIDTH = 384;
+const WIDGET_HEIGHT = 550;
+
 const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => {
     const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = chat;
+
+    const clampPosition = (x: number, y: number) => {
+        const clampedX = Math.max(0, Math.min(x, window.innerWidth - WIDGET_WIDTH));
+        const clampedY = Math.max(0, Math.min(y, window.innerHeight - WIDGET_HEIGHT));
+        return { x: clampedX, y: clampedY };
+    };
+
+    const getDefaultPosition = () => {
+        return clampPosition(window.innerWidth - 420, window.innerHeight - 620);
+    };
+
+    const [position, setPosition] = useState(getDefaultPosition());
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const positionRef = useRef(position);
+
+    useEffect(() => {
+        positionRef.current = position;
+    }, [position]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('probot-position');
+        if (saved) {
+            try {
+                const savedPos = JSON.parse(saved);
+                setPosition(clampPosition(savedPos.x, savedPos.y));
+            } catch (e) {
+                console.error('Failed to parse saved position:', e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setPosition(prev => clampPosition(prev.x, prev.y));
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
+        if (!isDragging) return;
+
+        const handleMove = (e: MouseEvent) => {
+            const newX = e.clientX - dragOffset.x;
+            const newY = e.clientY - dragOffset.y;
+            setPosition(clampPosition(newX, newY));
+        };
+
+        const handleMouseUp = () => {
+            setIsDragging(false);
+            localStorage.setItem('probot-position', JSON.stringify(positionRef.current));
+        };
+
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isDragging, dragOffset]);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        
+        setIsDragging(true);
+        setDragOffset({ x: e.clientX - position.x, y: e.clientY - position.y });
+    };
 
     useEffect(() => {
         if (voice.transcript && voice.isAwaitingCommand) {
@@ -47,9 +120,18 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
 
 
     return (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div 
+            className="fixed z-50"
+            style={{
+                left: `${position.x}px`,
+                top: `${position.y}px`
+            }}
+        >
             <div className="flex flex-col w-96 max-h-[70vh] h-[550px] bg-white rounded-lg shadow-2xl border border-brand-gray-200">
-                <header className="flex items-center justify-between p-4 bg-brand-green-700 text-white rounded-t-lg">
+                <header 
+                    className="flex items-center justify-between p-4 bg-brand-green-700 text-white rounded-t-lg cursor-move"
+                    onMouseDown={handleMouseDown}
+                >
                     <h2 className="text-lg font-semibold">ProBot AI Assistant</h2>
                     <div className="flex items-center gap-2">
                         {voice.hasSupport && voice.isListening && (
