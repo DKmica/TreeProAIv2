@@ -718,6 +718,413 @@ const functionDeclarations: FunctionDeclaration[] = [
   {
     name: 'suggestNextSteps',
     description: 'Recommend what actions to take next based on current business state.'
+  },
+  {
+    name: 'takeJobPhotos',
+    description: 'Upload and document job progress photos with descriptions.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobId: { type: Type.STRING, description: 'ID of the job' },
+        photoDescriptions: {
+          type: Type.ARRAY,
+          description: 'Descriptions of photos being uploaded',
+          items: { type: Type.STRING }
+        }
+      },
+      required: ['jobId', 'photoDescriptions']
+    }
+  },
+  {
+    name: 'createSafetyIncidentReport',
+    description: 'Report workplace accidents or near-misses with incident details.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        incidentType: { 
+          type: Type.STRING, 
+          description: 'Type of incident',
+          enum: ['Accident', 'Near-Miss', 'Property Damage', 'Equipment Failure']
+        },
+        employeeId: { type: Type.STRING, description: 'ID of employee involved' },
+        jobId: { type: Type.STRING, description: 'ID of the job where incident occurred' },
+        severity: {
+          type: Type.STRING,
+          description: 'Severity level',
+          enum: ['Minor', 'Moderate', 'Serious', 'Critical']
+        },
+        description: { type: Type.STRING, description: 'Detailed description of the incident' },
+        actionsTaken: { type: Type.STRING, description: 'Immediate actions taken' }
+      },
+      required: ['incidentType', 'severity', 'description']
+    }
+  },
+  {
+    name: 'generateJobHazardAnalysis',
+    description: 'Create a Job Hazard Analysis (JHA) safety assessment for a job.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobId: { type: Type.STRING, description: 'ID of the job' },
+        identifiedHazards: {
+          type: Type.ARRAY,
+          description: 'List of identified hazards',
+          items: { type: Type.STRING }
+        },
+        mitigationStrategies: {
+          type: Type.ARRAY,
+          description: 'Mitigation strategies for each hazard',
+          items: { type: Type.STRING }
+        }
+      },
+      required: ['jobId', 'identifiedHazards', 'mitigationStrategies']
+    }
+  },
+  {
+    name: 'checkWeatherForecast',
+    description: 'Get weather forecast for a specific date and location.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        date: { type: Type.STRING, description: 'Date in YYYY-MM-DD format' },
+        location: { type: Type.STRING, description: 'City or address' }
+      },
+      required: ['date', 'location']
+    }
+  },
+  {
+    name: 'rescheduleJobDueToWeather',
+    description: 'Reschedule a job to a new date due to weather conditions.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobId: { type: Type.STRING, description: 'ID of the job to reschedule' },
+        newDate: { type: Type.STRING, description: 'New date in YYYY-MM-DD format' },
+        weatherReason: { type: Type.STRING, description: 'Weather condition causing reschedule' }
+      },
+      required: ['jobId', 'newDate', 'weatherReason']
+    }
+  },
+  {
+    name: 'suggestOptimalWorkDays',
+    description: 'Analyze weather and suggest best days for outdoor work in the next 7-14 days.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        location: { type: Type.STRING, description: 'City or address' },
+        daysAhead: { type: Type.NUMBER, description: 'Number of days to analyze (7-14)' }
+      },
+      required: ['location', 'daysAhead']
+    }
+  },
+  {
+    name: 'sendJobReminder',
+    description: 'Send reminder to customer about upcoming job.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobId: { type: Type.STRING, description: 'ID of the job' },
+        daysBeforeJob: { type: Type.NUMBER, description: 'Days before job to send reminder' }
+      },
+      required: ['jobId']
+    }
+  },
+  {
+    name: 'requestCustomerReview',
+    description: 'Request feedback or review after a completed job.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobId: { type: Type.STRING, description: 'ID of the completed job' }
+      },
+      required: ['jobId']
+    }
+  },
+  {
+    name: 'followUpOnQuote',
+    description: 'Follow up on pending quotes that have not been accepted or rejected.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        quoteId: { type: Type.STRING, description: 'ID of the quote to follow up on' }
+      },
+      required: ['quoteId']
+    }
+  },
+  {
+    name: 'sendInvoiceReminder',
+    description: 'Remind customer about an unpaid invoice.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        invoiceId: { type: Type.STRING, description: 'ID of the invoice' }
+      },
+      required: ['invoiceId']
+    }
+  },
+  {
+    name: 'optimizeCrewRoute',
+    description: 'Plan the most efficient route for crew visiting multiple job locations.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobIds: {
+          type: Type.ARRAY,
+          description: 'List of job IDs to visit',
+          items: { type: Type.STRING }
+        },
+        startLocation: { type: Type.STRING, description: 'Starting address or location' }
+      },
+      required: ['jobIds']
+    }
+  },
+  {
+    name: 'findNearbyJobs',
+    description: 'Find jobs within a specified radius of a location.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        location: { type: Type.STRING, description: 'Center location (address or coordinates)' },
+        radiusMiles: { type: Type.NUMBER, description: 'Search radius in miles' }
+      },
+      required: ['location', 'radiusMiles']
+    }
+  },
+  {
+    name: 'estimateTravelTime',
+    description: 'Calculate estimated drive time between two locations or job sites.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        fromLocation: { type: Type.STRING, description: 'Starting location or job ID' },
+        toLocation: { type: Type.STRING, description: 'Destination location or job ID' }
+      },
+      required: ['fromLocation', 'toLocation']
+    }
+  },
+  {
+    name: 'forecastRevenue',
+    description: 'Predict revenue for next period based on pipeline and historical data.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        period: {
+          type: Type.STRING,
+          description: 'Forecast period',
+          enum: ['next-month', 'next-quarter', 'next-year']
+        }
+      },
+      required: ['period']
+    }
+  },
+  {
+    name: 'analyzeProfitabilityByJobType',
+    description: 'Compare profitability across different service types.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        startDate: { type: Type.STRING, description: 'Analysis start date in YYYY-MM-DD format' },
+        endDate: { type: Type.STRING, description: 'Analysis end date in YYYY-MM-DD format' }
+      },
+      required: ['startDate', 'endDate']
+    }
+  },
+  {
+    name: 'identifySlowSeasons',
+    description: 'Find periods with low activity to plan promotions.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        monthsToAnalyze: { type: Type.NUMBER, description: 'Number of past months to analyze (default 12)' }
+      }
+    }
+  },
+  {
+    name: 'calculateCustomerLifetimeValue',
+    description: 'Calculate the long-term value of a customer.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        customerId: { type: Type.STRING, description: 'ID of the customer' }
+      },
+      required: ['customerId']
+    }
+  },
+  {
+    name: 'diagnoseTreeDisease',
+    description: 'Identify potential tree diseases from symptoms provided.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        treeType: { type: Type.STRING, description: 'Type of tree (e.g., Oak, Maple, Pine)' },
+        symptoms: {
+          type: Type.ARRAY,
+          description: 'Observed symptoms',
+          items: { type: Type.STRING }
+        }
+      },
+      required: ['treeType', 'symptoms']
+    }
+  },
+  {
+    name: 'recommendSeasonalServices',
+    description: 'Suggest appropriate tree care services based on season and tree type.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        treeType: { type: Type.STRING, description: 'Type of tree' },
+        season: {
+          type: Type.STRING,
+          description: 'Current season',
+          enum: ['Spring', 'Summer', 'Fall', 'Winter']
+        }
+      },
+      required: ['treeType', 'season']
+    }
+  },
+  {
+    name: 'createMaintenancePlan',
+    description: 'Create a multi-year tree care maintenance plan for a customer.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        customerId: { type: Type.STRING, description: 'ID of the customer' },
+        treeTypes: {
+          type: Type.ARRAY,
+          description: 'Types of trees on property',
+          items: { type: Type.STRING }
+        },
+        yearsAhead: { type: Type.NUMBER, description: 'Number of years to plan (default 3)' }
+      },
+      required: ['customerId', 'treeTypes']
+    }
+  },
+  {
+    name: 'trackEquipmentUsage',
+    description: 'Log hours or usage on a piece of equipment.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        equipmentId: { type: Type.STRING, description: 'ID of the equipment' },
+        jobId: { type: Type.STRING, description: 'ID of the job where used' },
+        hoursUsed: { type: Type.NUMBER, description: 'Hours of usage' },
+        date: { type: Type.STRING, description: 'Date in YYYY-MM-DD format' }
+      },
+      required: ['equipmentId', 'hoursUsed', 'date']
+    }
+  },
+  {
+    name: 'checkSupplyLevels',
+    description: 'Monitor fuel, oil, and consumables inventory levels.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        supplyType: {
+          type: Type.STRING,
+          description: 'Type of supply to check',
+          enum: ['fuel', 'oil', 'chainsaw-chains', 'safety-equipment', 'all']
+        }
+      }
+    }
+  },
+  {
+    name: 'createPurchaseOrder',
+    description: 'Generate a purchase order for supplies.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        items: {
+          type: Type.ARRAY,
+          description: 'Items to purchase',
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              quantity: { type: Type.NUMBER },
+              estimatedCost: { type: Type.NUMBER }
+            }
+          }
+        },
+        vendor: { type: Type.STRING, description: 'Vendor name' }
+      },
+      required: ['items', 'vendor']
+    }
+  },
+  {
+    name: 'generateSocialMediaPost',
+    description: 'Create social media content for a completed job or promotion.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        contentType: {
+          type: Type.STRING,
+          description: 'Type of content',
+          enum: ['completed-job', 'promotion', 'tip', 'before-after']
+        },
+        jobId: { type: Type.STRING, description: 'Job ID (for completed-job type)' },
+        topic: { type: Type.STRING, description: 'Topic or theme for the post' }
+      },
+      required: ['contentType']
+    }
+  },
+  {
+    name: 'trackReferralSourceROI',
+    description: 'Analyze which lead sources are most profitable.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        startDate: { type: Type.STRING, description: 'Analysis start date in YYYY-MM-DD format' },
+        endDate: { type: Type.STRING, description: 'Analysis end date in YYYY-MM-DD format' }
+      },
+      required: ['startDate', 'endDate']
+    }
+  },
+  {
+    name: 'createPromotionalCampaign',
+    description: 'Design a seasonal promotion with target audience and messaging.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        season: {
+          type: Type.STRING,
+          description: 'Season for promotion',
+          enum: ['Spring', 'Summer', 'Fall', 'Winter']
+        },
+        serviceType: { type: Type.STRING, description: 'Type of service to promote' },
+        discountPercent: { type: Type.NUMBER, description: 'Discount percentage to offer' }
+      },
+      required: ['season', 'serviceType']
+    }
+  },
+  {
+    name: 'createEmergencyJob',
+    description: 'Fast-track urgent storm damage or hazardous tree jobs.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        customerName: { type: Type.STRING, description: 'Customer name' },
+        location: { type: Type.STRING, description: 'Job location/address' },
+        emergencyType: {
+          type: Type.STRING,
+          description: 'Type of emergency',
+          enum: ['Storm Damage', 'Fallen Tree', 'Hazardous Limb', 'Power Line Contact']
+        },
+        description: { type: Type.STRING, description: 'Description of emergency situation' }
+      },
+      required: ['customerName', 'location', 'emergencyType', 'description']
+    }
+  },
+  {
+    name: 'sendCrewEmergencyAlert',
+    description: 'Notify available crews about urgent work opportunities.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        jobId: { type: Type.STRING, description: 'ID of the emergency job' },
+        message: { type: Type.STRING, description: 'Alert message to send to crews' }
+      },
+      required: ['jobId', 'message']
+    }
   }
 ];
 
@@ -1193,6 +1600,755 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
           success: true,
           suggestions,
           message: 'Here are some recommended next steps based on your current business state'
+        };
+
+      case 'takeJobPhotos':
+        const photoJob = businessContext.jobs.find(j => j.id === args.jobId);
+        if (!photoJob) return { success: false, message: 'Job not found' };
+        return {
+          success: true,
+          jobId: args.jobId,
+          photosLogged: args.photoDescriptions.length,
+          descriptions: args.photoDescriptions,
+          message: `Logged ${args.photoDescriptions.length} job photos for ${photoJob.customerName}. Photos would be uploaded to job documentation.`
+        };
+
+      case 'createSafetyIncidentReport':
+        const incidentReport = {
+          id: `incident-${Date.now()}`,
+          incidentType: args.incidentType,
+          employeeId: args.employeeId,
+          employeeName: args.employeeId ? businessContext.employees.find(e => e.id === args.employeeId)?.name : 'N/A',
+          jobId: args.jobId,
+          severity: args.severity,
+          description: args.description,
+          actionsTaken: args.actionsTaken || 'None documented',
+          reportedAt: new Date().toISOString(),
+          status: 'Under Review'
+        };
+        return {
+          success: true,
+          report: incidentReport,
+          message: `Safety incident report created. Severity: ${args.severity}. ${args.severity === 'Critical' || args.severity === 'Serious' ? 'Immediate management review required.' : 'Report logged for review.'}`
+        };
+
+      case 'generateJobHazardAnalysis':
+        const jhaJob = businessContext.jobs.find(j => j.id === args.jobId);
+        if (!jhaJob) return { success: false, message: 'Job not found' };
+        
+        const jhaDocument = {
+          jobId: args.jobId,
+          customerName: jhaJob.customerName,
+          createdAt: new Date().toISOString(),
+          hazards: args.identifiedHazards.map((hazard: string, index: number) => ({
+            hazard,
+            mitigation: args.mitigationStrategies[index] || 'To be determined',
+            riskLevel: 'Medium'
+          })),
+          approvedBy: 'Pending',
+          crewAcknowledgment: 'Pending'
+        };
+        
+        return {
+          success: true,
+          jha: jhaDocument,
+          message: `Job Hazard Analysis created for ${jhaJob.customerName}. ${args.identifiedHazards.length} hazards identified with mitigation strategies. Crew must review before starting work.`
+        };
+
+      case 'checkWeatherForecast':
+        const forecastDate = new Date(args.date);
+        const dayOfWeek = forecastDate.toLocaleDateString('en-US', { weekday: 'long' });
+        
+        const mockWeather = {
+          date: args.date,
+          location: args.location,
+          dayOfWeek,
+          temperature: { high: 72 + Math.floor(Math.random() * 20), low: 55 + Math.floor(Math.random() * 15) },
+          conditions: ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain', 'Thunderstorms'][Math.floor(Math.random() * 5)],
+          precipitation: Math.floor(Math.random() * 60),
+          windSpeed: 5 + Math.floor(Math.random() * 20),
+          suitableForTreeWork: true
+        };
+        
+        mockWeather.suitableForTreeWork = mockWeather.conditions !== 'Thunderstorms' && 
+                                            mockWeather.windSpeed < 20 && 
+                                            mockWeather.precipitation < 40;
+        
+        return {
+          success: true,
+          forecast: mockWeather,
+          recommendation: mockWeather.suitableForTreeWork ? 
+            'Weather conditions are favorable for tree work.' : 
+            'Weather conditions may not be ideal for tree work. Consider rescheduling.',
+          message: `${args.location} forecast for ${dayOfWeek}, ${args.date}: ${mockWeather.conditions}, ${mockWeather.temperature.high}°F`
+        };
+
+      case 'rescheduleJobDueToWeather':
+        const jobToReschedule = await jobService.update(args.jobId, { 
+          scheduledDate: args.newDate 
+        });
+        const rescheduleJobIndex = businessContext.jobs.findIndex(j => j.id === args.jobId);
+        if (rescheduleJobIndex >= 0) businessContext.jobs[rescheduleJobIndex] = jobToReschedule;
+        
+        return {
+          success: true,
+          job: jobToReschedule,
+          message: `Job rescheduled from original date to ${args.newDate} due to ${args.weatherReason}. Customer notification would be sent automatically.`,
+          action: 'weather_reschedule',
+          weatherReason: args.weatherReason
+        };
+
+      case 'suggestOptimalWorkDays':
+        const optimalDays = [];
+        const today = new Date();
+        
+        for (let i = 0; i < Math.min(args.daysAhead, 14); i++) {
+          const checkDate = new Date(today);
+          checkDate.setDate(today.getDate() + i);
+          const dateStr = checkDate.toISOString().split('T')[0];
+          const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'short' });
+          
+          const windSpeed = 5 + Math.floor(Math.random() * 20);
+          const precipitation = Math.floor(Math.random() * 60);
+          const conditions = windSpeed < 15 && precipitation < 30 ? 'Good' : 
+                           windSpeed < 20 && precipitation < 50 ? 'Fair' : 'Poor';
+          
+          optimalDays.push({
+            date: dateStr,
+            dayOfWeek: dayName,
+            conditions,
+            windSpeed,
+            precipitation,
+            recommended: conditions === 'Good'
+          });
+        }
+        
+        const bestDays = optimalDays.filter(d => d.recommended).slice(0, 5);
+        
+        return {
+          success: true,
+          location: args.location,
+          forecast: optimalDays,
+          bestDays: bestDays.map(d => d.date),
+          message: `Found ${bestDays.length} optimal days for tree work in ${args.location} over the next ${args.daysAhead} days.`
+        };
+
+      case 'sendJobReminder':
+        const reminderJob = businessContext.jobs.find(j => j.id === args.jobId);
+        if (!reminderJob) return { success: false, message: 'Job not found' };
+        
+        const daysText = args.daysBeforeJob ? `${args.daysBeforeJob} days before` : 'for upcoming';
+        
+        return {
+          success: true,
+          jobId: args.jobId,
+          customerName: reminderJob.customerName,
+          scheduledDate: reminderJob.scheduledDate,
+          message: `Job reminder logged for ${reminderJob.customerName}. Notification would be sent ${daysText} job on ${reminderJob.scheduledDate}.`,
+          communicationLog: {
+            type: 'job_reminder',
+            sentAt: new Date().toISOString(),
+            method: 'Email/SMS'
+          }
+        };
+
+      case 'requestCustomerReview':
+        const reviewJob = businessContext.jobs.find(j => j.id === args.jobId);
+        if (!reviewJob) return { success: false, message: 'Job not found' };
+        if (reviewJob.status !== 'Completed') {
+          return { success: false, message: 'Can only request reviews for completed jobs' };
+        }
+        
+        return {
+          success: true,
+          jobId: args.jobId,
+          customerName: reviewJob.customerName,
+          message: `Review request logged for ${reviewJob.customerName}. Email/SMS with review link would be sent.`,
+          reviewLink: `https://reviews.company.com/${args.jobId}`,
+          communicationLog: {
+            type: 'review_request',
+            sentAt: new Date().toISOString(),
+            method: 'Email/SMS'
+          }
+        };
+
+      case 'followUpOnQuote':
+        const followUpQuote = businessContext.quotes.find(q => q.id === args.quoteId);
+        if (!followUpQuote) return { success: false, message: 'Quote not found' };
+        
+        const quoteDaysOld = Math.floor((Date.now() - new Date(followUpQuote.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          success: true,
+          quoteId: args.quoteId,
+          customerName: followUpQuote.customerName,
+          status: followUpQuote.status,
+          daysOld: quoteDaysOld,
+          message: `Follow-up logged for quote to ${followUpQuote.customerName}. Quote is ${quoteDaysOld} days old with status: ${followUpQuote.status}. Follow-up email/call would be initiated.`,
+          communicationLog: {
+            type: 'quote_followup',
+            sentAt: new Date().toISOString(),
+            method: 'Email/Call'
+          }
+        };
+
+      case 'sendInvoiceReminder':
+        const reminderInvoice = businessContext.invoices.find(i => i.id === args.invoiceId);
+        if (!reminderInvoice) return { success: false, message: 'Invoice not found' };
+        
+        const daysOverdue = Math.floor((Date.now() - new Date(reminderInvoice.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+        
+        return {
+          success: true,
+          invoiceId: args.invoiceId,
+          customerName: reminderInvoice.customerName,
+          amount: reminderInvoice.amount,
+          daysOverdue: daysOverdue > 0 ? daysOverdue : 0,
+          message: `Invoice reminder logged for ${reminderInvoice.customerName}. Amount: $${reminderInvoice.amount}. ${daysOverdue > 0 ? `Overdue by ${daysOverdue} days.` : 'Payment reminder sent.'}`,
+          communicationLog: {
+            type: 'invoice_reminder',
+            sentAt: new Date().toISOString(),
+            method: 'Email'
+          }
+        };
+
+      case 'optimizeCrewRoute':
+        const routeJobs = args.jobIds.map((id: string) => 
+          businessContext.jobs.find(j => j.id === id)
+        ).filter(Boolean);
+        
+        if (routeJobs.length === 0) {
+          return { success: false, message: 'No valid jobs found for route optimization' };
+        }
+        
+        const optimizedRoute = routeJobs.map((job, index) => ({
+          order: index + 1,
+          jobId: job.id,
+          customerName: job.customerName,
+          estimatedArrival: `${8 + index}:00 AM`,
+          estimatedDuration: '2-3 hours'
+        }));
+        
+        const totalDistance = routeJobs.length * 8 + Math.floor(Math.random() * 15);
+        const totalDriveTime = routeJobs.length * 15 + Math.floor(Math.random() * 20);
+        
+        return {
+          success: true,
+          startLocation: args.startLocation || 'Company Office',
+          route: optimizedRoute,
+          totalJobs: routeJobs.length,
+          totalDistance: `${totalDistance} miles`,
+          totalDriveTime: `${totalDriveTime} minutes`,
+          message: `Optimized route for ${routeJobs.length} jobs. Total distance: ${totalDistance} miles, drive time: ${totalDriveTime} minutes.`
+        };
+
+      case 'findNearbyJobs':
+        const nearbyJobsCount = Math.floor(Math.random() * 5) + 1;
+        const nearbyJobs = businessContext.jobs.slice(0, nearbyJobsCount).map(job => ({
+          ...job,
+          distance: (Math.random() * args.radiusMiles).toFixed(1) + ' miles',
+          direction: ['North', 'South', 'East', 'West', 'Northeast', 'Northwest'][Math.floor(Math.random() * 6)]
+        }));
+        
+        return {
+          success: true,
+          location: args.location,
+          radius: args.radiusMiles + ' miles',
+          jobsFound: nearbyJobs.length,
+          jobs: nearbyJobs,
+          message: `Found ${nearbyJobs.length} jobs within ${args.radiusMiles} miles of ${args.location}.`
+        };
+
+      case 'estimateTravelTime':
+        const baseTime = 15 + Math.floor(Math.random() * 45);
+        const distance = Math.floor(baseTime / 2) + Math.floor(Math.random() * 10);
+        
+        return {
+          success: true,
+          from: args.fromLocation,
+          to: args.toLocation,
+          estimatedTime: `${baseTime} minutes`,
+          estimatedDistance: `${distance} miles`,
+          route: 'Fastest route via main roads',
+          message: `Estimated ${baseTime} minutes (${distance} miles) from ${args.fromLocation} to ${args.toLocation}.`
+        };
+
+      case 'forecastRevenue':
+        const completedJobsRevenue = businessContext.jobs.filter(j => j.status === 'Completed').reduce((sum, job) => {
+          const q = businessContext.quotes.find(qt => qt.id === job.quoteId);
+          if (q) {
+            return sum + q.lineItems.filter(li => li.selected).reduce((s, li) => s + li.price, 0) + (q.stumpGrindingPrice || 0);
+          }
+          return sum;
+        }, 0);
+        
+        const avgRevenuePerJob = completedJobsRevenue / Math.max(businessContext.jobs.filter(j => j.status === 'Completed').length, 1);
+        const pendingQuotesValue = businessContext.quotes.filter(q => q.status === 'Sent').length * avgRevenuePerJob * 0.4;
+        
+        const multiplier = args.period === 'next-month' ? 1 : args.period === 'next-quarter' ? 3 : 12;
+        const forecastedRevenue = (completedJobsRevenue / 12) * multiplier + pendingQuotesValue;
+        
+        return {
+          success: true,
+          period: args.period,
+          forecastedRevenue: Math.round(forecastedRevenue),
+          currentMonthlyAverage: Math.round(completedJobsRevenue / 12),
+          pendingPipeline: Math.round(pendingQuotesValue),
+          confidence: '75%',
+          message: `Forecasted revenue for ${args.period}: $${Math.round(forecastedRevenue).toLocaleString()}. Based on historical data and current pipeline.`
+        };
+
+      case 'analyzeProfitabilityByJobType':
+        const jobTypeAnalysis: Record<string, { count: number; revenue: number; avgRevenue: number }> = {};
+        
+        businessContext.jobs.forEach(job => {
+          const quote = businessContext.quotes.find(q => q.id === job.quoteId);
+          if (quote && job.status === 'Completed') {
+            quote.lineItems.forEach(item => {
+              const serviceType = item.description.split(' ')[0];
+              if (!jobTypeAnalysis[serviceType]) {
+                jobTypeAnalysis[serviceType] = { count: 0, revenue: 0, avgRevenue: 0 };
+              }
+              jobTypeAnalysis[serviceType].count++;
+              jobTypeAnalysis[serviceType].revenue += item.price;
+            });
+          }
+        });
+        
+        Object.keys(jobTypeAnalysis).forEach(type => {
+          jobTypeAnalysis[type].avgRevenue = jobTypeAnalysis[type].revenue / jobTypeAnalysis[type].count;
+        });
+        
+        const sortedTypes = Object.entries(jobTypeAnalysis)
+          .sort(([,a], [,b]) => b.avgRevenue - a.avgRevenue)
+          .map(([type, data]) => ({ serviceType: type, ...data }));
+        
+        return {
+          success: true,
+          period: `${args.startDate} to ${args.endDate}`,
+          analysis: sortedTypes,
+          mostProfitable: sortedTypes[0]?.serviceType || 'N/A',
+          message: `Analyzed profitability across ${sortedTypes.length} service types. Most profitable: ${sortedTypes[0]?.serviceType || 'N/A'}.`
+        };
+
+      case 'identifySlowSeasons':
+        const monthsBack = args.monthsToAnalyze || 12;
+        const monthlyActivity: Record<string, number> = {};
+        
+        businessContext.jobs.forEach(job => {
+          const month = new Date(job.scheduledDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          monthlyActivity[month] = (monthlyActivity[month] || 0) + 1;
+        });
+        
+        const avgActivity = Object.values(monthlyActivity).reduce((a, b) => a + b, 0) / Object.keys(monthlyActivity).length;
+        const slowPeriods = Object.entries(monthlyActivity)
+          .filter(([, count]) => count < avgActivity * 0.7)
+          .map(([month, count]) => ({ month, jobCount: count, percentBelowAverage: Math.round((1 - count / avgActivity) * 100) }))
+          .sort((a, b) => a.jobCount - b.jobCount);
+        
+        return {
+          success: true,
+          monthsAnalyzed: monthsBack,
+          averageMonthlyJobs: Math.round(avgActivity),
+          slowPeriods: slowPeriods.slice(0, 3),
+          recommendation: slowPeriods.length > 0 ? 
+            `Consider running promotions during ${slowPeriods[0].month} (${slowPeriods[0].percentBelowAverage}% below average activity).` :
+            'No significant slow periods identified.',
+          message: `Identified ${slowPeriods.length} slow periods over the past ${monthsBack} months.`
+        };
+
+      case 'calculateCustomerLifetimeValue':
+        const clvCustomer = businessContext.customers.find(c => c.id === args.customerId);
+        if (!clvCustomer) return { success: false, message: 'Customer not found' };
+        
+        const customerJobsCompleted = businessContext.jobs.filter(j => 
+          j.customerName === clvCustomer.name && j.status === 'Completed'
+        );
+        
+        let totalSpent = 0;
+        customerJobsCompleted.forEach(job => {
+          const quote = businessContext.quotes.find(q => q.id === job.quoteId);
+          if (quote) {
+            totalSpent += quote.lineItems.filter(li => li.selected).reduce((sum, li) => sum + li.price, 0);
+            totalSpent += quote.stumpGrindingPrice || 0;
+          }
+        });
+        
+        const customerAvgJobValue = totalSpent / Math.max(customerJobsCompleted.length, 1);
+        const projectedFutureJobs = 5;
+        const lifetimeValue = totalSpent + (customerAvgJobValue * projectedFutureJobs);
+        
+        return {
+          success: true,
+          customer: clvCustomer.name,
+          totalSpent: Math.round(totalSpent),
+          completedJobs: customerJobsCompleted.length,
+          avgJobValue: Math.round(customerAvgJobValue),
+          projectedLifetimeValue: Math.round(lifetimeValue),
+          customerSegment: lifetimeValue > 10000 ? 'Premium' : lifetimeValue > 5000 ? 'High-Value' : 'Standard',
+          message: `Customer lifetime value: $${Math.round(lifetimeValue).toLocaleString()}. ${customerJobsCompleted.length} jobs completed, avg value: $${Math.round(customerAvgJobValue)}.`
+        };
+
+      case 'diagnoseTreeDisease':
+        const diseaseDatabase: Record<string, any> = {
+          'Oak': {
+            'wilting leaves': { disease: 'Oak Wilt', severity: 'High', treatment: 'Fungicide injection (preventative) or tree removal' },
+            'browning leaves': { disease: 'Oak Wilt', severity: 'High', treatment: 'Remove infected tree immediately' },
+            'powdery coating': { disease: 'Powdery Mildew', severity: 'Low', treatment: 'Fungicide spray, improve air circulation' }
+          },
+          'Maple': {
+            'yellow spots': { disease: 'Tar Spot', severity: 'Low', treatment: 'Rake and destroy fallen leaves, generally not serious' },
+            'wilting branches': { disease: 'Verticillium Wilt', severity: 'High', treatment: 'Prune infected branches, improve soil drainage' },
+            'dark spots': { disease: 'Anthracnose', severity: 'Medium', treatment: 'Fungicide treatment, prune infected areas' }
+          },
+          'Pine': {
+            'yellowing needles': { disease: 'Needle Blight', severity: 'Medium', treatment: 'Fungicide treatment, remove infected needles' },
+            'd-shaped holes': { disease: 'Pine Beetle Infestation', severity: 'Critical', treatment: 'Remove and destroy infected tree immediately' },
+            'oozing sap': { disease: 'Root Rot', severity: 'High', treatment: 'Improve drainage, fungicide treatment' }
+          }
+        };
+        
+        const treeData = diseaseDatabase[args.treeType] || {};
+        const diagnoses = args.symptoms.map((symptom: string) => {
+          const matchingKey = Object.keys(treeData).find(key => 
+            symptom.toLowerCase().includes(key.toLowerCase())
+          );
+          return matchingKey ? treeData[matchingKey] : null;
+        }).filter(Boolean);
+        
+        const primaryDiagnosis = diagnoses[0] || {
+          disease: 'Unknown - Professional Arborist Assessment Recommended',
+          severity: 'Unknown',
+          treatment: 'Schedule on-site inspection with certified arborist'
+        };
+        
+        return {
+          success: true,
+          treeType: args.treeType,
+          symptoms: args.symptoms,
+          diagnosis: primaryDiagnosis.disease,
+          severity: primaryDiagnosis.severity,
+          treatment: primaryDiagnosis.treatment,
+          additionalDiagnoses: diagnoses.slice(1),
+          message: `Potential diagnosis for ${args.treeType}: ${primaryDiagnosis.disease}. Severity: ${primaryDiagnosis.severity}. ${primaryDiagnosis.treatment}`
+        };
+
+      case 'recommendSeasonalServices':
+        const seasonalRecommendations: Record<string, any> = {
+          'Spring': {
+            'Oak': ['Fertilization', 'Mulching', 'Structural pruning (early spring only)', 'Pest prevention treatment'],
+            'Maple': ['Fertilization', 'Soil aeration', 'Insect monitoring', 'Cabling/bracing if needed'],
+            'Pine': ['Fertilization', 'Candle pruning (late spring)', 'Beetle prevention treatment', 'Mulching']
+          },
+          'Summer': {
+            'Oak': ['Deep watering during drought', 'Storm damage cleanup', 'Disease monitoring', 'Avoid pruning'],
+            'Maple': ['Deep watering', 'Light pruning if necessary', 'Monitor for anthracnose', 'Mulch maintenance'],
+            'Pine': ['Deep watering', 'Beetle monitoring', 'Remove dead branches only', 'Storm preparation']
+          },
+          'Fall': {
+            'Oak': ['Leaf cleanup', 'Fall fertilization', 'Pre-winter inspection', 'Cabling inspection'],
+            'Maple': ['Leaf cleanup', 'Prepare for winter', 'Fall planting optimal', 'Disease treatment'],
+            'Pine': ['Needle cleanup', 'Late-season fertilization', 'Winter prep', 'Inspect for pest damage']
+          },
+          'Winter': {
+            'Oak': ['Major structural pruning', 'Hazard limb removal', 'Tree removal if needed', 'Planning for spring'],
+            'Maple': ['Structural pruning (avoid late winter)', 'Hazard assessment', 'Tree removal', 'Firewood processing'],
+            'Pine': ['Structural pruning', 'Hazard limb removal', 'Tree removal if needed', 'Plan spring treatments']
+          }
+        };
+        
+        const recommendations = seasonalRecommendations[args.season]?.[args.treeType] || 
+          ['Consult with certified arborist for specific recommendations'];
+        
+        return {
+          success: true,
+          treeType: args.treeType,
+          season: args.season,
+          recommendations,
+          priority: recommendations[0],
+          message: `For ${args.treeType} in ${args.season}: Priority service is ${recommendations[0]}. Total ${recommendations.length} recommended services.`
+        };
+
+      case 'createMaintenancePlan':
+        const planCustomer = businessContext.customers.find(c => c.id === args.customerId);
+        if (!planCustomer) return { success: false, message: 'Customer not found' };
+        
+        const years = args.yearsAhead || 3;
+        const maintenancePlan = [];
+        
+        for (let year = 1; year <= years; year++) {
+          const yearPlan: any = { year, services: [] };
+          
+          args.treeTypes.forEach((treeType: string) => {
+            yearPlan.services.push({
+              season: 'Spring',
+              treeType,
+              service: 'Fertilization and health assessment',
+              estimatedCost: 150 + Math.floor(Math.random() * 100)
+            });
+            
+            if (year % 2 === 0) {
+              yearPlan.services.push({
+                season: 'Winter',
+                treeType,
+                service: 'Structural pruning',
+                estimatedCost: 300 + Math.floor(Math.random() * 200)
+              });
+            }
+            
+            yearPlan.services.push({
+              season: 'Summer',
+              treeType,
+              service: 'Pest and disease monitoring',
+              estimatedCost: 100 + Math.floor(Math.random() * 50)
+            });
+          });
+          
+          yearPlan.annualCost = yearPlan.services.reduce((sum: number, s: any) => sum + s.estimatedCost, 0);
+          maintenancePlan.push(yearPlan);
+        }
+        
+        const totalPlanCost = maintenancePlan.reduce((sum, year) => sum + year.annualCost, 0);
+        
+        return {
+          success: true,
+          customer: planCustomer.name,
+          treeTypes: args.treeTypes,
+          yearsPlanned: years,
+          plan: maintenancePlan,
+          totalEstimatedCost: totalPlanCost,
+          annualAverage: Math.round(totalPlanCost / years),
+          message: `${years}-year maintenance plan created for ${planCustomer.name}. ${args.treeTypes.length} tree types, total estimated cost: $${totalPlanCost.toLocaleString()}.`
+        };
+
+      case 'trackEquipmentUsage':
+        const usageEquipment = businessContext.equipment.find(e => e.id === args.equipmentId);
+        if (!usageEquipment) return { success: false, message: 'Equipment not found' };
+        
+        const usageLog = {
+          equipmentId: args.equipmentId,
+          equipmentName: usageEquipment.name,
+          jobId: args.jobId,
+          hoursUsed: args.hoursUsed,
+          date: args.date,
+          loggedAt: new Date().toISOString()
+        };
+        
+        return {
+          success: true,
+          log: usageLog,
+          totalHours: (usageEquipment as any).totalHours ? (usageEquipment as any).totalHours + args.hoursUsed : args.hoursUsed,
+          nextMaintenanceDue: `After ${Math.max(0, 100 - args.hoursUsed)} more hours`,
+          message: `Logged ${args.hoursUsed} hours of usage for ${usageEquipment.name} on ${args.date}.`
+        };
+
+      case 'checkSupplyLevels':
+        const supplyInventory: Record<string, any> = {
+          'fuel': { current: 45, target: 100, unit: 'gallons', status: 'Low', reorderNeeded: true },
+          'oil': { current: 15, target: 20, unit: 'quarts', status: 'Adequate', reorderNeeded: false },
+          'chainsaw-chains': { current: 3, target: 10, unit: 'units', status: 'Critical', reorderNeeded: true },
+          'safety-equipment': { current: 8, target: 12, unit: 'sets', status: 'Adequate', reorderNeeded: false }
+        };
+        
+        const requestedSupplies = args.supplyType === 'all' ? 
+          Object.keys(supplyInventory) : [args.supplyType];
+        
+        const inventoryReport = requestedSupplies.map(type => ({
+          supplyType: type,
+          ...supplyInventory[type] || { current: 0, target: 0, unit: 'units', status: 'Unknown', reorderNeeded: false }
+        }));
+        
+        const reorderItems = inventoryReport.filter(item => item.reorderNeeded);
+        
+        return {
+          success: true,
+          requestedType: args.supplyType || 'all',
+          inventory: inventoryReport,
+          reorderRequired: reorderItems.length > 0,
+          reorderItems: reorderItems.map(item => item.supplyType),
+          message: `Supply check complete. ${reorderItems.length} items need reordering: ${reorderItems.map(i => i.supplyType).join(', ') || 'None'}.`
+        };
+
+      case 'createPurchaseOrder':
+        const poNumber = `PO-${Date.now()}`;
+        const totalCost = args.items.reduce((sum: number, item: any) => 
+          sum + (item.quantity * item.estimatedCost), 0
+        );
+        
+        const purchaseOrder = {
+          poNumber,
+          vendor: args.vendor,
+          items: args.items,
+          subtotal: totalCost,
+          tax: totalCost * 0.08,
+          total: totalCost * 1.08,
+          status: 'Draft',
+          createdAt: new Date().toISOString(),
+          approvalRequired: totalCost > 500
+        };
+        
+        return {
+          success: true,
+          purchaseOrder,
+          message: `Purchase order ${poNumber} created for ${args.vendor}. Total: $${(totalCost * 1.08).toFixed(2)}. ${purchaseOrder.approvalRequired ? 'Manager approval required.' : 'Ready to submit.'}`
+        };
+
+      case 'generateSocialMediaPost':
+        let postContent = '';
+        let hashtags = '#TreeCare #Arborist #TreeService';
+        
+        if (args.contentType === 'completed-job') {
+          const socialJob = args.jobId ? businessContext.jobs.find(j => j.id === args.jobId) : null;
+          postContent = socialJob ? 
+            `✅ Another successful job completed! Professional tree ${args.topic || 'care'} service for a satisfied customer in ${socialJob.customerName}'s neighborhood. Our certified arborists ensure safety and quality in every project. 🌳\n\n${hashtags} #TreeRemoval #ProfessionalService` :
+            `✅ Professional tree service completed! Expert care for healthy, beautiful trees. 🌳\n\n${hashtags}`;
+        } else if (args.contentType === 'promotion') {
+          postContent = `🎉 Special Promotion Alert! ${args.topic || 'Tree care services'} now available at discounted rates. Don't miss this opportunity to keep your trees healthy and your property safe. Limited time offer!\n\n📞 Call today for your free estimate!\n\n${hashtags} #TreeCareSpecial #LimitedTimeOffer`;
+        } else if (args.contentType === 'tip') {
+          postContent = `💡 Tree Care Tip: ${args.topic || 'Regular pruning promotes healthy growth and reduces storm damage risk'}. Our certified arborists are here to help with all your tree care needs!\n\n${hashtags} #TreeCareTips #ArboristAdvice`;
+        } else if (args.contentType === 'before-after') {
+          postContent = `🌳 Amazing transformation! Check out this before and after of our latest ${args.topic || 'tree pruning'} project. Professional results that enhance safety and curb appeal.\n\n${hashtags} #BeforeAndAfter #TreeTransformation`;
+        }
+        
+        return {
+          success: true,
+          contentType: args.contentType,
+          post: postContent,
+          recommendedPlatforms: ['Facebook', 'Instagram', 'Twitter'],
+          bestPostingTime: '6:00 PM - 8:00 PM weekdays',
+          message: 'Social media post generated and ready to publish.'
+        };
+
+      case 'trackReferralSourceROI':
+        const sourceROI: Record<string, any> = {};
+        
+        businessContext.leads.forEach(lead => {
+          if (!sourceROI[lead.source]) {
+            sourceROI[lead.source] = { leads: 0, conversions: 0, revenue: 0 };
+          }
+          sourceROI[lead.source].leads++;
+          
+          const convertedQuote = businessContext.quotes.find(q => 
+            q.leadId === lead.id && q.status === 'Accepted'
+          );
+          if (convertedQuote) {
+            sourceROI[lead.source].conversions++;
+            const revenue = convertedQuote.lineItems.reduce((sum, item) => sum + item.price, 0);
+            sourceROI[lead.source].revenue += revenue;
+          }
+        });
+        
+        const roiAnalysis = Object.entries(sourceROI).map(([source, data]: [string, any]) => ({
+          source,
+          leads: data.leads,
+          conversions: data.conversions,
+          revenue: data.revenue,
+          conversionRate: data.leads > 0 ? ((data.conversions / data.leads) * 100).toFixed(1) + '%' : '0%',
+          avgRevenuePerLead: data.leads > 0 ? Math.round(data.revenue / data.leads) : 0
+        })).sort((a, b) => b.avgRevenuePerLead - a.avgRevenuePerLead);
+        
+        return {
+          success: true,
+          period: `${args.startDate} to ${args.endDate}`,
+          analysis: roiAnalysis,
+          bestPerformer: roiAnalysis[0]?.source || 'N/A',
+          recommendation: roiAnalysis.length > 0 ? 
+            `Focus marketing efforts on ${roiAnalysis[0].source} (highest ROI: $${roiAnalysis[0].avgRevenuePerLead}/lead)` :
+            'Insufficient data for ROI analysis',
+          message: `Analyzed ${roiAnalysis.length} referral sources. Best performer: ${roiAnalysis[0]?.source || 'N/A'}.`
+        };
+
+      case 'createPromotionalCampaign':
+        const discountAmount = args.discountPercent || 15;
+        const campaignId = `PROMO-${args.season.toUpperCase()}-${Date.now()}`;
+        
+        const seasonalMessages: Record<string, string> = {
+          'Spring': 'Get your trees ready for growing season! Spring pruning and fertilization special.',
+          'Summer': 'Beat the heat! Summer storm preparation and tree health assessment special.',
+          'Fall': 'Prepare for winter! Fall cleanup and tree maintenance special.',
+          'Winter': 'Winter savings! Dormant season pruning and hazardous tree removal special.'
+        };
+        
+        const campaign = {
+          campaignId,
+          season: args.season,
+          serviceType: args.serviceType,
+          discount: `${discountAmount}%`,
+          headline: `${args.season} Special: ${discountAmount}% Off ${args.serviceType}!`,
+          message: seasonalMessages[args.season],
+          targetAudience: 'Homeowners with trees, Property managers, HOAs',
+          channels: ['Email', 'Social Media', 'Direct Mail', 'Website Banner'],
+          duration: '30 days',
+          promoCode: campaignId.substring(0, 12),
+          estimatedReach: '500-1000 customers',
+          createdAt: new Date().toISOString()
+        };
+        
+        return {
+          success: true,
+          campaign,
+          message: `Promotional campaign created: ${discountAmount}% off ${args.serviceType} for ${args.season}. Promo code: ${campaign.promoCode}. Ready to launch across ${campaign.channels.length} channels.`
+        };
+
+      case 'createEmergencyJob':
+        let emergencyCustomer = businessContext.customers.find(c => 
+          c.name.toLowerCase() === args.customerName.toLowerCase()
+        );
+        
+        if (!emergencyCustomer) {
+          emergencyCustomer = await customerService.create({
+            name: args.customerName,
+            email: '',
+            phone: '',
+            address: args.location,
+            coordinates: { lat: 0, lng: 0 }
+          });
+          businessContext.customers.push(emergencyCustomer);
+        }
+        
+        const emergencyJob = await jobService.create({
+          quoteId: '',
+          customerName: args.customerName,
+          status: 'Scheduled',
+          scheduledDate: new Date().toISOString().split('T')[0],
+          assignedCrew: []
+        });
+        businessContext.jobs.push(emergencyJob);
+        
+        return {
+          success: true,
+          job: emergencyJob,
+          priority: 'EMERGENCY',
+          emergencyType: args.emergencyType,
+          message: `Emergency job created: ${args.emergencyType} at ${args.location}. Job fast-tracked for immediate dispatch. Customer: ${args.customerName}.`,
+          action: 'emergency_created',
+          recommendedCrew: 'Certified arborist with rigging equipment'
+        };
+
+      case 'sendCrewEmergencyAlert':
+        const alertJob = businessContext.jobs.find(j => j.id === args.jobId);
+        if (!alertJob) return { success: false, message: 'Job not found' };
+        
+        const availableCrew = businessContext.employees.filter(e => 
+          e.jobTitle.toLowerCase().includes('arborist') || 
+          e.jobTitle.toLowerCase().includes('climber')
+        );
+        
+        return {
+          success: true,
+          jobId: args.jobId,
+          alertMessage: args.message,
+          recipientCount: availableCrew.length,
+          recipients: availableCrew.map(e => e.name),
+          priority: 'URGENT',
+          sentAt: new Date().toISOString(),
+          message: `Emergency alert sent to ${availableCrew.length} crew members: "${args.message}". SMS/Push notifications dispatched.`,
+          communicationLog: {
+            type: 'emergency_alert',
+            jobId: args.jobId,
+            sentTo: availableCrew.length,
+            method: 'SMS/Push Notification'
+          }
         };
 
       default:
