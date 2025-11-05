@@ -3,6 +3,25 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Sessions table for Replit Auth (REQUIRED)
+CREATE TABLE IF NOT EXISTS sessions (
+    sid VARCHAR PRIMARY KEY,
+    sess JSONB NOT NULL,
+    expire TIMESTAMP NOT NULL
+);
+CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions(expire);
+
+-- Users table for Replit Auth
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    email VARCHAR UNIQUE,
+    first_name VARCHAR,
+    last_name VARCHAR,
+    profile_image_url VARCHAR,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Customers Table
 CREATE TABLE IF NOT EXISTS customers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

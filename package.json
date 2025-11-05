@@ -15,8 +15,15 @@
   },
   "dependencies": {
     "@google/genai": "^1.22.0",
+    "@types/express-session": "^1.18.2",
+    "@types/passport": "^1.0.17",
     "chromadb": "^3.1.0",
     "concurrently": "^9.2.1",
+    "connect-pg-simple": "^10.0.0",
+    "express-session": "^1.18.2",
+    "memoizee": "^0.4.17",
+    "openid-client": "^6.8.1",
+    "passport": "^0.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.3"

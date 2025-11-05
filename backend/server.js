@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
+const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,11 +15,6 @@ app.use(cors());
 app.use(express.json());
 
 const apiRouter = express.Router();
-app.use('/api', apiRouter);
-
-apiRouter.get('/health', (req, res) => {
-  res.status(200).send('TreePro AI Backend is running.');
-});
 
 const handleError = (res, err) => {
   console.error(err);
@@ -1242,22 +1238,51 @@ resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
 });
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Handle SPA routing
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, HOST, async () => {
-  console.log(`Backend server running on http://${HOST}:${PORT}`);
+async function startServer() {
+  await setupAuth(app);
   
-  try {
-    await ragService.initialize();
-    console.log('🤖 RAG Service ready');
-  } catch (error) {
-    console.error('⚠️ RAG Service initialization failed:', error);
-    console.log('💡 Run POST /api/rag/build to build the vector database');
-  }
+  apiRouter.get('/auth/user', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Failed to fetch user' });
+    }
+  });
+
+  apiRouter.get('/health', (req, res) => {
+    res.status(200).send('TreePro AI Backend is running.');
+  });
+
+  app.use('/api', apiRouter);
+  
+  // Serve static files from the 'public' directory
+  app.use(express.static(path.join(__dirname, 'public')));
+
+  // Handle SPA routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+
+  app.listen(PORT, HOST, async () => {
+    console.log(`Backend server running on http://${HOST}:${PORT}`);
+    
+    try {
+      await ragService.initialize();
+      console.log('🤖 RAG Service ready');
+    } catch (error) {
+      console.error('⚠️ RAG Service initialization failed:', error);
+      console.log('💡 Run POST /api/rag/build to build the vector database');
+    }
+  });
+}
+
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
