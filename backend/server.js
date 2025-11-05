@@ -326,6 +326,62 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform estimate_feedback fields
+  if (tableName === 'estimate_feedback') {
+    if (row.quote_id !== undefined) {
+      transformed.quoteId = row.quote_id;
+      delete transformed.quote_id;
+    }
+    if (row.ai_estimate_data !== undefined) {
+      transformed.aiEstimateData = row.ai_estimate_data;
+      delete transformed.ai_estimate_data;
+    }
+    if (row.ai_suggested_price_min !== undefined) {
+      transformed.aiSuggestedPriceMin = (row.ai_suggested_price_min !== null && row.ai_suggested_price_min !== '') ? parseFloat(row.ai_suggested_price_min) : row.ai_suggested_price_min;
+      delete transformed.ai_suggested_price_min;
+    }
+    if (row.ai_suggested_price_max !== undefined) {
+      transformed.aiSuggestedPriceMax = (row.ai_suggested_price_max !== null && row.ai_suggested_price_max !== '') ? parseFloat(row.ai_suggested_price_max) : row.ai_suggested_price_max;
+      delete transformed.ai_suggested_price_max;
+    }
+    if (row.actual_price_quoted !== undefined) {
+      transformed.actualPriceQuoted = (row.actual_price_quoted !== null && row.actual_price_quoted !== '') ? parseFloat(row.actual_price_quoted) : row.actual_price_quoted;
+      delete transformed.actual_price_quoted;
+    }
+    if (row.feedback_rating !== undefined) {
+      transformed.feedbackRating = row.feedback_rating;
+      delete transformed.feedback_rating;
+    }
+    if (row.correction_reasons !== undefined) {
+      transformed.correctionReasons = row.correction_reasons;
+      delete transformed.correction_reasons;
+    }
+    if (row.user_notes !== undefined) {
+      transformed.userNotes = row.user_notes;
+      delete transformed.user_notes;
+    }
+    if (row.tree_species !== undefined) {
+      transformed.treeSpecies = row.tree_species;
+      delete transformed.tree_species;
+    }
+    if (row.tree_height !== undefined) {
+      transformed.treeHeight = (row.tree_height !== null && row.tree_height !== '') ? parseFloat(row.tree_height) : row.tree_height;
+      delete transformed.tree_height;
+    }
+    if (row.trunk_diameter !== undefined) {
+      transformed.trunkDiameter = (row.trunk_diameter !== null && row.trunk_diameter !== '') ? parseFloat(row.trunk_diameter) : row.trunk_diameter;
+      delete transformed.trunk_diameter;
+    }
+    if (row.job_location !== undefined) {
+      transformed.jobLocation = row.job_location;
+      delete transformed.job_location;
+    }
+    if (row.customer_name !== undefined) {
+      transformed.customerName = row.customer_name;
+      delete transformed.customer_name;
+    }
+  }
+  
   // Transform other snake_case fields
   if (row.created_at !== undefined) {
     transformed.createdAt = row.created_at;
@@ -629,6 +685,62 @@ const transformToDb = (data, tableName) => {
     if (data.updatedAt !== undefined) {
       transformed.updated_at = data.updatedAt;
       delete transformed.updatedAt;
+    }
+  }
+  
+  // Transform estimate_feedback fields
+  if (tableName === 'estimate_feedback') {
+    if (data.quoteId !== undefined) {
+      transformed.quote_id = data.quoteId;
+      delete transformed.quoteId;
+    }
+    if (data.aiEstimateData !== undefined) {
+      transformed.ai_estimate_data = data.aiEstimateData;
+      delete transformed.aiEstimateData;
+    }
+    if (data.aiSuggestedPriceMin !== undefined) {
+      transformed.ai_suggested_price_min = data.aiSuggestedPriceMin;
+      delete transformed.aiSuggestedPriceMin;
+    }
+    if (data.aiSuggestedPriceMax !== undefined) {
+      transformed.ai_suggested_price_max = data.aiSuggestedPriceMax;
+      delete transformed.aiSuggestedPriceMax;
+    }
+    if (data.actualPriceQuoted !== undefined) {
+      transformed.actual_price_quoted = data.actualPriceQuoted;
+      delete transformed.actualPriceQuoted;
+    }
+    if (data.feedbackRating !== undefined) {
+      transformed.feedback_rating = data.feedbackRating;
+      delete transformed.feedbackRating;
+    }
+    if (data.correctionReasons !== undefined) {
+      transformed.correction_reasons = data.correctionReasons;
+      delete transformed.correctionReasons;
+    }
+    if (data.userNotes !== undefined) {
+      transformed.user_notes = data.userNotes;
+      delete transformed.userNotes;
+    }
+    if (data.treeSpecies !== undefined) {
+      transformed.tree_species = data.treeSpecies;
+      delete transformed.treeSpecies;
+    }
+    if (data.treeHeight !== undefined) {
+      transformed.tree_height = data.treeHeight;
+      delete transformed.treeHeight;
+    }
+    if (data.trunkDiameter !== undefined) {
+      transformed.trunk_diameter = data.trunkDiameter;
+      delete transformed.trunkDiameter;
+    }
+    if (data.jobLocation !== undefined) {
+      transformed.job_location = data.jobLocation;
+      delete transformed.jobLocation;
+    }
+    if (data.customerName !== undefined) {
+      transformed.customer_name = data.customerName;
+      delete transformed.customerName;
     }
   }
   
@@ -1028,7 +1140,7 @@ apiRouter.get('/rag/stats', async (req, res) => {
   }
 });
 
-const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records'];
+const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
 });

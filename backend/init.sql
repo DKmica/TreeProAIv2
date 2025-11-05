@@ -160,6 +160,26 @@ CREATE TABLE IF NOT EXISTS payroll_records (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Estimate Feedback Table (AI Learning System)
+CREATE TABLE IF NOT EXISTS estimate_feedback (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
+    ai_estimate_data JSONB NOT NULL,
+    ai_suggested_price_min NUMERIC NOT NULL,
+    ai_suggested_price_max NUMERIC NOT NULL,
+    actual_price_quoted NUMERIC,
+    feedback_rating TEXT NOT NULL,
+    correction_reasons JSONB DEFAULT '[]',
+    user_notes TEXT,
+    tree_species TEXT,
+    tree_height NUMERIC,
+    trunk_diameter NUMERIC,
+    hazards JSONB DEFAULT '[]',
+    job_location TEXT,
+    customer_name TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_leads_customer_id ON leads(customer_id);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
@@ -175,6 +195,9 @@ CREATE INDEX IF NOT EXISTS idx_time_entries_job_id ON time_entries(job_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_date ON time_entries(date);
 CREATE INDEX IF NOT EXISTS idx_payroll_records_employee_id ON payroll_records(employee_id);
 CREATE INDEX IF NOT EXISTS idx_payroll_records_pay_period_id ON payroll_records(pay_period_id);
+CREATE INDEX IF NOT EXISTS idx_estimate_feedback_quote_id ON estimate_feedback(quote_id);
+CREATE INDEX IF NOT EXISTS idx_estimate_feedback_rating ON estimate_feedback(feedback_rating);
+CREATE INDEX IF NOT EXISTS idx_estimate_feedback_created_at ON estimate_feedback(created_at);
 
 -- Insert sample data for development
 INSERT INTO customers (id, name, email, phone, address, lat, lon) VALUES

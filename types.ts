@@ -224,6 +224,41 @@ export interface AITreeEstimate {
     estimated_duration_hours: number;
 }
 
+export interface EstimateFeedback {
+    id: string;
+    quoteId?: string;
+    aiEstimateData: AITreeEstimate;
+    aiSuggestedPriceMin: number;
+    aiSuggestedPriceMax: number;
+    actualPriceQuoted?: number;
+    feedbackRating: 'accurate' | 'too_low' | 'too_high';
+    correctionReasons: string[];
+    userNotes?: string;
+    treeSpecies?: string;
+    treeHeight?: number;
+    trunkDiameter?: number;
+    hazards: string[];
+    jobLocation?: string;
+    customerName?: string;
+    createdAt: string;
+}
+
+export interface EstimateFeedbackStats {
+    totalFeedback: number;
+    accurateCount: number;
+    tooLowCount: number;
+    tooHighCount: number;
+    accuracyRate: number;
+    averagePriceDifference: number;
+    commonCorrectionReasons: { reason: string; count: number }[];
+    feedbackByTreeSize: {
+        small: { count: number; avgDifference: number };
+        medium: { count: number; avgDifference: number };
+        large: { count: number; avgDifference: number };
+        extraLarge: { count: number; avgDifference: number };
+    };
+}
+
 export interface UpsellSuggestion {
   service_name: string;
   description: string;
