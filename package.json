@@ -9,15 +9,11 @@
     "dev:backend": "npm run dev --prefix backend",
     "build": "vite build",
     "preview": "vite preview",
-    "verify": "node verify-setup.js",
     "install:all": "pnpm install && cd backend && pnpm install && cd ..",
-    "build:production": "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/"
+    "build:production": "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/",
+    "db:push": "npm run db:push --prefix backend"
   },
   "dependencies": {
-    "@capacitor/android": "^7.4.4",
-    "@capacitor/cli": "^7.4.4",
-    "@capacitor/core": "^7.4.4",
-    "@capacitor/ios": "^7.4.4",
     "@google/genai": "^1.22.0",
     "chromadb": "^3.1.0",
     "concurrently": "^9.2.1",

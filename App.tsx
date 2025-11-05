@@ -77,7 +77,7 @@ const App: React.FC = () => {
         setEquipment(equipmentData);
       } catch (e: any) {
         console.error("❌ Failed to fetch initial data:", e);
-        setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the README.md. Error: ${e.message}`);
+        setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the replit.md documentation. Error: ${e.message}`);
       } finally {
         console.log("⏹️ Fetch complete, setting isLoading to false");
         setIsLoading(false);
@@ -107,7 +107,7 @@ const App: React.FC = () => {
             <div className="text-center max-w-2xl">
                  <h1 className="text-2xl font-bold text-red-800">Connection Error</h1>
                  <p className="mt-4 text-red-700 whitespace-pre-wrap">{error}</p>
-                 <p className="mt-4 text-sm text-brand-gray-600">Please make sure you have followed the instructions in the `README.md` file to start both the frontend and backend servers.</p>
+                 <p className="mt-4 text-sm text-brand-gray-600">Please make sure you have followed the instructions in the `replit.md` file to start both the frontend and backend servers.</p>
             </div>
         </div>
      );
