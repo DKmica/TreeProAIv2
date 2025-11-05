@@ -1,0 +1,30 @@
+(index):64  cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64
+react-dom-client.development.js:28004 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+App.tsx:49 🚀 Starting data fetch from backend...
+App.tsx:49 🚀 Starting data fetch from backend...
+log.js:122  [chrome-extension://jmjjnhpacphpjmnnlnccpfmhkcloaade/content_scripts/nif2_main.js:352:9]: Initialization failed!
+error @ log.js:122
+App.tsx:69 ✅ Data fetched successfully
+App.tsx:81 ⏹️ Fetch complete, setting isLoading to false
+App.tsx:69 ✅ Data fetched successfully
+App.tsx:81 ⏹️ Fetch complete, setting isLoading to false
+useAICore.ts:29 🚀 Initializing AI Core...
+useVoiceRecognition.ts:237 🧹 Cleaning up voice recognition
+useAICore.ts:29 🚀 Initializing AI Core...
+aiCore.ts:1250 ✅ AI Core business data loaded: Object
+aiCore.ts:1273 ✅ AI Core initialized with full business context
+useAICore.ts:39 ✅ AI Core initialized successfully
+js?key=AIzaSyAJ3NuxhCMIXciZXo9V6vvDM96WhpjRzcQ&v=beta&libraries=marker:1033  Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
+hea @ js?key=AIzaSyAJ3NuxhCMIXciZXo9V6vvDM96WhpjRzcQ&v=beta&libraries=marker:1033
+aiCore.ts:1250 ✅ AI Core business data loaded: Object
+aiCore.ts:1273 ✅ AI Core initialized with full business context
+useAICore.ts:39 ✅ AI Core initialized successfully
+js?key=AIzaSyAJ3NuxhCMIXciZXo9V6vvDM96WhpjRzcQ&v=beta&libraries=marker:905  Google Maps JavaScript API error: InvalidKeyMapError
+https://developers.google.com/maps/documentation/javascript/error-messages#invalid-key-map-error
+_.xm @ js?key=AIzaSyAJ3NuxhCMIXciZXo9V6vvDM96WhpjRzcQ&v=beta&libraries=marker:905
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
