@@ -11,7 +11,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return undefined as T;
   }
   
-  return response.json() as Promise<T>;
+  try {
+    return await response.json() as T;
+  } catch (error) {
+    throw new Error(`Failed to parse JSON response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 // Generic fetch function
