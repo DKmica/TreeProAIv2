@@ -6,6 +6,18 @@ const memoize = require('memoizee');
 const connectPg = require('connect-pg-simple');
 const db = require('./db');
 
+const offlineUser = {
+  id: 'offline-user',
+  email: 'owner@treepro.ai',
+  first_name: 'TreePro',
+  last_name: 'Owner',
+  profile_image_url: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+let isOfflineAuth = false;
+
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
@@ -71,12 +83,46 @@ async function upsertUser(claims) {
 }
 
 async function getUser(userId) {
+  if (isOfflineAuth) {
+    return offlineUser.id === userId ? offlineUser : null;
+  }
+
   const query = 'SELECT * FROM users WHERE id = $1';
   const result = await db.query(query, [userId]);
   return result.rows[0];
 }
 
 async function setupAuth(app) {
+  const disableOidc =
+    process.env.DISABLE_OIDC === 'true' ||
+    !process.env.REPL_ID ||
+    !process.env.SESSION_SECRET ||
+    !process.env.DATABASE_URL;
+
+  if (disableOidc) {
+    isOfflineAuth = true;
+
+    app.use((req, _res, next) => {
+      req.user = offlineUser;
+      req.isAuthenticated = () => true;
+      next();
+    });
+
+    app.get('/api/auth/user', (_req, res) => {
+      res.json(offlineUser);
+    });
+
+    app.get('/api/login', (_req, res) => {
+      res.json({ success: true, mode: 'offline' });
+    });
+
+    app.get('/api/logout', (_req, res) => {
+      res.json({ success: true, mode: 'offline' });
+    });
+
+    return;
+  }
+
   app.set('trust proxy', 1);
   app.use(getSession());
   app.use(passport.initialize());
@@ -142,6 +188,10 @@ async function setupAuth(app) {
 }
 
 const isAuthenticated = async (req, res, next) => {
+  if (isOfflineAuth) {
+    return next();
+  }
+
   const user = req.user;
 
   if (!req.isAuthenticated() || !user.expires_at) {
