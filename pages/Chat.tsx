@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { useGeminiChat } from '../hooks/useGeminiChat';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment } from '../types';
+import { useAICore } from '../hooks/useAICore';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ToolIcon from '../components/icons/ToolIcon';
 import FunctionCallIcon from '../components/icons/FunctionCallIcon';
@@ -10,9 +8,7 @@ import MicrophoneIcon from '../components/icons/MicrophoneIcon';
 import BroadcastIcon from '../components/icons/BroadcastIcon';
 
 const ChatPage: React.FC = () => {
-    const appState = useOutletContext<any>();
-    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef, sendMessage } = useGeminiChat({
-        appState: appState,
+    const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef, sendMessage } = useAICore({
         pageContext: "The user is on the dedicated full-screen Chat page. They may ask about any aspect of the application."
     });
 

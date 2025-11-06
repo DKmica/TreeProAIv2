@@ -21,6 +21,52 @@ const handleError = (res, err) => {
   res.status(500).json({ error: 'Internal Server Error', details: err.message });
 };
 
+const scheduleFinancialReminders = () => {
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+
+  const parseDate = (value) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const run = async () => {
+    try {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const { rows: invoices } = await db.query('SELECT * FROM invoices');
+      invoices.forEach(invoice => {
+        const dueDate = parseDate(invoice.due_date);
+        if (!dueDate) return;
+
+        const diffDays = Math.floor((dueDate.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0 || diffDays === 3 || diffDays === -7) {
+          const statusLabel = diffDays === 0 ? 'due today' : diffDays === 3 ? 'due in 3 days' : '7 days overdue';
+          console.log(`📬 [Invoice Reminder] Invoice ${invoice.id} for ${invoice.customer_name} is ${statusLabel}. Amount: $${invoice.amount}.`);
+        }
+      });
+
+      const { rows: quotes } = await db.query("SELECT * FROM quotes WHERE status = 'Sent'");
+      quotes.forEach(quote => {
+        const createdAt = parseDate(quote.created_at);
+        if (!createdAt) return;
+
+        const ageDays = Math.floor((startOfToday.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        if (ageDays >= 14) {
+          console.log(`📧 [Quote Follow-up] Quote ${quote.id} for ${quote.customer_name} has been open for ${ageDays} days. Consider a polite follow-up.`);
+        }
+      });
+    } catch (error) {
+      console.error('Automated reminder check failed:', error);
+    }
+  };
+
+  run();
+  setInterval(run, ONE_DAY);
+};
+
 // Helper function to transform database row to API format
 const transformRow = (row, tableName) => {
   if (!row) return null;
@@ -118,16 +164,24 @@ const transformRow = (row, tableName) => {
       transformed.paymentTerms = row.payment_terms;
       delete transformed.payment_terms;
     }
+    if (row.customer_uploads !== undefined) {
+      transformed.customerUploads = row.customer_uploads;
+      delete transformed.customer_uploads;
+    }
   }
-  
+
   // Transform leads fields
   if (tableName === 'leads') {
     if (row.customer_id !== undefined) {
       transformed.customerId = row.customer_id;
       delete transformed.customer_id;
     }
+    if (row.customer_uploads !== undefined) {
+      transformed.customerUploads = row.customer_uploads;
+      delete transformed.customer_uploads;
+    }
   }
-  
+
   if (tableName === 'jobs') {
     if (row.clock_in_lat !== undefined && row.clock_in_lon !== undefined) {
       transformed.clockInCoordinates = { lat: row.clock_in_lat, lng: row.clock_in_lon };
@@ -183,6 +237,10 @@ const transformRow = (row, tableName) => {
     if (row.estimated_hours !== undefined) {
       transformed.estimatedHours = (row.estimated_hours !== null && row.estimated_hours !== '') ? parseFloat(row.estimated_hours) : row.estimated_hours;
       delete transformed.estimated_hours;
+    }
+    if (row.jha_acknowledged_at !== undefined) {
+      transformed.jhaAcknowledgedAt = row.jha_acknowledged_at;
+      delete transformed.jha_acknowledged_at;
     }
   }
   
@@ -480,16 +538,24 @@ const transformToDb = (data, tableName) => {
       transformed.payment_terms = data.paymentTerms;
       delete transformed.paymentTerms;
     }
+    if (data.customerUploads !== undefined) {
+      transformed.customer_uploads = data.customerUploads;
+      delete transformed.customerUploads;
+    }
   }
-  
+
   // Transform leads fields
   if (tableName === 'leads') {
     if (data.customerId !== undefined) {
       transformed.customer_id = data.customerId;
       delete transformed.customerId;
     }
+    if (data.customerUploads !== undefined) {
+      transformed.customer_uploads = data.customerUploads;
+      delete transformed.customerUploads;
+    }
   }
-  
+
   if (tableName === 'jobs') {
     if (data.clockInCoordinates) {
       transformed.clock_in_lat = data.clockInCoordinates.lat;
@@ -545,6 +611,10 @@ const transformToDb = (data, tableName) => {
     if (data.estimatedHours !== undefined) {
       transformed.estimated_hours = data.estimatedHours;
       delete transformed.estimatedHours;
+    }
+    if (data.jhaAcknowledgedAt !== undefined) {
+      transformed.jha_acknowledged_at = data.jhaAcknowledgedAt;
+      delete transformed.jhaAcknowledgedAt;
     }
   }
   
@@ -1271,7 +1341,7 @@ async function startServer() {
 
   app.listen(PORT, HOST, async () => {
     console.log(`Backend server running on http://${HOST}:${PORT}`);
-    
+
     try {
       await ragService.initialize();
       console.log('🤖 RAG Service ready');
@@ -1279,6 +1349,8 @@ async function startServer() {
       console.error('⚠️ RAG Service initialization failed:', error);
       console.log('💡 Run POST /api/rag/build to build the vector database');
     }
+
+    scheduleFinancialReminders();
   });
 }
 
