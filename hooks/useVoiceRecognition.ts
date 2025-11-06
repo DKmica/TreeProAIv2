@@ -216,16 +216,20 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     recognition.onend = () => {
       console.log(`⏹️ Recognition ended - mode: ${modeRef.current.toUpperCase()}, active: ${isActiveRef.current}`);
       
-      // Auto-restart if still active
-      if (isActiveRef.current && modeRef.current !== 'off') {
-        try {
-          console.log('🔄 Auto-restarting recognition...');
-          recognition.start();
-        } catch (e: any) {
-          if (e.name !== 'InvalidStateError') {
-            console.error('Error restarting recognition:', e);
+      // Auto-restart if still active and not in cleanup
+      if (isActiveRef.current && modeRef.current !== 'off' && recognitionRef.current === recognition) {
+        setTimeout(() => {
+          if (isActiveRef.current && modeRef.current !== 'off' && recognitionRef.current === recognition) {
+            try {
+              console.log('🔄 Auto-restarting recognition...');
+              recognition.start();
+            } catch (e: any) {
+              if (e.name !== 'InvalidStateError') {
+                console.error('Error restarting recognition:', e);
+              }
+            }
           }
-        }
+        }, 100);
       } else {
         console.log('⏸️ Voice recognition stopped');
       }
@@ -236,9 +240,14 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     return () => {
       console.log('🧹 Cleaning up voice recognition');
       isActiveRef.current = false;
+      modeRef.current = 'off';
+      recognitionRef.current = null;
+      
       if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
       }
+      
       try {
         recognition.abort();
       } catch (e) {

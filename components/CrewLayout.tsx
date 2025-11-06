@@ -2,10 +2,10 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import TreeIcon from './icons/TreeIcon';
+import { useAuth } from '../contexts/AuthContext';
 
 const CrewLayout: React.FC = () => {
-  // Simulate a logged-in user for demonstration
-  const currentUser = { name: 'Mike Miller', role: 'Crew Leader' };
+  const { userName, isAuthenticated } = useAuth();
 
   return (
     <div className="bg-brand-gray-100 min-h-screen font-sans">
@@ -17,8 +17,8 @@ const CrewLayout: React.FC = () => {
               <span className="ml-3 text-xl font-bold">TreePro Crew</span>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium">{currentUser.name}</p>
-              <p className="text-xs text-brand-gray-400">{currentUser.role}</p>
+              <p className="text-sm font-medium">{isAuthenticated && userName ? userName : 'Crew Member'}</p>
+              <p className="text-xs text-brand-gray-400">Crew Member</p>
             </div>
           </div>
         </div>

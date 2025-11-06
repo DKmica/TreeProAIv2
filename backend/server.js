@@ -1494,6 +1494,24 @@ async function startServer() {
 
     try {
       await ragService.initialize();
+      console.log('🤖 RAG Service initialized');
+      
+      try {
+        const stats = await vectorStore.getCollectionStats();
+        const totalDocs = Object.values(stats).reduce((sum, count) => sum + count, 0);
+        
+        if (totalDocs === 0) {
+          console.log('📚 Vector database is empty, building from scratch...');
+          await ragService.buildVectorDatabase();
+          console.log('✅ Vector database built successfully on startup');
+        } else {
+          console.log(`📊 Vector database loaded with ${totalDocs} documents`);
+        }
+      } catch (buildError) {
+        console.error('⚠️ Failed to build vector database on startup:', buildError);
+        console.log('💡 You can manually rebuild with POST /api/rag/build');
+      }
+      
       console.log('🤖 RAG Service ready');
     } catch (error) {
       console.error('⚠️ RAG Service initialization failed:', error);

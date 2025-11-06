@@ -2,13 +2,30 @@ import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLo
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API Error: ${response.status} - ${errorText}`);
+    let errorMessage = `${response.status} ${response.statusText}`;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || JSON.stringify(errorData);
+      } else {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+    } catch (e) {
+      console.error('Failed to parse error response:', e);
+    }
+    throw new Error(`API Error: ${response.status} - ${errorMessage}`);
   }
   
   // Handle empty responses (e.g., DELETE operations)
   if (response.status === 204 || response.headers.get('content-length') === '0') {
     return undefined as T;
+  }
+  
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    throw new Error(`Expected JSON response but received ${contentType || 'unknown content type'}`);
   }
   
   try {
