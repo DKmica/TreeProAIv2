@@ -9,7 +9,7 @@ I prefer that the AI assistant prioritizes clear and concise explanations. When 
 ## System Architecture
 
 ### UI/UX Decisions
-The application utilizes a modern, dark theme with a primary color palette of bright cyan (#00c2ff) for accents and highlights, set against a dark navy/gray background (#0a1628 to #102a43). The design incorporates a custom "futuristic AI circuit tree" logo, consistent across the login page, sidebar, and other UI components. All form stylings and active states have been updated to reflect the cyan branding.
+The application utilizes a modern, dark theme with a color palette inspired by the TreePro AI logo. Primary colors include bright cyan (#00c2ff) for main accents and highlights, warm amber/orange (#ffa500 to #ff8c00) for secondary accents and interactive elements, set against a dark navy/gray background (#0a1628 to #102a43). The design incorporates a custom "futuristic AI circuit tree" logo featuring the cyan tree and warm amber cityscape lights, consistent across the login page, sidebar, and other UI components. All form stylings and active states reflect this dual cyan-amber branding scheme.
 
 ### Technical Implementations
 - **Frontend**: Built with React 19, TypeScript, and Vite for a fast development experience. Styling is handled with TailwindCSS v4 via PostCSS (using @tailwindcss/postcss plugin) for production-ready builds. React Router DOM (HashRouter) manages client-side navigation.
