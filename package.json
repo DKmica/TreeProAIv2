@@ -16,6 +16,7 @@
   "dependencies": {
     "@google/genai": "^1.22.0",
     "@types/express-session": "^1.18.2",
+    "@types/memoizee": "^0.4.12",
     "@types/passport": "^1.0.17",
     "chromadb": "^3.1.0",
     "concurrently": "^9.2.1",

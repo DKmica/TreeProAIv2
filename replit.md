@@ -28,7 +28,7 @@ The application utilizes a modern, dark theme with a primary color palette of br
 - **Lead and Job Management**: Comprehensive CRUD operations for customers, leads, quotes, and jobs, with features like lead status tracking, quote conversion to jobs, and crew assignment.
 - **Financial Tools**: Includes revenue tracking, outstanding invoices management, and payroll processing.
 - **Business Analytics**: Provides metrics like lead conversion rates, crew utilization, and upsell opportunity identification.
-- **Authentication**: Owner accounts (`dakoenig4@gmail.com`, `nullgbow@gmail.com` with password `12Tree45`) provide full access.
+- **Authentication**: Replit Auth integration provides enterprise-grade authentication using OpenID Connect (OIDC). Supports multiple login methods: Google, GitHub, X (Twitter), Apple, and email/password. Sessions are stored in PostgreSQL with automatic token refresh. Users are automatically created/updated in the database upon login. Offline development mode available when OIDC is disabled via `DISABLE_OIDC=true`.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services (e.g., `estimateService.ts`, `businessService.ts`, `chatService.ts`, `marketingService.ts`) to promote separation of concerns.
