@@ -3,6 +3,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
@@ -12,9 +15,58 @@ const vectorStore = require('./services/vectorStore');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+const isProduction = process.env.NODE_ENV === 'production';
 
-app.use(cors());
-app.use(express.json());
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Allow flexibility for development; configure properly for production
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Compression middleware
+app.use(compression());
+
+// CORS configuration
+const allowedOrigins = isProduction 
+  ? [
+      process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
+      process.env.PRODUCTION_URL || null,
+    ].filter(Boolean)
+  : ['http://localhost:5000', 'http://127.0.0.1:5000'];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || !isProduction) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.use(express.json({ limit: '10mb' })); // Add limit to prevent large payload attacks
+
+// Rate limiting - adjust as needed for production
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProduction ? 100 : 1000, // limit each IP to 100 requests per windowMs in production
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5, // limit each IP to 5 login attempts per windowMs
+  skipSuccessfulRequests: true,
+  message: 'Too many login attempts, please try again later.',
+});
 
 const apiRouter = express.Router();
 
@@ -1397,6 +1449,11 @@ resources.forEach(resource => {
 });
 
 async function startServer() {
+  // Apply auth rate limiter to login/logout routes
+  app.use('/api/login', authLimiter);
+  app.use('/api/logout', authLimiter);
+  app.use('/api/callback', authLimiter);
+  
   await setupAuth(app);
   
   apiRouter.get('/auth/user', isAuthenticated, async (req, res) => {
@@ -1414,10 +1471,15 @@ async function startServer() {
   });
 
   apiRouter.get('/health', (req, res) => {
-    res.status(200).send('TreePro AI Backend is running.');
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
   });
 
-  app.use('/api', apiRouter);
+  // Apply rate limiter to all API routes
+  app.use('/api', apiLimiter, apiRouter);
   
   // Serve static files from the 'public' directory
   app.use(express.static(path.join(__dirname, 'public')));

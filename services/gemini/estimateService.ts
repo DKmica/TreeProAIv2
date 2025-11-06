@@ -6,10 +6,11 @@ import { estimateFeedbackService } from "../apiService";
 const geminiApiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
 if (!geminiApiKey) {
-    console.error("VITE_GEMINI_API_KEY is not set!");
+    console.error("⚠️ VITE_GEMINI_API_KEY is not set! AI tree estimation features will not work.");
+    throw new Error("Gemini API key is required for tree estimation. Please set VITE_GEMINI_API_KEY in your environment variables.");
 }
 
-const ai = new GoogleGenAI({ apiKey: geminiApiKey as string });
+const ai = new GoogleGenAI({ apiKey: geminiApiKey });
 
 const aiTreeEstimateSchema = {
     type: Type.OBJECT,

@@ -33,8 +33,10 @@ import Payroll from './pages/Payroll';
 import * as api from './services/apiService';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 import { aiCore } from './services/gemini/aiCore';
+import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -48,8 +50,15 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
+    // Only fetch data if user is authenticated
+    if (authLoading || !isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       console.log("🚀 Starting data fetch from backend...");
+      setIsLoading(true);
       try {
         const [
           customersData,
@@ -119,7 +128,7 @@ const App: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [isAuthenticated, authLoading]);
 
   useEffect(() => {
     if (!isAiCoreInitialized) {
@@ -168,7 +177,20 @@ const App: React.FC = () => {
   const appSetters = { setCustomers, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
   const appState = { data: appData, setters: appSetters };
 
-  if (isLoading || !isAiCoreInitialized) {
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-brand-gray-50">
+        <div className="text-center">
+            <SpinnerIcon className="h-12 w-12 text-brand-green-600 mx-auto" />
+            <h1 className="mt-4 text-xl font-semibold text-brand-gray-700">
+              Checking authentication...
+            </h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated && (isLoading || !isAiCoreInitialized)) {
     return (
       <div className="flex items-center justify-center h-screen bg-brand-gray-50">
         <div className="text-center">
