@@ -5,6 +5,7 @@ import SignaturePad from '../../components/SignaturePad';
 import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import PortalMessaging from '../../components/PortalMessaging';
+import * as api from '../../services/apiService';
 
 interface QuotePortalProps {
   quotes: Quote[];
@@ -74,11 +75,21 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
         });
       }
 
+      const newCustomerUploads = [...(quote?.customerUploads || []), ...uploads];
+
       setQuotes(prev => prev.map(q =>
         q.id === quoteId
-          ? { ...q, customerUploads: [...(q.customerUploads || []), ...uploads] }
+          ? { ...q, customerUploads: newCustomerUploads }
           : q
       ));
+
+      try {
+        await api.quoteService.update(quoteId, { customerUploads: newCustomerUploads });
+      } catch (apiError: any) {
+        console.error('Failed to save uploads to backend:', apiError);
+        setUploadError(`Files uploaded to portal, but failed to save: ${apiError.message || 'Unknown error'}`);
+      }
+
       event.target.value = '';
     } catch (error: any) {
       console.error('Failed to upload media', error);

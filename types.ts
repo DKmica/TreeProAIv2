@@ -92,6 +92,8 @@ export interface Job {
   specialInstructions?: string;
   equipmentNeeded?: string[];
   estimatedHours?: number;
+  riskLevel?: 'Low' | 'Medium' | 'High' | 'Critical';
+  jhaRequired?: boolean;
 }
 
 
