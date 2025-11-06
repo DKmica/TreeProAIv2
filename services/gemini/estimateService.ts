@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AITreeEstimate, JobHazardAnalysis } from "../../types";
+import { AITreeEstimate, JobHazardAnalysis, EstimateFeedback } from "../../types";
+import { estimateFeedbackService } from "../apiService";
 
 // Use environment variable injected by Vite
 const geminiApiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
@@ -56,8 +57,60 @@ const aiTreeEstimateSchema = {
     required: ["tree_identification", "health_assessment", "measurements", "hazards_obstacles", "detailed_assessment", "suggested_services", "required_equipment", "required_manpower", "estimated_duration_hours"]
 };
 
+const getFeedbackSummaries = (feedback: EstimateFeedback[]): string => {
+    if (feedback.length === 0) {
+        return '';
+    }
+
+    const entries = feedback.map((item, index) => {
+        const species = item.treeSpecies || 'Unknown species';
+        const diameter = item.trunkDiameter ? `${item.trunkDiameter}" diameter` : 'Unknown diameter';
+        const height = item.treeHeight ? `${item.treeHeight}ft tall` : 'Height unknown';
+        const hazards = item.hazards && item.hazards.length > 0 ? `Hazards: ${item.hazards.join(', ')}.` : '';
+        const actual = item.actualPriceQuoted ? `$${item.actualPriceQuoted.toFixed(2)}` : 'Actual price not provided';
+        const aiRange = `$${item.aiSuggestedPriceMin.toFixed(2)} - $${item.aiSuggestedPriceMax.toFixed(2)}`;
+        const rating = item.feedbackRating === 'too_high' ? 'AI was too high' : item.feedbackRating === 'too_low' ? 'AI was too low' : 'AI was accurate';
+        const notes = item.userNotes ? `Customer note: "${item.userNotes}"` : '';
+
+        return `${index + 1}. ${species} (${diameter}, ${height}). AI suggested ${aiRange}; ${rating}. Actual: ${actual}. ${hazards} ${notes}`.trim();
+    });
+
+    return entries.join('\n');
+};
+
+const fetchRecentCorrections = async (): Promise<string> => {
+    try {
+        const feedback = await estimateFeedbackService.getEstimateFeedback();
+        if (!feedback || feedback.length === 0) {
+            return '';
+        }
+
+        const corrected = feedback
+            .filter(entry => entry.feedbackRating !== 'accurate')
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 3);
+
+        if (corrected.length === 0) {
+            return '';
+        }
+
+        return getFeedbackSummaries(corrected);
+    } catch (error) {
+        console.warn('Unable to load estimate feedback context:', error);
+        return '';
+    }
+};
+
 export const generateTreeEstimate = async (files: { mimeType: string, data: string }[]): Promise<AITreeEstimate> => {
-    const prompt = `You are an expert ISA Certified Arborist providing a detailed assessment and quote estimate for a potential tree service job based on the provided images and/or videos.
+    const correctionsContext = await fetchRecentCorrections();
+
+    const promptSections: string[] = [];
+
+    if (correctionsContext) {
+        promptSections.push(`REFERENCE CUSTOMER FEEDBACK\nThe following are recent customer corrections to past AI estimates. Learn from these outcomes and adjust your new pricing accordingly:\n${correctionsContext}`);
+    }
+
+    promptSections.push(`You are an expert ISA Certified Arborist providing a detailed assessment and quote estimate for a potential tree service job based on the provided images and/or videos.
 
     Analyze the media and provide the following information in a structured JSON format:
     1.  **tree_identification**: Identify the tree's species.
@@ -92,10 +145,14 @@ export const generateTreeEstimate = async (files: { mimeType: string, data: stri
     85ft Pin Oak, 48" trunk diameter, between two houses = $7,000
     
     **Default to MIDDLE-TO-HIGH pricing:** When uncertain, quote the middle or high end of the range, NOT the low end. Professional tree services don't lowball estimates.
-    
+
     Debris removal is NEVER a separate service - it's ALWAYS included in removal price.
 
-    Return ONLY the JSON object.`;
+    Before finalizing your new price ranges, compare them against the feedback data provided above. If past customers said AI was too high, lean lower. If they said too low, lean higher. Explicitly factor in similar species, trunk diameter, and hazards when adjusting ranges.
+
+    Return ONLY the JSON object.`);
+
+    const prompt = promptSections.join('\n\n');
 
     const imageParts = files.map(file => ({
         inlineData: {

@@ -146,7 +146,7 @@ const App: React.FC = () => {
       
       {/* Crew App Layout */}
       <Route path="/crew" element={<CrewLayout />}>
-          <Route index element={<CrewDashboard jobs={jobs} />} />
+          <Route index element={<CrewDashboard jobs={jobs} customers={customers} />} />
           <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} />} />
       </Route>
 
