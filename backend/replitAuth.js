@@ -139,6 +139,10 @@ async function setupAuth(app) {
 
   const registeredStrategies = new Set();
 
+  const getCallbackDomain = (req) => {
+    return process.env.REPLIT_DEV_DOMAIN || req.hostname;
+  };
+
   const ensureStrategy = (domain) => {
     const strategyName = `replitauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {
@@ -160,27 +164,30 @@ async function setupAuth(app) {
   passport.deserializeUser((user, cb) => cb(null, user));
 
   app.get('/api/login', (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const domain = getCallbackDomain(req);
+    ensureStrategy(domain);
+    passport.authenticate(`replitauth:${domain}`, {
       prompt: 'login consent',
       scope: ['openid', 'email', 'profile', 'offline_access'],
     })(req, res, next);
   });
 
   app.get('/api/callback', (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const domain = getCallbackDomain(req);
+    ensureStrategy(domain);
+    passport.authenticate(`replitauth:${domain}`, {
       successReturnToOrRedirect: '/',
       failureRedirect: '/api/login',
     })(req, res, next);
   });
 
   app.get('/api/logout', (req, res) => {
+    const domain = getCallbackDomain(req);
     req.logout(() => {
       res.redirect(
         client.buildEndSessionUrl(config, {
           client_id: process.env.REPL_ID,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+          post_logout_redirect_uri: `https://${domain}`,
         }).href
       );
     });
