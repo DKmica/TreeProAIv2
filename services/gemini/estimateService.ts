@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AITreeEstimate, JobHazardAnalysis, EstimateFeedback } from "../../types";
+import { AITreeEstimate, JobHazardAnalysis, EstimateFeedback, Quote, CustomerUpload } from "../../types";
 import { estimateFeedbackService } from "../apiService";
 
 // Use environment variable injected by Vite
@@ -243,5 +243,67 @@ export const generateJobHazardAnalysis = async (files: { mimeType: string, data:
         console.error("Error generating JHA:", error);
         const errorMessage = error?.message || error?.toString() || "Unknown error";
         throw new Error(`Failed to generate AI Job Hazard Analysis: ${errorMessage}`);
+    }
+};
+
+interface AITreeRiskAssessment {
+    risk_level: 'Low' | 'Medium' | 'High' | 'Critical';
+    jha_required: boolean;
+    risk_factors: string[];
+    reasoning: string;
+}
+
+const aiTreeRiskSchema = {
+    type: Type.OBJECT,
+    properties: {
+        risk_level: { type: Type.STRING, enum: ['Low', 'Medium', 'High', 'Critical'] },
+        jha_required: { type: Type.BOOLEAN },
+        risk_factors: { type: Type.ARRAY, items: { type: Type.STRING } },
+        reasoning: { type: Type.STRING, description: "A brief explanation for the risk assessment." }
+    },
+    required: ["risk_level", "jha_required", "risk_factors", "reasoning"]
+};
+
+export const generateJobRiskAssessment = async (quote: Quote, customerUploads: CustomerUpload[] = []): Promise<AITreeRiskAssessment> => {
+    const services = quote.lineItems.filter(li => li.selected).map(li => li.description).join(', ');
+    const hasPhotos = customerUploads.length > 0;
+
+    const prompt = `You are an expert tree service safety manager (OSHA-certified). Analyze the following job details from an accepted quote and assess the risk level.
+
+    **Job Details:**
+    - Services: ${services}
+    - Stump Grinding: ${quote.stumpGrindingPrice && quote.stumpGrindingPrice > 0 ? 'Yes' : 'No'}
+    - Customer Notes: ${quote.specialInstructions || 'None'}
+    - Job Location: ${quote.jobLocation || 'Unknown'}
+    - Has Photos from Customer: ${hasPhotos}
+
+    **Risk Assessment Rules:**
+    - **Low:** Standard pruning, small trees, no obstacles, stump grinding only.
+    - **Medium:** Medium tree removal (30-60ft), crown reduction.
+    - **High:** Large tree removal (60ft+), work near structures, limited access.
+    - **Critical:** Emergency work, storm damage, work near power lines, use of crane.
+
+    **Your Task:**
+    Return a JSON object assessing the risk.
+    - Set 'jha_required' to 'true' if 'risk_level' is 'Medium', 'High', or 'Critical'.
+    - List the specific 'risk_factors' (e.g., "Large tree removal", "Emergency work", "Proximity to structures").
+    - Provide a brief 'reasoning'.
+
+    Return ONLY the valid JSON object.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: aiTreeRiskSchema
+            }
+        });
+        const cleanedJsonText = response.text.trim().replace(/^```json\s*|```$/g, '');
+        return JSON.parse(cleanedJsonText) as AITreeRiskAssessment;
+    } catch (error: any) {
+        console.error("Error generating risk assessment:", error);
+        throw new Error(`Failed to generate AI risk assessment: ${error.message}`);
     }
 };

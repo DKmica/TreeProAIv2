@@ -6,6 +6,8 @@ const cors = require('cors');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
+const ragService = require('./services/ragService');
+const vectorStore = require('./services/vectorStore');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,6 +21,70 @@ const apiRouter = express.Router();
 const handleError = (res, err) => {
   console.error(err);
   res.status(500).json({ error: 'Internal Server Error', details: err.message });
+};
+
+const collectionDocIdPrefixes = {
+  customers: 'customer',
+  leads: 'lead',
+  quotes: 'quote',
+  jobs: 'job',
+  employees: 'employee',
+  equipment: 'equipment'
+};
+
+const reindexDocument = async (tableName, row) => {
+  if (!row) return;
+
+  try {
+    console.log(`[RAG] Re-indexing document for ${tableName} ID: ${row.id}`);
+    switch (tableName) {
+      case 'customers':
+        await ragService.indexCustomers([row]);
+        break;
+      case 'leads':
+        {
+          const { rows: leads } = await db.query(`
+            SELECT l.*, c.name as customer_name, c.address, c.phone, c.email
+            FROM leads l LEFT JOIN customers c ON l.customer_id = c.id
+            WHERE l.id = $1
+          `, [row.id]);
+          if (leads.length) {
+            await ragService.indexLeads(leads);
+          }
+        }
+        break;
+      case 'quotes':
+        await ragService.indexQuotes([row]);
+        break;
+      case 'jobs':
+        await ragService.indexJobs([row]);
+        break;
+      case 'employees':
+        await ragService.indexEmployees([row]);
+        break;
+      case 'equipment':
+        await ragService.indexEquipment([row]);
+        break;
+      default:
+        break;
+    }
+    console.log('[RAG] Re-indexing complete.');
+  } catch (err) {
+    console.error('[RAG] Failed to re-index document:', err);
+  }
+};
+
+const removeFromVectorStore = async (tableName, id) => {
+  const prefix = collectionDocIdPrefixes[tableName];
+  if (!prefix) {
+    return;
+  }
+
+  try {
+    await vectorStore.removeDocument(tableName, `${prefix}_${id}`);
+  } catch (err) {
+    console.error('[RAG] Error removing document from vector store:', err);
+  }
 };
 
 const scheduleFinancialReminders = () => {
@@ -241,6 +307,14 @@ const transformRow = (row, tableName) => {
     if (row.jha_acknowledged_at !== undefined) {
       transformed.jhaAcknowledgedAt = row.jha_acknowledged_at;
       delete transformed.jha_acknowledged_at;
+    }
+    if (row.risk_level !== undefined) {
+      transformed.riskLevel = row.risk_level;
+      delete transformed.risk_level;
+    }
+    if (row.jha_required !== undefined) {
+      transformed.jhaRequired = row.jha_required;
+      delete transformed.jha_required;
     }
   }
   
@@ -616,6 +690,14 @@ const transformToDb = (data, tableName) => {
       transformed.jha_acknowledged_at = data.jhaAcknowledgedAt;
       delete transformed.jhaAcknowledgedAt;
     }
+    if (data.riskLevel !== undefined) {
+      transformed.risk_level = data.riskLevel;
+      delete transformed.riskLevel;
+    }
+    if (data.jhaRequired !== undefined) {
+      transformed.jha_required = data.jhaRequired;
+      delete transformed.jhaRequired;
+    }
   }
   
   // Transform pay_periods fields
@@ -852,7 +934,10 @@ const setupCrudEndpoints = (router, tableName) => {
 
       const queryText = `INSERT INTO ${tableName} (id, ${columns.join(', ')}) VALUES ($1, ${placeholders}) RETURNING *`;
       const { rows } = await db.query(queryText, [newId, ...values]);
-      res.status(201).json(transformRow(rows[0], tableName));
+      const result = transformRow(rows[0], tableName);
+      res.status(201).json(result);
+
+      reindexDocument(tableName, rows[0]);
     } catch (err) {
       handleError(res, err);
     }
@@ -870,7 +955,10 @@ const setupCrudEndpoints = (router, tableName) => {
       const { rows } = await db.query(queryText, [req.params.id, ...values]);
 
       if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
-      res.json(transformRow(rows[0], tableName));
+      const result = transformRow(rows[0], tableName);
+      res.json(result);
+
+      reindexDocument(tableName, rows[0]);
     } catch (err) {
       handleError(res, err);
     }
@@ -882,6 +970,9 @@ const setupCrudEndpoints = (router, tableName) => {
       const result = await db.query(`DELETE FROM ${tableName} WHERE id = $1`, [req.params.id]);
       if (result.rowCount === 0) return res.status(404).json({ error: 'Not found' });
       res.status(204).send();
+
+      removeFromVectorStore(tableName, req.params.id);
+      console.log(`[RAG] Document ${req.params.id} deleted from ${tableName}.`);
     } catch (err) {
       handleError(res, err);
     }
@@ -1148,9 +1239,6 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
   }
 });
 
-
-// RAG Service endpoints
-const ragService = require('./services/ragService');
 
 apiRouter.post('/rag/search', async (req, res) => {
   try {

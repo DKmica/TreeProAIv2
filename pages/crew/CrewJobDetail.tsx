@@ -34,6 +34,8 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
   const customer = useMemo(() => customers.find(c => c.name === job?.customerName), [customers, job]);
 
   const isJhaAcknowledged = Boolean(job.jhaAcknowledgedAt);
+  const isJhaRequired = job.jhaRequired ?? false;
+  const isJhaMissing = isJhaRequired && !job.jha;
 
   if (!job) {
     return (
@@ -203,7 +205,7 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
     clockButtonText = 'Work Logged';
     clockButtonDisabled = true;
     clockButtonClasses = "bg-brand-gray-400 cursor-not-allowed";
-  } else if (!isJhaAcknowledged) {
+  } else if (!isJhaAcknowledged && isJhaRequired) {
     clockButtonText = 'Acknowledge JHA to Clock In';
     clockButtonDisabled = true;
     clockButtonClasses = "bg-brand-gray-400 cursor-not-allowed";
@@ -242,6 +244,26 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
         </div>
       </div>
 
+      {isJhaMissing && (
+        <div className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg shadow" role="alert">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-lg font-semibold">Safety Warning: JHA Required</h3>
+              <p className="mt-2 text-sm">
+                AI has flagged this job as <strong>{job.riskLevel || 'Medium'} Risk</strong>.
+                A Job Hazard Analysis (JHA) is <strong>mandatory</strong> before work can begin.
+              </p>
+              <p className="mt-1 text-sm">
+                Please upload job site photos and click "Generate Job Hazard Analysis" below.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-gray-800 mb-3">Safety & Compliance Co-pilot</h2>
         {!job.jha ? (
@@ -249,7 +271,11 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
                 <button 
                     onClick={handleGenerateJHA} 
                     disabled={!job.photos || job.photos.length === 0 || isGeneratingJha}
-                    className="w-full inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-400 disabled:cursor-not-allowed"
+                    className={`w-full inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:bg-brand-gray-400 disabled:cursor-not-allowed ${
+                      isJhaMissing
+                        ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 animate-pulse'
+                        : 'bg-brand-green-600 hover:bg-brand-green-700 focus:ring-brand-green-500'
+                    }`}
                 >
                     {isGeneratingJha ? <SpinnerIcon className="h-5 w-5 mr-2"/> :  <ShieldCheckIcon className="h-5 w-5 mr-2" />}
                     {isGeneratingJha ? 'Analyzing Site...' : 'Generate Job Hazard Analysis'}

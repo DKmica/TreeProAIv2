@@ -90,10 +90,14 @@ CREATE TABLE IF NOT EXISTS jobs (
     special_instructions TEXT,
     equipment_needed JSONB DEFAULT '[]',
     estimated_hours NUMERIC DEFAULT 0,
+    risk_level TEXT DEFAULT 'Low',
+    jha_required BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 ALTER TABLE jobs ADD COLUMN IF NOT EXISTS jha_acknowledged_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS risk_level TEXT DEFAULT 'Low';
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS jha_required BOOLEAN DEFAULT false;
 
 -- Invoices Table
 CREATE TABLE IF NOT EXISTS invoices (
