@@ -24,13 +24,31 @@ export const useAICore = ({ pageContext }: UseAICoreProps) => {
   useEffect(() => {
     if (isInitializedRef.current) return;
     
-    isInitializedRef.current = true;
-    setIsInitializing(false);
+    let timeoutId: NodeJS.Timeout;
     
-    addMessage({
-      role: 'model',
-      text: 'Hello! I\'m ProBot, your expert arborist and TreePro AI assistant. I have full access to your business data and can help you with:\n\n• **Business questions** - Ask about customers, leads, jobs, revenue\n• **Arborist expertise** - Tree identification, pruning, safety standards\n• **App automation** - Create records, navigate pages, schedule jobs\n\nWhat can I help you with today?'
-    });
+    const checkInitialization = () => {
+      const context = aiCore.getContext();
+      
+      if (context !== null) {
+        isInitializedRef.current = true;
+        setIsInitializing(false);
+        
+        addMessage({
+          role: 'model',
+          text: 'Hello! I\'m ProBot, your expert arborist and TreePro AI assistant. I have full access to your business data and can help you with:\n\n• **Business questions** - Ask about customers, leads, jobs, revenue\n• **Arborist expertise** - Tree identification, pruning, safety standards\n• **App automation** - Create records, navigate pages, schedule jobs\n\nWhat can I help you with today?'
+        });
+      } else {
+        timeoutId = setTimeout(checkInitialization, 100);
+      }
+    };
+    
+    checkInitialization();
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   useEffect(() => {
