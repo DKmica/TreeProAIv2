@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import SpinnerIcon from './icons/SpinnerIcon';
 import ChatIcon from './icons/ChatIcon';
 import XIcon from './icons/XIcon';
@@ -23,15 +23,15 @@ const WIDGET_HEIGHT = 550;
 const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => {
     const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef } = chat;
 
-    const clampPosition = useCallback((x: number, y: number) => {
+    const clampPosition = (x: number, y: number) => {
         const clampedX = Math.max(0, Math.min(x, window.innerWidth - WIDGET_WIDTH));
         const clampedY = Math.max(0, Math.min(y, window.innerHeight - WIDGET_HEIGHT));
         return { x: clampedX, y: clampedY };
-    }, []);
+    };
 
-    const getDefaultPosition = useCallback(() => {
+    const getDefaultPosition = () => {
         return clampPosition(window.innerWidth - 420, window.innerHeight - 620);
-    }, [clampPosition]);
+    };
 
     const [position, setPosition] = useState(getDefaultPosition());
     const [isDragging, setIsDragging] = useState(false);
@@ -52,7 +52,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                 console.error('Failed to parse saved position:', e);
             }
         }
-    }, [clampPosition]);
+    }, []);
 
     useEffect(() => {
         const handleResize = () => {
@@ -61,7 +61,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, [clampPosition]);
+    }, []);
 
     useEffect(() => {
         if (!isDragging) return;
@@ -104,7 +104,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-50 bg-brand-cyan-600 text-white p-4 rounded-full shadow-lg hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 transition-transform transform hover:scale-110"
+                className="fixed bottom-6 right-6 bg-brand-cyan-600 text-white p-4 rounded-full shadow-lg hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 transition-transform transform hover:scale-110"
                 aria-label="Open AI Assistant"
             >
                 <ChatIcon className="h-8 w-8" />

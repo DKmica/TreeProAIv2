@@ -1,3 +1,4 @@
+const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 
 // Helper to generate random dates
@@ -64,11 +65,7 @@ const generateCoordinates = () => {
   };
 };
 
-async function seedDatabase(db) {
-  if (!db || typeof db.query !== 'function') {
-    throw new Error('A database instance with a query method is required to seed data');
-  }
-
+async function seedDatabase() {
   console.log('🌱 Starting database seed...');
 
   try {
@@ -409,19 +406,13 @@ async function seedDatabase(db) {
   }
 }
 
-// Run the seed function when executed directly from the command line
-if (require.main === module) {
-  const db = require('./db');
-
-  seedDatabase(db)
-    .then(() => {
-      console.log('\n✅ Seed process completed');
-      process.exit(0);
-    })
-    .catch(err => {
-      console.error('\n❌ Seed process failed:', err);
-      process.exit(1);
-    });
-}
-
-module.exports = { seedDatabase };
+// Run the seed function
+seedDatabase()
+  .then(() => {
+    console.log('\n✅ Seed process completed');
+    process.exit(0);
+  })
+  .catch(err => {
+    console.error('\n❌ Seed process failed:', err);
+    process.exit(1);
+  });

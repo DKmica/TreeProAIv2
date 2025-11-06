@@ -4,8 +4,6 @@ import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessa
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
 import PortalMessaging from '../components/PortalMessaging';
-import { generateJobRiskAssessment } from '../services/geminiService';
-import * as api from '../services/apiService';
 
 
 // Helper to calculate total
@@ -18,7 +16,7 @@ const calculateQuoteTotal = (lineItems: LineItem[], stumpGrindingPrice: number):
 const JobForm: React.FC<{
     quotes: Quote[];
     employees: Employee[];
-    onSave: (job: Job | Omit<Job, 'id'>) => Promise<void>;
+    onSave: (job: Job | Omit<Job, 'id'>) => void;
     onCancel: () => void;
     initialData?: Job;
 }> = ({ quotes, employees, onSave, onCancel, initialData }) => {
@@ -95,13 +93,13 @@ const JobForm: React.FC<{
         }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.quoteId) {
             alert("Please select a quote.");
             return;
         }
-        await onSave(formData);
+        onSave(formData);
     };
 
     return (
@@ -232,58 +230,20 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     setShowForm(true);
   };
 
-  const handleArchiveJob = async (jobId: string) => {
-      if(!window.confirm('Are you sure you want to archive this job?')) {
-          return;
-      }
-
-      try {
-          await api.jobService.remove(jobId);
+  const handleArchiveJob = (jobId: string) => {
+      if(window.confirm('Are you sure you want to archive this job?')) {
           setJobs(prev => prev.filter(j => j.id !== jobId));
-      } catch (error: any) {
-          console.error('Failed to archive job', error);
-          alert(`Failed to archive job: ${error.message || 'Unknown error'}`);
       }
   };
 
-  const handleSave = async (jobData: Job | Omit<Job, 'id'>) => {
-      try {
-          if ('id' in jobData && jobData.id) { // Editing
-              const { id, ...updatePayload } = jobData as Job;
-              const updatedJob = await api.jobService.update(id, updatePayload);
-              setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
-          } else { // Creating
-              const quote = quotes.find(q => q.id === jobData.quoteId);
-              if (!quote) {
-                  alert('Cannot create job: Associated quote not found.');
-                  return;
-              }
-
-              let riskAssessment: { risk_level: 'Low' | 'Medium' | 'High' | 'Critical'; jha_required: boolean };
-              try {
-                  console.log('Generating AI risk assessment...');
-                  const assessment = await generateJobRiskAssessment(quote, quote.customerUploads || []);
-                  console.log('AI Risk Assessment:', assessment);
-                  riskAssessment = { risk_level: assessment.risk_level, jha_required: assessment.jha_required };
-              } catch (err) {
-                  console.error('AI risk assessment failed:', err);
-                  riskAssessment = { risk_level: 'Medium', jha_required: true };
-              }
-
-              const newJobPayload = {
-                  ...(jobData as Omit<Job, 'id'>),
-                  riskLevel: riskAssessment.risk_level,
-                  jhaRequired: riskAssessment.jha_required
-              };
-
-              const newJob = await api.jobService.create(newJobPayload);
-              setJobs(prev => [newJob, ...prev]);
-          }
-          handleCancel();
-      } catch (error: any) {
-          console.error('Failed to save job', error);
-          alert(`Failed to save job: ${error.message || 'Unknown error'}`);
+  const handleSave = (jobData: Job | Omit<Job, 'id'>) => {
+      if ('id' in jobData && jobData.id) { // Editing
+          setJobs(prev => prev.map(j => j.id === jobData.id ? jobData as Job : j));
+      } else { // Creating
+          const newJob: Job = { id: `job-${Date.now()}`, ...jobData as Omit<Job, 'id'>};
+          setJobs(prev => [newJob, ...prev]);
       }
+      handleCancel();
   };
 
   const handleCreateInvoice = (job: Job) => {

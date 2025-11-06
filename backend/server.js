@@ -3,188 +3,22 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const compression = require('compression');
-const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
-const ragService = require('./services/ragService');
-const vectorStore = require('./services/vectorStore');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-const isProduction = process.env.NODE_ENV === 'production';
 
-app.set('trust proxy', 1);
-
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Allow flexibility for development; configure properly for production
-  crossOriginEmbedderPolicy: false,
-}));
-
-// Compression middleware
-app.use(compression());
-
-// CORS configuration
-const allowedOrigins = isProduction 
-  ? [
-      process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null,
-      process.env.PRODUCTION_URL || null,
-    ].filter(Boolean)
-  : ['http://localhost:5000', 'http://127.0.0.1:5000'];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || !isProduction) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-app.use(express.json({ limit: '10mb' })); // Add limit to prevent large payload attacks
-
-// Rate limiting - adjust as needed for production
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isProduction ? 100 : 1000, // limit each IP to 100 requests per windowMs in production
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5, // limit each IP to 5 login attempts per windowMs
-  skipSuccessfulRequests: true,
-  message: 'Too many login attempts, please try again later.',
-});
+app.use(cors());
+app.use(express.json());
 
 const apiRouter = express.Router();
 
 const handleError = (res, err) => {
   console.error(err);
   res.status(500).json({ error: 'Internal Server Error', details: err.message });
-};
-
-const collectionDocIdPrefixes = {
-  customers: 'customer',
-  leads: 'lead',
-  quotes: 'quote',
-  jobs: 'job',
-  employees: 'employee',
-  equipment: 'equipment'
-};
-
-const reindexDocument = async (tableName, row) => {
-  if (!row) return;
-
-  try {
-    console.log(`[RAG] Re-indexing document for ${tableName} ID: ${row.id}`);
-    switch (tableName) {
-      case 'customers':
-        await ragService.indexCustomers([row]);
-        break;
-      case 'leads':
-        {
-          const { rows: leads } = await db.query(`
-            SELECT l.*, c.name as customer_name, c.address, c.phone, c.email
-            FROM leads l LEFT JOIN customers c ON l.customer_id = c.id
-            WHERE l.id = $1
-          `, [row.id]);
-          if (leads.length) {
-            await ragService.indexLeads(leads);
-          }
-        }
-        break;
-      case 'quotes':
-        await ragService.indexQuotes([row]);
-        break;
-      case 'jobs':
-        await ragService.indexJobs([row]);
-        break;
-      case 'employees':
-        await ragService.indexEmployees([row]);
-        break;
-      case 'equipment':
-        await ragService.indexEquipment([row]);
-        break;
-      default:
-        break;
-    }
-    console.log('[RAG] Re-indexing complete.');
-  } catch (err) {
-    console.error('[RAG] Failed to re-index document:', err);
-  }
-};
-
-const removeFromVectorStore = async (tableName, id) => {
-  const prefix = collectionDocIdPrefixes[tableName];
-  if (!prefix) {
-    return;
-  }
-
-  try {
-    await vectorStore.removeDocument(tableName, `${prefix}_${id}`);
-  } catch (err) {
-    console.error('[RAG] Error removing document from vector store:', err);
-  }
-};
-
-const scheduleFinancialReminders = () => {
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-
-  const parseDate = (value) => {
-    if (!value) return null;
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  };
-
-  const run = async () => {
-    try {
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      const { rows: invoices } = await db.query('SELECT * FROM invoices');
-      invoices.forEach(invoice => {
-        const dueDate = parseDate(invoice.due_date);
-        if (!dueDate) return;
-
-        const diffDays = Math.floor((dueDate.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0 || diffDays === 3 || diffDays === -7) {
-          const statusLabel = diffDays === 0 ? 'due today' : diffDays === 3 ? 'due in 3 days' : '7 days overdue';
-          console.log(`📬 [Invoice Reminder] Invoice ${invoice.id} for ${invoice.customer_name} is ${statusLabel}. Amount: $${invoice.amount}.`);
-        }
-      });
-
-      const { rows: quotes } = await db.query("SELECT * FROM quotes WHERE status = 'Sent'");
-      quotes.forEach(quote => {
-        const createdAt = parseDate(quote.created_at);
-        if (!createdAt) return;
-
-        const ageDays = Math.floor((startOfToday.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-        if (ageDays >= 14) {
-          console.log(`📧 [Quote Follow-up] Quote ${quote.id} for ${quote.customer_name} has been open for ${ageDays} days. Consider a polite follow-up.`);
-        }
-      });
-    } catch (error) {
-      console.error('Automated reminder check failed:', error);
-    }
-  };
-
-  run();
-  setInterval(run, ONE_DAY);
 };
 
 // Helper function to transform database row to API format
@@ -284,24 +118,16 @@ const transformRow = (row, tableName) => {
       transformed.paymentTerms = row.payment_terms;
       delete transformed.payment_terms;
     }
-    if (row.customer_uploads !== undefined) {
-      transformed.customerUploads = row.customer_uploads;
-      delete transformed.customer_uploads;
-    }
   }
-
+  
   // Transform leads fields
   if (tableName === 'leads') {
     if (row.customer_id !== undefined) {
       transformed.customerId = row.customer_id;
       delete transformed.customer_id;
     }
-    if (row.customer_uploads !== undefined) {
-      transformed.customerUploads = row.customer_uploads;
-      delete transformed.customer_uploads;
-    }
   }
-
+  
   if (tableName === 'jobs') {
     if (row.clock_in_lat !== undefined && row.clock_in_lon !== undefined) {
       transformed.clockInCoordinates = { lat: row.clock_in_lat, lng: row.clock_in_lon };
@@ -357,18 +183,6 @@ const transformRow = (row, tableName) => {
     if (row.estimated_hours !== undefined) {
       transformed.estimatedHours = (row.estimated_hours !== null && row.estimated_hours !== '') ? parseFloat(row.estimated_hours) : row.estimated_hours;
       delete transformed.estimated_hours;
-    }
-    if (row.jha_acknowledged_at !== undefined) {
-      transformed.jhaAcknowledgedAt = row.jha_acknowledged_at;
-      delete transformed.jha_acknowledged_at;
-    }
-    if (row.risk_level !== undefined) {
-      transformed.riskLevel = row.risk_level;
-      delete transformed.risk_level;
-    }
-    if (row.jha_required !== undefined) {
-      transformed.jhaRequired = row.jha_required;
-      delete transformed.jha_required;
     }
   }
   
@@ -666,24 +480,16 @@ const transformToDb = (data, tableName) => {
       transformed.payment_terms = data.paymentTerms;
       delete transformed.paymentTerms;
     }
-    if (data.customerUploads !== undefined) {
-      transformed.customer_uploads = data.customerUploads;
-      delete transformed.customerUploads;
-    }
   }
-
+  
   // Transform leads fields
   if (tableName === 'leads') {
     if (data.customerId !== undefined) {
       transformed.customer_id = data.customerId;
       delete transformed.customerId;
     }
-    if (data.customerUploads !== undefined) {
-      transformed.customer_uploads = data.customerUploads;
-      delete transformed.customerUploads;
-    }
   }
-
+  
   if (tableName === 'jobs') {
     if (data.clockInCoordinates) {
       transformed.clock_in_lat = data.clockInCoordinates.lat;
@@ -739,18 +545,6 @@ const transformToDb = (data, tableName) => {
     if (data.estimatedHours !== undefined) {
       transformed.estimated_hours = data.estimatedHours;
       delete transformed.estimatedHours;
-    }
-    if (data.jhaAcknowledgedAt !== undefined) {
-      transformed.jha_acknowledged_at = data.jhaAcknowledgedAt;
-      delete transformed.jhaAcknowledgedAt;
-    }
-    if (data.riskLevel !== undefined) {
-      transformed.risk_level = data.riskLevel;
-      delete transformed.riskLevel;
-    }
-    if (data.jhaRequired !== undefined) {
-      transformed.jha_required = data.jhaRequired;
-      delete transformed.jhaRequired;
     }
   }
   
@@ -988,10 +782,7 @@ const setupCrudEndpoints = (router, tableName) => {
 
       const queryText = `INSERT INTO ${tableName} (id, ${columns.join(', ')}) VALUES ($1, ${placeholders}) RETURNING *`;
       const { rows } = await db.query(queryText, [newId, ...values]);
-      const result = transformRow(rows[0], tableName);
-      res.status(201).json(result);
-
-      reindexDocument(tableName, rows[0]);
+      res.status(201).json(transformRow(rows[0], tableName));
     } catch (err) {
       handleError(res, err);
     }
@@ -1009,10 +800,7 @@ const setupCrudEndpoints = (router, tableName) => {
       const { rows } = await db.query(queryText, [req.params.id, ...values]);
 
       if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
-      const result = transformRow(rows[0], tableName);
-      res.json(result);
-
-      reindexDocument(tableName, rows[0]);
+      res.json(transformRow(rows[0], tableName));
     } catch (err) {
       handleError(res, err);
     }
@@ -1024,9 +812,6 @@ const setupCrudEndpoints = (router, tableName) => {
       const result = await db.query(`DELETE FROM ${tableName} WHERE id = $1`, [req.params.id]);
       if (result.rowCount === 0) return res.status(404).json({ error: 'Not found' });
       res.status(204).send();
-
-      removeFromVectorStore(tableName, req.params.id);
-      console.log(`[RAG] Document ${req.params.id} deleted from ${tableName}.`);
     } catch (err) {
       handleError(res, err);
     }
@@ -1294,6 +1079,9 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
 });
 
 
+// RAG Service endpoints
+const ragService = require('./services/ragService');
+
 apiRouter.post('/rag/search', async (req, res) => {
   try {
     const { query, collections, limit } = req.body;
@@ -1451,11 +1239,6 @@ resources.forEach(resource => {
 });
 
 async function startServer() {
-  // Apply auth rate limiter to login/logout routes
-  app.use('/api/login', authLimiter);
-  app.use('/api/logout', authLimiter);
-  app.use('/api/callback', authLimiter);
-  
   await setupAuth(app);
   
   apiRouter.get('/auth/user', isAuthenticated, async (req, res) => {
@@ -1473,15 +1256,10 @@ async function startServer() {
   });
 
   apiRouter.get('/health', (req, res) => {
-    res.status(200).json({ 
-      status: 'healthy', 
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
-    });
+    res.status(200).send('TreePro AI Backend is running.');
   });
 
-  // Apply rate limiter to all API routes
-  app.use('/api', apiLimiter, apiRouter);
+  app.use('/api', apiRouter);
   
   // Serve static files from the 'public' directory
   app.use(express.static(path.join(__dirname, 'public')));
@@ -1493,34 +1271,14 @@ async function startServer() {
 
   app.listen(PORT, HOST, async () => {
     console.log(`Backend server running on http://${HOST}:${PORT}`);
-
+    
     try {
       await ragService.initialize();
-      console.log('🤖 RAG Service initialized');
-      
-      try {
-        const stats = await vectorStore.getCollectionStats();
-        const totalDocs = Object.values(stats).reduce((sum, count) => sum + count, 0);
-        
-        if (totalDocs === 0) {
-          console.log('📚 Vector database is empty, building from scratch...');
-          await ragService.buildVectorDatabase();
-          console.log('✅ Vector database built successfully on startup');
-        } else {
-          console.log(`📊 Vector database loaded with ${totalDocs} documents`);
-        }
-      } catch (buildError) {
-        console.error('⚠️ Failed to build vector database on startup:', buildError);
-        console.log('💡 You can manually rebuild with POST /api/rag/build');
-      }
-      
       console.log('🤖 RAG Service ready');
     } catch (error) {
       console.error('⚠️ RAG Service initialization failed:', error);
       console.log('💡 Run POST /api/rag/build to build the vector database');
     }
-
-    scheduleFinancialReminders();
   });
 }
 

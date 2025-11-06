@@ -1,7 +1,6 @@
 modules = ["nodejs-20", "swift-5.8", "bash", "web", "postgresql-16"]
 [agent]
 expertMode = true
-integrations = ["javascript_log_in_with_replit:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
@@ -54,14 +53,6 @@ localPort = 34437
 externalPort = 3001
 
 [[ports]]
-localPort = 36715
-externalPort = 4200
-
-[[ports]]
-localPort = 42129
-externalPort = 3003
-
-[[ports]]
 localPort = 42199
 externalPort = 3002
 
@@ -72,4 +63,4 @@ externalPort = 3000
 [deployment]
 deploymentTarget = "autoscale"
 run = ["node", "backend/server.js"]
-build = ["npm", "run", "build:production"]
+build = ["pnpm", "run", "build:production"]

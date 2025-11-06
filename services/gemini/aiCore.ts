@@ -31,11 +31,10 @@ import {
 const geminiApiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
 if (!geminiApiKey) {
-  console.error("⚠️ VITE_GEMINI_API_KEY is not set! AI Core features will not work.");
-  throw new Error("Gemini API key is required for AI Core. Please set VITE_GEMINI_API_KEY in your environment variables.");
+  console.error("VITE_GEMINI_API_KEY is not set!");
 }
 
-const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+const ai = new GoogleGenAI({ apiKey: geminiApiKey as string });
 
 interface BusinessContext {
   customers: Customer[];
@@ -52,14 +51,20 @@ interface BusinessContext {
   lastUpdated: Date;
 }
 
-let businessContext: BusinessContext | null = null;
-
-function ensureContext(): BusinessContext {
-  if (!businessContext) {
-    throw new Error('AI Core context is not initialized.');
-  }
-  return businessContext;
-}
+let businessContext: BusinessContext = {
+  customers: [],
+  leads: [],
+  quotes: [],
+  jobs: [],
+  invoices: [],
+  employees: [],
+  equipment: [],
+  payrollRecords: [],
+  timeEntries: [],
+  payPeriods: [],
+  companyProfile: null,
+  lastUpdated: new Date()
+};
 
 let chatSession: Chat | null = null;
 let requestCount = 0;
@@ -1142,10 +1147,6 @@ async function checkRateLimit(): Promise<void> {
 }
 
 function getContextSummary(): string {
-  if (!businessContext) {
-    return JSON.stringify({ summary: "AI Core is not yet initialized." });
-  }
-
   const ctx = businessContext;
   return JSON.stringify({
     summary: {
@@ -1224,8 +1225,6 @@ Remember: You are the intelligent assistant that makes TreePro AI feel magical a
 
 async function executeFunctionCall(name: string, args: any): Promise<any> {
   console.log(`Executing function: ${name}`, args);
-
-  const businessContext = ensureContext();
 
   try {
     switch (name) {
@@ -1427,16 +1426,9 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
 
       case 'processPayroll':
         const result = await payPeriodService.process(args.payPeriodId);
-        const payPeriodIndex = businessContext.payPeriods.findIndex(pp => pp.id === result.payPeriod.id);
-        if (payPeriodIndex >= 0) {
-          businessContext.payPeriods[payPeriodIndex] = result.payPeriod;
-        } else {
-          businessContext.payPeriods.push(result.payPeriod);
-        }
-        businessContext.payrollRecords = result.payrollRecords;
-        businessContext.lastUpdated = new Date();
-        return {
-          success: true,
+        await loadBusinessData();
+        return { 
+          success: true, 
           payPeriod: result.payPeriod,
           payrollRecords: result.payrollRecords,
           message: `Processed payroll for pay period`
@@ -2368,8 +2360,65 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
   }
 }
 
-async function initialize(initialData: BusinessContext): Promise<void> {
-  businessContext = initialData;
+async function loadBusinessData(): Promise<void> {
+  try {
+    const [
+      customers,
+      leads,
+      quotes,
+      jobs,
+      invoices,
+      employees,
+      equipment,
+      payrollRecords,
+      timeEntries,
+      payPeriods,
+      companyProfile
+    ] = await Promise.all([
+      customerService.getAll(),
+      leadService.getAll(),
+      quoteService.getAll(),
+      jobService.getAll(),
+      invoiceService.getAll(),
+      employeeService.getAll(),
+      equipmentService.getAll(),
+      payrollRecordService.getAll(),
+      timeEntryService.getAll(),
+      payPeriodService.getAll(),
+      companyProfileService.get().catch(() => null)
+    ]);
+
+    businessContext = {
+      customers,
+      leads,
+      quotes,
+      jobs,
+      invoices,
+      employees,
+      equipment,
+      payrollRecords,
+      timeEntries,
+      payPeriods,
+      companyProfile,
+      lastUpdated: new Date()
+    };
+
+    console.log('✅ AI Core business data loaded:', {
+      customers: customers.length,
+      leads: leads.length,
+      quotes: quotes.length,
+      jobs: jobs.length,
+      employees: employees.length,
+      equipment: equipment.length
+    });
+  } catch (error) {
+    console.error('❌ Error loading business data:', error);
+    throw error;
+  }
+}
+
+async function initialize(): Promise<void> {
+  await loadBusinessData();
   chatSession = ai.chats.create({
     model: 'gemini-2.0-flash',
     config: {
@@ -2377,7 +2426,7 @@ async function initialize(initialData: BusinessContext): Promise<void> {
       tools: [{ functionDeclarations }]
     }
   });
-  console.log('✅ AI Core initialized with initial business context');
+  console.log('✅ AI Core initialized with full business context');
 }
 
 async function getRagContext(query: string): Promise<string> {
@@ -2404,16 +2453,8 @@ async function getRagContext(query: string): Promise<string> {
 async function chat(message: string, history: ChatMessage[] = []): Promise<{ response: string; functionCalls?: any[] }> {
   await checkRateLimit();
 
-  ensureContext();
-
   if (!chatSession) {
-    chatSession = ai.chats.create({
-      model: 'gemini-2.0-flash',
-      config: {
-        systemInstruction: getSystemInstruction(),
-        tools: [{ functionDeclarations }]
-      }
-    });
+    await initialize();
   }
 
   try {
@@ -2465,8 +2506,8 @@ async function chat(message: string, history: ChatMessage[] = []): Promise<{ res
   }
 }
 
-async function refresh(newData: BusinessContext): Promise<void> {
-  businessContext = newData;
+async function refresh(): Promise<void> {
+  await loadBusinessData();
   if (chatSession) {
     chatSession = ai.chats.create({
       model: 'gemini-2.0-flash',
@@ -2479,7 +2520,7 @@ async function refresh(newData: BusinessContext): Promise<void> {
   console.log('✅ AI Core data refreshed');
 }
 
-function getContext(): BusinessContext | null {
+function getContext(): BusinessContext {
   return businessContext;
 }
 

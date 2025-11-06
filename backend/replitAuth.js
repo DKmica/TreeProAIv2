@@ -6,18 +6,6 @@ const memoize = require('memoizee');
 const connectPg = require('connect-pg-simple');
 const db = require('./db');
 
-const offlineUser = {
-  id: 'offline-user',
-  email: 'owner@treepro.ai',
-  first_name: 'TreePro',
-  last_name: 'Owner',
-  profile_image_url: null,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
-let isOfflineAuth = false;
-
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
@@ -83,46 +71,12 @@ async function upsertUser(claims) {
 }
 
 async function getUser(userId) {
-  if (isOfflineAuth) {
-    return offlineUser.id === userId ? offlineUser : null;
-  }
-
   const query = 'SELECT * FROM users WHERE id = $1';
   const result = await db.query(query, [userId]);
   return result.rows[0];
 }
 
 async function setupAuth(app) {
-  const disableOidc =
-    process.env.DISABLE_OIDC === 'true' ||
-    !process.env.REPL_ID ||
-    !process.env.SESSION_SECRET ||
-    !process.env.DATABASE_URL;
-
-  if (disableOidc) {
-    isOfflineAuth = true;
-
-    app.use((req, _res, next) => {
-      req.user = offlineUser;
-      req.isAuthenticated = () => true;
-      next();
-    });
-
-    app.get('/api/auth/user', (_req, res) => {
-      res.json(offlineUser);
-    });
-
-    app.get('/api/login', (_req, res) => {
-      res.json({ success: true, mode: 'offline' });
-    });
-
-    app.get('/api/logout', (_req, res) => {
-      res.json({ success: true, mode: 'offline' });
-    });
-
-    return;
-  }
-
   app.set('trust proxy', 1);
   app.use(getSession());
   app.use(passport.initialize());
@@ -138,10 +92,6 @@ async function setupAuth(app) {
   };
 
   const registeredStrategies = new Set();
-
-  const getCallbackDomain = (req) => {
-    return process.env.REPLIT_DEV_DOMAIN || req.hostname;
-  };
 
   const ensureStrategy = (domain) => {
     const strategyName = `replitauth:${domain}`;
@@ -164,55 +114,34 @@ async function setupAuth(app) {
   passport.deserializeUser((user, cb) => cb(null, user));
 
   app.get('/api/login', (req, res, next) => {
-    const domain = getCallbackDomain(req);
-    ensureStrategy(domain);
-    passport.authenticate(`replitauth:${domain}`, {
+    ensureStrategy(req.hostname);
+    passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: 'login consent',
       scope: ['openid', 'email', 'profile', 'offline_access'],
     })(req, res, next);
   });
 
   app.get('/api/callback', (req, res, next) => {
-    const domain = getCallbackDomain(req);
-    ensureStrategy(domain);
-    passport.authenticate(`replitauth:${domain}`, {
+    ensureStrategy(req.hostname);
+    passport.authenticate(`replitauth:${req.hostname}`, {
       successReturnToOrRedirect: '/',
       failureRedirect: '/api/login',
     })(req, res, next);
   });
 
   app.get('/api/logout', (req, res) => {
-    const domain = getCallbackDomain(req);
     req.logout(() => {
       res.redirect(
         client.buildEndSessionUrl(config, {
           client_id: process.env.REPL_ID,
-          post_logout_redirect_uri: `https://${domain}`,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
       );
     });
   });
-
-  app.get('/api/auth/user', isAuthenticated, async (req, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      res.json(user);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      res.status(500).json({ message: 'Failed to fetch user' });
-    }
-  });
 }
 
 const isAuthenticated = async (req, res, next) => {
-  if (isOfflineAuth) {
-    return next();
-  }
-
   const user = req.user;
 
   if (!req.isAuthenticated() || !user.expires_at) {

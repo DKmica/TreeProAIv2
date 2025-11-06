@@ -22,33 +22,35 @@ export const useAICore = ({ pageContext }: UseAICoreProps) => {
   };
 
   useEffect(() => {
-    if (isInitializedRef.current) return;
-    
-    let timeoutId: NodeJS.Timeout;
-    
-    const checkInitialization = () => {
-      const context = aiCore.getContext();
+    const initializeAICore = async () => {
+      if (isInitializedRef.current) return;
       
-      if (context !== null) {
+      try {
+        console.log('🚀 Initializing AI Core...');
+        setIsInitializing(true);
+        await aiCore.initialize();
         isInitializedRef.current = true;
-        setIsInitializing(false);
         
         addMessage({
           role: 'model',
           text: 'Hello! I\'m ProBot, your expert arborist and TreePro AI assistant. I have full access to your business data and can help you with:\n\n• **Business questions** - Ask about customers, leads, jobs, revenue\n• **Arborist expertise** - Tree identification, pruning, safety standards\n• **App automation** - Create records, navigate pages, schedule jobs\n\nWhat can I help you with today?'
         });
-      } else {
-        timeoutId = setTimeout(checkInitialization, 100);
+        
+        console.log('✅ AI Core initialized successfully');
+        setError(null);
+      } catch (err: any) {
+        console.error('❌ AI Core initialization failed:', err);
+        setError(`Failed to initialize AI Core: ${err.message}`);
+        addMessage({
+          role: 'model',
+          text: '⚠️ I encountered an error during initialization. Please refresh the page and try again.'
+        });
+      } finally {
+        setIsInitializing(false);
       }
     };
-    
-    checkInitialization();
-    
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
+
+    initializeAICore();
   }, []);
 
   useEffect(() => {
@@ -62,10 +64,10 @@ export const useAICore = ({ pageContext }: UseAICoreProps) => {
     setIsLoading(true);
     setError(null);
     addMessage({ role: 'user', text: userMessage });
+    setInputValue('');
 
     try {
       const result = await aiCore.chat(userMessage, messages);
-      setInputValue('');
 
       if (result.functionCalls && result.functionCalls.length > 0) {
         for (const call of result.functionCalls) {

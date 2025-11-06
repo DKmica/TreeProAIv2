@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Lead, Customer, CustomerUpload } from '../types';
+import { Lead, Customer } from '../types';
 import * as api from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 
@@ -22,10 +22,6 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
         description: ''
     });
     const [isSaving, setIsSaving] = useState(false);
-    const [attachments, setAttachments] = useState<CustomerUpload[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadError, setUploadError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (initialData) {
@@ -38,7 +34,6 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
                 status: initialData.status,
                 description: initialData.description || '',
             });
-            setAttachments(initialData.customerUploads || []);
         } else {
             // Reset for new entry
             setFormData({
@@ -50,7 +45,6 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
                 status: 'New' as Lead['status'],
                 description: '',
             });
-            setAttachments([]);
         }
     }, [initialData]);
 
@@ -59,50 +53,6 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleUploadClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const readFileAsDataUrl = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(file);
-        });
-    };
-
-    const handleAttachmentChange: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
-        if (!event.target.files || event.target.files.length === 0) return;
-
-        setIsUploading(true);
-        setUploadError(null);
-
-        try {
-            const uploads: CustomerUpload[] = [];
-            for (const file of Array.from(event.target.files)) {
-                if (file.size > 25 * 1024 * 1024) {
-                    throw new Error(`"${file.name}" is larger than 25MB. Please upload smaller files.`);
-                }
-                const dataUrl = await readFileAsDataUrl(file);
-                uploads.push({
-                    url: dataUrl,
-                    name: file.name,
-                    uploadedAt: new Date().toISOString(),
-                    type: file.type,
-                });
-            }
-
-            setAttachments(prev => [...prev, ...uploads]);
-            event.target.value = '';
-        } catch (error: any) {
-            console.error('Failed to attach files', error);
-            setUploadError(error.message || 'Unable to upload files right now.');
-        } finally {
-            setIsUploading(false);
-        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -119,11 +69,9 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
             status: formData.status,
             description: formData.description,
             createdAt: new Date().toISOString().split('T')[0],
-            customerUploads: attachments,
         };
         try {
             await onSave(leadData, customerData);
-            setAttachments([]);
         } catch (error) {
             console.error("Failed to save lead:", error);
             alert(`Error: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
@@ -166,53 +114,9 @@ const AddLeadForm: React.FC<AddLeadFormProps> = ({ onSave, onCancel, initialData
                             <option>Lost</option>
                         </select>
                     </div>
-                    <div className="col-span-full">
+                     <div className="col-span-full">
                         <label htmlFor="description" className="block text-sm font-medium leading-6 text-brand-gray-900">Description</label>
                         <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={3} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
-                    </div>
-                    <div className="col-span-full">
-                        <label className="block text-sm font-medium leading-6 text-brand-gray-900">Site Photos or Video</label>
-                        <p className="mt-1 text-xs text-brand-gray-500">Add photos or short videos to help our estimator preview the job. Max 25MB each.</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={handleUploadClick}
-                                disabled={isUploading}
-                                className="inline-flex items-center rounded-md bg-brand-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-green-600 disabled:bg-brand-gray-400"
-                            >
-                                {isUploading && <SpinnerIcon className="h-4 w-4 mr-2" />}
-                                {isUploading ? 'Uploading…' : 'Upload Files'}
-                            </button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*,video/*"
-                                multiple
-                                className="hidden"
-                                onChange={handleAttachmentChange}
-                            />
-                            {uploadError && <span className="text-xs text-red-600">{uploadError}</span>}
-                        </div>
-                        {attachments.length > 0 && (
-                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {attachments.map(upload => (
-                                    <div key={`${upload.uploadedAt}-${upload.name}`} className="border border-brand-gray-200 rounded-md overflow-hidden bg-brand-gray-50">
-                                        <div className="px-3 py-2">
-                                            <p className="text-sm font-semibold text-brand-gray-800 truncate" title={upload.name}>{upload.name}</p>
-                                            <p className="text-xs text-brand-gray-500">Added {new Date(upload.uploadedAt).toLocaleString()}</p>
-                                        </div>
-                                        {upload.type.startsWith('video') ? (
-                                            <video controls className="w-full h-32 object-cover bg-black">
-                                                <source src={upload.url} type={upload.type} />
-                                                Your browser does not support embedded video.
-                                            </video>
-                                        ) : (
-                                            <img src={upload.url} alt={upload.name} className="w-full h-32 object-cover" />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
@@ -296,11 +200,10 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, customers, setCustomers 
             source: leadData.source,
             status: leadData.status,
             description: leadData.description,
-            customerUploads: leadData.customerUploads,
             customer: updatedCustomer // Embed the updated customer
         };
         const updatedLead = await api.leadService.update(editingLead.id, updatedLeadData);
-        setLeads(prev => prev.map(l => l.id === updatedLead.id ? { ...updatedLead, customerUploads: updatedLead.customerUploads || leadData.customerUploads || [] } : l));
+        setLeads(prev => prev.map(l => l.id === updatedLead.id ? updatedLead : l));
 
     } else {
         // Create new logic
@@ -310,7 +213,7 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, customers, setCustomers 
                 name: customerData.name || 'N/A',
                 email: customerData.email || 'N/A',
                 phone: customerData.phone || '',
-                address: customerData.address || '',
+                address: '',
                 coordinates: {lat: 0, lng: 0}
             });
             setCustomers(prev => [customer!, ...prev]);
@@ -322,10 +225,7 @@ const Leads: React.FC<LeadsProps> = ({ leads, setLeads, customers, setCustomers 
         } as Omit<Lead, 'id'>;
 
         const newLead = await api.leadService.create(newLeadData);
-        setLeads(prev => [
-            { ...newLead, customerUploads: newLead.customerUploads || leadData.customerUploads || [] },
-            ...prev
-        ]);
+        setLeads(prev => [newLead, ...prev]);
     }
     
     handleCancel();

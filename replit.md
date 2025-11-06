@@ -9,10 +9,10 @@ I prefer that the AI assistant prioritizes clear and concise explanations. When 
 ## System Architecture
 
 ### UI/UX Decisions
-The application utilizes a modern, dark theme with a color palette inspired by the TreePro AI logo. Primary colors include bright cyan (#00c2ff) for main accents and highlights, warm amber/orange (#ffa500 to #ff8c00) for secondary accents and interactive elements, set against a dark navy/gray background (#0a1628 to #102a43). The design incorporates a custom "futuristic AI circuit tree" logo featuring the cyan tree and warm amber cityscape lights, consistent across the login page, sidebar, and other UI components. All form stylings and active states reflect this dual cyan-amber branding scheme.
+The application utilizes a modern, dark theme with a primary color palette of bright cyan (#00c2ff) for accents and highlights, set against a dark navy/gray background (#0a1628 to #102a43). The design incorporates a custom "futuristic AI circuit tree" logo, consistent across the login page, sidebar, and other UI components. All form stylings and active states have been updated to reflect the cyan branding.
 
 ### Technical Implementations
-- **Frontend**: Built with React 19, TypeScript, and Vite for a fast development experience. Styling is handled with TailwindCSS v4 via PostCSS (using @tailwindcss/postcss plugin) for production-ready builds. React Router DOM (HashRouter) manages client-side navigation.
+- **Frontend**: Built with React 19, TypeScript, and Vite for a fast development experience. Styling is handled with TailwindCSS (CDN for development). React Router DOM (HashRouter) manages client-side navigation.
 - **Backend**: Developed using Node.js and Express, providing a RESTful API.
 - **Database**: PostgreSQL 14+ is used as the primary data store, managed by Replit. The schema is initialized from `backend/init.sql`.
 - **AI Core**: A centralized AI Core service (`services/gemini/aiCore.ts`) loads all business data (customers, leads, quotes, jobs, employees, equipment, company profile) on initialization to maintain real-time context. It integrates an extensive arborist knowledge base covering tree species, pruning techniques, safety protocols, equipment, seasonal recommendations, and disease/pest knowledge. This core powers 58 distinct function calls across 9 categories: (1) Navigation & Records, (2) Customer/Lead Management, (3) Quote/Job Management, (4) Financial Operations, (5) Employee/Payroll, (6) Equipment & Inventory, (7) Business Analytics, (8) Documentation & Safety, (9) Weather & Scheduling, (10) Customer Communication, (11) Route & Logistics, (12) Tree Care Expertise, (13) Marketing & Growth, (14) Emergency Response, and (15) Help/Onboarding.
@@ -28,18 +28,11 @@ The application utilizes a modern, dark theme with a color palette inspired by t
 - **Lead and Job Management**: Comprehensive CRUD operations for customers, leads, quotes, and jobs, with features like lead status tracking, quote conversion to jobs, and crew assignment.
 - **Financial Tools**: Includes revenue tracking, outstanding invoices management, and payroll processing.
 - **Business Analytics**: Provides metrics like lead conversion rates, crew utilization, and upsell opportunity identification.
-- **Authentication**: Replit Auth integration provides enterprise-grade authentication using OpenID Connect (OIDC). Supports multiple login methods: Google, GitHub, X (Twitter), Apple, and email/password. Sessions are stored in PostgreSQL with automatic token refresh. Users are automatically created/updated in the database upon login. Offline development mode available when OIDC is disabled via `DISABLE_OIDC=true`.
+- **Authentication**: Owner accounts (`dakoenig4@gmail.com`, `nullgbow@gmail.com` with password `12Tree45`) provide full access.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services (e.g., `estimateService.ts`, `businessService.ts`, `chatService.ts`, `marketingService.ts`) to promote separation of concerns.
 - **Environment Agnostic Configuration**: Frontend and backend are configured to run seamlessly in both development (using `localhost` and specific ports) and production (using `0.0.0.0` and port 5000) environments, leveraging Replit's infrastructure.
-- **Production Security**: Backend implements comprehensive security measures including:
-  - **CORS Protection**: Restricts requests to explicitly allowed origins (REPLIT_DEV_DOMAIN, PRODUCTION_URL) with credentials support
-  - **Security Headers**: Helmet middleware provides security headers (CSP disabled for development, to be configured for production)
-  - **Rate Limiting**: API endpoints limited to 100 requests per 15 minutes, authentication endpoints to 5 requests per 15 minutes in production
-  - **Compression**: Response compression enabled for bandwidth optimization
-  - **Error Handling**: All Gemini AI services fail fast with explicit errors if API key is missing, preventing silent failures
-  - **Authentication Flow**: Frontend prevents data fetching before authentication check completes, eliminating 401 errors on initial load
 - **Scalability**: Designed for stateless deployment (e.g., Cloud Run) with a `pnpm run build:production` script for optimized builds.
 
 ## External Dependencies

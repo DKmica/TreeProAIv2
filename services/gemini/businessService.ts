@@ -5,11 +5,10 @@ import { AICoreInsights, Lead, Job, Quote, Employee, Equipment, UpsellSuggestion
 const geminiApiKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
 
 if (!geminiApiKey) {
-    console.error("⚠️ VITE_GEMINI_API_KEY is not set! AI business insights will not work.");
-    throw new Error("Gemini API key is required for business insights. Please set VITE_GEMINI_API_KEY in your environment variables.");
+    console.error("VITE_GEMINI_API_KEY is not set!");
 }
 
-const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+const ai = new GoogleGenAI({ apiKey: geminiApiKey as string });
 
 const aiCoreSchema = {
     type: Type.OBJECT,

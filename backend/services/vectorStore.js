@@ -52,26 +52,11 @@ class InMemoryVectorStore {
         metadata: doc.metadata || {}
       }));
 
-      const existingIds = new Set(processedDocs.map(doc => doc.id));
-      this.collections[collectionName] = this.collections[collectionName].filter(doc => !existingIds.has(doc.id));
       this.collections[collectionName].push(...processedDocs);
       console.log(`✅ Added ${documents.length} documents to ${collectionName}`);
     } catch (error) {
       console.error(`Error adding documents to ${collectionName}:`, error);
       throw error;
-    }
-  }
-
-  async removeDocument(collectionName, documentId) {
-    if (!this.collections[collectionName]) {
-      return;
-    }
-
-    const collection = this.collections[collectionName];
-    const index = collection.findIndex(doc => doc.id === documentId);
-    if (index > -1) {
-      collection.splice(index, 1);
-      console.log(`✅ Removed ${documentId} from ${collectionName}`);
     }
   }
 
