@@ -17,6 +17,8 @@ const PORT = process.env.PORT || 3001;
 const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
 const isProduction = process.env.NODE_ENV === 'production';
 
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Allow flexibility for development; configure properly for production
