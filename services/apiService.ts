@@ -40,7 +40,14 @@ const createApiService = <T extends { id: string }>(resource: string) => ({
 
 export const customerService = createApiService<Customer>('customers');
 export const clientService = {
-  ...createApiService<Client>('clients'),
+  getAll: async (): Promise<Client[]> => {
+    const response = await apiFetch<{ success: boolean; data: Client[]; pagination: any }>('clients');
+    return response.data ?? [];
+  },
+  getById: (id: string): Promise<Client> => apiFetch(`clients/${id}`),
+  create: (data: Partial<Omit<Client, 'id'>>): Promise<Client> => apiFetch('clients', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Client>): Promise<Client> => apiFetch(`clients/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  remove: (id: string): Promise<void> => apiFetch<void>(`clients/${id}`, { method: 'DELETE' }),
   getProperties: (clientId: string): Promise<Property[]> => apiFetch(`clients/${clientId}/properties`),
   getContacts: (clientId: string): Promise<Contact[]> => apiFetch(`clients/${clientId}/contacts`),
 };
@@ -50,7 +57,16 @@ export const propertyService = {
     apiFetch(`clients/${clientId}/properties`, { method: 'POST', body: JSON.stringify(data) }),
 };
 export const leadService = createApiService<Lead>('leads');
-export const quoteService = createApiService<Quote>('quotes');
+export const quoteService = {
+  getAll: async (): Promise<Quote[]> => {
+    const response = await apiFetch<{ success: boolean; data: Quote[]; pagination: any }>('quotes');
+    return response.data ?? [];
+  },
+  getById: (id: string): Promise<Quote> => apiFetch(`quotes/${id}`),
+  create: (data: Partial<Omit<Quote, 'id'>>): Promise<Quote> => apiFetch('quotes', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Quote>): Promise<Quote> => apiFetch(`quotes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  remove: (id: string): Promise<void> => apiFetch<void>(`quotes/${id}`, { method: 'DELETE' }),
+};
 export const jobService = createApiService<Job>('jobs');
 export const invoiceService = createApiService<Invoice>('invoices');
 export const employeeService = createApiService<Employee>('employees');

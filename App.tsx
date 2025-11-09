@@ -23,7 +23,7 @@ import CrewJobDetail from './pages/crew/CrewJobDetail';
 import CustomerPortalLayout from './components/CustomerPortalLayout';
 import QuotePortal from './pages/portal/QuotePortal';
 import InvoicePortal from './pages/portal/InvoicePortal';
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
+import { Customer, Client, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
 import Profitability from './pages/Profitability';
 import EquipmentDetail from './pages/EquipmentDetail';
 import JobStatusPortal from './pages/portal/JobStatusPortal';
@@ -37,7 +37,7 @@ import SpinnerIcon from './components/icons/SpinnerIcon';
 import { aiCore } from './services/gemini/aiCore';
 
 const App: React.FC = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -54,7 +54,7 @@ const App: React.FC = () => {
       console.log("🚀 Starting data fetch from backend...");
       try {
         const [
-          customersData,
+          clientsData,
           leadsData,
           quotesData,
           jobsData,
@@ -62,7 +62,7 @@ const App: React.FC = () => {
           employeesData,
           equipmentData
         ] = await Promise.all([
-          api.customerService.getAll().catch(() => []),
+          api.clientService.getAll().catch(() => []),
           api.leadService.getAll().catch(() => []),
           api.quoteService.getAll().catch(() => []),
           api.jobService.getAll().catch(() => []),
@@ -72,7 +72,7 @@ const App: React.FC = () => {
         ]);
 
         console.log("✅ Data fetched successfully");
-        setCustomers(customersData);
+        setClients(clientsData);
         setLeads(leadsData);
         setQuotes(quotesData);
         setJobs(jobsData);
@@ -94,7 +94,7 @@ const App: React.FC = () => {
           ]);
 
           await aiCore.initialize({
-            customers: customersData,
+            clients: clientsData,
             leads: leadsData,
             quotes: quotesData,
             jobs: jobsData,
@@ -144,7 +144,7 @@ const App: React.FC = () => {
         ]);
 
         await aiCore.refresh({
-          customers,
+          clients,
           leads,
           quotes,
           jobs,
@@ -164,10 +164,10 @@ const App: React.FC = () => {
 
     refreshAiContext();
 
-  }, [isAiCoreInitialized, customers, leads, quotes, jobs, invoices, employees, equipment]);
+  }, [isAiCoreInitialized, clients, leads, quotes, jobs, invoices, employees, equipment]);
 
-  const appData = { customers, leads, quotes, jobs, invoices, employees, equipment };
-  const appSetters = { setCustomers, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
+  const appData = { clients, leads, quotes, jobs, invoices, employees, equipment };
+  const appSetters = { setClients, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
   const appState = { data: appData, setters: appSetters };
 
   if (isLoading || !isAiCoreInitialized) {
@@ -202,21 +202,21 @@ const App: React.FC = () => {
       
       {/* Main App Protected Routes */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<Layout appState={appState} />}>
+        <Route element={<Layout appState={appState} isAiCoreInitialized={isAiCoreInitialized} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} leads={leads} quotes={quotes} />} />
+          <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={clients} leads={leads} quotes={quotes} />} />
           <Route path="/crm" element={<CRM />} />
           <Route path="/crm/clients/:id" element={<ClientDetail />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
           <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={customers} setCustomers={setCustomers} />} />
-          <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={customers} />} />
-          <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
-          <Route path="/customers" element={<Customers customers={customers} setCustomers={setCustomers} />} />
+          <Route path="/chat" element={<ChatPage isAiCoreInitialized={isAiCoreInitialized} />} />
+          <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={clients} setCustomers={setClients} />} />
+          <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={clients} />} />
+          <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
+          <Route path="/customers" element={<Customers customers={clients} setCustomers={setClients} />} />
           <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
-          <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={customers} />} />
+          <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={clients} />} />
           <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
           <Route path="/payroll" element={<Payroll />} />
           <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
@@ -230,8 +230,8 @@ const App: React.FC = () => {
       
       {/* Crew App Layout */}
       <Route path="/crew" element={<CrewLayout />}>
-          <Route index element={<CrewDashboard jobs={jobs} customers={customers} />} />
-          <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} />} />
+          <Route index element={<CrewDashboard jobs={jobs} customers={clients} />} />
+          <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} />} />
       </Route>
 
       {/* Customer Portal Layout */}

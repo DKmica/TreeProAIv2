@@ -26,6 +26,7 @@ interface AppState {
 
 interface LayoutProps {
   appState: AppState;
+  isAiCoreInitialized: boolean;
 }
 
 const getPageContext = (pathname: string): string => {
@@ -46,7 +47,7 @@ const getPageContext = (pathname: string): string => {
 };
 
 
-const Layout: React.FC<LayoutProps> = ({ appState }) => {
+const Layout: React.FC<LayoutProps> = ({ appState, isAiCoreInitialized }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isBotOpen, setIsBotOpen] = useState(false);
   const location = useLocation();
@@ -54,6 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ appState }) => {
 
   const chat = useAICore({
       pageContext: pageContext,
+      isAiCoreReady: isAiCoreInitialized,
   });
   
   const voice = useVoiceRecognition({

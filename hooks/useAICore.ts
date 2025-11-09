@@ -5,9 +5,10 @@ import { aiCore } from '../services/gemini/aiCore';
 
 interface UseAICoreProps {
   pageContext: string;
+  isAiCoreReady: boolean;
 }
 
-export const useAICore = ({ pageContext }: UseAICoreProps) => {
+export const useAICore = ({ pageContext, isAiCoreReady }: UseAICoreProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,36 +23,17 @@ export const useAICore = ({ pageContext }: UseAICoreProps) => {
   };
 
   useEffect(() => {
-    const initializeAICore = async () => {
-      if (isInitializedRef.current) return;
-      
-      try {
-        console.log('🚀 Initializing AI Core...');
-        setIsInitializing(true);
-        await aiCore.initialize();
-        isInitializedRef.current = true;
-        
-        addMessage({
-          role: 'model',
-          text: 'Hello! I\'m ProBot, your expert arborist and TreePro AI assistant. I have full access to your business data and can help you with:\n\n• **Business questions** - Ask about customers, leads, jobs, revenue\n• **Arborist expertise** - Tree identification, pruning, safety standards\n• **App automation** - Create records, navigate pages, schedule jobs\n\nWhat can I help you with today?'
-        });
-        
-        console.log('✅ AI Core initialized successfully');
-        setError(null);
-      } catch (err: any) {
-        console.error('❌ AI Core initialization failed:', err);
-        setError(`Failed to initialize AI Core: ${err.message}`);
-        addMessage({
-          role: 'model',
-          text: '⚠️ I encountered an error during initialization. Please refresh the page and try again.'
-        });
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-
-    initializeAICore();
-  }, []);
+    if (isInitializedRef.current) return;
+    
+    if (isAiCoreReady && aiCore.isInitialized()) {
+      isInitializedRef.current = true;
+      addMessage({
+        role: 'model',
+        text: 'Hello! I\'m ProBot, your expert arborist and TreePro AI assistant. I have full access to your business data and can help you with:\n\n• **Business questions** - Ask about customers, leads, jobs, revenue\n• **Arborist expertise** - Tree identification, pruning, safety standards\n• **App automation** - Create records, navigate pages, schedule jobs\n\nWhat can I help you with today?'
+      });
+      setIsInitializing(false);
+    }
+  }, [isAiCoreReady]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

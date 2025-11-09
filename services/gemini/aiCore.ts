@@ -1,6 +1,7 @@
 import { GoogleGenAI, Chat, FunctionDeclaration, Type } from "@google/genai";
 import {
   Customer,
+  Client,
   Lead,
   Quote,
   Job,
@@ -14,7 +15,7 @@ import {
   ChatMessage
 } from "../../types";
 import {
-  customerService,
+  clientService,
   leadService,
   quoteService,
   jobService,
@@ -37,7 +38,7 @@ if (!geminiApiKey) {
 const ai = new GoogleGenAI({ apiKey: geminiApiKey as string });
 
 interface BusinessContext {
-  customers: Customer[];
+  clients: Client[];
   leads: Lead[];
   quotes: Quote[];
   jobs: Job[];
@@ -1146,13 +1147,16 @@ function getContextSummary(): string {
   }
 
   const ctx = businessContext;
+  
+  const quotes = Array.isArray(ctx.quotes) ? ctx.quotes : [];
+  
   return JSON.stringify({
     summary: {
-      totalCustomers: ctx.customers.length,
+      totalCustomers: ctx.clients.length,
       totalLeads: ctx.leads.length,
       newLeads: ctx.leads.filter(l => l.status === 'New').length,
-      totalQuotes: ctx.quotes.length,
-      acceptedQuotes: ctx.quotes.filter(q => q.status === 'Accepted').length,
+      totalQuotes: quotes.length,
+      acceptedQuotes: quotes.filter(q => q.status === 'Accepted').length,
       totalJobs: ctx.jobs.length,
       scheduledJobs: ctx.jobs.filter(j => j.status === 'Scheduled').length,
       inProgressJobs: ctx.jobs.filter(j => j.status === 'In Progress').length,
@@ -1165,9 +1169,9 @@ function getContextSummary(): string {
       unpaidInvoices: ctx.invoices.filter(i => i.status !== 'Paid').length,
       companyName: ctx.companyProfile?.companyName || 'Tree Service Company'
     },
-    customers: ctx.customers.slice(0, 10).map(c => ({ id: c.id, name: c.name, address: c.address })),
+    clients: ctx.clients.slice(0, 10).map(c => ({ id: c.id, firstName: c.firstName, lastName: c.lastName, companyName: c.companyName })),
     leads: ctx.leads.map(l => ({ id: l.id, customer: l.customer.name, status: l.status, source: l.source, description: l.description })),
-    quotes: ctx.quotes.map(q => ({ id: q.id, customerName: q.customerName, status: q.status, leadId: q.leadId })),
+    quotes: quotes.map(q => ({ id: q.id, customerName: q.customerName, status: q.status, leadId: q.leadId })),
     jobs: ctx.jobs.map(j => ({ id: j.id, customerName: j.customerName, status: j.status, scheduledDate: j.scheduledDate, assignedCrew: j.assignedCrew })),
     employees: ctx.employees.map(e => ({ id: e.id, name: e.name, jobTitle: e.jobTitle, payRate: e.payRate })),
     equipment: ctx.equipment.map(eq => ({ id: eq.id, name: eq.name, status: eq.status, lastServiceDate: eq.lastServiceDate })),
@@ -1235,39 +1239,66 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         return { success: true, message: `Open ${args.type} record ${args.id}`, action: 'navigate', path: `/${args.type}s/${args.id}` };
 
       case 'createCustomer':
-        const newCustomer = await customerService.create({
-          name: args.name,
-          email: args.email,
-          phone: args.phone || '',
-          address: args.address || '',
-          coordinates: { lat: 0, lng: 0 }
+        const newCustomer = await clientService.create({
+          firstName: args.name.split(' ')[0] || '',
+          lastName: args.name.split(' ').slice(1).join(' ') || '',
+          primaryEmail: args.email,
+          primaryPhone: args.phone || '',
+          billingAddressLine1: args.address || '',
+          clientType: 'residential',
+          status: 'active',
+          paymentTerms: 'Net 30',
+          taxExempt: false,
+          billingCountry: 'USA',
+          lifetimeValue: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         });
-        businessContext.customers.push(newCustomer);
-        return { success: true, customer: newCustomer, message: `Created customer: ${newCustomer.name}` };
+        businessContext.clients.push(newCustomer);
+        return { success: true, customer: newCustomer, message: `Created customer: ${newCustomer.firstName} ${newCustomer.lastName}` };
 
       case 'createLead':
-        let targetCustomer = businessContext.customers.find(c => 
-          c.name.toLowerCase() === args.customerName.toLowerCase()
+        let targetCustomer = businessContext.clients.find(c => 
+          `${c.firstName} ${c.lastName}`.toLowerCase() === args.customerName.toLowerCase() ||
+          c.companyName?.toLowerCase() === args.customerName.toLowerCase()
         );
         if (!targetCustomer) {
-          targetCustomer = await customerService.create({
-            name: args.customerName,
-            email: '',
-            phone: '',
-            address: '',
-            coordinates: { lat: 0, lng: 0 }
+          targetCustomer = await clientService.create({
+            firstName: args.customerName.split(' ')[0] || '',
+            lastName: args.customerName.split(' ').slice(1).join(' ') || '',
+            primaryEmail: '',
+            primaryPhone: '',
+            billingAddressLine1: '',
+            clientType: 'residential',
+            status: 'active',
+            paymentTerms: 'Net 30',
+            taxExempt: false,
+            billingCountry: 'USA',
+            lifetimeValue: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           });
-          businessContext.customers.push(targetCustomer);
+          businessContext.clients.push(targetCustomer);
         }
+        
+        const customerForLead: Customer = {
+          id: targetCustomer.id,
+          name: `${targetCustomer.firstName} ${targetCustomer.lastName}`,
+          email: targetCustomer.primaryEmail || '',
+          phone: targetCustomer.primaryPhone || '',
+          address: targetCustomer.billingAddressLine1 || '',
+          coordinates: { lat: 0, lng: 0 }
+        };
+        
         const lead = await leadService.create({
-          customer: targetCustomer,
+          customer: customerForLead,
           source: args.source,
           status: 'New',
           description: args.description,
           createdAt: new Date().toISOString()
         });
         businessContext.leads.push(lead);
-        return { success: true, lead, message: `Created lead for ${targetCustomer.name}` };
+        return { success: true, lead, message: `Created lead for ${customerForLead.name}` };
 
       case 'updateLeadStatus':
         const leadToUpdate = await leadService.update(args.leadId, { status: args.status });
@@ -1290,8 +1321,9 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         };
 
       case 'createQuote':
+        const quoteClient = businessContext.clients.find(c => c.id === args.customerId);
         const quote = await quoteService.create({
-          customerName: businessContext.customers.find(c => c.id === args.customerId)?.name || 'Unknown',
+          customerName: quoteClient ? `${quoteClient.firstName} ${quoteClient.lastName}` : 'Unknown',
           leadId: '',
           status: 'Draft',
           lineItems: args.lineItems.map((item: any) => ({ ...item, selected: true })),
@@ -1496,7 +1528,7 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
           success: true,
           metrics: {
             totalRevenue: totalRev,
-            totalCustomers: businessContext.customers.length,
+            totalCustomers: businessContext.clients.length,
             activeJobs: businessContext.jobs.filter(j => j.status === 'Scheduled' || j.status === 'In Progress').length,
             completedJobs: businessContext.jobs.filter(j => j.status === 'Completed').length,
             newLeads: businessContext.leads.filter(l => l.status === 'New').length,
@@ -1536,11 +1568,12 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         };
 
       case 'identifyUpsellOpportunities':
-        const upsellCustomer = businessContext.customers.find(c => c.id === args.customerId);
+        const upsellCustomer = businessContext.clients.find(c => c.id === args.customerId);
         if (!upsellCustomer) return { success: false, message: 'Customer not found' };
         
-        const customerJobs = businessContext.jobs.filter(j => j.customerName === upsellCustomer.name);
-        const customerQuotes = businessContext.quotes.filter(q => q.customerName === upsellCustomer.name);
+        const customerName = `${upsellCustomer.firstName} ${upsellCustomer.lastName}`;
+        const customerJobs = businessContext.jobs.filter(j => j.customerName === customerName);
+        const customerQuotes = businessContext.quotes.filter(q => q.customerName === customerName);
         
         const opportunities = [];
         if (customerJobs.length > 0 && !customerQuotes.some(q => 
@@ -1556,7 +1589,7 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         
         return {
           success: true,
-          customer: upsellCustomer.name,
+          customer: customerName,
           opportunities,
           message: opportunities.length > 0 ? `Found ${opportunities.length} upsell opportunities` : 'No immediate opportunities identified'
         };
@@ -1965,11 +1998,12 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         };
 
       case 'calculateCustomerLifetimeValue':
-        const clvCustomer = businessContext.customers.find(c => c.id === args.customerId);
+        const clvCustomer = businessContext.clients.find(c => c.id === args.customerId);
         if (!clvCustomer) return { success: false, message: 'Customer not found' };
         
+        const clvCustomerName = `${clvCustomer.firstName} ${clvCustomer.lastName}`;
         const customerJobsCompleted = businessContext.jobs.filter(j => 
-          j.customerName === clvCustomer.name && j.status === 'Completed'
+          j.customerName === clvCustomerName && j.status === 'Completed'
         );
         
         let totalSpent = 0;
@@ -1987,7 +2021,7 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         
         return {
           success: true,
-          customer: clvCustomer.name,
+          customer: clvCustomerName,
           totalSpent: Math.round(totalSpent),
           completedJobs: customerJobsCompleted.length,
           avgJobValue: Math.round(customerAvgJobValue),
@@ -2077,7 +2111,7 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         };
 
       case 'createMaintenancePlan':
-        const planCustomer = businessContext.customers.find(c => c.id === args.customerId);
+        const planCustomer = businessContext.clients.find(c => c.id === args.customerId);
         if (!planCustomer) return { success: false, message: 'Customer not found' };
         
         const years = args.yearsAhead || 3;
@@ -2116,16 +2150,17 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         }
         
         const totalPlanCost = maintenancePlan.reduce((sum, year) => sum + year.annualCost, 0);
+        const planCustomerName = `${planCustomer.firstName} ${planCustomer.lastName}`;
         
         return {
           success: true,
-          customer: planCustomer.name,
+          customer: planCustomerName,
           treeTypes: args.treeTypes,
           yearsPlanned: years,
           plan: maintenancePlan,
           totalEstimatedCost: totalPlanCost,
           annualAverage: Math.round(totalPlanCost / years),
-          message: `${years}-year maintenance plan created for ${planCustomer.name}. ${args.treeTypes.length} tree types, total estimated cost: $${totalPlanCost.toLocaleString()}.`
+          message: `${years}-year maintenance plan created for ${planCustomerName}. ${args.treeTypes.length} tree types, total estimated cost: $${totalPlanCost.toLocaleString()}.`
         };
 
       case 'trackEquipmentUsage':
@@ -2298,19 +2333,28 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         };
 
       case 'createEmergencyJob':
-        let emergencyCustomer = businessContext.customers.find(c => 
-          c.name.toLowerCase() === args.customerName.toLowerCase()
+        let emergencyCustomer = businessContext.clients.find(c => 
+          `${c.firstName} ${c.lastName}`.toLowerCase() === args.customerName.toLowerCase() ||
+          c.companyName?.toLowerCase() === args.customerName.toLowerCase()
         );
         
         if (!emergencyCustomer) {
-          emergencyCustomer = await customerService.create({
-            name: args.customerName,
-            email: '',
-            phone: '',
-            address: args.location,
-            coordinates: { lat: 0, lng: 0 }
+          emergencyCustomer = await clientService.create({
+            firstName: args.customerName.split(' ')[0] || '',
+            lastName: args.customerName.split(' ').slice(1).join(' ') || '',
+            primaryEmail: '',
+            primaryPhone: '',
+            billingAddressLine1: args.location,
+            clientType: 'residential',
+            status: 'active',
+            paymentTerms: 'Net 30',
+            taxExempt: false,
+            billingCountry: 'USA',
+            lifetimeValue: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           });
-          businessContext.customers.push(emergencyCustomer);
+          businessContext.clients.push(emergencyCustomer);
         }
         
         const emergencyJob = await jobService.create({
@@ -2482,9 +2526,14 @@ function getContext(): BusinessContext | null {
   return businessContext;
 }
 
+function isInitialized(): boolean {
+  return businessContext !== null;
+}
+
 export const aiCore = {
   initialize,
   chat,
   refresh,
-  getContext
+  getContext,
+  isInitialized
 };
