@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Client, Lead, Quote } from '../types';
 import { clientService, leadService, quoteService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
@@ -11,7 +11,11 @@ import ClientEditor from '../components/ClientEditor';
 type TabType = 'clients' | 'leads' | 'quotes';
 
 const CRM: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('clients');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabType | null;
+  const initialTab: TabType = tabParam && ['clients', 'leads', 'quotes'].includes(tabParam) ? tabParam : 'clients';
+  
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [searchTerm, setSearchTerm] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -20,6 +24,12 @@ const CRM: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (tabParam && ['clients', 'leads', 'quotes'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   useEffect(() => {
     const fetchData = async () => {

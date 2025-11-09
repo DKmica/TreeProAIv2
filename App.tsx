@@ -4,11 +4,8 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CRM from './pages/CRM';
 import ClientDetail from './pages/ClientDetail';
-import Leads from './pages/Leads';
-import Quotes from './pages/Quotes';
 import Jobs from './pages/Jobs';
 import JobTemplates from './pages/JobTemplates';
-import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
 import Calendar from './pages/Calendar';
 import Employees from './pages/Employees';
@@ -212,11 +209,11 @@ const App: React.FC = () => {
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
           <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
           <Route path="/chat" element={<ChatPage isAiCoreInitialized={isAiCoreInitialized} />} />
-          <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={clients} setCustomers={setClients} />} />
-          <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={clients} />} />
+          <Route path="/leads" element={<Navigate to="/crm?tab=leads" replace />} />
+          <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
           <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
           <Route path="/job-templates" element={<JobTemplates />} />
-          <Route path="/customers" element={<Customers customers={clients} setCustomers={setClients} />} />
+          <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
           <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
           <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={clients} />} />
           <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />

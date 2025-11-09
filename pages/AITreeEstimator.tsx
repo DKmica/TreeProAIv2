@@ -71,7 +71,7 @@ const AITreeEstimator: React.FC = () => {
     
     const handleCreateQuote = () => {
         if (results) {
-            navigate('/quotes', { state: { aiEstimate: results } });
+            navigate('/crm?tab=quotes', { state: { aiEstimate: results } });
         }
     };
 
