@@ -16,6 +16,7 @@ export interface Lead {
   status: 'New' | 'Contacted' | 'Qualified' | 'Lost';
   createdAt: string;
   description?: string;
+  customerUploads?: CustomerUpload[];
 }
 
 export interface LineItem {
@@ -46,6 +47,14 @@ export interface Quote {
   validUntil?: string;
   depositAmount?: number;
   paymentTerms?: string;
+  customerUploads?: CustomerUpload[];
+}
+
+export interface CustomerUpload {
+  url: string;
+  name: string;
+  uploadedAt: string;
+  type: string;
 }
 
 export interface JobHazardAnalysis {
@@ -76,12 +85,15 @@ export interface Job {
   clockInCoordinates?: { lat: number; lng: number; };
   clockOutCoordinates?: { lat: number; lng: number; };
   jha?: JobHazardAnalysis;
+  jhaAcknowledgedAt?: string;
   costs?: JobCost;
   messages?: PortalMessage[];
   jobLocation?: string;
   specialInstructions?: string;
   equipmentNeeded?: string[];
   estimatedHours?: number;
+  riskLevel?: 'Low' | 'Medium' | 'High' | 'Critical';
+  jhaRequired?: boolean;
 }
 
 

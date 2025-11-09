@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS leads (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS customer_uploads JSONB DEFAULT '[]';
+
 -- Quotes Table
 CREATE TABLE IF NOT EXISTS quotes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -62,6 +64,8 @@ CREATE TABLE IF NOT EXISTS quotes (
     payment_terms TEXT DEFAULT 'Net 30',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS customer_uploads JSONB DEFAULT '[]';
 
 -- Jobs Table
 CREATE TABLE IF NOT EXISTS jobs (
@@ -86,8 +90,14 @@ CREATE TABLE IF NOT EXISTS jobs (
     special_instructions TEXT,
     equipment_needed JSONB DEFAULT '[]',
     estimated_hours NUMERIC DEFAULT 0,
+    risk_level TEXT DEFAULT 'Low',
+    jha_required BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS jha_acknowledged_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS risk_level TEXT DEFAULT 'Low';
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS jha_required BOOLEAN DEFAULT false;
 
 -- Invoices Table
 CREATE TABLE IF NOT EXISTS invoices (

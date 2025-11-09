@@ -33,6 +33,10 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
   const quote = useMemo(() => quotes.find(q => q.id === job?.quoteId), [quotes, job]);
   const customer = useMemo(() => customers.find(c => c.name === job?.customerName), [customers, job]);
 
+  const isJhaAcknowledged = Boolean(job.jhaAcknowledgedAt);
+  const isJhaRequired = job.jhaRequired ?? false;
+  const isJhaMissing = isJhaRequired && !job.jha;
+
   if (!job) {
     return (
       <div className="text-center p-8 bg-white rounded-lg shadow">
@@ -48,6 +52,15 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
 
   const handleStatusUpdate = (updates: Partial<Job>) => {
     setJobs(prevJobs => prevJobs.map(j => (j.id === jobId ? { ...j, ...updates } : j)));
+  };
+
+  const handleAcknowledgeJha = () => {
+    if (!job.jha) {
+      setJhaError('Generate a Job Hazard Analysis before acknowledging.');
+      return;
+    }
+
+    handleStatusUpdate({ jhaAcknowledgedAt: new Date().toISOString() });
   };
 
   const getCurrentLocation = (): Promise<{ lat: number; lng: number }> => {
@@ -192,6 +205,10 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
     clockButtonText = 'Work Logged';
     clockButtonDisabled = true;
     clockButtonClasses = "bg-brand-gray-400 cursor-not-allowed";
+  } else if (!isJhaAcknowledged && isJhaRequired) {
+    clockButtonText = 'Acknowledge JHA to Clock In';
+    clockButtonDisabled = true;
+    clockButtonClasses = "bg-brand-gray-400 cursor-not-allowed";
   }
 
   return (
@@ -227,6 +244,26 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
         </div>
       </div>
 
+      {isJhaMissing && (
+        <div className="mt-4 bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg shadow" role="alert">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-lg font-semibold">Safety Warning: JHA Required</h3>
+              <p className="mt-2 text-sm">
+                AI has flagged this job as <strong>{job.riskLevel || 'Medium'} Risk</strong>.
+                A Job Hazard Analysis (JHA) is <strong>mandatory</strong> before work can begin.
+              </p>
+              <p className="mt-1 text-sm">
+                Please upload job site photos and click "Generate Job Hazard Analysis" below.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-gray-800 mb-3">Safety & Compliance Co-pilot</h2>
         {!job.jha ? (
@@ -234,7 +271,11 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
                 <button 
                     onClick={handleGenerateJHA} 
                     disabled={!job.photos || job.photos.length === 0 || isGeneratingJha}
-                    className="w-full inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-400 disabled:cursor-not-allowed"
+                    className={`w-full inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:bg-brand-gray-400 disabled:cursor-not-allowed ${
+                      isJhaMissing
+                        ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 animate-pulse'
+                        : 'bg-brand-green-600 hover:bg-brand-green-700 focus:ring-brand-green-500'
+                    }`}
                 >
                     {isGeneratingJha ? <SpinnerIcon className="h-5 w-5 mr-2"/> :  <ShieldCheckIcon className="h-5 w-5 mr-2" />}
                     {isGeneratingJha ? 'Analyzing Site...' : 'Generate Job Hazard Analysis'}
@@ -253,7 +294,7 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
                         {job.jha.identified_hazards.map((hazard, i) => <li key={i}>{hazard}</li>)}
                     </ul>
                 </div>
-                 <div>
+                <div>
                     <h3 className="text-md font-semibold text-brand-gray-800 flex items-center">
                         <ShieldCheckIcon className="w-5 h-5 mr-2 text-blue-500"/>
                         Recommended PPE
@@ -262,10 +303,30 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
                         {job.jha.recommended_ppe.map((ppe, i) => <li key={i}>{ppe}</li>)}
                     </ul>
                 </div>
+                <div className="rounded-md border border-brand-gray-200 p-3 bg-brand-gray-50">
+                    <p className="text-sm text-brand-gray-700">
+                        Review the Job Hazard Analysis above and confirm you understand the required safety protocols before
+                        clocking in.
+                    </p>
+                    <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <button
+                            onClick={handleAcknowledgeJha}
+                            disabled={isJhaAcknowledged}
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+                        >
+                            {isJhaAcknowledged ? 'Acknowledged' : 'I Have Read and Acknowledge'}
+                        </button>
+                        {isJhaAcknowledged && job.jhaAcknowledgedAt && (
+                            <p className="text-xs text-brand-gray-500">
+                                Acknowledged at {new Date(job.jhaAcknowledgedAt).toLocaleTimeString()}
+                            </p>
+                        )}
+                    </div>
+                </div>
                 <p className="text-xs text-brand-gray-400 text-right">Analysis generated at {new Date(job.jha.analysis_timestamp).toLocaleTimeString()}</p>
             </div>
         )}
-       
+
       </div>
       
       {(job.workStartedAt || locationError) && (
@@ -313,10 +374,17 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
       <div className="mt-6 space-y-4">
         <h2 className="text-xl font-bold text-brand-gray-900">Job Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <button onClick={handleClockInOut} disabled={clockButtonDisabled || isClocking} className={`flex items-center justify-center p-4 text-white font-bold rounded-lg shadow-md transition-transform active:scale-95 ${clockButtonClasses}`}>
-                {isClocking ? <SpinnerIcon className="w-6 h-6 mr-2" /> : <ClockIcon className="w-6 h-6 mr-2" />}
-                {clockButtonText}
-            </button>
+            <div className="space-y-2">
+                <button onClick={handleClockInOut} disabled={clockButtonDisabled || isClocking} className={`flex items-center justify-center p-4 text-white font-bold rounded-lg shadow-md transition-transform active:scale-95 ${clockButtonClasses}`}>
+                    {isClocking ? <SpinnerIcon className="w-6 h-6 mr-2" /> : <ClockIcon className="w-6 h-6 mr-2" />}
+                    {clockButtonText}
+                </button>
+                {!isJhaAcknowledged && !job.workStartedAt && (
+                    <p className="text-xs text-brand-gray-600 text-center">
+                        Review and acknowledge the Job Hazard Analysis to unlock clock-in.
+                    </p>
+                )}
+            </div>
             <button onClick={handlePhotoUploadClick} className="flex items-center justify-center p-4 bg-brand-gray-700 text-white font-bold rounded-lg shadow-md hover:bg-brand-gray-800 transition-transform active:scale-95">
                 <CameraIcon className="w-6 h-6 mr-2" />
                 Upload Photos

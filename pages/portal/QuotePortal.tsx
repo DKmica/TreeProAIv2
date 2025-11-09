@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Quote, LineItem, PortalMessage } from '../../types';
+import { Quote, LineItem, PortalMessage, CustomerUpload } from '../../types';
 import SignaturePad from '../../components/SignaturePad';
 import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import PortalMessaging from '../../components/PortalMessaging';
+import * as api from '../../services/apiService';
 
 interface QuotePortalProps {
   quotes: Quote[];
@@ -15,10 +16,13 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
   const { quoteId } = useParams<{ quoteId: string }>();
 
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId]);
-  
+
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [isSigning, setIsSigning] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (quote) {
@@ -35,6 +39,64 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
 
   const handleAcceptAndSign = () => {
     setIsSigning(true);
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const readFileAsDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleUploadMedia: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+    if (!quoteId || !event.target.files || event.target.files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploads: CustomerUpload[] = [];
+      for (const file of Array.from(event.target.files)) {
+        if (file.size > 25 * 1024 * 1024) {
+          throw new Error(`"${file.name}" is larger than 25MB. Please upload smaller files.`);
+        }
+        const dataUrl = await readFileAsDataUrl(file);
+        uploads.push({
+          url: dataUrl,
+          name: file.name,
+          uploadedAt: new Date().toISOString(),
+          type: file.type,
+        });
+      }
+
+      const newCustomerUploads = [...(quote?.customerUploads || []), ...uploads];
+
+      setQuotes(prev => prev.map(q =>
+        q.id === quoteId
+          ? { ...q, customerUploads: newCustomerUploads }
+          : q
+      ));
+
+      try {
+        await api.quoteService.update(quoteId, { customerUploads: newCustomerUploads });
+      } catch (apiError: any) {
+        console.error('Failed to save uploads to backend:', apiError);
+        setUploadError(`Files uploaded to portal, but failed to save: ${apiError.message || 'Unknown error'}`);
+      }
+
+      event.target.value = '';
+    } catch (error: any) {
+      console.error('Failed to upload media', error);
+      setUploadError(error.message || 'Unable to upload files right now.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSendMessage = (text: string) => {
@@ -153,6 +215,52 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
             <p className="text-md font-semibold text-brand-gray-800">Total Amount:</p>
             <p className="text-4xl font-bold text-brand-gray-900">${totalAmount.toFixed(2)}</p>
           </div>
+        </div>
+
+        <div className="p-6 border-t bg-white">
+          <h2 className="text-lg font-semibold text-brand-gray-800">Share Site Photos or Videos</h2>
+          <p className="mt-1 text-sm text-brand-gray-600">Upload photos or short clips of the tree or site to help our estimator prepare an accurate quote.</p>
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <button
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300 disabled:cursor-not-allowed"
+            >
+              {isUploading ? <SpinnerIcon className="h-5 w-5 mr-2" /> : null}
+              {isUploading ? 'Uploading...' : 'Upload Photos or Video'}
+            </button>
+            <p className="text-xs text-brand-gray-500">Up to 25MB per file. Supported formats: JPG, PNG, HEIC, MP4.</p>
+          </div>
+          {uploadError && <p className="mt-2 text-sm text-red-600">{uploadError}</p>}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            className="hidden"
+            onChange={handleUploadMedia}
+          />
+
+          {quote.customerUploads && quote.customerUploads.length > 0 && (
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {quote.customerUploads.map(upload => (
+                <div key={`${upload.uploadedAt}-${upload.name}`} className="rounded-lg border border-brand-gray-200 overflow-hidden bg-brand-gray-50 shadow-sm">
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-brand-gray-800 truncate" title={upload.name}>{upload.name}</p>
+                    <p className="text-xs text-brand-gray-500">Uploaded {new Date(upload.uploadedAt).toLocaleString()}</p>
+                  </div>
+                  {upload.type.startsWith('video') ? (
+                    <video controls className="w-full h-48 object-cover bg-black">
+                      <source src={upload.url} type={upload.type} />
+                      Your browser does not support embedded video.
+                    </video>
+                  ) : (
+                    <img src={upload.url} alt={upload.name} className="w-full h-48 object-cover" />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {quote.status === 'Sent' && (

@@ -32,6 +32,7 @@ import TemplateViewer from './pages/TemplateViewer';
 import Payroll from './pages/Payroll';
 import * as api from './services/apiService';
 import SpinnerIcon from './components/icons/SpinnerIcon';
+import { aiCore } from './services/gemini/aiCore';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   const [equipment, setEquipment] = useState<EquipmentType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAiCoreInitialized, setIsAiCoreInitialized] = useState(false);
 
 
   useEffect(() => {
@@ -75,6 +77,39 @@ const App: React.FC = () => {
         setInvoices(invoicesData);
         setEmployees(employeesData);
         setEquipment(equipmentData);
+
+        try {
+          const [
+            payrollRecords,
+            timeEntries,
+            payPeriods,
+            companyProfile
+          ] = await Promise.all([
+            api.payrollRecordService.getAll(),
+            api.timeEntryService.getAll(),
+            api.payPeriodService.getAll(),
+            api.companyProfileService.get().catch(() => null)
+          ]);
+
+          await aiCore.initialize({
+            customers: customersData,
+            leads: leadsData,
+            quotes: quotesData,
+            jobs: jobsData,
+            invoices: invoicesData,
+            employees: employeesData,
+            equipment: equipmentData,
+            payrollRecords,
+            timeEntries,
+            payPeriods,
+            companyProfile,
+            lastUpdated: new Date()
+          });
+          setIsAiCoreInitialized(true);
+        } catch (aiError) {
+          console.error("❌ Failed to initialize AI Core:", aiError);
+          setIsAiCoreInitialized(true);
+        }
       } catch (e: any) {
         console.error("❌ Failed to fetch initial data:", e);
         setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the replit.md documentation. Error: ${e.message}`);
@@ -86,16 +121,61 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (!isAiCoreInitialized) {
+      return;
+    }
+
+    const refreshAiContext = async () => {
+      console.log("🔄 AI Core context is stale, refreshing...");
+      try {
+        const [
+          payrollRecords,
+          timeEntries,
+          payPeriods,
+          companyProfile
+        ] = await Promise.all([
+          api.payrollRecordService.getAll(),
+          api.timeEntryService.getAll(),
+          api.payPeriodService.getAll(),
+          api.companyProfileService.get().catch(() => null)
+        ]);
+
+        await aiCore.refresh({
+          customers,
+          leads,
+          quotes,
+          jobs,
+          invoices,
+          employees,
+          equipment,
+          payrollRecords,
+          timeEntries,
+          payPeriods,
+          companyProfile,
+          lastUpdated: new Date()
+        });
+      } catch (err) {
+        console.error("❌ Failed to refresh AI Core context:", err);
+      }
+    };
+
+    refreshAiContext();
+
+  }, [isAiCoreInitialized, customers, leads, quotes, jobs, invoices, employees, equipment]);
+
   const appData = { customers, leads, quotes, jobs, invoices, employees, equipment };
   const appSetters = { setCustomers, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
   const appState = { data: appData, setters: appSetters };
 
-  if (isLoading) {
+  if (isLoading || !isAiCoreInitialized) {
     return (
       <div className="flex items-center justify-center h-screen bg-brand-gray-50">
         <div className="text-center">
             <SpinnerIcon className="h-12 w-12 text-brand-green-600 mx-auto" />
-            <h1 className="mt-4 text-xl font-semibold text-brand-gray-700">Loading TreePro AI...</h1>
+            <h1 className="mt-4 text-xl font-semibold text-brand-gray-700">
+              {isLoading ? 'Loading TreePro AI...' : 'Initializing AI Core...'}
+            </h1>
         </div>
       </div>
     );
@@ -146,7 +226,7 @@ const App: React.FC = () => {
       
       {/* Crew App Layout */}
       <Route path="/crew" element={<CrewLayout />}>
-          <Route index element={<CrewDashboard jobs={jobs} />} />
+          <Route index element={<CrewDashboard jobs={jobs} customers={customers} />} />
           <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={customers} />} />
       </Route>
 

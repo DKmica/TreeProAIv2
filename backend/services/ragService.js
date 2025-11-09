@@ -47,12 +47,13 @@ class RAGService {
         db.query('SELECT * FROM equipment')
       ]);
 
-      await this.indexCustomers(customers.rows);
-      await this.indexLeads(leads.rows);
-      await this.indexQuotes(quotes.rows);
-      await this.indexJobs(jobs.rows);
-      await this.indexEmployees(employees.rows);
-      await this.indexEquipment(equipment.rows);
+      const options = { clearExisting: true };
+      await this.indexCustomers(customers.rows, options);
+      await this.indexLeads(leads.rows, options);
+      await this.indexQuotes(quotes.rows, options);
+      await this.indexJobs(jobs.rows, options);
+      await this.indexEmployees(employees.rows, options);
+      await this.indexEquipment(equipment.rows, options);
 
       const stats = await vectorStore.getCollectionStats();
       console.log('✅ Vector database built successfully:', stats);
@@ -64,7 +65,7 @@ class RAGService {
     }
   }
 
-  async indexCustomers(customers) {
+  async indexCustomers(customers, options = {}) {
     if (!customers || customers.length === 0) return;
 
     const documents = customers.map(customer => ({
@@ -78,11 +79,13 @@ class RAGService {
       }
     }));
 
-    await vectorStore.clearCollection('customers');
+    if (options.clearExisting) {
+      await vectorStore.clearCollection('customers');
+    }
     await vectorStore.addDocuments('customers', documents);
   }
 
-  async indexLeads(leads) {
+  async indexLeads(leads, options = {}) {
     if (!leads || leads.length === 0) return;
 
     const documents = leads.map(lead => ({
@@ -105,11 +108,13 @@ class RAGService {
       }
     }));
 
-    await vectorStore.clearCollection('leads');
+    if (options.clearExisting) {
+      await vectorStore.clearCollection('leads');
+    }
     await vectorStore.addDocuments('leads', documents);
   }
 
-  async indexQuotes(quotes) {
+  async indexQuotes(quotes, options = {}) {
     if (!quotes || quotes.length === 0) return;
 
     const documents = quotes.map(quote => ({
@@ -124,11 +129,13 @@ class RAGService {
       }
     }));
 
-    await vectorStore.clearCollection('quotes');
+    if (options.clearExisting) {
+      await vectorStore.clearCollection('quotes');
+    }
     await vectorStore.addDocuments('quotes', documents);
   }
 
-  async indexJobs(jobs) {
+  async indexJobs(jobs, options = {}) {
     if (!jobs || jobs.length === 0) return;
 
     const documents = jobs.map(job => ({
@@ -149,11 +156,13 @@ class RAGService {
       }
     }));
 
-    await vectorStore.clearCollection('jobs');
+    if (options.clearExisting) {
+      await vectorStore.clearCollection('jobs');
+    }
     await vectorStore.addDocuments('jobs', documents);
   }
 
-  async indexEmployees(employees) {
+  async indexEmployees(employees, options = {}) {
     if (!employees || employees.length === 0) return;
 
     const documents = employees.map(employee => ({
@@ -168,11 +177,13 @@ class RAGService {
       }
     }));
 
-    await vectorStore.clearCollection('employees');
+    if (options.clearExisting) {
+      await vectorStore.clearCollection('employees');
+    }
     await vectorStore.addDocuments('employees', documents);
   }
 
-  async indexEquipment(equipment) {
+  async indexEquipment(equipment, options = {}) {
     if (!equipment || equipment.length === 0) return;
 
     const documents = equipment.map(item => ({
@@ -187,7 +198,9 @@ class RAGService {
       }
     }));
 
-    await vectorStore.clearCollection('equipment');
+    if (options.clearExisting) {
+      await vectorStore.clearCollection('equipment');
+    }
     await vectorStore.addDocuments('equipment', documents);
   }
 

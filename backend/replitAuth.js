@@ -100,7 +100,6 @@ async function setupAuth(app) {
     !process.env.DATABASE_URL;
 
   if (disableOidc) {
-    console.log('🔧 Offline auth mode enabled');
     isOfflineAuth = true;
 
     app.use((req, _res, next) => {
