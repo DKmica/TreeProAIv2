@@ -18,6 +18,7 @@ import CogIcon from './icons/CogIcon';
 import DocumentTextIcon from './icons/DocumentTextIcon';
 import UsersIcon from './icons/UsersIcon';
 import ClockIcon from './icons/ClockIcon';
+import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
@@ -28,6 +29,7 @@ const navigation = [
   { name: 'Chat', href: '/chat', icon: ChatIcon },
   { name: 'Jobs', href: '/jobs', icon: JobIcon },
   { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon },
+  { name: 'Forms', href: '/forms', icon: ClipboardDocumentListIcon },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
   { name: 'Profitability', href: '/profitability', icon: DollarIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },

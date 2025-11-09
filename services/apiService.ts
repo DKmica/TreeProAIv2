@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -238,4 +238,33 @@ export const crewAssignmentService = {
     }),
   remove: (id: string): Promise<void> =>
     apiFetch<void>(`crew-assignments/${id}`, { method: 'DELETE' }),
+};
+
+export const formService = {
+  getTemplates: async (filters?: { category?: string; search?: string }): Promise<FormTemplate[]> => {
+    const params: Record<string, string> = {};
+    if (filters?.category) params.category = filters.category;
+    if (filters?.search) params.search = filters.search;
+    const queryString = new URLSearchParams(params).toString();
+    return apiFetch(`form-templates${queryString ? `?${queryString}` : ''}`);
+  },
+  getCategories: (): Promise<string[]> => apiFetch('form-templates/categories'),
+  getTemplate: (id: string): Promise<FormTemplate> => apiFetch(`form-templates/${id}`),
+  createTemplate: (data: Partial<Omit<FormTemplate, 'id'>>): Promise<FormTemplate> => 
+    apiFetch('form-templates', { method: 'POST', body: JSON.stringify(data) }),
+  updateTemplate: (id: string, data: Partial<FormTemplate>): Promise<FormTemplate> => 
+    apiFetch(`form-templates/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteTemplate: (id: string): Promise<void> => 
+    apiFetch<void>(`form-templates/${id}`, { method: 'DELETE' }),
+  
+  attachFormToJob: (jobId: string, templateId: string): Promise<JobForm> => 
+    apiFetch(`jobs/${jobId}/forms`, { method: 'POST', body: JSON.stringify({ templateId }) }),
+  getJobForms: (jobId: string): Promise<JobForm[]> => apiFetch(`jobs/${jobId}/forms`),
+  getJobForm: (id: string): Promise<JobForm> => apiFetch(`job-forms/${id}`),
+  submitFormData: (id: string, formData: Record<string, any>): Promise<JobForm> => 
+    apiFetch(`job-forms/${id}/submit`, { method: 'PUT', body: JSON.stringify({ formData }) }),
+  completeForm: (id: string): Promise<JobForm> => 
+    apiFetch(`job-forms/${id}/complete`, { method: 'PUT' }),
+  deleteJobForm: (id: string): Promise<void> => 
+    apiFetch<void>(`job-forms/${id}`, { method: 'DELETE' }),
 };

@@ -9,6 +9,7 @@ import StateTransitionControl from '../components/StateTransitionControl';
 import StateHistoryTimeline from '../components/StateHistoryTimeline';
 import XIcon from '../components/icons/XIcon';
 import TemplateSelector from '../components/TemplateSelector';
+import JobForms from '../components/JobForms';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 
@@ -562,6 +563,16 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                   Information
                 </button>
                 <button
+                  onClick={() => setActiveTab('forms')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'forms'
+                      ? 'border-cyan-500 text-cyan-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  Forms
+                </button>
+                <button
                   onClick={() => setActiveTab('transitions')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'transitions'
@@ -670,6 +681,10 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                     </div>
                   )}
                 </div>
+              )}
+
+              {activeTab === 'forms' && (
+                <JobForms jobId={viewingJobDetail.id} />
               )}
 
               {activeTab === 'transitions' && (

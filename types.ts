@@ -813,3 +813,41 @@ export interface CrewAssignment {
   createdAt: string;
   job?: Job;
 }
+
+// ============================================================================
+// PHASE 2B FORM TEMPLATES TYPES
+// ============================================================================
+
+export interface FormField {
+  id: string;
+  type: 'text' | 'number' | 'checkbox' | 'select' | 'textarea' | 'date' | 'signature';
+  label: string;
+  required: boolean;
+  options?: string[];
+}
+
+export interface FormTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  fields: FormField[];
+  requireSignature?: boolean;
+  requirePhotos?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobForm {
+  id: string;
+  jobId: string;
+  formTemplateId: string;
+  formData: Record<string, any>;
+  status: 'pending' | 'in_progress' | 'completed';
+  completedAt?: string;
+  completedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+  template?: FormTemplate;
+}
