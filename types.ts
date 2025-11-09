@@ -699,3 +699,23 @@ export interface CompanyProfile {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface JobStateTransition {
+  id: string;
+  jobId: string;
+  fromState: string | null;
+  toState: string;
+  changedBy: string | null;
+  changedByRole: string | null;
+  changeSource: 'manual' | 'automation' | 'api';
+  reason: string | null;
+  notes: any;
+  metadata: any;
+  createdAt: string;
+}
+
+export interface AllowedTransition {
+  state: string;
+  allowed: boolean;
+  blockedReasons: string[];
+}

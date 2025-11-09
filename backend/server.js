@@ -8,6 +8,7 @@ const { v4: uuidv4 } = require('uuid');
 const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
 const ragService = require('./services/ragService');
 const vectorStore = require('./services/vectorStore');
+const jobStateService = require('./services/jobStateService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -1027,6 +1028,43 @@ const transformToDb = (data, tableName) => {
   if (data.createdAt !== undefined) {
     transformed.created_at = data.createdAt;
     delete transformed.createdAt;
+  }
+  
+  // JSON.stringify JSONB fields to prevent "invalid input syntax for type json" errors
+  // This ensures objects and arrays are properly serialized before database insertion
+  
+  // Jobs table JSONB fields
+  if (tableName === 'jobs') {
+    if (transformed.assigned_crew !== undefined && typeof transformed.assigned_crew === 'object') {
+      transformed.assigned_crew = JSON.stringify(transformed.assigned_crew);
+    }
+    if (transformed.completion_checklist !== undefined && typeof transformed.completion_checklist === 'object') {
+      transformed.completion_checklist = JSON.stringify(transformed.completion_checklist);
+    }
+    if (transformed.permit_details !== undefined && typeof transformed.permit_details === 'object') {
+      transformed.permit_details = JSON.stringify(transformed.permit_details);
+    }
+  }
+  
+  // Quotes table JSONB fields
+  if (tableName === 'quotes') {
+    if (transformed.line_items !== undefined && typeof transformed.line_items === 'object') {
+      transformed.line_items = JSON.stringify(transformed.line_items);
+    }
+  }
+  
+  // Employees table JSONB fields
+  if (tableName === 'employees') {
+    if (transformed.performance_metrics !== undefined && typeof transformed.performance_metrics === 'object') {
+      transformed.performance_metrics = JSON.stringify(transformed.performance_metrics);
+    }
+  }
+  
+  // Equipment table JSONB fields
+  if (tableName === 'equipment') {
+    if (transformed.maintenance_history !== undefined && typeof transformed.maintenance_history === 'object') {
+      transformed.maintenance_history = JSON.stringify(transformed.maintenance_history);
+    }
   }
   
   return transformed;
@@ -5145,6 +5183,138 @@ apiRouter.post('/quotes/from-template/:templateId', async (req, res) => {
     handleError(res, err);
   }
 });
+
+// ============================================================================
+// JOB STATE MACHINE ENDPOINTS
+// ============================================================================
+
+// GET /api/jobs/:id/state-history - Get state transition history for a job
+apiRouter.get('/jobs/:id/state-history', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verify job exists
+    const job = await jobStateService.getJob(id);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    // Get complete state transition history
+    const history = await jobStateService.getStateHistory(id);
+    
+    res.json({
+      success: true,
+      data: {
+        jobId: id,
+        currentState: job.status,
+        currentStateName: jobStateService.STATE_NAMES[job.status],
+        history
+      }
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/jobs/:id/state-transitions - Transition job to new state
+apiRouter.post('/jobs/:id/state-transitions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      toState, 
+      reason, 
+      notes,
+      changedByRole = 'admin',
+      changeSource = 'manual',
+      jobUpdates = {}
+    } = req.body;
+    
+    // Use session user ID or null (not hardcoded string)
+    const changedBy = req.session?.userId || null;
+    
+    // Validate required fields
+    if (!toState) {
+      return res.status(400).json({
+        success: false,
+        error: 'toState is required'
+      });
+    }
+    
+    // Verify job exists
+    const job = await jobStateService.getJob(id);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    // Attempt state transition
+    const result = await jobStateService.transitionJobState(id, toState, {
+      changedBy,
+      changedByRole,
+      changeSource,
+      reason,
+      notes,
+      jobUpdates
+    });
+    
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        errors: result.errors
+      });
+    }
+    
+    // Re-index job in RAG system after state change
+    await reindexDocument('jobs', result.job);
+    
+    res.json({
+      success: true,
+      data: {
+        job: transformRow(result.job, 'jobs'),
+        transition: result.transition
+      },
+      message: `Job transitioned from '${result.transition.from}' to '${result.transition.to}'`
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/jobs/:id/allowed-transitions - Get currently allowed transitions for a job
+apiRouter.get('/jobs/:id/allowed-transitions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get allowed transitions with validation context
+    const result = await jobStateService.getAllowedTransitionsForJob(id);
+    
+    if (result.error) {
+      return res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// GENERIC CRUD ENDPOINTS
+// ============================================================================
 
 const resources = ['clients', 'leads', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
 resources.forEach(resource => {

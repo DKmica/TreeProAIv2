@@ -120,3 +120,12 @@ export const estimateFeedbackService = {
   getEstimateFeedback: (): Promise<EstimateFeedback[]> => apiFetch('estimate_feedback'),
   getEstimateFeedbackStats: (): Promise<EstimateFeedbackStats> => apiFetch('estimate_feedback/stats'),
 };
+
+export const jobStateService = {
+  getAllowedTransitions: (jobId: string): Promise<{currentState: string; transitions: any[]}> => 
+    apiFetch(`jobs/${jobId}/allowed-transitions`),
+  transitionState: (jobId: string, data: {toState: string; reason?: string; notes?: any}): Promise<Job> =>
+    apiFetch(`jobs/${jobId}/state-transitions`, { method: 'POST', body: JSON.stringify(data) }),
+  getStateHistory: (jobId: string): Promise<{currentState: string; history: any[]}> =>
+    apiFetch(`jobs/${jobId}/state-history`)
+};

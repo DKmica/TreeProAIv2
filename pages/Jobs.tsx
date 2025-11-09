@@ -4,6 +4,10 @@ import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessa
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
 import PortalMessaging from '../components/PortalMessaging';
+import JobStatusBadge from '../components/JobStatusBadge';
+import StateTransitionControl from '../components/StateTransitionControl';
+import StateHistoryTimeline from '../components/StateHistoryTimeline';
+import XIcon from '../components/icons/XIcon';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 
@@ -201,6 +205,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [linkCopied, setLinkCopied] = useState('');
   const [viewingMessages, setViewingMessages] = useState<Job | null>(null);
+  const [viewingJobDetail, setViewingJobDetail] = useState<Job | null>(null);
+  const [activeTab, setActiveTab] = useState<'info' | 'transitions' | 'history'>('info');
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -377,6 +383,29 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     }));
   };
 
+  const handleStateChanged = async (jobId: string, newState: string) => {
+    try {
+      const updatedJob = await api.jobService.getById(jobId);
+      setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? updatedJob : j));
+      if (viewingJobDetail?.id === jobId) {
+        setViewingJobDetail(updatedJob);
+      }
+    } catch (error: any) {
+      console.error('Failed to refresh job after state change:', error);
+    }
+  };
+
+  const handleViewDetails = (job: Job) => {
+    setViewingJobDetail(job);
+    setActiveTab('info');
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setViewingJobDetail(null);
+    }
+  };
+
   const filteredJobs = useMemo(() => jobs.filter(job =>
     Object.values(job).some(value => value.toString().toLowerCase().includes(searchTerm.toLowerCase()))
   ), [jobs, searchTerm]);
@@ -434,16 +463,11 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.customerName}</td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
-                             <select value={job.status} onChange={(e) => handleStatusChange(job.id, e.target.value as Job['status'])} className="block w-full rounded-md border-0 py-1 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
-                                <option>Unscheduled</option>
-                                <option>Scheduled</option>
-                                <option>In Progress</option>
-                                <option>Completed</option>
-                                <option>Cancelled</option>
-                            </select>
+                            <JobStatusBadge status={job.status} size="sm" />
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.scheduledDate || 'N/A'}</td>
                           <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
+                            <button onClick={() => handleViewDetails(job)} className="text-brand-cyan-600 hover:text-brand-cyan-900 font-medium">Details</button>
                             <div className="inline-flex rounded-md shadow-sm">
                               <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="relative inline-flex items-center rounded-l-md bg-white px-2 py-1 text-sm font-semibold text-brand-gray-900 ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 focus:z-10">
                                 Link
@@ -483,6 +507,174 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                   />
               </div>
           </div>
+      )}
+
+      {viewingJobDetail && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+          onClick={handleOverlayClick}
+        >
+          <div
+            className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Job Details</h2>
+                <p className="text-sm text-gray-400 mt-1">Job ID: {viewingJobDetail.id}</p>
+              </div>
+              <button
+                onClick={() => setViewingJobDetail(null)}
+                className="text-gray-400 hover:text-white transition-colors p-1"
+                type="button"
+              >
+                <XIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="border-b border-gray-700">
+              <nav className="flex space-x-4 px-6" aria-label="Tabs">
+                <button
+                  onClick={() => setActiveTab('info')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'info'
+                      ? 'border-cyan-500 text-cyan-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  Information
+                </button>
+                <button
+                  onClick={() => setActiveTab('transitions')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'transitions'
+                      ? 'border-cyan-500 text-cyan-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  State Transitions
+                </button>
+                <button
+                  onClick={() => setActiveTab('history')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'history'
+                      ? 'border-cyan-500 text-cyan-400'
+                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  History
+                </button>
+              </nav>
+            </div>
+
+            <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
+              {activeTab === 'info' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Customer</label>
+                      <p className="text-white">{viewingJobDetail.customerName}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                      <JobStatusBadge status={viewingJobDetail.status} size="md" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Scheduled Date</label>
+                      <p className="text-white">{viewingJobDetail.scheduledDate || 'Not scheduled'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Quote ID</label>
+                      <p className="text-white">{viewingJobDetail.quoteId || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  {viewingJobDetail.jobLocation && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
+                      <p className="text-white">{viewingJobDetail.jobLocation}</p>
+                    </div>
+                  )}
+
+                  {viewingJobDetail.specialInstructions && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Special Instructions</label>
+                      <p className="text-white whitespace-pre-wrap">{viewingJobDetail.specialInstructions}</p>
+                    </div>
+                  )}
+
+                  {viewingJobDetail.assignedCrew && viewingJobDetail.assignedCrew.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Assigned Crew</label>
+                      <div className="flex flex-wrap gap-2">
+                        {viewingJobDetail.assignedCrew.map(crewId => {
+                          const employee = employees.find(e => e.id === crewId);
+                          return (
+                            <span key={crewId} className="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm">
+                              {employee?.name || crewId}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {viewingJobDetail.equipmentNeeded && viewingJobDetail.equipmentNeeded.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Equipment Needed</label>
+                      <div className="flex flex-wrap gap-2">
+                        {viewingJobDetail.equipmentNeeded.map((eq, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm">
+                            {eq}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {viewingJobDetail.estimatedHours && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Estimated Hours</label>
+                      <p className="text-white">{viewingJobDetail.estimatedHours} hours</p>
+                    </div>
+                  )}
+
+                  {viewingJobDetail.riskLevel && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1">Risk Level</label>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        viewingJobDetail.riskLevel === 'Critical' ? 'bg-red-600 text-red-100' :
+                        viewingJobDetail.riskLevel === 'High' ? 'bg-orange-600 text-orange-100' :
+                        viewingJobDetail.riskLevel === 'Medium' ? 'bg-yellow-600 text-yellow-100' :
+                        'bg-green-600 text-green-100'
+                      }`}>
+                        {viewingJobDetail.riskLevel}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'transitions' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Change Job State</h3>
+                    <StateTransitionControl
+                      jobId={viewingJobDetail.id}
+                      currentState={viewingJobDetail.status}
+                      onStateChanged={(newState) => handleStateChanged(viewingJobDetail.id, newState)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'history' && (
+                <StateHistoryTimeline jobId={viewingJobDetail.id} />
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
