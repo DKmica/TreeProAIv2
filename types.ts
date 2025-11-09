@@ -719,3 +719,27 @@ export interface AllowedTransition {
   allowed: boolean;
   blockedReasons: string[];
 }
+
+export interface JobTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  defaultDurationHours: number | null;
+  defaultCrewSize: number | null;
+  defaultEquipmentIds: any;
+  basePrice: number | null;
+  pricePerHour: number | null;
+  lineItems: any;
+  permitRequired: boolean;
+  depositRequired: boolean;
+  depositPercentage: number | null;
+  jhaRequired: boolean;
+  completionChecklist: any;
+  safetyNotes: string | null;
+  specialInstructions: string | null;
+  usageCount: number;
+  lastUsedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

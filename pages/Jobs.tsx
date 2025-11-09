@@ -8,6 +8,7 @@ import JobStatusBadge from '../components/JobStatusBadge';
 import StateTransitionControl from '../components/StateTransitionControl';
 import StateHistoryTimeline from '../components/StateHistoryTimeline';
 import XIcon from '../components/icons/XIcon';
+import TemplateSelector from '../components/TemplateSelector';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 
@@ -207,6 +208,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   const [viewingMessages, setViewingMessages] = useState<Job | null>(null);
   const [viewingJobDetail, setViewingJobDetail] = useState<Job | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'transitions' | 'history'>('info');
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -395,6 +397,17 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     }
   };
 
+  const handleUseTemplate = async (templateId: string) => {
+    try {
+      const newJob = await api.jobTemplateService.useTemplate(templateId);
+      setJobs(prev => [newJob, ...prev]);
+      setShowTemplateSelector(false);
+    } catch (error: any) {
+      console.error('Failed to create job from template:', error);
+      alert(`Failed to create job from template: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   const handleViewDetails = (job: Job) => {
     setViewingJobDetail(job);
     setActiveTab('info');
@@ -417,7 +430,10 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
           <h1 className="text-2xl font-bold text-brand-gray-900">Jobs</h1>
           <p className="mt-2 text-sm text-brand-gray-700">A list of all scheduled and active jobs.</p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none flex gap-2">
+          <button type="button" onClick={() => setShowTemplateSelector(true)} className="inline-flex items-center justify-center rounded-md border border-brand-gray-300 bg-white px-4 py-2 text-sm font-medium text-brand-gray-700 shadow-sm hover:bg-brand-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:ring-offset-2 sm:w-auto">
+              Create from Template
+          </button>
           <button type="button" onClick={handleMainButtonClick} className="inline-flex items-center justify-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 sm:w-auto">
               {showForm ? 'Cancel' : 'Create Job'}
           </button>
@@ -676,6 +692,12 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
           </div>
         </div>
       )}
+
+      <TemplateSelector
+        isOpen={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelect={handleUseTemplate}
+      />
     </div>
   );
 };

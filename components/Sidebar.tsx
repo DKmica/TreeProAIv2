@@ -27,6 +27,7 @@ const navigation = [
   { name: 'Leads', href: '/leads', icon: LeadIcon },
   { name: 'Quotes', href: '/quotes', icon: QuoteIcon },
   { name: 'Jobs', href: '/jobs', icon: JobIcon },
+  { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon },
   { name: 'Customers', href: '/customers', icon: CustomerIcon },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
   { name: 'Profitability', href: '/profitability', icon: DollarIcon },

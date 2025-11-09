@@ -9,6 +9,7 @@ const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
 const ragService = require('./services/ragService');
 const vectorStore = require('./services/vectorStore');
 const jobStateService = require('./services/jobStateService');
+const jobTemplateService = require('./services/jobTemplateService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -5308,6 +5309,193 @@ apiRouter.get('/jobs/:id/allowed-transitions', async (req, res) => {
     });
     
   } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// JOB TEMPLATES ENDPOINTS
+// ============================================================================
+
+// GET /api/job-templates - List all templates with filters
+apiRouter.get('/job-templates', async (req, res) => {
+  try {
+    const { category, search, limit } = req.query;
+    
+    const filters = {
+      category,
+      search,
+      limit: limit ? parseInt(limit) : undefined
+    };
+    
+    const templates = await jobTemplateService.getAllTemplates(filters);
+    
+    res.json({
+      success: true,
+      data: templates
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/job-templates/by-category - Get templates grouped by category
+apiRouter.get('/job-templates/by-category', async (req, res) => {
+  try {
+    const grouped = await jobTemplateService.getTemplatesByCategory();
+    
+    res.json({
+      success: true,
+      data: grouped
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/job-templates/usage-stats - Get template usage statistics
+apiRouter.get('/job-templates/usage-stats', async (req, res) => {
+  try {
+    const stats = await jobTemplateService.getUsageStats();
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/job-templates/:id - Get template details
+apiRouter.get('/job-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const template = await jobTemplateService.getTemplateById(id);
+    
+    res.json({
+      success: true,
+      data: template
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+// POST /api/job-templates - Create new template
+apiRouter.post('/job-templates', async (req, res) => {
+  try {
+    const template = await jobTemplateService.createTemplate(req.body);
+    
+    res.status(201).json({
+      success: true,
+      data: template,
+      message: 'Template created successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/job-templates/from-job/:jobId - Create template from existing job
+apiRouter.post('/job-templates/from-job/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const templateData = req.body;
+    
+    const template = await jobTemplateService.createTemplateFromJob(jobId, templateData);
+    
+    res.status(201).json({
+      success: true,
+      data: template,
+      message: 'Template created from job successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+// PUT /api/job-templates/:id - Update template
+apiRouter.put('/job-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const template = await jobTemplateService.updateTemplate(id, req.body);
+    
+    res.json({
+      success: true,
+      data: template,
+      message: 'Template updated successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/job-templates/:id - Soft delete template
+apiRouter.delete('/job-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await jobTemplateService.deleteTemplate(id);
+    
+    res.json({
+      success: true,
+      message: 'Template deleted successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+// POST /api/job-templates/:id/use - Create job from template
+apiRouter.post('/job-templates/:id/use', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const jobData = req.body;
+    
+    const job = await jobTemplateService.useTemplate(id, jobData);
+    
+    // Re-index job in RAG system
+    await reindexDocument('jobs', job);
+    
+    res.status(201).json({
+      success: true,
+      data: transformRow(job, 'jobs'),
+      message: 'Job created from template successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
     handleError(res, err);
   }
 });

@@ -7,6 +7,7 @@ import ClientDetail from './pages/ClientDetail';
 import Leads from './pages/Leads';
 import Quotes from './pages/Quotes';
 import Jobs from './pages/Jobs';
+import JobTemplates from './pages/JobTemplates';
 import Customers from './pages/Customers';
 import Invoices from './pages/Invoices';
 import Calendar from './pages/Calendar';
@@ -214,6 +215,7 @@ const App: React.FC = () => {
           <Route path="/leads" element={<Leads leads={leads} setLeads={setLeads} customers={clients} setCustomers={setClients} />} />
           <Route path="/quotes" element={<Quotes quotes={quotes} setQuotes={setQuotes} customers={clients} />} />
           <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
+          <Route path="/job-templates" element={<JobTemplates />} />
           <Route path="/customers" element={<Customers customers={clients} setCustomers={setClients} />} />
           <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
           <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={clients} />} />

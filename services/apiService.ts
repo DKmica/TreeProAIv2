@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -128,4 +128,61 @@ export const jobStateService = {
     apiFetch(`jobs/${jobId}/state-transitions`, { method: 'POST', body: JSON.stringify(data) }),
   getStateHistory: (jobId: string): Promise<{currentState: string; history: any[]}> =>
     apiFetch(`jobs/${jobId}/state-history`)
+};
+
+export const jobTemplateService = {
+  getAll: async (filters?: {category?: string; search?: string; limit?: number}): Promise<JobTemplate[]> => {
+    const params: Record<string, string> = {};
+    if (filters?.category) params.category = filters.category;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.limit) params.limit = filters.limit.toString();
+    const queryString = new URLSearchParams(params).toString();
+    const response = await apiFetch<{success: boolean; data: JobTemplate[]}>(`job-templates${queryString ? `?${queryString}` : ''}`);
+    return response.data ?? [];
+  },
+  getByCategory: async (): Promise<{category: string; templates: JobTemplate[]}[]> => {
+    const response = await apiFetch<{success: boolean; data: {category: string; templates: JobTemplate[]}[]}>('job-templates/by-category');
+    return response.data ?? [];
+  },
+  getUsageStats: async (): Promise<JobTemplate[]> => {
+    const response = await apiFetch<{success: boolean; data: JobTemplate[]}>('job-templates/usage-stats');
+    return response.data ?? [];
+  },
+  getById: async (id: string): Promise<JobTemplate> => {
+    const response = await apiFetch<{success: boolean; data: JobTemplate}>(`job-templates/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<JobTemplate>): Promise<JobTemplate> => {
+    const response = await apiFetch<{success: boolean; data: JobTemplate}>('job-templates', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return response.data;
+  },
+  createFromJob: async (jobId: string, data: Partial<JobTemplate>): Promise<JobTemplate> => {
+    const response = await apiFetch<{success: boolean; data: JobTemplate}>(`job-templates/from-job/${jobId}`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return response.data;
+  },
+  update: async (id: string, data: Partial<JobTemplate>): Promise<JobTemplate> => {
+    const response = await apiFetch<{success: boolean; data: JobTemplate}>(`job-templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    return response.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiFetch<{success: boolean}>(`job-templates/${id}`, {
+      method: 'DELETE'
+    });
+  },
+  useTemplate: async (id: string, overrideData?: Partial<Job>): Promise<Job> => {
+    const response = await apiFetch<{success: boolean; data: Job}>(`job-templates/${id}/use`, {
+      method: 'POST',
+      body: JSON.stringify(overrideData || {})
+    });
+    return response.data;
+  }
 };

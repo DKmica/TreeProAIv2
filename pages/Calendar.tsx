@@ -4,7 +4,9 @@ import { CalendarView } from './Calendar/types';
 import JobIcon from '../components/icons/JobIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
+import TemplateSelector from '../components/TemplateSelector';
 import { syncJobsToGoogleCalendar } from '../services/googleCalendarService';
+import * as api from '../services/apiService';
 
 import MonthView from './Calendar/views/MonthView';
 import WeekView from './Calendar/views/WeekView';
@@ -27,6 +29,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
     const [employeeFilter, setEmployeeFilter] = useState('all');
     const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
     const schedulableJobs = useMemo(() => {
         return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'In Progress')
@@ -93,6 +96,17 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
             alert(`Failed to sync calendar: ${error.message}`);
         } finally {
             setIsSyncing(false);
+        }
+    };
+
+    const handleUseTemplate = async (templateId: string) => {
+        try {
+            const newJob = await api.jobTemplateService.useTemplate(templateId);
+            setJobs(prev => [newJob, ...prev]);
+            setShowTemplateSelector(false);
+        } catch (error: any) {
+            console.error('Failed to create job from template:', error);
+            alert(`Failed to create job from template: ${error.message || 'Unknown error'}`);
         }
     };
 
@@ -268,6 +282,12 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                         </div>
                         <div className="mt-4 sm:mt-0 flex items-center space-x-2">
                             <button 
+                                onClick={() => setShowTemplateSelector(true)}
+                                className="inline-flex items-center gap-x-1.5 rounded-md bg-brand-cyan-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700"
+                            >
+                                Create from Template
+                            </button>
+                            <button 
                                 onClick={goToToday}
                                 className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50"
                             >
@@ -380,6 +400,12 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                     {activeView === 'map' && <MapViewWrapper {...viewProps} customers={customers} />}
                 </div>
             </div>
+
+            <TemplateSelector
+                isOpen={showTemplateSelector}
+                onClose={() => setShowTemplateSelector(false)}
+                onSelect={handleUseTemplate}
+            />
         </div>
     );
 };
