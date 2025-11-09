@@ -9,6 +9,7 @@ import MapPinIcon from '../components/icons/MapPinIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
 import JobIcon from '../components/icons/JobIcon';
 import ClientEditor from '../components/ClientEditor';
+import PropertyEditor from '../components/PropertyEditor';
 
 type TabType = 'overview' | 'properties' | 'contacts' | 'quotes' | 'jobs' | 'activity';
 
@@ -27,6 +28,8 @@ const ClientDetail: React.FC = () => {
   const [quoteStatusFilter, setQuoteStatusFilter] = useState<string>('all');
   const [jobStatusFilter, setJobStatusFilter] = useState<string>('all');
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
+  const [isPropertyEditorOpen, setIsPropertyEditorOpen] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -172,7 +175,24 @@ const ClientDetail: React.FC = () => {
   };
 
   const handleAddProperty = () => {
-    alert('Add property modal will be implemented next');
+    setSelectedProperty(undefined);
+    setIsPropertyEditorOpen(true);
+  };
+
+  const handleEditProperty = (property: Property) => {
+    setSelectedProperty(property);
+    setIsPropertyEditorOpen(true);
+  };
+
+  const handlePropertySave = async (savedProperty: Property) => {
+    if (!id) return;
+    
+    try {
+      const propertiesData = await clientService.getProperties(id);
+      setProperties(propertiesData);
+    } catch (err) {
+      console.error('Error refreshing properties:', err);
+    }
   };
 
   const handleAddContact = () => {
@@ -180,7 +200,10 @@ const ClientDetail: React.FC = () => {
   };
 
   const handleViewProperty = (propertyId: string) => {
-    alert(`View property ${propertyId} - property detail page will be implemented next`);
+    const property = properties.find(p => p.id === propertyId);
+    if (property) {
+      handleEditProperty(property);
+    }
   };
 
   const handleQuoteView = (quoteId: string) => {
@@ -231,6 +254,14 @@ const ClientDetail: React.FC = () => {
         onClose={() => setIsClientEditorOpen(false)}
         onSave={handleClientSave}
         client={client || undefined}
+      />
+
+      <PropertyEditor
+        isOpen={isPropertyEditorOpen}
+        onClose={() => setIsPropertyEditorOpen(false)}
+        onSave={handlePropertySave}
+        clientId={id || ''}
+        property={selectedProperty}
       />
 
       <nav className="flex mb-4 text-sm text-brand-gray-600">

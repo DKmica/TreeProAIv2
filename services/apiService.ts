@@ -44,6 +44,11 @@ export const clientService = {
   getProperties: (clientId: string): Promise<Property[]> => apiFetch(`clients/${clientId}/properties`),
   getContacts: (clientId: string): Promise<Contact[]> => apiFetch(`clients/${clientId}/contacts`),
 };
+export const propertyService = {
+  ...createApiService<Property>('properties'),
+  createForClient: (clientId: string, data: Partial<Omit<Property, 'id'>>): Promise<Property> => 
+    apiFetch(`clients/${clientId}/properties`, { method: 'POST', body: JSON.stringify(data) }),
+};
 export const leadService = createApiService<Lead>('leads');
 export const quoteService = createApiService<Quote>('quotes');
 export const jobService = createApiService<Job>('jobs');
