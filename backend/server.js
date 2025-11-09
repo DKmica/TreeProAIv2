@@ -580,6 +580,102 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform crews fields
+  if (tableName === 'crews') {
+    if (row.is_active !== undefined) {
+      transformed.isActive = row.is_active;
+      delete transformed.is_active;
+    }
+    if (row.default_start_time !== undefined) {
+      transformed.defaultStartTime = row.default_start_time;
+      delete transformed.default_start_time;
+    }
+    if (row.default_end_time !== undefined) {
+      transformed.defaultEndTime = row.default_end_time;
+      delete transformed.default_end_time;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+    if (row.deleted_at !== undefined) {
+      transformed.deletedAt = row.deleted_at;
+      delete transformed.deleted_at;
+    }
+    if (row.member_count !== undefined) {
+      transformed.memberCount = parseInt(row.member_count) || 0;
+      delete transformed.member_count;
+    }
+  }
+  
+  // Transform crew_members fields
+  if (tableName === 'crew_members') {
+    if (row.crew_id !== undefined) {
+      transformed.crewId = row.crew_id;
+      delete transformed.crew_id;
+    }
+    if (row.employee_id !== undefined) {
+      transformed.employeeId = row.employee_id;
+      delete transformed.employee_id;
+    }
+    if (row.joined_at !== undefined) {
+      transformed.joinedAt = row.joined_at;
+      delete transformed.joined_at;
+    }
+    if (row.left_at !== undefined) {
+      transformed.leftAt = row.left_at;
+      delete transformed.left_at;
+    }
+    if (row.employee_name !== undefined) {
+      transformed.employeeName = row.employee_name;
+      delete transformed.employee_name;
+    }
+    if (row.job_title !== undefined) {
+      transformed.jobTitle = row.job_title;
+      delete transformed.job_title;
+    }
+  }
+  
+  // Transform crew_assignments fields
+  if (tableName === 'crew_assignments') {
+    if (row.job_id !== undefined) {
+      transformed.jobId = row.job_id;
+      delete transformed.job_id;
+    }
+    if (row.crew_id !== undefined) {
+      transformed.crewId = row.crew_id;
+      delete transformed.crew_id;
+    }
+    if (row.assigned_date !== undefined) {
+      transformed.assignedDate = row.assigned_date;
+      delete transformed.assigned_date;
+    }
+    if (row.assigned_by !== undefined) {
+      transformed.assignedBy = row.assigned_by;
+      delete transformed.assigned_by;
+    }
+    if (row.created_at !== undefined) {
+      transformed.createdAt = row.created_at;
+      delete transformed.created_at;
+    }
+    if (row.crew_name !== undefined) {
+      transformed.crewName = row.crew_name;
+      delete transformed.crew_name;
+    }
+    if (row.job_title !== undefined) {
+      transformed.jobTitle = row.job_title;
+      delete transformed.job_title;
+    }
+    if (row.customer_name !== undefined) {
+      transformed.customerName = row.customer_name;
+      delete transformed.customer_name;
+    }
+    if (row.scheduled_date !== undefined) {
+      transformed.scheduledDate = row.scheduled_date;
+      delete transformed.scheduled_date;
+    }
+  }
+  
   // Transform other snake_case fields
   if (row.created_at !== undefined) {
     transformed.createdAt = row.created_at;
@@ -5652,6 +5748,724 @@ apiRouter.post('/job-templates/:id/use', async (req, res) => {
         error: err.message
       });
     }
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// CREW MANAGEMENT ENDPOINTS
+// ============================================================================
+
+// ----------------------
+// HELPER ENDPOINTS (must be before parameterized routes)
+// ----------------------
+
+// GET /api/crews/available - Get crews available on a specific date
+apiRouter.get('/crews/available', async (req, res) => {
+  try {
+    const { date, exclude_job_id } = req.query;
+    
+    // Validation
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: 'date query parameter is required'
+      });
+    }
+    
+    // Get crews that haven't reached capacity for the date
+    let query = `
+      SELECT 
+        c.*,
+        COUNT(DISTINCT cm.id) FILTER (WHERE cm.left_at IS NULL) as member_count,
+        COUNT(DISTINCT ca.id) FILTER (WHERE ca.assigned_date = $1) as assignments_on_date
+      FROM crews c
+      LEFT JOIN crew_members cm ON c.id = cm.crew_id AND cm.left_at IS NULL
+      LEFT JOIN crew_assignments ca ON c.id = ca.crew_id
+      WHERE c.deleted_at IS NULL 
+        AND c.is_active = true
+      GROUP BY c.id
+      HAVING 
+        c.capacity IS NULL 
+        OR COUNT(DISTINCT ca.id) FILTER (WHERE ca.assigned_date = $1) < c.capacity
+      ORDER BY c.name
+    `;
+    
+    const { rows } = await db.query(query, [date]);
+    
+    // Filter out crew if it's already assigned to the excluded job
+    let crews = rows;
+    if (exclude_job_id) {
+      const excludeQuery = `
+        SELECT crew_id FROM crew_assignments 
+        WHERE job_id = $1 AND assigned_date = $2
+      `;
+      const { rows: excludeRows } = await db.query(excludeQuery, [exclude_job_id, date]);
+      const excludedCrewIds = excludeRows.map(r => r.crew_id);
+      
+      crews = rows.filter(crew => !excludedCrewIds.includes(crew.id));
+    }
+    
+    const availableCrews = crews.map(row => transformRow(row, 'crews'));
+    
+    res.json({
+      success: true,
+      data: availableCrews
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/employees/unassigned - Get employees not in any crew
+apiRouter.get('/employees/unassigned', async (req, res) => {
+  try {
+    const query = `
+      SELECT e.*
+      FROM employees e
+      LEFT JOIN crew_members cm ON e.id = cm.employee_id AND cm.left_at IS NULL
+      WHERE cm.id IS NULL
+      ORDER BY e.name
+    `;
+    
+    const { rows } = await db.query(query);
+    const employees = rows.map(row => transformRow(row, 'employees'));
+    
+    res.json({
+      success: true,
+      data: employees
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ----------------------
+// CREW CRUD ENDPOINTS
+// ----------------------
+
+// GET /api/crews - List all crews with member counts
+apiRouter.get('/crews', async (req, res) => {
+  try {
+    const includeDeleted = req.query.include_deleted === 'true';
+    
+    let query = `
+      SELECT 
+        c.*,
+        COUNT(DISTINCT cm.id) FILTER (WHERE cm.left_at IS NULL) as member_count,
+        COUNT(DISTINCT ca.id) as active_assignments
+      FROM crews c
+      LEFT JOIN crew_members cm ON c.id = cm.crew_id AND cm.left_at IS NULL
+      LEFT JOIN crew_assignments ca ON c.id = ca.crew_id
+      ${includeDeleted ? '' : 'WHERE c.deleted_at IS NULL'}
+      GROUP BY c.id
+      ORDER BY c.name
+    `;
+    
+    const { rows } = await db.query(query);
+    const crews = rows.map(row => transformRow(row, 'crews'));
+    
+    res.json({
+      success: true,
+      data: crews
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/crews/:id - Get crew by ID with members and assignments
+apiRouter.get('/crews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get crew basic info
+    const crewQuery = `
+      SELECT 
+        c.*,
+        COUNT(DISTINCT cm.id) FILTER (WHERE cm.left_at IS NULL) as member_count
+      FROM crews c
+      LEFT JOIN crew_members cm ON c.id = cm.crew_id AND cm.left_at IS NULL
+      WHERE c.id = $1
+      GROUP BY c.id
+    `;
+    const { rows: crewRows } = await db.query(crewQuery, [id]);
+    
+    if (crewRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found'
+      });
+    }
+    
+    const crew = transformRow(crewRows[0], 'crews');
+    
+    // Get crew members with employee details
+    const membersQuery = `
+      SELECT 
+        cm.*,
+        e.name as employee_name,
+        e.phone,
+        e.job_title,
+        e.certifications
+      FROM crew_members cm
+      JOIN employees e ON cm.employee_id = e.id
+      WHERE cm.crew_id = $1 AND cm.left_at IS NULL
+      ORDER BY cm.role, e.name
+    `;
+    const { rows: memberRows } = await db.query(membersQuery, [id]);
+    crew.members = memberRows.map(row => transformRow(row, 'crew_members'));
+    
+    // Get current job assignments
+    const assignmentsQuery = `
+      SELECT 
+        ca.*,
+        j.customer_name,
+        j.status,
+        j.scheduled_date,
+        j.job_location
+      FROM crew_assignments ca
+      JOIN jobs j ON ca.job_id = j.id
+      WHERE ca.crew_id = $1
+      ORDER BY ca.assigned_date DESC
+      LIMIT 10
+    `;
+    const { rows: assignmentRows } = await db.query(assignmentsQuery, [id]);
+    crew.currentAssignments = assignmentRows.map(row => transformRow(row, 'crew_assignments'));
+    
+    res.json({
+      success: true,
+      data: crew
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/crews - Create new crew
+apiRouter.post('/crews', async (req, res) => {
+  try {
+    const { name, description, default_start_time, default_end_time, capacity } = req.body;
+    
+    // Validation
+    if (!name || name.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Crew name is required'
+      });
+    }
+    
+    if (capacity !== undefined && capacity <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Capacity must be greater than 0'
+      });
+    }
+    
+    const query = `
+      INSERT INTO crews (name, description, default_start_time, default_end_time, capacity)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [
+      name,
+      description || null,
+      default_start_time || null,
+      default_end_time || null,
+      capacity || null
+    ]);
+    
+    const crew = transformRow(rows[0], 'crews');
+    
+    res.status(201).json({
+      success: true,
+      data: crew,
+      message: 'Crew created successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/crews/:id - Update crew
+apiRouter.put('/crews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, is_active, default_start_time, default_end_time, capacity } = req.body;
+    
+    // Check if crew exists
+    const checkQuery = 'SELECT id FROM crews WHERE id = $1';
+    const { rows: checkRows } = await db.query(checkQuery, [id]);
+    
+    if (checkRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found'
+      });
+    }
+    
+    // Validation
+    if (capacity !== undefined && capacity <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Capacity must be greater than 0'
+      });
+    }
+    
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (name !== undefined) {
+      updates.push(`name = $${paramCount++}`);
+      values.push(name);
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramCount++}`);
+      values.push(description);
+    }
+    if (is_active !== undefined) {
+      updates.push(`is_active = $${paramCount++}`);
+      values.push(is_active);
+    }
+    if (default_start_time !== undefined) {
+      updates.push(`default_start_time = $${paramCount++}`);
+      values.push(default_start_time);
+    }
+    if (default_end_time !== undefined) {
+      updates.push(`default_end_time = $${paramCount++}`);
+      values.push(default_end_time);
+    }
+    if (capacity !== undefined) {
+      updates.push(`capacity = $${paramCount++}`);
+      values.push(capacity);
+    }
+    
+    updates.push(`updated_at = NOW()`);
+    values.push(id);
+    
+    const query = `
+      UPDATE crews
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, values);
+    const crew = transformRow(rows[0], 'crews');
+    
+    res.json({
+      success: true,
+      data: crew,
+      message: 'Crew updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/crews/:id - Soft delete crew
+apiRouter.delete('/crews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if crew has active assignments
+    const assignmentQuery = `
+      SELECT COUNT(*) as count
+      FROM crew_assignments ca
+      JOIN jobs j ON ca.job_id = j.id
+      WHERE ca.crew_id = $1 AND j.status NOT IN ('completed', 'cancelled')
+    `;
+    const { rows: assignmentRows } = await db.query(assignmentQuery, [id]);
+    
+    if (parseInt(assignmentRows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot delete crew with active job assignments'
+      });
+    }
+    
+    // Soft delete the crew
+    const query = `
+      UPDATE crews
+      SET deleted_at = NOW(), updated_at = NOW()
+      WHERE id = $1 AND deleted_at IS NULL
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found or already deleted'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Crew deleted successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ----------------------
+// CREW MEMBER ENDPOINTS
+// ----------------------
+
+// POST /api/crews/:id/members - Add member to crew
+apiRouter.post('/crews/:id/members', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { employee_id, role } = req.body;
+    
+    // Validation
+    if (!employee_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'employee_id is required'
+      });
+    }
+    
+    const validRoles = ['leader', 'climber', 'groundsman', 'driver'];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        error: `Role must be one of: ${validRoles.join(', ')}`
+      });
+    }
+    
+    // Check if crew exists
+    const crewQuery = 'SELECT id FROM crews WHERE id = $1 AND deleted_at IS NULL';
+    const { rows: crewRows } = await db.query(crewQuery, [id]);
+    
+    if (crewRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found'
+      });
+    }
+    
+    // Check if employee exists
+    const employeeQuery = 'SELECT id FROM employees WHERE id = $1';
+    const { rows: employeeRows } = await db.query(employeeQuery, [employee_id]);
+    
+    if (employeeRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Employee not found'
+      });
+    }
+    
+    // Check if employee is already an active member
+    const memberCheckQuery = `
+      SELECT id FROM crew_members
+      WHERE crew_id = $1 AND employee_id = $2 AND left_at IS NULL
+    `;
+    const { rows: existingRows } = await db.query(memberCheckQuery, [id, employee_id]);
+    
+    if (existingRows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Employee is already an active member of this crew'
+      });
+    }
+    
+    // Add member to crew
+    const insertQuery = `
+      INSERT INTO crew_members (crew_id, employee_id, role)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(insertQuery, [id, employee_id, role || null]);
+    const member = transformRow(rows[0], 'crew_members');
+    
+    res.status(201).json({
+      success: true,
+      data: member,
+      message: 'Member added to crew successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/crews/:id/members - Get all crew members
+apiRouter.get('/crews/:id/members', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if crew exists
+    const crewQuery = 'SELECT id FROM crews WHERE id = $1';
+    const { rows: crewRows } = await db.query(crewQuery, [id]);
+    
+    if (crewRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found'
+      });
+    }
+    
+    // Get active members with employee details
+    const query = `
+      SELECT 
+        cm.*,
+        e.name as employee_name,
+        e.phone,
+        e.job_title,
+        e.certifications
+      FROM crew_members cm
+      JOIN employees e ON cm.employee_id = e.id
+      WHERE cm.crew_id = $1 AND cm.left_at IS NULL
+      ORDER BY 
+        CASE cm.role
+          WHEN 'leader' THEN 1
+          WHEN 'climber' THEN 2
+          WHEN 'groundsman' THEN 3
+          WHEN 'driver' THEN 4
+          ELSE 5
+        END,
+        e.name
+    `;
+    
+    const { rows } = await db.query(query, [id]);
+    const members = rows.map(row => transformRow(row, 'crew_members'));
+    
+    res.json({
+      success: true,
+      data: members
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/crews/:crew_id/members/:member_id - Update member role
+apiRouter.put('/crews/:crew_id/members/:member_id', async (req, res) => {
+  try {
+    const { crew_id, member_id } = req.params;
+    const { role } = req.body;
+    
+    // Validation
+    const validRoles = ['leader', 'climber', 'groundsman', 'driver'];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        error: `Role must be one of: ${validRoles.join(', ')}`
+      });
+    }
+    
+    // Update member role
+    const query = `
+      UPDATE crew_members
+      SET role = $1
+      WHERE id = $2 AND crew_id = $3 AND left_at IS NULL
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [role || null, member_id, crew_id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew member not found or no longer active'
+      });
+    }
+    
+    const member = transformRow(rows[0], 'crew_members');
+    
+    res.json({
+      success: true,
+      data: member,
+      message: 'Member role updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/crews/:crew_id/members/:member_id - Remove member from crew
+apiRouter.delete('/crews/:crew_id/members/:member_id', async (req, res) => {
+  try {
+    const { crew_id, member_id } = req.params;
+    
+    // Set left_at timestamp
+    const query = `
+      UPDATE crew_members
+      SET left_at = NOW()
+      WHERE id = $1 AND crew_id = $2 AND left_at IS NULL
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [member_id, crew_id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew member not found or already removed'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Member removed from crew successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ----------------------
+// CREW ASSIGNMENT ENDPOINTS
+// ----------------------
+
+// POST /api/jobs/:job_id/assign-crew - Assign crew to job
+apiRouter.post('/jobs/:job_id/assign-crew', async (req, res) => {
+  try {
+    const { job_id } = req.params;
+    const { crew_id, assigned_date, notes } = req.body;
+    
+    // Validation
+    if (!crew_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'crew_id is required'
+      });
+    }
+    
+    if (!assigned_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'assigned_date is required'
+      });
+    }
+    
+    // Check if job exists
+    const jobQuery = 'SELECT id FROM jobs WHERE id = $1';
+    const { rows: jobRows } = await db.query(jobQuery, [job_id]);
+    
+    if (jobRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    // Check if crew exists and is active
+    const crewQuery = 'SELECT id FROM crews WHERE id = $1 AND deleted_at IS NULL AND is_active = true';
+    const { rows: crewRows } = await db.query(crewQuery, [crew_id]);
+    
+    if (crewRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found or inactive'
+      });
+    }
+    
+    // Create assignment
+    const insertQuery = `
+      INSERT INTO crew_assignments (job_id, crew_id, assigned_date, notes)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(insertQuery, [job_id, crew_id, assigned_date, notes || null]);
+    const assignment = transformRow(rows[0], 'crew_assignments');
+    
+    res.status(201).json({
+      success: true,
+      data: assignment,
+      message: 'Crew assigned to job successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/crews/:id/assignments - Get crew's assignments
+apiRouter.get('/crews/:id/assignments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { start_date, end_date } = req.query;
+    
+    // Check if crew exists
+    const crewQuery = 'SELECT id FROM crews WHERE id = $1';
+    const { rows: crewRows } = await db.query(crewQuery, [id]);
+    
+    if (crewRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found'
+      });
+    }
+    
+    // Build query with optional date filters
+    let query = `
+      SELECT 
+        ca.*,
+        j.customer_name,
+        j.status,
+        j.scheduled_date,
+        j.job_location,
+        j.special_instructions as job_description
+      FROM crew_assignments ca
+      JOIN jobs j ON ca.job_id = j.id
+      WHERE ca.crew_id = $1
+    `;
+    
+    const params = [id];
+    let paramCount = 2;
+    
+    if (start_date) {
+      query += ` AND ca.assigned_date >= $${paramCount++}`;
+      params.push(start_date);
+    }
+    
+    if (end_date) {
+      query += ` AND ca.assigned_date <= $${paramCount++}`;
+      params.push(end_date);
+    }
+    
+    query += ` ORDER BY ca.assigned_date DESC`;
+    
+    const { rows } = await db.query(query, params);
+    const assignments = rows.map(row => transformRow(row, 'crew_assignments'));
+    
+    res.json({
+      success: true,
+      data: assignments
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/crew-assignments/:id - Remove crew assignment
+apiRouter.delete('/crew-assignments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Hard delete the assignment
+    const query = 'DELETE FROM crew_assignments WHERE id = $1 RETURNING *';
+    const { rows } = await db.query(query, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Crew assignment not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Crew assignment removed successfully'
+    });
+  } catch (err) {
     handleError(res, err);
   }
 });

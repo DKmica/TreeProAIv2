@@ -8,6 +8,7 @@ import Jobs from './pages/Jobs';
 import JobTemplates from './pages/JobTemplates';
 import Invoices from './pages/Invoices';
 import Calendar from './pages/Calendar';
+import Crews from './pages/Crews';
 import Employees from './pages/Employees';
 import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
@@ -216,6 +217,7 @@ const App: React.FC = () => {
           <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
           <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
           <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={clients} />} />
+          <Route path="/crews" element={<Crews />} />
           <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
           <Route path="/payroll" element={<Payroll />} />
           <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />

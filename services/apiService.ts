@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -185,4 +185,21 @@ export const jobTemplateService = {
     });
     return response.data;
   }
+};
+
+export const crewService = {
+  getAll: (): Promise<Crew[]> => apiFetch('crews'),
+  getById: (id: string): Promise<Crew> => apiFetch(`crews/${id}`),
+  create: (data: Partial<Omit<Crew, 'id'>>): Promise<Crew> => apiFetch('crews', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Crew>): Promise<Crew> => apiFetch(`crews/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  remove: (id: string): Promise<void> => apiFetch<void>(`crews/${id}`, { method: 'DELETE' }),
+  getMembers: (crewId: string): Promise<CrewMember[]> => apiFetch(`crews/${crewId}/members`),
+  addMember: (crewId: string, data: { employeeId: string; role: string }): Promise<CrewMember> => 
+    apiFetch(`crews/${crewId}/members`, { method: 'POST', body: JSON.stringify(data) }),
+  updateMemberRole: (crewId: string, memberId: string, role: string): Promise<CrewMember> =>
+    apiFetch(`crews/${crewId}/members/${memberId}`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  removeMember: (crewId: string, memberId: string): Promise<void> =>
+    apiFetch<void>(`crews/${crewId}/members/${memberId}`, { method: 'DELETE' }),
+  getAvailable: (date: string): Promise<Crew[]> => apiFetch(`crews/available?date=${encodeURIComponent(date)}`),
+  getUnassignedEmployees: (): Promise<Employee[]> => apiFetch('employees/unassigned'),
 };

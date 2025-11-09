@@ -16,6 +16,7 @@ import ChatIcon from './icons/ChatIcon';
 import DollarIcon from './icons/DollarIcon';
 import CogIcon from './icons/CogIcon';
 import DocumentTextIcon from './icons/DocumentTextIcon';
+import UsersIcon from './icons/UsersIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
   { name: 'Profitability', href: '/profitability', icon: DollarIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
+  { name: 'Crews', href: '/crews', icon: UsersIcon },
   { name: 'Employees', href: '/employees', icon: EmployeeIcon },
   { name: 'Payroll', href: '/payroll', icon: DollarIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },

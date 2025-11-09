@@ -743,3 +743,38 @@ export interface JobTemplate {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Crew {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  defaultStartTime?: string;
+  defaultEndTime?: string;
+  capacity?: number;
+  memberCount?: number;
+  assignmentCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrewMember {
+  id: string;
+  crewId: string;
+  employeeId: string;
+  role: string;
+  joinedAt: string;
+  leftAt?: string;
+  employee?: Employee;
+}
+
+export interface CrewAssignment {
+  id: string;
+  jobId: string;
+  crewId: string;
+  assignedDate: string;
+  assignedBy?: string;
+  notes?: string;
+  createdAt: string;
+  job?: Job;
+}
