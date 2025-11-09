@@ -33,6 +33,7 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Authentication**: Supports owner accounts with full access.
 - **Job State Machine**: Comprehensive job workflow with 10 states, guarded transitions, automated triggers, and an audit trail.
 - **Job Templates**: Reusable job configurations to standardize services and accelerate job creation, with a library of seed templates and usage tracking.
+- **Crew Management (Phase 2B)**: Complete crew organization system with crew creation, member assignment, role management (leader, climber, groundsman, driver), capacity tracking, and job assignments. Includes 14 backend API endpoints and full CRUD UI.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
