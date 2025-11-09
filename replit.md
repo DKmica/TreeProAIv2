@@ -33,7 +33,12 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Authentication**: Supports owner accounts with full access.
 - **Job State Machine**: Comprehensive job workflow with 10 states, guarded transitions, automated triggers, and an audit trail.
 - **Job Templates**: Reusable job configurations to standardize services and accelerate job creation, with a library of seed templates and usage tracking.
-- **Crew Management (Phase 2B)**: Complete crew organization system with crew creation, member assignment, role management (leader, climber, groundsman, driver), capacity tracking, and job assignments. Includes 14 backend API endpoints and full CRUD UI.
+- **Phase 2B Operations & Scheduling (COMPLETE)**: Comprehensive operational management system with five major deliverables:
+  - **Crew Management**: Complete crew organization with crew creation, member assignment, role management (leader, climber, groundsman, driver), capacity tracking, and job assignments. 14 backend endpoints and full CRUD UI.
+  - **Time Tracking**: Clock in/out with GPS tracking, break management, manager approval workflow, and automated timesheet generation. 9 backend endpoints with TimeTracking page featuring 4 tabs.
+  - **Job Assignment System**: Atomic crew-to-job assignments with conflict detection, bulk operations, and reassignment capabilities. 4 backend endpoints with transactional guarantees.
+  - **Calendar Integration**: New Crew view mode with Gantt-style schedule, drag-and-drop job assignments, real-time conflict warnings (visual indicators, tooltips, summary banners), and seamless integration with existing calendar views.
+  - **Job Forms System**: Dynamic form templates and job-specific forms (safety checklists, inspections, work orders, approvals) with 7 field types, validation, completion tracking, and manager workflows. 12 backend endpoints, 5 seed templates, integrated into Jobs page.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
