@@ -10,6 +10,7 @@ import QuoteIcon from '../components/icons/QuoteIcon';
 import JobIcon from '../components/icons/JobIcon';
 import ClientEditor from '../components/ClientEditor';
 import PropertyEditor from '../components/PropertyEditor';
+import ContactEditor from '../components/ContactEditor';
 
 type TabType = 'overview' | 'properties' | 'contacts' | 'quotes' | 'jobs' | 'activity';
 
@@ -30,6 +31,8 @@ const ClientDetail: React.FC = () => {
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const [isPropertyEditorOpen, setIsPropertyEditorOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
+  const [isContactEditorOpen, setIsContactEditorOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | undefined>(undefined);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -196,7 +199,24 @@ const ClientDetail: React.FC = () => {
   };
 
   const handleAddContact = () => {
-    alert('Add contact modal will be implemented next');
+    setSelectedContact(undefined);
+    setIsContactEditorOpen(true);
+  };
+
+  const handleEditContact = (contact: Contact) => {
+    setSelectedContact(contact);
+    setIsContactEditorOpen(true);
+  };
+
+  const handleContactSave = async (savedContact: Contact) => {
+    if (!id) return;
+    
+    try {
+      const contactsData = await clientService.getContacts(id);
+      setContacts(contactsData);
+    } catch (err) {
+      console.error('Error refreshing contacts:', err);
+    }
   };
 
   const handleViewProperty = (propertyId: string) => {
@@ -262,6 +282,15 @@ const ClientDetail: React.FC = () => {
         onSave={handlePropertySave}
         clientId={id || ''}
         property={selectedProperty}
+      />
+
+      <ContactEditor
+        isOpen={isContactEditorOpen}
+        onClose={() => setIsContactEditorOpen(false)}
+        onSave={handleContactSave}
+        clientId={id || ''}
+        propertyId={undefined}
+        contact={selectedContact}
       />
 
       <nav className="flex mb-4 text-sm text-brand-gray-600">
@@ -686,7 +715,8 @@ const ClientDetail: React.FC = () => {
                 return (
                   <div
                     key={contact.id}
-                    className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200"
+                    onClick={() => handleEditContact(contact)}
+                    className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200 cursor-pointer"
                   >
                     <div className="p-6">
                       <div className="flex items-start justify-between">
