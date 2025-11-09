@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -202,4 +202,40 @@ export const crewService = {
     apiFetch<void>(`crews/${crewId}/members/${memberId}`, { method: 'DELETE' }),
   getAvailable: (date: string): Promise<Crew[]> => apiFetch(`crews/available?date=${encodeURIComponent(date)}`),
   getUnassignedEmployees: (): Promise<Employee[]> => apiFetch('employees/unassigned'),
+};
+
+export const crewAssignmentService = {
+  getSchedule: async (params?: { startDate?: string; endDate?: string; crewId?: string }): Promise<CrewAssignment[]> => {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('start_date', params.startDate);
+    if (params?.endDate) queryParams.append('end_date', params.endDate);
+    if (params?.crewId) queryParams.append('crew_id', params.crewId);
+    const queryString = queryParams.toString();
+    const response = await apiFetch<{ success: boolean; data: CrewAssignment[] }>(`crew-assignments/schedule${queryString ? `?${queryString}` : ''}`);
+    return response.data || [];
+  },
+  create: async (data: { jobId: string; crewId: string; assignedDate: string; notes?: string }): Promise<CrewAssignment> => {
+    const response = await apiFetch<{ success: boolean; data: CrewAssignment[] }>('crew-assignments/bulk-assign', { 
+      method: 'POST', 
+      body: JSON.stringify({ 
+        job_id: data.jobId, 
+        crew_id: data.crewId, 
+        dates: [data.assignedDate], 
+        notes: data.notes 
+      }) 
+    });
+    return response.data[0];
+  },
+  bulkAssign: (data: { jobId: string; crewId: string; dates: string[]; notes?: string }): Promise<CrewAssignment[]> =>
+    apiFetch('crew-assignments/bulk-assign', { 
+      method: 'POST', 
+      body: JSON.stringify({ job_id: data.jobId, crew_id: data.crewId, dates: data.dates, notes: data.notes }) 
+    }),
+  checkConflictForCrewAndDate: (crewId: string, assignedDate: string, jobId?: string): Promise<{ hasConflict: boolean; conflicts: any[] }> =>
+    apiFetch('crew-assignments/check-conflicts', { 
+      method: 'POST', 
+      body: JSON.stringify({ crew_id: crewId, assigned_date: assignedDate, job_id: jobId }) 
+    }),
+  remove: (id: string): Promise<void> =>
+    apiFetch<void>(`crew-assignments/${id}`, { method: 'DELETE' }),
 };

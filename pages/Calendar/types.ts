@@ -1,7 +1,7 @@
 import React from 'react';
 import { Job, Employee } from '../../types';
 
-export type CalendarView = 'day' | '3-day' | 'week' | 'month' | 'list' | 'map';
+export type CalendarView = 'day' | '3-day' | 'week' | 'month' | 'list' | 'map' | 'crew';
 
 export interface CalendarViewProps {
   jobs: Job[];

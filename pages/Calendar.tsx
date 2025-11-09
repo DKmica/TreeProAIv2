@@ -14,6 +14,7 @@ import DayView from './Calendar/views/DayView';
 import ThreeDayView from './Calendar/views/ThreeDayView';
 import ListView from './Calendar/views/ListView';
 import MapViewWrapper from './Calendar/views/MapViewWrapper';
+import CrewView from './Calendar/views/CrewView';
 
 interface CalendarProps {
     jobs: Job[];
@@ -178,6 +179,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                     </>
                 );
             case 'week':
+            case 'crew':
                 return (
                     <>
                         <button onClick={goToPreviousWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
@@ -246,8 +248,37 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
             <h1 className="text-2xl font-bold text-brand-gray-900">Jobs Calendar</h1>
             
             <div className="mt-6 flex flex-col lg:flex-row lg:space-x-8">
-                {activeView !== 'list' && activeView !== 'map' && (
+                {activeView !== 'list' && activeView !== 'map' && activeView !== 'crew' && (
                     <div className="lg:w-1/3 xl:w-1/4">
+                        <h2 className="text-xl font-bold text-brand-gray-900">Jobs List</h2>
+                        <div className="mt-4 bg-white p-3 rounded-lg shadow-sm border border-brand-gray-200 space-y-3 max-h-[80vh] overflow-y-auto">
+                            {schedulableJobs.length > 0 ? schedulableJobs.map(job => (
+                                <div 
+                                    key={job.id}
+                                    draggable="true"
+                                    onDragStart={(e) => handleDragStart(e, job.id)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`p-3 rounded-lg border cursor-move hover:shadow-lg transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-xl bg-brand-green-50' : 'bg-white shadow-sm'}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <p className="font-semibold text-brand-gray-800 flex items-center"><JobIcon className="w-4 h-4 mr-2 text-brand-gray-400"/> {job.id}</p>
+                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(job.status)}`}>
+                                            {job.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-brand-gray-600 mt-1">{job.customerName}</p>
+                                </div>
+                            )) : (
+                                <div className="text-center py-10">
+                                    <p className="text-sm text-brand-gray-500">No active jobs to schedule.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {activeView === 'crew' && (
+                    <div className="lg:w-1/4 xl:w-1/5">
                         <h2 className="text-xl font-bold text-brand-gray-900">Jobs List</h2>
                         <div className="mt-4 bg-white p-3 rounded-lg shadow-sm border border-brand-gray-200 space-y-3 max-h-[80vh] overflow-y-auto">
                             {schedulableJobs.length > 0 ? schedulableJobs.map(job => (
@@ -365,9 +396,19 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                         >
                             Map
                         </button>
+                        <button
+                            onClick={() => setActiveView('crew')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === 'crew' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            Crew
+                        </button>
                     </div>
 
-                    {activeView !== 'list' && activeView !== 'map' && (
+                    {activeView !== 'list' && activeView !== 'map' && activeView !== 'crew' && (
                         <div className="mb-4 flex flex-wrap gap-2">
                             <select 
                                 value={statusFilter} 
@@ -398,6 +439,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                     {activeView === '3-day' && <ThreeDayView {...viewProps} />}
                     {activeView === 'list' && <ListView {...viewProps} />}
                     {activeView === 'map' && <MapViewWrapper {...viewProps} customers={customers} />}
+                    {activeView === 'crew' && <CrewView jobs={jobs} currentDate={currentDate} setJobs={setJobs} handleDragStart={handleDragStart} handleDragEnd={handleDragEnd} draggedJobId={draggedJobId} />}
                 </div>
             </div>
 
