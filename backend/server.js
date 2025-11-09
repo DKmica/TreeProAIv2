@@ -676,6 +676,70 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform form_templates fields
+  if (tableName === 'form_templates') {
+    if (row.form_type !== undefined) {
+      transformed.formType = row.form_type;
+      delete transformed.form_type;
+    }
+    if (row.is_active !== undefined) {
+      transformed.isActive = row.is_active;
+      delete transformed.is_active;
+    }
+    if (row.require_signature !== undefined) {
+      transformed.requireSignature = row.require_signature;
+      delete transformed.require_signature;
+    }
+    if (row.require_photos !== undefined) {
+      transformed.requirePhotos = row.require_photos;
+      delete transformed.require_photos;
+    }
+    if (row.min_photos !== undefined) {
+      transformed.minPhotos = row.min_photos;
+      delete transformed.min_photos;
+    }
+    if (row.created_by !== undefined) {
+      transformed.createdBy = row.created_by;
+      delete transformed.created_by;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+    if (row.deleted_at !== undefined) {
+      transformed.deletedAt = row.deleted_at;
+      delete transformed.deleted_at;
+    }
+  }
+  
+  // Transform job_forms fields
+  if (tableName === 'job_forms') {
+    if (row.job_id !== undefined) {
+      transformed.jobId = row.job_id;
+      delete transformed.job_id;
+    }
+    if (row.form_template_id !== undefined) {
+      transformed.formTemplateId = row.form_template_id;
+      delete transformed.form_template_id;
+    }
+    if (row.form_data !== undefined) {
+      transformed.formData = row.form_data;
+      delete transformed.form_data;
+    }
+    if (row.completed_at !== undefined) {
+      transformed.completedAt = row.completed_at;
+      delete transformed.completed_at;
+    }
+    if (row.completed_by !== undefined) {
+      transformed.completedBy = row.completed_by;
+      delete transformed.completed_by;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+  }
+  
   // Transform other snake_case fields
   if (row.created_at !== undefined) {
     transformed.createdAt = row.created_at;
@@ -5748,6 +5812,656 @@ apiRouter.post('/job-templates/:id/use', async (req, res) => {
         error: err.message
       });
     }
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// JOB FORMS ENDPOINTS (Phase 2B)
+// ============================================================================
+
+// ----------------------
+// FORM TEMPLATES ENDPOINTS
+// ----------------------
+
+// GET /api/form-templates - List all form templates with filters
+apiRouter.get('/form-templates', async (req, res) => {
+  try {
+    const { category, search, active } = req.query;
+    
+    let query = 'SELECT * FROM form_templates WHERE deleted_at IS NULL';
+    const params = [];
+    let paramCount = 1;
+    
+    // Filter by category (form_type in the database)
+    if (category) {
+      query += ` AND form_type = $${paramCount}`;
+      params.push(category);
+      paramCount++;
+    }
+    
+    // Filter by active status
+    if (active !== undefined) {
+      query += ` AND is_active = $${paramCount}`;
+      params.push(active === 'true');
+      paramCount++;
+    }
+    
+    // Search by name or description
+    if (search) {
+      query += ` AND (name ILIKE $${paramCount} OR description ILIKE $${paramCount})`;
+      params.push(`%${search}%`);
+      paramCount++;
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    const { rows } = await db.query(query, params);
+    const templates = rows.map(row => transformRow(row, 'form_templates'));
+    
+    res.json({
+      success: true,
+      data: templates
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/form-templates/categories - Get list of unique categories
+apiRouter.get('/form-templates/categories', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT DISTINCT form_type as category
+      FROM form_templates
+      WHERE deleted_at IS NULL AND form_type IS NOT NULL
+      ORDER BY form_type
+    `);
+    
+    const categories = rows.map(row => row.category);
+    
+    res.json({
+      success: true,
+      data: categories
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/form-templates/:id - Get single template by ID
+apiRouter.get('/form-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      'SELECT * FROM form_templates WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Form template not found'
+      });
+    }
+    
+    const template = transformRow(rows[0], 'form_templates');
+    
+    res.json({
+      success: true,
+      data: template
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/form-templates - Create new form template
+apiRouter.post('/form-templates', async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      formType,
+      fields,
+      requireSignature,
+      requirePhotos,
+      minPhotos
+    } = req.body;
+    
+    // Validation
+    if (!name || !fields) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name and fields are required'
+      });
+    }
+    
+    if (!Array.isArray(fields)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Fields must be an array'
+      });
+    }
+    
+    // Validate field structure
+    for (const field of fields) {
+      if (!field.id || !field.type || !field.label) {
+        return res.status(400).json({
+          success: false,
+          error: 'Each field must have id, type, and label'
+        });
+      }
+    }
+    
+    const { rows } = await db.query(
+      `INSERT INTO form_templates (
+        name, description, form_type, fields, 
+        require_signature, require_photos, min_photos
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        name,
+        description || null,
+        formType || null,
+        JSON.stringify(fields),
+        requireSignature || false,
+        requirePhotos || false,
+        minPhotos || null
+      ]
+    );
+    
+    const template = transformRow(rows[0], 'form_templates');
+    
+    res.status(201).json({
+      success: true,
+      data: template,
+      message: 'Form template created successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/form-templates/:id - Update template
+apiRouter.put('/form-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      description,
+      formType,
+      fields,
+      isActive,
+      requireSignature,
+      requirePhotos,
+      minPhotos
+    } = req.body;
+    
+    // Check if template exists
+    const { rows: existing } = await db.query(
+      'SELECT * FROM form_templates WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Form template not found'
+      });
+    }
+    
+    // Build update query dynamically
+    const updates = [];
+    const params = [];
+    let paramCount = 1;
+    
+    if (name !== undefined) {
+      updates.push(`name = $${paramCount}`);
+      params.push(name);
+      paramCount++;
+    }
+    if (description !== undefined) {
+      updates.push(`description = $${paramCount}`);
+      params.push(description);
+      paramCount++;
+    }
+    if (formType !== undefined) {
+      updates.push(`form_type = $${paramCount}`);
+      params.push(formType);
+      paramCount++;
+    }
+    if (fields !== undefined) {
+      if (!Array.isArray(fields)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Fields must be an array'
+        });
+      }
+      updates.push(`fields = $${paramCount}`);
+      params.push(JSON.stringify(fields));
+      paramCount++;
+    }
+    if (isActive !== undefined) {
+      updates.push(`is_active = $${paramCount}`);
+      params.push(isActive);
+      paramCount++;
+    }
+    if (requireSignature !== undefined) {
+      updates.push(`require_signature = $${paramCount}`);
+      params.push(requireSignature);
+      paramCount++;
+    }
+    if (requirePhotos !== undefined) {
+      updates.push(`require_photos = $${paramCount}`);
+      params.push(requirePhotos);
+      paramCount++;
+    }
+    if (minPhotos !== undefined) {
+      updates.push(`min_photos = $${paramCount}`);
+      params.push(minPhotos);
+      paramCount++;
+    }
+    
+    updates.push(`updated_at = NOW()`);
+    params.push(id);
+    
+    const { rows } = await db.query(
+      `UPDATE form_templates SET ${updates.join(', ')}
+       WHERE id = $${paramCount} RETURNING *`,
+      params
+    );
+    
+    const template = transformRow(rows[0], 'form_templates');
+    
+    res.json({
+      success: true,
+      data: template,
+      message: 'Form template updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/form-templates/:id - Soft delete template (set is_active = false)
+apiRouter.delete('/form-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      `UPDATE form_templates 
+       SET is_active = false, deleted_at = NOW(), updated_at = NOW()
+       WHERE id = $1 AND deleted_at IS NULL
+       RETURNING *`,
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Form template not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Form template deleted successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ----------------------
+// JOB FORMS ENDPOINTS
+// ----------------------
+
+// POST /api/jobs/:jobId/forms - Attach form template to job, creates job_form instance
+apiRouter.post('/jobs/:jobId/forms', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { formTemplateId } = req.body;
+    
+    if (!formTemplateId) {
+      return res.status(400).json({
+        success: false,
+        error: 'formTemplateId is required'
+      });
+    }
+    
+    // Verify job exists
+    const { rows: jobRows } = await db.query(
+      'SELECT id FROM jobs WHERE id = $1',
+      [jobId]
+    );
+    
+    if (jobRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    // Verify form template exists and is active
+    const { rows: templateRows } = await db.query(
+      'SELECT * FROM form_templates WHERE id = $1 AND deleted_at IS NULL',
+      [formTemplateId]
+    );
+    
+    if (templateRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Form template not found'
+      });
+    }
+    
+    // Create job form
+    const { rows } = await db.query(
+      `INSERT INTO job_forms (job_id, form_template_id, status, form_data)
+       VALUES ($1, $2, 'pending', '{}')
+       RETURNING *`,
+      [jobId, formTemplateId]
+    );
+    
+    const jobForm = transformRow(rows[0], 'job_forms');
+    
+    res.status(201).json({
+      success: true,
+      data: jobForm,
+      message: 'Form attached to job successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/jobs/:jobId/forms - Get all forms attached to a job
+apiRouter.get('/jobs/:jobId/forms', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    
+    // Verify job exists
+    const { rows: jobRows } = await db.query(
+      'SELECT id FROM jobs WHERE id = $1',
+      [jobId]
+    );
+    
+    if (jobRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    // Get all forms for this job with template details
+    const { rows } = await db.query(
+      `SELECT 
+        jf.*,
+        ft.name as template_name,
+        ft.description as template_description,
+        ft.form_type as template_form_type,
+        ft.fields as template_fields,
+        ft.require_signature,
+        ft.require_photos,
+        ft.min_photos
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.job_id = $1
+       ORDER BY jf.created_at DESC`,
+      [jobId]
+    );
+    
+    const jobForms = rows.map(row => {
+      const jobForm = transformRow(row, 'job_forms');
+      jobForm.template = {
+        name: row.template_name,
+        description: row.template_description,
+        formType: row.template_form_type,
+        fields: row.template_fields,
+        requireSignature: row.require_signature,
+        requirePhotos: row.require_photos,
+        minPhotos: row.min_photos
+      };
+      return jobForm;
+    });
+    
+    res.json({
+      success: true,
+      data: jobForms
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/job-forms/:id - Get single job form with filled data
+apiRouter.get('/job-forms/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      `SELECT 
+        jf.*,
+        ft.name as template_name,
+        ft.description as template_description,
+        ft.form_type as template_form_type,
+        ft.fields as template_fields,
+        ft.require_signature,
+        ft.require_photos,
+        ft.min_photos
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.id = $1`,
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    const jobForm = transformRow(rows[0], 'job_forms');
+    jobForm.template = {
+      name: rows[0].template_name,
+      description: rows[0].template_description,
+      formType: rows[0].template_form_type,
+      fields: rows[0].template_fields,
+      requireSignature: rows[0].require_signature,
+      requirePhotos: rows[0].require_photos,
+      minPhotos: rows[0].min_photos
+    };
+    
+    res.json({
+      success: true,
+      data: jobForm
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/job-forms/:id/submit - Submit/update form data (field values)
+apiRouter.put('/job-forms/:id/submit', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { formData } = req.body;
+    
+    if (!formData || typeof formData !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'formData is required and must be an object'
+      });
+    }
+    
+    // Get job form with template
+    const { rows: formRows } = await db.query(
+      `SELECT jf.*, ft.fields as template_fields
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.id = $1`,
+      [id]
+    );
+    
+    if (formRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    // Validate field types match template
+    const templateFields = formRows[0].template_fields;
+    const errors = [];
+    
+    for (const field of templateFields) {
+      const value = formData[field.id];
+      
+      if (value !== undefined && value !== null && value !== '') {
+        // Type validation
+        switch (field.type) {
+          case 'number':
+            if (isNaN(Number(value))) {
+              errors.push(`Field '${field.label}' must be a number`);
+            }
+            break;
+          case 'checkbox':
+            if (typeof value !== 'boolean') {
+              errors.push(`Field '${field.label}' must be a boolean`);
+            }
+            break;
+          case 'date':
+            if (isNaN(Date.parse(value))) {
+              errors.push(`Field '${field.label}' must be a valid date`);
+            }
+            break;
+        }
+      }
+    }
+    
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation errors',
+        errors
+      });
+    }
+    
+    // Update form data
+    const { rows } = await db.query(
+      `UPDATE job_forms 
+       SET form_data = $1, status = 'in_progress', updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [JSON.stringify(formData), id]
+    );
+    
+    const jobForm = transformRow(rows[0], 'job_forms');
+    
+    res.json({
+      success: true,
+      data: jobForm,
+      message: 'Form data updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/job-forms/:id/complete - Mark form as completed
+apiRouter.put('/job-forms/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completedBy } = req.body;
+    
+    // Get job form with template to validate required fields
+    const { rows: formRows } = await db.query(
+      `SELECT jf.*, ft.fields as template_fields
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.id = $1`,
+      [id]
+    );
+    
+    if (formRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    const jobForm = formRows[0];
+    const templateFields = jobForm.template_fields;
+    const formData = jobForm.form_data || {};
+    
+    // Validate required fields are filled
+    const errors = [];
+    for (const field of templateFields) {
+      if (field.required) {
+        const value = formData[field.id];
+        if (value === undefined || value === null || value === '') {
+          errors.push(`Required field '${field.label}' is not filled`);
+        }
+      }
+    }
+    
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot complete form: required fields are missing',
+        errors
+      });
+    }
+    
+    // Mark as completed
+    const { rows } = await db.query(
+      `UPDATE job_forms 
+       SET status = 'completed', 
+           completed_at = NOW(), 
+           completed_by = $1,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [completedBy || null, id]
+    );
+    
+    const updatedJobForm = transformRow(rows[0], 'job_forms');
+    
+    res.json({
+      success: true,
+      data: updatedJobForm,
+      message: 'Form marked as completed'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/job-forms/:id - Remove form from job
+apiRouter.delete('/job-forms/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      'DELETE FROM job_forms WHERE id = $1 RETURNING *',
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Form removed from job successfully'
+    });
+  } catch (err) {
     handleError(res, err);
   }
 });
