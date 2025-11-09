@@ -7,6 +7,8 @@ import CustomerIcon from '../components/icons/CustomerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
 import ClientEditor from '../components/ClientEditor';
+import LeadEditor from '../components/LeadEditor';
+import QuoteEditor from '../components/QuoteEditor';
 
 type TabType = 'clients' | 'leads' | 'quotes';
 
@@ -23,6 +25,8 @@ const CRM: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
+  const [isLeadEditorOpen, setIsLeadEditorOpen] = useState(false);
+  const [isQuoteEditorOpen, setIsQuoteEditorOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -159,9 +163,9 @@ const CRM: React.FC = () => {
     if (activeTab === 'clients') {
       setIsClientEditorOpen(true);
     } else if (activeTab === 'leads') {
-      alert('Add new lead modal will be implemented next');
+      setIsLeadEditorOpen(true);
     } else if (activeTab === 'quotes') {
-      alert('Add new quote modal will be implemented next');
+      setIsQuoteEditorOpen(true);
     }
   };
 
@@ -171,6 +175,24 @@ const CRM: React.FC = () => {
       setClients(updatedClients);
     } catch (err) {
       console.error('Error refreshing clients:', err);
+    }
+  };
+
+  const handleLeadSave = async (lead: Lead) => {
+    try {
+      const updatedLeads = await leadService.getAll();
+      setLeads(updatedLeads);
+    } catch (err) {
+      console.error('Error refreshing leads:', err);
+    }
+  };
+
+  const handleQuoteSave = async (quote: Quote) => {
+    try {
+      const updatedQuotes = await quoteService.getAll();
+      setQuotes(updatedQuotes);
+    } catch (err) {
+      console.error('Error refreshing quotes:', err);
     }
   };
 
@@ -219,6 +241,16 @@ const CRM: React.FC = () => {
         isOpen={isClientEditorOpen}
         onClose={() => setIsClientEditorOpen(false)}
         onSave={handleClientSave}
+      />
+      <LeadEditor
+        isOpen={isLeadEditorOpen}
+        onClose={() => setIsLeadEditorOpen(false)}
+        onSave={handleLeadSave}
+      />
+      <QuoteEditor
+        isOpen={isQuoteEditorOpen}
+        onClose={() => setIsQuoteEditorOpen(false)}
+        onSave={handleQuoteSave}
       />
 
       <div className="sm:flex sm:items-center sm:justify-between">

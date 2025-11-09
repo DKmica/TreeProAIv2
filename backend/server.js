@@ -1186,6 +1186,149 @@ apiRouter.get('/leads', async (req, res) => {
   }
 });
 
+// POST /api/leads - Create new lead
+apiRouter.post('/leads', async (req, res) => {
+  try {
+    const leadData = req.body;
+    const leadId = uuidv4();
+    
+    const insertQuery = `
+      INSERT INTO leads (
+        id, client_id_new, property_id, source, status, priority,
+        lead_score, assigned_to, estimated_value, expected_close_date,
+        next_followup_date, description, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+      ) RETURNING *
+    `;
+    
+    const { rows } = await db.query(insertQuery, [
+      leadId,
+      leadData.clientId || null,
+      leadData.propertyId || null,
+      leadData.source || null,
+      leadData.status || 'New',
+      leadData.priority || 'medium',
+      leadData.leadScore || 50,
+      leadData.assignedTo || null,
+      leadData.estimatedValue || null,
+      leadData.expectedCloseDate || null,
+      leadData.nextFollowupDate || null,
+      leadData.description || null
+    ]);
+    
+    const lead = transformRow(rows[0], 'leads');
+    res.status(201).json(lead);
+    
+    reindexDocument('leads', rows[0]);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/leads/:id - Get lead by ID
+apiRouter.get('/leads/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT l.*, 
+             c.id as customer_id, 
+             CONCAT(c.first_name, ' ', c.last_name) as customer_name, 
+             c.primary_email as customer_email, 
+             c.primary_phone as customer_phone, 
+             c.billing_address_line1 as customer_address
+      FROM leads l
+      LEFT JOIN clients c ON l.client_id_new = c.id
+      WHERE l.id = $1
+    `, [req.params.id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+    
+    const lead = transformRow(rows[0], 'leads');
+    lead.customer = {
+      id: rows[0].customer_id,
+      name: rows[0].customer_name,
+      email: rows[0].customer_email,
+      phone: rows[0].customer_phone,
+      address: rows[0].customer_address
+    };
+    
+    res.json(lead);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/leads/:id - Update lead
+apiRouter.put('/leads/:id', async (req, res) => {
+  try {
+    const leadData = req.body;
+    const { id } = req.params;
+    
+    const updateQuery = `
+      UPDATE leads SET
+        client_id_new = COALESCE($1, client_id_new),
+        property_id = COALESCE($2, property_id),
+        source = COALESCE($3, source),
+        status = COALESCE($4, status),
+        priority = COALESCE($5, priority),
+        lead_score = COALESCE($6, lead_score),
+        assigned_to = COALESCE($7, assigned_to),
+        estimated_value = COALESCE($8, estimated_value),
+        expected_close_date = COALESCE($9, expected_close_date),
+        next_followup_date = COALESCE($10, next_followup_date),
+        description = COALESCE($11, description),
+        updated_at = NOW()
+      WHERE id = $12
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(updateQuery, [
+      leadData.clientId,
+      leadData.propertyId,
+      leadData.source,
+      leadData.status,
+      leadData.priority,
+      leadData.leadScore,
+      leadData.assignedTo,
+      leadData.estimatedValue,
+      leadData.expectedCloseDate,
+      leadData.nextFollowupDate,
+      leadData.description,
+      id
+    ]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+    
+    const lead = transformRow(rows[0], 'leads');
+    res.json(lead);
+    
+    reindexDocument('leads', rows[0]);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/leads/:id - Delete lead
+apiRouter.delete('/leads/:id', async (req, res) => {
+  try {
+    const result = await db.query('DELETE FROM leads WHERE id = $1', [req.params.id]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+    
+    res.status(204).send();
+    
+    removeFromVectorStore('leads', req.params.id);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 apiRouter.post('/pay_periods/:id/process', async (req, res) => {
   try {
     const { rows: payPeriodRows } = await db.query(
@@ -4016,16 +4159,28 @@ apiRouter.post('/quotes', async (req, res) => {
       
       const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
       
+      let customerName = 'Unknown';
+      if (quoteData.clientId) {
+        const { rows: clientRows } = await db.query(
+          'SELECT company_name, first_name, last_name FROM clients WHERE id = $1',
+          [quoteData.clientId]
+        );
+        if (clientRows.length > 0) {
+          const client = clientRows[0];
+          customerName = client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Unknown';
+        }
+      }
+      
       const insertQuery = `
         INSERT INTO quotes (
-          id, client_id, property_id, lead_id, quote_number, version,
+          id, client_id, property_id, lead_id, customer_name, quote_number, version,
           approval_status, line_items, total_amount, discount_amount,
           discount_percentage, tax_rate, tax_amount, grand_total,
           terms_and_conditions, internal_notes, status, valid_until,
           deposit_amount, payment_terms, special_instructions, created_at
         ) VALUES (
-          $1, $2, $3, $4, $5, 1, 'pending', $6, $7, $8, $9, $10, $11, $12,
-          $13, $14, $15, $16, $17, $18, $19, NOW()
+          $1, $2, $3, $4, $5, $6, 1, 'pending', $7, $8, $9, $10, $11, $12, $13,
+          $14, $15, $16, $17, $18, $19, $20, NOW()
         ) RETURNING *
       `;
       
@@ -4034,6 +4189,7 @@ apiRouter.post('/quotes', async (req, res) => {
         quoteData.clientId || null,
         quoteData.propertyId || null,
         quoteData.leadId || null,
+        customerName,
         quoteNumber,
         JSON.stringify(lineItems),
         totals.totalAmount,
