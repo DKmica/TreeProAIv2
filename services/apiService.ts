@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -39,7 +39,11 @@ const createApiService = <T extends { id: string }>(resource: string) => ({
 });
 
 export const customerService = createApiService<Customer>('customers');
-export const clientService = createApiService<Client>('clients');
+export const clientService = {
+  ...createApiService<Client>('clients'),
+  getProperties: (clientId: string): Promise<Property[]> => apiFetch(`clients/${clientId}/properties`),
+  getContacts: (clientId: string): Promise<Contact[]> => apiFetch(`clients/${clientId}/contacts`),
+};
 export const leadService = createApiService<Lead>('leads');
 export const quoteService = createApiService<Quote>('quotes');
 export const jobService = createApiService<Job>('jobs');
