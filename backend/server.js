@@ -5532,13 +5532,8 @@ async function startServer() {
 
   app.use('/api', apiRouter);
   
-  // Serve static files from the 'public' directory
-  app.use(express.static(path.join(__dirname, 'public')));
-
-  // Handle SPA routing
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  });
+  // Frontend is served separately by Vite on port 5000
+  // Backend only handles API routes
 
   app.listen(PORT, HOST, async () => {
     console.log(`Backend server running on http://${HOST}:${PORT}`);
