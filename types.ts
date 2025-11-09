@@ -17,6 +17,24 @@ export interface Lead {
   createdAt: string;
   description?: string;
   customerUploads?: CustomerUpload[];
+  
+  // NEW Phase 1 fields:
+  clientId?: string;
+  propertyId?: string;
+  leadScore: number;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  assignedTo?: string;
+  estimatedValue?: number;
+  expectedCloseDate?: string;
+  lastContactDate?: string;
+  nextFollowupDate?: string;
+  updatedAt: string;
+  deletedAt?: string;
+  
+  // Nested
+  client?: Client;
+  property?: Property;
+  tags?: Tag[];
 }
 
 export interface LineItem {
@@ -33,21 +51,47 @@ export interface PortalMessage {
 
 export interface Quote {
   id: string;
-  leadId: string;
+  leadId?: string;
   customerName: string;
-  status: 'Draft' | 'Sent' | 'Accepted' | 'Declined';
+  status: 'Draft' | 'Sent' | 'Accepted' | 'Declined' | 'Converted';
   lineItems: LineItem[];
-  stumpGrindingPrice: number; // 0 if not included
+  stumpGrindingPrice?: number;
   createdAt: string;
-  signature?: string; // Base64 encoded image
-  acceptedAt?: string; // ISO date string
+  signature?: string;
+  acceptedAt?: string;
   messages?: PortalMessage[];
   jobLocation?: string;
   specialInstructions?: string;
   validUntil?: string;
   depositAmount?: number;
-  paymentTerms?: string;
+  paymentTerms: string;
   customerUploads?: CustomerUpload[];
+  
+  // NEW Phase 1 fields:
+  clientId?: string;
+  propertyId?: string;
+  quoteNumber: string;
+  version: number;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: string;
+  termsAndConditions?: string;
+  internalNotes?: string;
+  totalAmount: number;
+  discountAmount: number;
+  discountPercentage: number;
+  taxRate: number;
+  taxAmount: number;
+  grandTotal: number;
+  updatedAt: string;
+  deletedAt?: string;
+  
+  // Nested (when fetched with includes)
+  client?: Client;
+  property?: Property;
+  versions?: QuoteVersion[];
+  followups?: QuoteFollowup[];
+  tags?: Tag[];
 }
 
 export interface CustomerUpload {
@@ -73,10 +117,10 @@ export interface JobCost {
 
 export interface Job {
   id: string;
-  quoteId: string;
+  quoteId?: string;
   customerName: string;
   status: 'Unscheduled' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
-  scheduledDate: string;
+  scheduledDate?: string;
   assignedCrew: string[];
   stumpGrindingPrice?: number;
   workStartedAt?: string;
@@ -94,6 +138,18 @@ export interface Job {
   estimatedHours?: number;
   riskLevel?: 'Low' | 'Medium' | 'High' | 'Critical';
   jhaRequired?: boolean;
+  
+  // NEW Phase 1 fields:
+  clientId?: string;
+  propertyId?: string;
+  jobNumber: string;
+  updatedAt: string;
+  deletedAt?: string;
+  
+  // Nested
+  client?: Client;
+  property?: Property;
+  tags?: Tag[];
 }
 
 
@@ -145,6 +201,264 @@ export interface Equipment {
   assignedTo?: string;
   maintenanceHistory?: MaintenanceLog[];
 }
+
+// ============================================================================
+// PHASE 1 CRM TYPES
+// ============================================================================
+
+// Client Hierarchy Types
+export interface Client {
+  id: string;
+  
+  // Basic Info
+  title?: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  
+  // Contact
+  primaryEmail?: string;
+  primaryPhone?: string;
+  
+  // Classification
+  clientType: 'residential' | 'commercial' | 'property_manager';
+  industry?: string;
+  
+  // Status
+  status: 'active' | 'inactive' | 'archived';
+  leadSource?: string;
+  
+  // Financial
+  paymentTerms: string;
+  creditLimit?: number;
+  taxExempt: boolean;
+  
+  // Billing Address
+  billingAddressLine1?: string;
+  billingAddressLine2?: string;
+  billingCity?: string;
+  billingState?: string;
+  billingZip?: string;
+  billingCountry: string;
+  
+  // Metadata
+  notes?: string;
+  internalNotes?: string;
+  referralSource?: string;
+  lifetimeValue: number;
+  
+  // Audit
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  deletedAt?: string;
+  
+  // Nested (when fetched with includes)
+  properties?: Property[];
+  contacts?: Contact[];
+  tags?: Tag[];
+  customFields?: CustomFieldValue[];
+  stats?: ClientStats;
+}
+
+export interface ClientStats {
+  totalQuotes: number;
+  totalJobs: number;
+  totalInvoices: number;
+  lifetimeValue: number;
+  lastJobDate?: string;
+}
+
+export interface Property {
+  id: string;
+  clientId: string;
+  
+  // Address
+  propertyName?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  
+  // Location
+  lat?: number;
+  lon?: number;
+  
+  // Details
+  propertyType?: string;
+  squareFootage?: number;
+  lotSize?: number;
+  
+  // Access
+  gateCode?: string;
+  accessInstructions?: string;
+  parkingInstructions?: string;
+  
+  // Service
+  treesOnProperty?: number;
+  propertyFeatures?: string[];
+  
+  // Status
+  isPrimary: boolean;
+  
+  // Audit
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  
+  // Nested
+  client?: Client;
+  contacts?: Contact[];
+}
+
+export interface Contact {
+  id: string;
+  clientId: string;
+  propertyId?: string;
+  
+  // Personal
+  title?: string;
+  firstName: string;
+  lastName: string;
+  jobTitle?: string;
+  
+  // Role
+  contactType: 'general' | 'billing' | 'site_manager' | 'tenant' | 'owner';
+  isPrimary: boolean;
+  
+  // Preferences
+  preferredContactMethod: 'email' | 'phone' | 'sms';
+  canApproveQuotes: boolean;
+  canReceiveInvoices: boolean;
+  
+  // Notes
+  notes?: string;
+  
+  // Audit
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  
+  // Nested
+  channels?: ContactChannel[];
+  client?: Client;
+  property?: Property;
+}
+
+export interface ContactChannel {
+  id: string;
+  contactId: string;
+  channelType: 'email' | 'phone' | 'mobile' | 'fax';
+  channelValue: string;
+  label?: string;
+  isPrimary: boolean;
+  isVerified: boolean;
+  bounced: boolean;
+  doNotContact: boolean;
+  createdAt: string;
+}
+
+// Tagging Types
+export interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  category?: string;
+  createdAt: string;
+  usageCount?: number;
+}
+
+export interface EntityTag {
+  id: string;
+  tagId: string;
+  entityType: 'client' | 'property' | 'quote' | 'job' | 'lead';
+  entityId: string;
+  taggedAt: string;
+  taggedBy?: string;
+  tag?: Tag;
+}
+
+// Custom Fields Types
+export interface CustomFieldValue {
+  id: string;
+  fieldDefinitionId: string;
+  entityType: string;
+  entityId: string;
+  fieldValue: string;
+  createdAt: string;
+  updatedAt: string;
+  definition?: CustomFieldDefinition;
+}
+
+// Quote Enhancement Types
+export interface QuoteVersion {
+  id: string;
+  quoteId: string;
+  versionNumber: number;
+  lineItems: LineItem[];
+  totalAmount: number;
+  terms?: string;
+  notes?: string;
+  changedBy?: string;
+  changeReason?: string;
+  createdAt: string;
+}
+
+export interface QuoteFollowup {
+  id: string;
+  quoteId: string;
+  followupType: 'email' | 'call' | 'sms' | 'in_person';
+  scheduledDate: string;
+  subject?: string;
+  message?: string;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'skipped';
+  completedAt?: string;
+  completedBy?: string;
+  clientResponse?: string;
+  outcome?: 'interested' | 'not_interested' | 'needs_time' | 'converted';
+  isAutomated: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuoteTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  lineItems: LineItem[];
+  termsAndConditions?: string;
+  validDays: number;
+  depositPercentage: number;
+  paymentTerms: string;
+  serviceCategory?: string;
+  isActive: boolean;
+  useCount: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+}
+
+// API Response Types
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+// ============================================================================
+// END PHASE 1 CRM TYPES
+// ============================================================================
 
 export interface GroundingSource {
   uri: string;
@@ -284,9 +598,19 @@ export interface MaintenanceAdvice {
 
 export interface CustomFieldDefinition {
   id: string;
-  name: string;
-  type: 'text' | 'number' | 'date' | 'checkbox';
-  entity: 'customer' | 'lead' | 'quote' | 'job' | 'invoice' | 'employee' | 'equipment';
+  entityType: 'client' | 'property' | 'quote' | 'job' | 'lead';
+  fieldName: string;
+  fieldLabel: string;
+  fieldType: 'text' | 'number' | 'date' | 'dropdown' | 'checkbox' | 'textarea';
+  isRequired: boolean;
+  defaultValue?: string;
+  options?: string[];
+  validationRules?: Record<string, any>;
+  displayOrder: number;
+  helpText?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DocumentTemplate {

@@ -194,6 +194,70 @@ const transformRow = (row, tableName) => {
       transformed.leadId = row.lead_id;
       delete transformed.lead_id;
     }
+    if (row.client_id !== undefined) {
+      transformed.clientId = row.client_id;
+      delete transformed.client_id;
+    }
+    if (row.property_id !== undefined) {
+      transformed.propertyId = row.property_id;
+      delete transformed.property_id;
+    }
+    if (row.quote_number !== undefined) {
+      transformed.quoteNumber = row.quote_number;
+      delete transformed.quote_number;
+    }
+    if (row.approval_status !== undefined) {
+      transformed.approvalStatus = row.approval_status;
+      delete transformed.approval_status;
+    }
+    if (row.approved_by !== undefined) {
+      transformed.approvedBy = row.approved_by;
+      delete transformed.approved_by;
+    }
+    if (row.approved_at !== undefined) {
+      transformed.approvedAt = row.approved_at;
+      delete transformed.approved_at;
+    }
+    if (row.terms_and_conditions !== undefined) {
+      transformed.termsAndConditions = row.terms_and_conditions;
+      delete transformed.terms_and_conditions;
+    }
+    if (row.internal_notes !== undefined) {
+      transformed.internalNotes = row.internal_notes;
+      delete transformed.internal_notes;
+    }
+    if (row.total_amount !== undefined) {
+      transformed.totalAmount = (row.total_amount !== null && row.total_amount !== '') ? parseFloat(row.total_amount) : row.total_amount;
+      delete transformed.total_amount;
+    }
+    if (row.discount_amount !== undefined) {
+      transformed.discountAmount = (row.discount_amount !== null && row.discount_amount !== '') ? parseFloat(row.discount_amount) : row.discount_amount;
+      delete transformed.discount_amount;
+    }
+    if (row.discount_percentage !== undefined) {
+      transformed.discountPercentage = (row.discount_percentage !== null && row.discount_percentage !== '') ? parseFloat(row.discount_percentage) : row.discount_percentage;
+      delete transformed.discount_percentage;
+    }
+    if (row.tax_rate !== undefined) {
+      transformed.taxRate = (row.tax_rate !== null && row.tax_rate !== '') ? parseFloat(row.tax_rate) : row.tax_rate;
+      delete transformed.tax_rate;
+    }
+    if (row.tax_amount !== undefined) {
+      transformed.taxAmount = (row.tax_amount !== null && row.tax_amount !== '') ? parseFloat(row.tax_amount) : row.tax_amount;
+      delete transformed.tax_amount;
+    }
+    if (row.grand_total !== undefined) {
+      transformed.grandTotal = (row.grand_total !== null && row.grand_total !== '') ? parseFloat(row.grand_total) : row.grand_total;
+      delete transformed.grand_total;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+    if (row.deleted_at !== undefined) {
+      transformed.deletedAt = row.deleted_at;
+      delete transformed.deleted_at;
+    }
     if (row.customer_name !== undefined) {
       transformed.customerName = row.customer_name;
       delete transformed.customer_name;
@@ -575,6 +639,70 @@ const transformToDb = (data, tableName) => {
     if (data.leadId !== undefined) {
       transformed.lead_id = data.leadId;
       delete transformed.leadId;
+    }
+    if (data.clientId !== undefined) {
+      transformed.client_id = data.clientId;
+      delete transformed.clientId;
+    }
+    if (data.propertyId !== undefined) {
+      transformed.property_id = data.propertyId;
+      delete transformed.propertyId;
+    }
+    if (data.quoteNumber !== undefined) {
+      transformed.quote_number = data.quoteNumber;
+      delete transformed.quoteNumber;
+    }
+    if (data.approvalStatus !== undefined) {
+      transformed.approval_status = data.approvalStatus;
+      delete transformed.approvalStatus;
+    }
+    if (data.approvedBy !== undefined) {
+      transformed.approved_by = data.approvedBy;
+      delete transformed.approvedBy;
+    }
+    if (data.approvedAt !== undefined) {
+      transformed.approved_at = data.approvedAt;
+      delete transformed.approvedAt;
+    }
+    if (data.termsAndConditions !== undefined) {
+      transformed.terms_and_conditions = data.termsAndConditions;
+      delete transformed.termsAndConditions;
+    }
+    if (data.internalNotes !== undefined) {
+      transformed.internal_notes = data.internalNotes;
+      delete transformed.internalNotes;
+    }
+    if (data.totalAmount !== undefined) {
+      transformed.total_amount = data.totalAmount;
+      delete transformed.totalAmount;
+    }
+    if (data.discountAmount !== undefined) {
+      transformed.discount_amount = data.discountAmount;
+      delete transformed.discountAmount;
+    }
+    if (data.discountPercentage !== undefined) {
+      transformed.discount_percentage = data.discountPercentage;
+      delete transformed.discountPercentage;
+    }
+    if (data.taxRate !== undefined) {
+      transformed.tax_rate = data.taxRate;
+      delete transformed.taxRate;
+    }
+    if (data.taxAmount !== undefined) {
+      transformed.tax_amount = data.taxAmount;
+      delete transformed.taxAmount;
+    }
+    if (data.grandTotal !== undefined) {
+      transformed.grand_total = data.grandTotal;
+      delete transformed.grandTotal;
+    }
+    if (data.updatedAt !== undefined) {
+      transformed.updated_at = data.updatedAt;
+      delete transformed.updatedAt;
+    }
+    if (data.deletedAt !== undefined) {
+      transformed.deleted_at = data.deletedAt;
+      delete transformed.deletedAt;
     }
     if (data.customerName !== undefined) {
       transformed.customer_name = data.customerName;
@@ -1391,7 +1519,3621 @@ apiRouter.get('/estimate_feedback/stats', async (req, res) => {
   }
 });
 
-const resources = ['customers', 'leads', 'quotes', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
+// ============================================================================
+// CLIENT CRUD API ENDPOINTS
+// ============================================================================
+
+// Helper function: Convert snake_case object keys to camelCase recursively
+const snakeToCamel = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(snakeToCamel);
+  if (typeof obj !== 'object') return obj;
+  
+  const camelObj = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    camelObj[camelKey] = (value && typeof value === 'object') ? snakeToCamel(value) : value;
+  }
+  return camelObj;
+};
+
+// Helper function: Convert camelCase object keys to snake_case recursively
+const camelToSnake = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(camelToSnake);
+  if (typeof obj !== 'object') return obj;
+  
+  const snakeObj = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    snakeObj[snakeKey] = (value && typeof value === 'object') ? camelToSnake(value) : value;
+  }
+  return snakeObj;
+};
+
+// Helper function: Build client stats
+const buildClientStats = async (clientId) => {
+  try {
+    const statsQuery = `
+      SELECT 
+        (SELECT COUNT(*) FROM quotes WHERE customer_name IN (
+          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
+        )) as total_quotes,
+        (SELECT COUNT(*) FROM jobs WHERE customer_name IN (
+          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
+        )) as total_jobs,
+        (SELECT COUNT(*) FROM invoices WHERE customer_name IN (
+          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
+        )) as total_invoices,
+        (SELECT COALESCE(SUM(amount::numeric), 0) FROM invoices WHERE customer_name IN (
+          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
+        ) AND status = 'Paid') as lifetime_value,
+        (SELECT MAX(scheduled_date) FROM jobs WHERE customer_name IN (
+          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
+        )) as last_job_date
+    `;
+    
+    const { rows } = await db.query(statsQuery, [clientId]);
+    return {
+      totalQuotes: parseInt(rows[0]?.total_quotes || 0),
+      totalJobs: parseInt(rows[0]?.total_jobs || 0),
+      totalInvoices: parseInt(rows[0]?.total_invoices || 0),
+      lifetimeValue: parseFloat(rows[0]?.lifetime_value || 0),
+      lastJobDate: rows[0]?.last_job_date || null
+    };
+  } catch (err) {
+    console.error('Error building client stats:', err);
+    return {
+      totalQuotes: 0,
+      totalJobs: 0,
+      totalInvoices: 0,
+      lifetimeValue: 0,
+      lastJobDate: null
+    };
+  }
+};
+
+// Helper function: Validate client input
+const validateClientInput = (data) => {
+  const errors = [];
+  
+  if (data.primaryEmail) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.primaryEmail)) {
+      errors.push('Invalid email format');
+    }
+  }
+  
+  if (!data.firstName && !data.companyName) {
+    errors.push('Either firstName or companyName is required');
+  }
+  
+  return errors;
+};
+
+// POST /api/clients - Create new client
+apiRouter.post('/clients', async (req, res) => {
+  try {
+    const clientData = req.body;
+    
+    // Validate input
+    const validationErrors = validateClientInput(clientData);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Validation failed', 
+        details: validationErrors 
+      });
+    }
+    
+    // Start transaction
+    await db.query('BEGIN');
+    
+    try {
+      // Convert camelCase to snake_case for database
+      const dbData = camelToSnake(clientData);
+      
+      // Extract nested data
+      const properties = clientData.properties || [];
+      const contacts = clientData.contacts || [];
+      const tags = clientData.tags || [];
+      
+      // Remove nested arrays from main data
+      delete dbData.properties;
+      delete dbData.contacts;
+      delete dbData.tags;
+      
+      // Generate UUID and set defaults
+      const clientId = uuidv4();
+      dbData.id = clientId;
+      dbData.status = dbData.status || 'active';
+      dbData.client_type = dbData.client_type || 'residential';
+      
+      // Insert client
+      const clientColumns = Object.keys(dbData).filter(k => k !== 'id');
+      const clientValues = clientColumns.map(k => dbData[k]);
+      const clientPlaceholders = clientColumns.map((_, i) => `$${i + 2}`).join(', ');
+      
+      const clientQuery = `
+        INSERT INTO clients (id, ${clientColumns.join(', ')}) 
+        VALUES ($1, ${clientPlaceholders}) 
+        RETURNING *
+      `;
+      
+      const { rows: clientRows } = await db.query(clientQuery, [clientId, ...clientValues]);
+      const createdClient = clientRows[0];
+      
+      // Insert properties
+      const createdProperties = [];
+      for (const property of properties) {
+        const propertyId = uuidv4();
+        const propData = camelToSnake(property);
+        propData.id = propertyId;
+        propData.client_id = clientId;
+        
+        const propColumns = Object.keys(propData).filter(k => k !== 'id');
+        const propValues = propColumns.map(k => propData[k]);
+        const propPlaceholders = propColumns.map((_, i) => `$${i + 2}`).join(', ');
+        
+        const propQuery = `
+          INSERT INTO properties (id, ${propColumns.join(', ')}) 
+          VALUES ($1, ${propPlaceholders}) 
+          RETURNING *
+        `;
+        
+        const { rows: propRows } = await db.query(propQuery, [propertyId, ...propValues]);
+        createdProperties.push(propRows[0]);
+      }
+      
+      // Insert contacts
+      const createdContacts = [];
+      for (const contact of contacts) {
+        const contactId = uuidv4();
+        const contactData = camelToSnake(contact);
+        contactData.id = contactId;
+        contactData.client_id = clientId;
+        
+        // Extract channels
+        const channels = contact.channels || [];
+        delete contactData.channels;
+        
+        const contactColumns = Object.keys(contactData).filter(k => k !== 'id');
+        const contactValues = contactColumns.map(k => contactData[k]);
+        const contactPlaceholders = contactColumns.map((_, i) => `$${i + 2}`).join(', ');
+        
+        const contactQuery = `
+          INSERT INTO contacts (id, ${contactColumns.join(', ')}) 
+          VALUES ($1, ${contactPlaceholders}) 
+          RETURNING *
+        `;
+        
+        const { rows: contactRows } = await db.query(contactQuery, [contactId, ...contactValues]);
+        const createdContact = contactRows[0];
+        
+        // Insert contact channels
+        const createdChannels = [];
+        for (const channel of channels) {
+          const channelId = uuidv4();
+          const channelData = camelToSnake(channel);
+          channelData.id = channelId;
+          channelData.contact_id = contactId;
+          
+          const channelQuery = `
+            INSERT INTO contact_channels (id, contact_id, channel_type, channel_value, label, is_primary, is_verified)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+          `;
+          
+          const { rows: channelRows } = await db.query(channelQuery, [
+            channelId,
+            contactId,
+            channelData.channel_type,
+            channelData.channel_value,
+            channelData.label || null,
+            channelData.is_primary || false,
+            channelData.is_verified || false
+          ]);
+          createdChannels.push(channelRows[0]);
+        }
+        
+        createdContact.channels = createdChannels;
+        createdContacts.push(createdContact);
+      }
+      
+      // Insert tags
+      const createdTags = [];
+      for (const tagName of tags) {
+        // Find or create tag
+        let tagId;
+        const { rows: existingTags } = await db.query(
+          'SELECT id FROM tags WHERE name = $1',
+          [tagName]
+        );
+        
+        if (existingTags.length > 0) {
+          tagId = existingTags[0].id;
+        } else {
+          tagId = uuidv4();
+          await db.query(
+            'INSERT INTO tags (id, name, category) VALUES ($1, $2, $3)',
+            [tagId, tagName, 'client']
+          );
+        }
+        
+        // Link tag to client
+        await db.query(
+          'INSERT INTO entity_tags (id, tag_id, entity_type, entity_id) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',
+          [uuidv4(), tagId, 'client', clientId]
+        );
+        
+        createdTags.push({ id: tagId, name: tagName });
+      }
+      
+      // Commit transaction
+      await db.query('COMMIT');
+      
+      // Build response with nested data
+      const response = snakeToCamel(createdClient);
+      response.properties = createdProperties.map(snakeToCamel);
+      response.contacts = createdContacts.map(snakeToCamel);
+      response.tags = createdTags;
+      
+      res.status(201).json({ success: true, data: response });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/clients - List clients with filtering and pagination
+apiRouter.get('/clients', async (req, res) => {
+  try {
+    const {
+      status,
+      clientType,
+      search,
+      tags,
+      page = 1,
+      limit = 50,
+      sortBy = 'created_at',
+      sortOrder = 'desc'
+    } = req.query;
+    
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const conditions = ['deleted_at IS NULL'];
+    const params = [];
+    let paramIndex = 1;
+    
+    // Status filter
+    if (status) {
+      conditions.push(`status = $${paramIndex}`);
+      params.push(status);
+      paramIndex++;
+    }
+    
+    // Client type filter
+    if (clientType) {
+      conditions.push(`client_type = $${paramIndex}`);
+      params.push(clientType);
+      paramIndex++;
+    }
+    
+    // Full-text search
+    if (search) {
+      conditions.push(`(
+        to_tsvector('english', 
+          coalesce(first_name, '') || ' ' || 
+          coalesce(last_name, '') || ' ' || 
+          coalesce(company_name, '') || ' ' || 
+          coalesce(primary_email, '')
+        ) @@ plainto_tsquery('english', $${paramIndex})
+        OR first_name ILIKE $${paramIndex + 1}
+        OR last_name ILIKE $${paramIndex + 1}
+        OR company_name ILIKE $${paramIndex + 1}
+        OR primary_email ILIKE $${paramIndex + 1}
+      )`);
+      params.push(search, `%${search}%`);
+      paramIndex += 2;
+    }
+    
+    // Tag filter
+    if (tags) {
+      const tagArray = tags.split(',');
+      conditions.push(`id IN (
+        SELECT entity_id FROM entity_tags 
+        WHERE entity_type = 'client' 
+        AND tag_id IN (SELECT id FROM tags WHERE name = ANY($${paramIndex}))
+      )`);
+      params.push(tagArray);
+      paramIndex++;
+    }
+    
+    // Build WHERE clause
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    
+    // Validate sortBy to prevent SQL injection
+    const validSortColumns = ['created_at', 'updated_at', 'first_name', 'last_name', 'company_name', 'lifetime_value'];
+    const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'created_at';
+    const sortDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    
+    // Get total count
+    const countQuery = `SELECT COUNT(*) FROM clients ${whereClause}`;
+    const { rows: countRows } = await db.query(countQuery, params);
+    const totalCount = parseInt(countRows[0].count);
+    
+    // Get clients with basic stats
+    const clientsQuery = `
+      SELECT 
+        c.*,
+        (SELECT COUNT(*) FROM quotes q WHERE q.customer_name = CONCAT(c.first_name, ' ', c.last_name)) as job_count,
+        (SELECT COUNT(*) FROM quotes WHERE customer_name = CONCAT(c.first_name, ' ', c.last_name)) as quote_count,
+        (SELECT COALESCE(SUM(amount::numeric), 0) FROM invoices WHERE customer_name = CONCAT(c.first_name, ' ', c.last_name) AND status = 'Paid') as calculated_lifetime_value
+      FROM clients c
+      ${whereClause}
+      ORDER BY ${sortColumn} ${sortDirection}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    
+    const { rows: clients } = await db.query(clientsQuery, [...params, parseInt(limit), offset]);
+    
+    // Transform to camelCase and add stats
+    const transformedClients = clients.map(client => {
+      const transformed = snakeToCamel(client);
+      transformed.stats = {
+        jobCount: parseInt(client.job_count || 0),
+        quoteCount: parseInt(client.quote_count || 0),
+        lifetimeValue: parseFloat(client.calculated_lifetime_value || client.lifetime_value || 0)
+      };
+      delete transformed.jobCount;
+      delete transformed.quoteCount;
+      delete transformed.calculatedLifetimeValue;
+      return transformed;
+    });
+    
+    res.json({
+      success: true,
+      data: transformedClients,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalCount,
+        totalPages: Math.ceil(totalCount / parseInt(limit))
+      }
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/clients/:id - Get single client with full details
+apiRouter.get('/clients/:id', async (req, res) => {
+  try {
+    const clientId = req.params.id;
+    
+    // Get client
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (clientRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    const client = snakeToCamel(clientRows[0]);
+    
+    // Get properties
+    const { rows: propertyRows } = await db.query(
+      'SELECT * FROM properties WHERE client_id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    client.properties = propertyRows.map(snakeToCamel);
+    
+    // Get contacts with channels
+    const { rows: contactRows } = await db.query(
+      'SELECT * FROM contacts WHERE client_id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    const contacts = [];
+    for (const contact of contactRows) {
+      const transformedContact = snakeToCamel(contact);
+      
+      // Get channels for this contact
+      const { rows: channelRows } = await db.query(
+        'SELECT * FROM contact_channels WHERE contact_id = $1',
+        [contact.id]
+      );
+      transformedContact.channels = channelRows.map(snakeToCamel);
+      
+      contacts.push(transformedContact);
+    }
+    client.contacts = contacts;
+    
+    // Get tags
+    const { rows: tagRows } = await db.query(`
+      SELECT t.id, t.name, t.color, t.category
+      FROM tags t
+      INNER JOIN entity_tags et ON t.id = et.tag_id
+      WHERE et.entity_type = 'client' AND et.entity_id = $1
+    `, [clientId]);
+    client.tags = tagRows.map(snakeToCamel);
+    
+    // Get custom field values
+    const { rows: customFieldRows } = await db.query(`
+      SELECT 
+        cfv.id,
+        cfv.field_value,
+        cfd.field_name,
+        cfd.field_label,
+        cfd.field_type
+      FROM custom_field_values cfv
+      INNER JOIN custom_field_definitions cfd ON cfv.field_definition_id = cfd.id
+      WHERE cfv.entity_type = 'client' AND cfv.entity_id = $1
+    `, [clientId]);
+    client.customFields = customFieldRows.map(snakeToCamel);
+    
+    // Get stats
+    client.stats = await buildClientStats(clientId);
+    
+    res.json({ success: true, data: client });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/clients/:id - Update client
+apiRouter.put('/clients/:id', async (req, res) => {
+  try {
+    const clientId = req.params.id;
+    const clientData = req.body;
+    
+    // Validate input
+    const validationErrors = validateClientInput(clientData);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Validation failed', 
+        details: validationErrors 
+      });
+    }
+    
+    // Check if client exists
+    const { rows: existingRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    // Check email uniqueness if email is being changed
+    if (clientData.primaryEmail && clientData.primaryEmail !== existingRows[0].primary_email) {
+      const { rows: emailCheckRows } = await db.query(
+        'SELECT id FROM clients WHERE primary_email = $1 AND id != $2 AND deleted_at IS NULL',
+        [clientData.primaryEmail, clientId]
+      );
+      
+      if (emailCheckRows.length > 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Email already exists for another client' 
+        });
+      }
+    }
+    
+    // Convert to snake_case and remove nested data
+    const dbData = camelToSnake(clientData);
+    delete dbData.properties;
+    delete dbData.contacts;
+    delete dbData.tags;
+    delete dbData.customFields;
+    delete dbData.stats;
+    delete dbData.id;
+    delete dbData.created_at;
+    delete dbData.deleted_at;
+    
+    // Build update query
+    const columns = Object.keys(dbData);
+    const values = columns.map(k => dbData[k]);
+    const setString = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+    
+    const updateQuery = `
+      UPDATE clients 
+      SET ${setString}, updated_at = NOW() 
+      WHERE id = $1 
+      RETURNING *
+    `;
+    
+    const { rows: updatedRows } = await db.query(updateQuery, [clientId, ...values]);
+    
+    // Get full client details to return
+    const response = await db.query(
+      'SELECT * FROM clients WHERE id = $1',
+      [clientId]
+    );
+    
+    const client = snakeToCamel(response.rows[0]);
+    
+    // Get nested data
+    const { rows: propertyRows } = await db.query(
+      'SELECT * FROM properties WHERE client_id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    client.properties = propertyRows.map(snakeToCamel);
+    
+    const { rows: contactRows } = await db.query(
+      'SELECT * FROM contacts WHERE client_id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    const contacts = [];
+    for (const contact of contactRows) {
+      const transformedContact = snakeToCamel(contact);
+      const { rows: channelRows } = await db.query(
+        'SELECT * FROM contact_channels WHERE contact_id = $1',
+        [contact.id]
+      );
+      transformedContact.channels = channelRows.map(snakeToCamel);
+      contacts.push(transformedContact);
+    }
+    client.contacts = contacts;
+    
+    const { rows: tagRows } = await db.query(`
+      SELECT t.id, t.name, t.color, t.category
+      FROM tags t
+      INNER JOIN entity_tags et ON t.id = et.tag_id
+      WHERE et.entity_type = 'client' AND et.entity_id = $1
+    `, [clientId]);
+    client.tags = tagRows.map(snakeToCamel);
+    
+    res.json({ success: true, data: client });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/clients/:id - Soft delete client
+apiRouter.delete('/clients/:id', async (req, res) => {
+  try {
+    const clientId = req.params.id;
+    
+    // Check if client exists
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (clientRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    // Check if client has jobs
+    const clientName = `${clientRows[0].first_name} ${clientRows[0].last_name}`.trim() || clientRows[0].company_name;
+    const { rows: jobRows } = await db.query(
+      'SELECT COUNT(*) as count FROM jobs WHERE customer_name = $1',
+      [clientName]
+    );
+    
+    if (parseInt(jobRows[0].count) > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Cannot delete client with existing jobs' 
+      });
+    }
+    
+    // Soft delete client
+    await db.query(
+      'UPDATE clients SET deleted_at = NOW() WHERE id = $1',
+      [clientId]
+    );
+    
+    // Soft delete related properties
+    await db.query(
+      'UPDATE properties SET deleted_at = NOW() WHERE client_id = $1',
+      [clientId]
+    );
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// PROPERTY CRUD API ENDPOINTS
+// ============================================================================
+
+// POST /api/clients/:clientId/properties - Add property to client
+apiRouter.post('/clients/:clientId/properties', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const propertyData = req.body;
+    
+    // Validate client exists
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (clientRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      // Convert camelCase to snake_case
+      const dbData = camelToSnake(propertyData);
+      const propertyId = uuidv4();
+      dbData.id = propertyId;
+      dbData.client_id = clientId;
+      
+      // Handle isPrimary logic
+      if (dbData.is_primary === true) {
+        // Unset any existing primary property for this client
+        await db.query(
+          'UPDATE properties SET is_primary = false WHERE client_id = $1 AND deleted_at IS NULL',
+          [clientId]
+        );
+      }
+      
+      // Build insert query
+      const columns = Object.keys(dbData).filter(k => k !== 'id');
+      const values = columns.map(k => dbData[k]);
+      const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
+      
+      const insertQuery = `
+        INSERT INTO properties (id, ${columns.join(', ')}) 
+        VALUES ($1, ${placeholders}) 
+        RETURNING *
+      `;
+      
+      const { rows: propertyRows } = await db.query(insertQuery, [propertyId, ...values]);
+      
+      await db.query('COMMIT');
+      
+      const response = snakeToCamel(propertyRows[0]);
+      res.status(201).json({ success: true, data: response });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/properties/:id - Get property details
+apiRouter.get('/properties/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get property
+    const { rows: propertyRows } = await db.query(
+      'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (propertyRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Property not found' 
+      });
+    }
+    
+    const property = snakeToCamel(propertyRows[0]);
+    
+    // Get client information
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [propertyRows[0].client_id]
+    );
+    
+    if (clientRows.length > 0) {
+      property.client = snakeToCamel(clientRows[0]);
+    }
+    
+    // Get contacts linked to this property
+    const { rows: contactRows } = await db.query(
+      'SELECT * FROM contacts WHERE property_id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    const contacts = [];
+    for (const contact of contactRows) {
+      const transformedContact = snakeToCamel(contact);
+      
+      // Get channels for this contact
+      const { rows: channelRows } = await db.query(
+        'SELECT * FROM contact_channels WHERE contact_id = $1',
+        [contact.id]
+      );
+      transformedContact.channels = channelRows.map(snakeToCamel);
+      
+      contacts.push(transformedContact);
+    }
+    property.contacts = contacts;
+    
+    res.json({ success: true, data: property });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/properties/:id - Update property
+apiRouter.put('/properties/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const propertyData = req.body;
+    
+    // Check if property exists
+    const { rows: existingRows } = await db.query(
+      'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Property not found' 
+      });
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      const existingProperty = existingRows[0];
+      
+      // Handle isPrimary logic
+      if (propertyData.isPrimary === true) {
+        // Unset other primary properties for this client
+        await db.query(
+          'UPDATE properties SET is_primary = false WHERE client_id = $1 AND id != $2 AND deleted_at IS NULL',
+          [existingProperty.client_id, id]
+        );
+      }
+      
+      // Convert to snake_case and remove fields that shouldn't be updated
+      const dbData = camelToSnake(propertyData);
+      delete dbData.id;
+      delete dbData.client_id;
+      delete dbData.created_at;
+      delete dbData.deleted_at;
+      delete dbData.client;
+      delete dbData.contacts;
+      
+      // Build update query
+      const columns = Object.keys(dbData);
+      const values = columns.map(k => dbData[k]);
+      const setString = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+      
+      const updateQuery = `
+        UPDATE properties 
+        SET ${setString}, updated_at = NOW() 
+        WHERE id = $1 
+        RETURNING *
+      `;
+      
+      const { rows: updatedRows } = await db.query(updateQuery, [id, ...values]);
+      
+      await db.query('COMMIT');
+      
+      const response = snakeToCamel(updatedRows[0]);
+      res.json({ success: true, data: response });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/properties/:id - Soft delete property
+apiRouter.delete('/properties/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if property exists
+    const { rows: propertyRows } = await db.query(
+      'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (propertyRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Property not found' 
+      });
+    }
+    
+    const property = propertyRows[0];
+    
+    // Check if this is the only property for the client
+    const { rows: clientPropertyRows } = await db.query(
+      'SELECT COUNT(*) as count FROM properties WHERE client_id = $1 AND deleted_at IS NULL',
+      [property.client_id]
+    );
+    
+    if (parseInt(clientPropertyRows[0].count) <= 1) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Cannot delete the only property for a client' 
+      });
+    }
+    
+    // Check if property is linked to any jobs (via property address matching)
+    // Note: This is a simplified check. In production, you'd want a proper FK relationship
+    const propertyAddress = `${property.address_line1}, ${property.city}, ${property.state}`;
+    const { rows: jobRows } = await db.query(
+      'SELECT COUNT(*) as count FROM jobs WHERE job_location ILIKE $1',
+      [`%${property.address_line1}%`]
+    );
+    
+    if (parseInt(jobRows[0].count) > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Cannot delete property that is linked to existing jobs' 
+      });
+    }
+    
+    // Soft delete property
+    await db.query(
+      'UPDATE properties SET deleted_at = NOW() WHERE id = $1',
+      [id]
+    );
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// CONTACT CRUD API ENDPOINTS
+// ============================================================================
+
+// POST /api/clients/:clientId/contacts - Add contact to client
+apiRouter.post('/clients/:clientId/contacts', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const contactData = req.body;
+    
+    // Validate client exists
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (clientRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    // Validate property if provided
+    if (contactData.propertyId) {
+      const { rows: propertyRows } = await db.query(
+        'SELECT * FROM properties WHERE id = $1 AND client_id = $2 AND deleted_at IS NULL',
+        [contactData.propertyId, clientId]
+      );
+      
+      if (propertyRows.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Property not found or does not belong to this client' 
+        });
+      }
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      // Extract channels
+      const channels = contactData.channels || [];
+      
+      // Convert camelCase to snake_case
+      const dbData = camelToSnake(contactData);
+      delete dbData.channels;
+      
+      const contactId = uuidv4();
+      dbData.id = contactId;
+      dbData.client_id = clientId;
+      
+      // Build insert query for contact
+      const columns = Object.keys(dbData).filter(k => k !== 'id');
+      const values = columns.map(k => dbData[k]);
+      const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
+      
+      const contactQuery = `
+        INSERT INTO contacts (id, ${columns.join(', ')}) 
+        VALUES ($1, ${placeholders}) 
+        RETURNING *
+      `;
+      
+      const { rows: contactRows } = await db.query(contactQuery, [contactId, ...values]);
+      const createdContact = contactRows[0];
+      
+      // Insert contact channels
+      const createdChannels = [];
+      for (const channel of channels) {
+        const channelId = uuidv4();
+        const channelData = camelToSnake(channel);
+        
+        const channelQuery = `
+          INSERT INTO contact_channels (id, contact_id, channel_type, channel_value, label, is_primary, is_verified)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING *
+        `;
+        
+        const { rows: channelRows } = await db.query(channelQuery, [
+          channelId,
+          contactId,
+          channelData.channel_type,
+          channelData.channel_value,
+          channelData.label || null,
+          channelData.is_primary || false,
+          channelData.is_verified || false
+        ]);
+        createdChannels.push(channelRows[0]);
+      }
+      
+      await db.query('COMMIT');
+      
+      // Build response
+      const response = snakeToCamel(createdContact);
+      response.channels = createdChannels.map(snakeToCamel);
+      
+      res.status(201).json({ success: true, data: response });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/contacts/:id - Get contact details
+apiRouter.get('/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get contact
+    const { rows: contactRows } = await db.query(
+      'SELECT * FROM contacts WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (contactRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Contact not found' 
+      });
+    }
+    
+    const contact = snakeToCamel(contactRows[0]);
+    
+    // Get all communication channels
+    const { rows: channelRows } = await db.query(
+      'SELECT * FROM contact_channels WHERE contact_id = $1',
+      [id]
+    );
+    contact.channels = channelRows.map(snakeToCamel);
+    
+    // Get linked client info
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [contactRows[0].client_id]
+    );
+    
+    if (clientRows.length > 0) {
+      contact.client = snakeToCamel(clientRows[0]);
+    }
+    
+    // Get linked property info if exists
+    if (contactRows[0].property_id) {
+      const { rows: propertyRows } = await db.query(
+        'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+        [contactRows[0].property_id]
+      );
+      
+      if (propertyRows.length > 0) {
+        contact.property = snakeToCamel(propertyRows[0]);
+      }
+    }
+    
+    res.json({ success: true, data: contact });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/contacts/:id - Update contact
+apiRouter.put('/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const contactData = req.body;
+    
+    // Check if contact exists
+    const { rows: existingRows } = await db.query(
+      'SELECT * FROM contacts WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Contact not found' 
+      });
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      // Extract channels if provided
+      const channels = contactData.channels;
+      
+      // Convert to snake_case and remove fields that shouldn't be updated
+      const dbData = camelToSnake(contactData);
+      delete dbData.id;
+      delete dbData.client_id;
+      delete dbData.created_at;
+      delete dbData.deleted_at;
+      delete dbData.channels;
+      delete dbData.client;
+      delete dbData.property;
+      
+      // Build update query for contact
+      const columns = Object.keys(dbData);
+      const values = columns.map(k => dbData[k]);
+      const setString = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+      
+      const updateQuery = `
+        UPDATE contacts 
+        SET ${setString}, updated_at = NOW() 
+        WHERE id = $1 
+        RETURNING *
+      `;
+      
+      const { rows: updatedRows } = await db.query(updateQuery, [id, ...values]);
+      
+      // Update channels if provided
+      if (channels && Array.isArray(channels)) {
+        // Delete old channels
+        await db.query('DELETE FROM contact_channels WHERE contact_id = $1', [id]);
+        
+        // Insert new channels
+        for (const channel of channels) {
+          const channelId = uuidv4();
+          const channelData = camelToSnake(channel);
+          
+          const channelQuery = `
+            INSERT INTO contact_channels (id, contact_id, channel_type, channel_value, label, is_primary, is_verified)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+          `;
+          
+          await db.query(channelQuery, [
+            channelId,
+            id,
+            channelData.channel_type,
+            channelData.channel_value,
+            channelData.label || null,
+            channelData.is_primary || false,
+            channelData.is_verified || false
+          ]);
+        }
+      }
+      
+      await db.query('COMMIT');
+      
+      // Get updated contact with channels
+      const { rows: finalContactRows } = await db.query(
+        'SELECT * FROM contacts WHERE id = $1',
+        [id]
+      );
+      
+      const response = snakeToCamel(finalContactRows[0]);
+      
+      const { rows: channelRows } = await db.query(
+        'SELECT * FROM contact_channels WHERE contact_id = $1',
+        [id]
+      );
+      response.channels = channelRows.map(snakeToCamel);
+      
+      res.json({ success: true, data: response });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/contacts/:id - Soft delete contact
+apiRouter.delete('/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if contact exists
+    const { rows: contactRows } = await db.query(
+      'SELECT * FROM contacts WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (contactRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Contact not found' 
+      });
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      // Soft delete contact
+      await db.query(
+        'UPDATE contacts SET deleted_at = NOW() WHERE id = $1',
+        [id]
+      );
+      
+      // Hard delete associated channels (cascade)
+      await db.query(
+        'DELETE FROM contact_channels WHERE contact_id = $1',
+        [id]
+      );
+      
+      await db.query('COMMIT');
+      
+      res.status(204).send();
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// CONTACT CHANNELS ENDPOINTS
+// ============================================================================
+
+// POST /api/contacts/:contactId/channels - Add communication channel
+apiRouter.post('/contacts/:contactId/channels', async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    const channelData = req.body;
+    
+    // Validate contact exists
+    const { rows: contactRows } = await db.query(
+      'SELECT * FROM contacts WHERE id = $1 AND deleted_at IS NULL',
+      [contactId]
+    );
+    
+    if (contactRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Contact not found' 
+      });
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      const dbData = camelToSnake(channelData);
+      
+      // Handle isPrimary logic
+      if (dbData.is_primary === true && dbData.channel_type) {
+        // Unset other primary channels of the same type
+        await db.query(
+          'UPDATE contact_channels SET is_primary = false WHERE contact_id = $1 AND channel_type = $2',
+          [contactId, dbData.channel_type]
+        );
+      }
+      
+      const channelId = uuidv4();
+      
+      const channelQuery = `
+        INSERT INTO contact_channels (id, contact_id, channel_type, channel_value, label, is_primary, is_verified)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+      `;
+      
+      const { rows: channelRows } = await db.query(channelQuery, [
+        channelId,
+        contactId,
+        dbData.channel_type,
+        dbData.channel_value,
+        dbData.label || null,
+        dbData.is_primary || false,
+        dbData.is_verified || false
+      ]);
+      
+      await db.query('COMMIT');
+      
+      const response = snakeToCamel(channelRows[0]);
+      res.status(201).json({ success: true, data: response });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/contact-channels/:id - Delete channel
+apiRouter.delete('/contact-channels/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if channel exists
+    const { rows: channelRows } = await db.query(
+      'SELECT * FROM contact_channels WHERE id = $1',
+      [id]
+    );
+    
+    if (channelRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Channel not found' 
+      });
+    }
+    
+    // Hard delete channel
+    await db.query(
+      'DELETE FROM contact_channels WHERE id = $1',
+      [id]
+    );
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// TAG MANAGEMENT API ENDPOINTS
+// ============================================================================
+
+// Helper function: Calculate usage count for a tag
+const calculateTagUsageCount = async (tagId) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT COUNT(*) as count FROM entity_tags WHERE tag_id = $1',
+      [tagId]
+    );
+    return parseInt(rows[0]?.count || 0);
+  } catch (err) {
+    console.error('Error calculating tag usage count:', err);
+    return 0;
+  }
+};
+
+// Helper function: Get or create tag by name
+const getOrCreateTagByName = async (name, category = null) => {
+  try {
+    const { rows: existingTags } = await db.query(
+      'SELECT * FROM tags WHERE LOWER(name) = LOWER($1)',
+      [name]
+    );
+    
+    if (existingTags.length > 0) {
+      return snakeToCamel(existingTags[0]);
+    }
+    
+    const tagId = uuidv4();
+    const { rows: newTagRows } = await db.query(
+      `INSERT INTO tags (id, name, color, category) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING *`,
+      [tagId, name, '#00c2ff', category]
+    );
+    
+    return snakeToCamel(newTagRows[0]);
+  } catch (err) {
+    console.error('Error in getOrCreateTagByName:', err);
+    throw err;
+  }
+};
+
+// Helper function: Validate entity type
+const validateEntityType = (entityType) => {
+  const validTypes = ['client', 'property', 'quote', 'job', 'lead'];
+  return validTypes.includes(entityType);
+};
+
+// Helper function: Get table name for entity type
+const getTableNameForEntityType = (entityType) => {
+  const tableMap = {
+    'client': 'clients',
+    'property': 'properties',
+    'quote': 'quotes',
+    'job': 'jobs',
+    'lead': 'leads'
+  };
+  return tableMap[entityType];
+};
+
+// Helper function: Validate entity exists
+const validateEntityExists = async (entityType, entityId) => {
+  const tableName = getTableNameForEntityType(entityType);
+  if (!tableName) return false;
+  
+  try {
+    const { rows } = await db.query(
+      `SELECT id FROM ${tableName} WHERE id = $1`,
+      [entityId]
+    );
+    return rows.length > 0;
+  } catch (err) {
+    console.error('Error validating entity existence:', err);
+    return false;
+  }
+};
+
+// GET /api/tags - List all tags
+apiRouter.get('/tags', async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    let queryText = `
+      SELECT t.*, 
+             (SELECT COUNT(*) FROM entity_tags et WHERE et.tag_id = t.id) as usage_count
+      FROM tags t
+    `;
+    
+    const queryParams = [];
+    
+    if (category) {
+      queryText += ' WHERE t.category = $1';
+      queryParams.push(category);
+    }
+    
+    queryText += ' ORDER BY t.name ASC';
+    
+    const { rows } = await db.query(queryText, queryParams);
+    
+    const tags = rows.map(row => ({
+      ...snakeToCamel(row),
+      usageCount: parseInt(row.usage_count || 0)
+    }));
+    
+    res.json({ success: true, data: tags });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/tags - Create new tag
+apiRouter.post('/tags', async (req, res) => {
+  try {
+    const { name, color = '#00c2ff', description, category } = req.body;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Tag name is required' 
+      });
+    }
+    
+    const { rows: existingTags } = await db.query(
+      'SELECT * FROM tags WHERE LOWER(name) = LOWER($1)',
+      [name.trim()]
+    );
+    
+    if (existingTags.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Tag name must be unique (case-insensitive)' 
+      });
+    }
+    
+    const tagId = uuidv4();
+    const { rows: newTagRows } = await db.query(
+      `INSERT INTO tags (id, name, color, description, category) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING *`,
+      [tagId, name.trim(), color, description || null, category || null]
+    );
+    
+    const tag = snakeToCamel(newTagRows[0]);
+    tag.usageCount = 0;
+    
+    res.status(201).json({ success: true, data: tag });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/tags/:id - Update tag
+apiRouter.put('/tags/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, color, description, category } = req.body;
+    
+    const { rows: existingTagRows } = await db.query(
+      'SELECT * FROM tags WHERE id = $1',
+      [id]
+    );
+    
+    if (existingTagRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Tag not found' 
+      });
+    }
+    
+    if (name && name.trim() !== '') {
+      const { rows: duplicateTagRows } = await db.query(
+        'SELECT * FROM tags WHERE LOWER(name) = LOWER($1) AND id != $2',
+        [name.trim(), id]
+      );
+      
+      if (duplicateTagRows.length > 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Tag name must be unique (case-insensitive)' 
+        });
+      }
+    }
+    
+    const updates = [];
+    const values = [id];
+    let paramIndex = 2;
+    
+    if (name !== undefined && name.trim() !== '') {
+      updates.push(`name = $${paramIndex}`);
+      values.push(name.trim());
+      paramIndex++;
+    }
+    
+    if (color !== undefined) {
+      updates.push(`color = $${paramIndex}`);
+      values.push(color);
+      paramIndex++;
+    }
+    
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex}`);
+      values.push(description);
+      paramIndex++;
+    }
+    
+    if (category !== undefined) {
+      updates.push(`category = $${paramIndex}`);
+      values.push(category);
+      paramIndex++;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'No valid fields to update' 
+      });
+    }
+    
+    const queryText = `
+      UPDATE tags 
+      SET ${updates.join(', ')} 
+      WHERE id = $1 
+      RETURNING *
+    `;
+    
+    const { rows: updatedTagRows } = await db.query(queryText, values);
+    
+    const tag = snakeToCamel(updatedTagRows[0]);
+    tag.usageCount = await calculateTagUsageCount(id);
+    
+    res.json({ success: true, data: tag });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/tags/:id - Delete tag
+apiRouter.delete('/tags/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: existingTagRows } = await db.query(
+      'SELECT * FROM tags WHERE id = $1',
+      [id]
+    );
+    
+    if (existingTagRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Tag not found' 
+      });
+    }
+    
+    await db.query('DELETE FROM entity_tags WHERE tag_id = $1', [id]);
+    
+    await db.query('DELETE FROM tags WHERE id = $1', [id]);
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// ENTITY TAGGING API ENDPOINTS
+// ============================================================================
+
+// POST /api/entities/:entityType/:entityId/tags - Add tags to entity
+apiRouter.post('/entities/:entityType/:entityId/tags', async (req, res) => {
+  try {
+    const { entityType, entityId } = req.params;
+    const { tagIds, tagNames } = req.body;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    const entityExists = await validateEntityExists(entityType, entityId);
+    if (!entityExists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `${entityType} not found` 
+      });
+    }
+    
+    const tagsToAdd = [];
+    
+    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+      for (const tagId of tagIds) {
+        const { rows: tagRows } = await db.query(
+          'SELECT * FROM tags WHERE id = $1',
+          [tagId]
+        );
+        
+        if (tagRows.length > 0) {
+          tagsToAdd.push(tagRows[0]);
+        }
+      }
+    }
+    
+    if (tagNames && Array.isArray(tagNames) && tagNames.length > 0) {
+      for (const tagName of tagNames) {
+        if (tagName && tagName.trim() !== '') {
+          const tag = await getOrCreateTagByName(tagName.trim(), entityType);
+          const tagSnake = camelToSnake(tag);
+          tagsToAdd.push(tagSnake);
+        }
+      }
+    }
+    
+    for (const tag of tagsToAdd) {
+      const entityTagId = uuidv4();
+      await db.query(
+        `INSERT INTO entity_tags (id, tag_id, entity_type, entity_id, tagged_by) 
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT ON CONSTRAINT unique_entity_tag DO NOTHING`,
+        [entityTagId, tag.id, entityType, entityId, 'system']
+      );
+    }
+    
+    const { rows: allEntityTagRows } = await db.query(
+      `SELECT t.* 
+       FROM tags t
+       INNER JOIN entity_tags et ON et.tag_id = t.id
+       WHERE et.entity_type = $1 AND et.entity_id = $2
+       ORDER BY t.name ASC`,
+      [entityType, entityId]
+    );
+    
+    const tags = allEntityTagRows.map(row => snakeToCamel(row));
+    
+    res.json({ success: true, data: tags });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/entities/:entityType/:entityId/tags - Get tags for entity
+apiRouter.get('/entities/:entityType/:entityId/tags', async (req, res) => {
+  try {
+    const { entityType, entityId } = req.params;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    const entityExists = await validateEntityExists(entityType, entityId);
+    if (!entityExists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `${entityType} not found` 
+      });
+    }
+    
+    const { rows: tagRows } = await db.query(
+      `SELECT t.* 
+       FROM tags t
+       INNER JOIN entity_tags et ON et.tag_id = t.id
+       WHERE et.entity_type = $1 AND et.entity_id = $2
+       ORDER BY t.name ASC`,
+      [entityType, entityId]
+    );
+    
+    const tags = tagRows.map(row => snakeToCamel(row));
+    
+    res.json({ success: true, data: tags });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/entities/:entityType/:entityId/tags/:tagId - Remove tag from entity
+apiRouter.delete('/entities/:entityType/:entityId/tags/:tagId', async (req, res) => {
+  try {
+    const { entityType, entityId, tagId } = req.params;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    const entityExists = await validateEntityExists(entityType, entityId);
+    if (!entityExists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `${entityType} not found` 
+      });
+    }
+    
+    const { rows: entityTagRows } = await db.query(
+      `SELECT * FROM entity_tags 
+       WHERE tag_id = $1 AND entity_type = $2 AND entity_id = $3`,
+      [tagId, entityType, entityId]
+    );
+    
+    if (entityTagRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Tag association not found' 
+      });
+    }
+    
+    await db.query(
+      `DELETE FROM entity_tags 
+       WHERE tag_id = $1 AND entity_type = $2 AND entity_id = $3`,
+      [tagId, entityType, entityId]
+    );
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// CUSTOM FIELDS MANAGEMENT API ENDPOINTS
+// ============================================================================
+
+// Helper function: Validate field type
+const validateFieldType = (fieldType) => {
+  const validTypes = ['text', 'number', 'date', 'dropdown', 'checkbox', 'textarea'];
+  return validTypes.includes(fieldType);
+};
+
+// Helper function: Generate field name from label
+const generateFieldName = (label) => {
+  if (!label) return '';
+  return label
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, '_');
+};
+
+// Helper function: Apply validation rules
+const applyValidationRules = (value, rules, fieldType) => {
+  if (!rules || typeof rules !== 'object') {
+    return { valid: true };
+  }
+
+  if (fieldType === 'number') {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      return { valid: false, error: 'Value must be a valid number' };
+    }
+    
+    if (rules.min !== undefined && numValue < rules.min) {
+      return { valid: false, error: `Value must be at least ${rules.min}` };
+    }
+    
+    if (rules.max !== undefined && numValue > rules.max) {
+      return { valid: false, error: `Value must be at most ${rules.max}` };
+    }
+  }
+
+  if (fieldType === 'text' || fieldType === 'textarea') {
+    if (rules.pattern) {
+      try {
+        const regex = new RegExp(rules.pattern);
+        if (!regex.test(value)) {
+          return { valid: false, error: `Value does not match required pattern` };
+        }
+      } catch (err) {
+        console.error('Invalid regex pattern:', err);
+      }
+    }
+    
+    if (rules.minLength !== undefined && value.length < rules.minLength) {
+      return { valid: false, error: `Value must be at least ${rules.minLength} characters` };
+    }
+    
+    if (rules.maxLength !== undefined && value.length > rules.maxLength) {
+      return { valid: false, error: `Value must be at most ${rules.maxLength} characters` };
+    }
+  }
+
+  return { valid: true };
+};
+
+// Helper function: Validate field value against field definition
+const validateFieldValue = (value, fieldDefinition) => {
+  if (!value && fieldDefinition.is_required) {
+    return { valid: false, error: `${fieldDefinition.field_label} is required` };
+  }
+
+  if (!value) {
+    return { valid: true };
+  }
+
+  const fieldType = fieldDefinition.field_type;
+
+  if (fieldType === 'date') {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      return { valid: false, error: 'Invalid date format' };
+    }
+  }
+
+  if (fieldType === 'checkbox') {
+    if (value !== 'true' && value !== 'false') {
+      return { valid: false, error: 'Checkbox value must be true or false' };
+    }
+  }
+
+  if (fieldType === 'dropdown') {
+    const options = fieldDefinition.options || [];
+    if (!options.includes(value)) {
+      return { valid: false, error: `Value must be one of: ${options.join(', ')}` };
+    }
+  }
+
+  if (fieldDefinition.validation_rules) {
+    return applyValidationRules(value, fieldDefinition.validation_rules, fieldType);
+  }
+
+  return { valid: true };
+};
+
+// GET /api/custom-fields/:entityType - Get field definitions for entity type
+apiRouter.get('/custom-fields/:entityType', async (req, res) => {
+  try {
+    const { entityType } = req.params;
+    const { includeInactive } = req.query;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    let queryText = `
+      SELECT * FROM custom_field_definitions 
+      WHERE entity_type = $1
+    `;
+    
+    if (includeInactive !== 'true') {
+      queryText += ' AND is_active = true';
+    }
+    
+    queryText += ' ORDER BY display_order ASC, field_label ASC';
+    
+    const { rows } = await db.query(queryText, [entityType]);
+    
+    const fieldDefinitions = rows.map(row => snakeToCamel(row));
+    
+    res.json({ success: true, data: fieldDefinitions });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/custom-fields - Create new field definition
+apiRouter.post('/custom-fields', async (req, res) => {
+  try {
+    const { 
+      entityType, 
+      fieldName, 
+      fieldLabel, 
+      fieldType, 
+      isRequired = false, 
+      defaultValue, 
+      options, 
+      validationRules, 
+      displayOrder = 0, 
+      helpText 
+    } = req.body;
+    
+    if (!entityType || !fieldLabel || !fieldType) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'entityType, fieldLabel, and fieldType are required' 
+      });
+    }
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    if (!validateFieldType(fieldType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid field type. Must be one of: text, number, date, dropdown, checkbox, textarea` 
+      });
+    }
+    
+    const finalFieldName = fieldName || generateFieldName(fieldLabel);
+    
+    if (!finalFieldName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid field name generated from label' 
+      });
+    }
+    
+    const { rows: existingFields } = await db.query(
+      'SELECT * FROM custom_field_definitions WHERE entity_type = $1 AND LOWER(field_name) = LOWER($2)',
+      [entityType, finalFieldName]
+    );
+    
+    if (existingFields.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Field name must be unique for this entity type (case-insensitive)' 
+      });
+    }
+    
+    if (fieldType === 'dropdown') {
+      if (!options || !Array.isArray(options) || options.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Dropdown fields must have options array' 
+        });
+      }
+    }
+    
+    const fieldId = uuidv4();
+    const { rows: newFieldRows } = await db.query(
+      `INSERT INTO custom_field_definitions (
+        id, entity_type, field_name, field_label, field_type, 
+        is_required, default_value, options, validation_rules, 
+        display_order, help_text, is_active
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+      RETURNING *`,
+      [
+        fieldId, 
+        entityType, 
+        finalFieldName, 
+        fieldLabel, 
+        fieldType, 
+        isRequired, 
+        defaultValue || null, 
+        options ? JSON.stringify(options) : null, 
+        validationRules ? JSON.stringify(validationRules) : null, 
+        displayOrder, 
+        helpText || null, 
+        true
+      ]
+    );
+    
+    const fieldDefinition = snakeToCamel(newFieldRows[0]);
+    
+    res.status(201).json({ success: true, data: fieldDefinition });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/custom-fields/:id - Update field definition
+apiRouter.put('/custom-fields/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      fieldLabel, 
+      fieldType, 
+      isRequired, 
+      defaultValue, 
+      options, 
+      validationRules, 
+      displayOrder, 
+      helpText,
+      isActive
+    } = req.body;
+    
+    const { rows: existingFieldRows } = await db.query(
+      'SELECT * FROM custom_field_definitions WHERE id = $1',
+      [id]
+    );
+    
+    if (existingFieldRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Field definition not found' 
+      });
+    }
+    
+    if (fieldType !== undefined && !validateFieldType(fieldType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid field type. Must be one of: text, number, date, dropdown, checkbox, textarea` 
+      });
+    }
+    
+    if (fieldType === 'dropdown' && options) {
+      if (!Array.isArray(options) || options.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Dropdown fields must have options array' 
+        });
+      }
+    }
+    
+    const updates = [];
+    const values = [id];
+    let paramIndex = 2;
+    
+    if (fieldLabel !== undefined) {
+      updates.push(`field_label = $${paramIndex}`);
+      values.push(fieldLabel);
+      paramIndex++;
+    }
+    
+    if (fieldType !== undefined) {
+      updates.push(`field_type = $${paramIndex}`);
+      values.push(fieldType);
+      paramIndex++;
+    }
+    
+    if (isRequired !== undefined) {
+      updates.push(`is_required = $${paramIndex}`);
+      values.push(isRequired);
+      paramIndex++;
+    }
+    
+    if (defaultValue !== undefined) {
+      updates.push(`default_value = $${paramIndex}`);
+      values.push(defaultValue);
+      paramIndex++;
+    }
+    
+    if (options !== undefined) {
+      updates.push(`options = $${paramIndex}`);
+      values.push(options ? JSON.stringify(options) : null);
+      paramIndex++;
+    }
+    
+    if (validationRules !== undefined) {
+      updates.push(`validation_rules = $${paramIndex}`);
+      values.push(validationRules ? JSON.stringify(validationRules) : null);
+      paramIndex++;
+    }
+    
+    if (displayOrder !== undefined) {
+      updates.push(`display_order = $${paramIndex}`);
+      values.push(displayOrder);
+      paramIndex++;
+    }
+    
+    if (helpText !== undefined) {
+      updates.push(`help_text = $${paramIndex}`);
+      values.push(helpText);
+      paramIndex++;
+    }
+    
+    if (isActive !== undefined) {
+      updates.push(`is_active = $${paramIndex}`);
+      values.push(isActive);
+      paramIndex++;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'No fields to update' 
+      });
+    }
+    
+    updates.push(`updated_at = NOW()`);
+    
+    const queryText = `
+      UPDATE custom_field_definitions 
+      SET ${updates.join(', ')} 
+      WHERE id = $1 
+      RETURNING *
+    `;
+    
+    const { rows: updatedFieldRows } = await db.query(queryText, values);
+    
+    const fieldDefinition = snakeToCamel(updatedFieldRows[0]);
+    
+    res.json({ success: true, data: fieldDefinition });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/custom-fields/:id - Soft delete field definition
+apiRouter.delete('/custom-fields/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: existingFieldRows } = await db.query(
+      'SELECT * FROM custom_field_definitions WHERE id = $1',
+      [id]
+    );
+    
+    if (existingFieldRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Field definition not found' 
+      });
+    }
+    
+    await db.query(
+      'UPDATE custom_field_definitions SET is_active = false, updated_at = NOW() WHERE id = $1',
+      [id]
+    );
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// CUSTOM FIELD VALUES API ENDPOINTS
+// ============================================================================
+
+// POST /api/entities/:entityType/:entityId/custom-fields - Set custom field values
+apiRouter.post('/entities/:entityType/:entityId/custom-fields', async (req, res) => {
+  try {
+    const { entityType, entityId } = req.params;
+    const { fieldValues } = req.body;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    const entityExists = await validateEntityExists(entityType, entityId);
+    if (!entityExists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `${entityType} not found` 
+      });
+    }
+    
+    if (!fieldValues || typeof fieldValues !== 'object') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'fieldValues object is required' 
+      });
+    }
+    
+    const { rows: fieldDefinitions } = await db.query(
+      'SELECT * FROM custom_field_definitions WHERE entity_type = $1 AND is_active = true',
+      [entityType]
+    );
+    
+    const fieldDefMap = {};
+    fieldDefinitions.forEach(fd => {
+      fieldDefMap[fd.field_name.toLowerCase()] = fd;
+    });
+    
+    for (const fieldName of Object.keys(fieldValues)) {
+      const fieldDef = fieldDefMap[fieldName.toLowerCase()];
+      if (!fieldDef) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Unknown field: ${fieldName}` 
+        });
+      }
+      
+      const validation = validateFieldValue(fieldValues[fieldName], fieldDef);
+      if (!validation.valid) {
+        return res.status(400).json({ 
+          success: false, 
+          error: validation.error 
+        });
+      }
+    }
+    
+    for (const fieldDef of fieldDefinitions) {
+      if (fieldDef.is_required) {
+        const fieldValue = fieldValues[fieldDef.field_name];
+        if (!fieldValue) {
+          return res.status(400).json({ 
+            success: false, 
+            error: `Required field missing: ${fieldDef.field_label}` 
+          });
+        }
+      }
+    }
+    
+    const savedValues = {};
+    
+    for (const [fieldName, fieldValue] of Object.entries(fieldValues)) {
+      const fieldDef = fieldDefMap[fieldName.toLowerCase()];
+      
+      if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+        await db.query(
+          `INSERT INTO custom_field_values (id, field_definition_id, entity_type, entity_id, field_value, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+           ON CONFLICT (field_definition_id, entity_type, entity_id) 
+           DO UPDATE SET field_value = $5, updated_at = NOW()`,
+          [uuidv4(), fieldDef.id, entityType, entityId, String(fieldValue)]
+        );
+        savedValues[fieldName] = fieldValue;
+      }
+    }
+    
+    res.json({ success: true, data: savedValues });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/entities/:entityType/:entityId/custom-fields - Get custom field values
+apiRouter.get('/entities/:entityType/:entityId/custom-fields', async (req, res) => {
+  try {
+    const { entityType, entityId } = req.params;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    const entityExists = await validateEntityExists(entityType, entityId);
+    if (!entityExists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `${entityType} not found` 
+      });
+    }
+    
+    const { rows } = await db.query(
+      `SELECT 
+        cfd.*,
+        cfv.field_value,
+        cfv.id as value_id
+       FROM custom_field_definitions cfd
+       LEFT JOIN custom_field_values cfv 
+         ON cfv.field_definition_id = cfd.id 
+         AND cfv.entity_type = $1 
+         AND cfv.entity_id = $2
+       WHERE cfd.entity_type = $1 
+         AND cfd.is_active = true
+       ORDER BY cfd.display_order ASC, cfd.field_label ASC`,
+      [entityType, entityId]
+    );
+    
+    const customFields = rows.map(row => ({
+      definition: snakeToCamel({
+        id: row.id,
+        entityType: row.entity_type,
+        fieldName: row.field_name,
+        fieldLabel: row.field_label,
+        fieldType: row.field_type,
+        isRequired: row.is_required,
+        defaultValue: row.default_value,
+        options: row.options,
+        validationRules: row.validation_rules,
+        displayOrder: row.display_order,
+        helpText: row.help_text,
+        isActive: row.is_active
+      }),
+      value: row.field_value || null,
+      valueId: row.value_id || null
+    }));
+    
+    res.json({ success: true, data: customFields });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/entities/:entityType/:entityId/custom-fields/:fieldDefinitionId - Clear custom field value
+apiRouter.delete('/entities/:entityType/:entityId/custom-fields/:fieldDefinitionId', async (req, res) => {
+  try {
+    const { entityType, entityId, fieldDefinitionId } = req.params;
+    
+    if (!validateEntityType(entityType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid entity type. Must be one of: client, property, quote, job, lead` 
+      });
+    }
+    
+    const entityExists = await validateEntityExists(entityType, entityId);
+    if (!entityExists) {
+      return res.status(404).json({ 
+        success: false, 
+        error: `${entityType} not found` 
+      });
+    }
+    
+    const { rows: fieldValueRows } = await db.query(
+      `SELECT * FROM custom_field_values 
+       WHERE field_definition_id = $1 AND entity_type = $2 AND entity_id = $3`,
+      [fieldDefinitionId, entityType, entityId]
+    );
+    
+    if (fieldValueRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Custom field value not found' 
+      });
+    }
+    
+    await db.query(
+      `DELETE FROM custom_field_values 
+       WHERE field_definition_id = $1 AND entity_type = $2 AND entity_id = $3`,
+      [fieldDefinitionId, entityType, entityId]
+    );
+    
+    res.status(204).send();
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// QUOTE MANAGEMENT - HELPER FUNCTIONS
+// ============================================================================
+
+// Helper: Calculate quote totals (subtotal → discount → tax → grand total)
+const calculateQuoteTotals = (lineItems, discountPercentage = 0, discountAmount = 0, taxRate = 0) => {
+  const subtotal = lineItems.reduce((sum, item) => {
+    const itemTotal = (item.quantity || 0) * (item.unitPrice || 0);
+    return sum + itemTotal;
+  }, 0);
+  
+  let finalDiscountAmount = discountAmount;
+  if (discountPercentage > 0) {
+    finalDiscountAmount = (subtotal * discountPercentage) / 100;
+  }
+  
+  const afterDiscount = subtotal - finalDiscountAmount;
+  const taxAmount = (afterDiscount * taxRate) / 100;
+  const grandTotal = afterDiscount + taxAmount;
+  
+  return {
+    totalAmount: parseFloat(subtotal.toFixed(2)),
+    discountAmount: parseFloat(finalDiscountAmount.toFixed(2)),
+    taxAmount: parseFloat(taxAmount.toFixed(2)),
+    grandTotal: parseFloat(grandTotal.toFixed(2))
+  };
+};
+
+// Helper: Generate quote number (Q-YYYYMM-####)
+const generateQuoteNumber = async () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const prefix = `Q-${year}${month}`;
+  
+  const { rows } = await db.query(
+    `SELECT quote_number FROM quotes 
+     WHERE quote_number LIKE $1 
+     ORDER BY quote_number DESC LIMIT 1`,
+    [`${prefix}-%`]
+  );
+  
+  let nextNumber = 1;
+  if (rows.length > 0 && rows[0].quote_number) {
+    const lastNumber = parseInt(rows[0].quote_number.split('-')[2]);
+    nextNumber = lastNumber + 1;
+  }
+  
+  return `${prefix}-${String(nextNumber).padStart(4, '0')}`;
+};
+
+// Helper: Generate job number (JOB-YYYYMM-####)
+const generateJobNumber = async () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const prefix = `JOB-${year}${month}`;
+  
+  const { rows } = await db.query(
+    `SELECT job_number FROM jobs 
+     WHERE job_number LIKE $1 
+     ORDER BY job_number DESC LIMIT 1`,
+    [`${prefix}-%`]
+  );
+  
+  let nextNumber = 1;
+  if (rows.length > 0 && rows[0].job_number) {
+    const lastNumber = parseInt(rows[0].job_number.split('-')[2]);
+    nextNumber = lastNumber + 1;
+  }
+  
+  return `${prefix}-${String(nextNumber).padStart(4, '0')}`;
+};
+
+// ============================================================================
+// ENHANCED QUOTE ENDPOINTS
+// ============================================================================
+
+// POST /api/quotes - Create new quote with enhanced CRM features
+apiRouter.post('/quotes', async (req, res) => {
+  try {
+    const quoteData = req.body;
+    
+    await db.query('BEGIN');
+    
+    try {
+      const quoteId = uuidv4();
+      const quoteNumber = await generateQuoteNumber();
+      
+      const lineItems = quoteData.lineItems || [];
+      const discountPercentage = quoteData.discountPercentage || 0;
+      const discountAmount = quoteData.discountAmount || 0;
+      const taxRate = quoteData.taxRate || 0;
+      
+      const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
+      
+      const insertQuery = `
+        INSERT INTO quotes (
+          id, client_id, property_id, lead_id, quote_number, version,
+          approval_status, line_items, total_amount, discount_amount,
+          discount_percentage, tax_rate, tax_amount, grand_total,
+          terms_and_conditions, internal_notes, status, valid_until,
+          deposit_amount, payment_terms, special_instructions, created_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, 1, 'pending', $6, $7, $8, $9, $10, $11, $12,
+          $13, $14, $15, $16, $17, $18, $19, NOW()
+        ) RETURNING *
+      `;
+      
+      const { rows: quoteRows } = await db.query(insertQuery, [
+        quoteId,
+        quoteData.clientId || null,
+        quoteData.propertyId || null,
+        quoteData.leadId || null,
+        quoteNumber,
+        JSON.stringify(lineItems),
+        totals.totalAmount,
+        totals.discountAmount,
+        discountPercentage,
+        taxRate,
+        totals.taxAmount,
+        totals.grandTotal,
+        quoteData.termsAndConditions || null,
+        quoteData.internalNotes || null,
+        quoteData.status || 'Draft',
+        quoteData.validUntil || null,
+        quoteData.depositAmount || null,
+        quoteData.paymentTerms || 'Net 30',
+        quoteData.specialInstructions || null
+      ]);
+      
+      const versionId = uuidv4();
+      await db.query(
+        `INSERT INTO quote_versions (
+          id, quote_id, version_number, line_items, total_amount,
+          terms, notes, changed_by, change_reason, created_at
+        ) VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, NOW())`,
+        [
+          versionId,
+          quoteId,
+          JSON.stringify(lineItems),
+          totals.grandTotal,
+          quoteData.termsAndConditions || null,
+          'Initial version',
+          quoteData.createdBy || 'system',
+          'Quote created'
+        ]
+      );
+      
+      await db.query('COMMIT');
+      
+      const quote = snakeToCamel(quoteRows[0]);
+      res.status(201).json({ success: true, data: quote });
+      
+      reindexDocument('quotes', quoteRows[0]);
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/quotes - List quotes with filtering and pagination
+apiRouter.get('/quotes', async (req, res) => {
+  try {
+    const { clientId, propertyId, approvalStatus, status, page = 1, limit = 50 } = req.query;
+    
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    
+    let queryText = `
+      SELECT 
+        q.*,
+        c.first_name as client_first_name,
+        c.last_name as client_last_name,
+        c.company_name as client_company_name,
+        c.primary_email as client_email,
+        c.primary_phone as client_phone,
+        p.property_name,
+        p.address_line1 as property_address,
+        p.city as property_city,
+        p.state as property_state
+      FROM quotes q
+      LEFT JOIN clients c ON q.client_id = c.id
+      LEFT JOIN properties p ON q.property_id = p.id
+      WHERE q.deleted_at IS NULL
+    `;
+    
+    const params = [];
+    let paramIndex = 1;
+    
+    if (clientId) {
+      queryText += ` AND q.client_id = $${paramIndex}`;
+      params.push(clientId);
+      paramIndex++;
+    }
+    
+    if (propertyId) {
+      queryText += ` AND q.property_id = $${paramIndex}`;
+      params.push(propertyId);
+      paramIndex++;
+    }
+    
+    if (approvalStatus) {
+      queryText += ` AND q.approval_status = $${paramIndex}`;
+      params.push(approvalStatus);
+      paramIndex++;
+    }
+    
+    if (status) {
+      queryText += ` AND q.status = $${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+    
+    queryText += ` ORDER BY q.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(parseInt(limit), offset);
+    
+    const { rows } = await db.query(queryText, params);
+    
+    const quotes = rows.map(row => {
+      const quote = snakeToCamel(row);
+      
+      if (row.client_first_name || row.client_last_name || row.client_company_name) {
+        quote.client = {
+          firstName: row.client_first_name,
+          lastName: row.client_last_name,
+          companyName: row.client_company_name,
+          email: row.client_email,
+          phone: row.client_phone
+        };
+      }
+      
+      if (row.property_name || row.property_address) {
+        quote.property = {
+          propertyName: row.property_name,
+          address: row.property_address,
+          city: row.property_city,
+          state: row.property_state
+        };
+      }
+      
+      delete quote.clientFirstName;
+      delete quote.clientLastName;
+      delete quote.clientCompanyName;
+      delete quote.clientEmail;
+      delete quote.clientPhone;
+      delete quote.propertyName;
+      delete quote.propertyAddress;
+      delete quote.propertyCity;
+      delete quote.propertyState;
+      
+      return quote;
+    });
+    
+    const { rows: countRows } = await db.query(
+      'SELECT COUNT(*) FROM quotes WHERE deleted_at IS NULL'
+    );
+    const total = parseInt(countRows[0].count);
+    
+    res.json({
+      success: true,
+      data: quotes,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / parseInt(limit))
+      }
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/quotes/:id - Get quote details with full relationships
+apiRouter.get('/quotes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const quote = snakeToCamel(quoteRows[0]);
+    
+    if (quote.clientId) {
+      const { rows: clientRows } = await db.query(
+        'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+        [quote.clientId]
+      );
+      if (clientRows.length > 0) {
+        quote.client = snakeToCamel(clientRows[0]);
+      }
+    }
+    
+    if (quote.propertyId) {
+      const { rows: propertyRows } = await db.query(
+        'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
+        [quote.propertyId]
+      );
+      if (propertyRows.length > 0) {
+        quote.property = snakeToCamel(propertyRows[0]);
+      }
+    }
+    
+    const { rows: versionRows } = await db.query(
+      'SELECT * FROM quote_versions WHERE quote_id = $1 ORDER BY version_number DESC',
+      [id]
+    );
+    quote.versions = versionRows.map(snakeToCamel);
+    
+    const { rows: followupRows } = await db.query(
+      'SELECT * FROM quote_followups WHERE quote_id = $1 ORDER BY scheduled_date ASC',
+      [id]
+    );
+    quote.followups = followupRows.map(snakeToCamel);
+    
+    const { rows: tagRows } = await db.query(
+      `SELECT t.* FROM tags t
+       INNER JOIN entity_tags et ON et.tag_id = t.id
+       WHERE et.entity_type = 'quote' AND et.entity_id = $1`,
+      [id]
+    );
+    quote.tags = tagRows.map(snakeToCamel);
+    
+    res.json({ success: true, data: quote });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/quotes/:id - Update quote
+apiRouter.put('/quotes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const quoteData = req.body;
+    
+    const { rows: existingRows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const updates = [];
+    const values = [id];
+    let paramIndex = 2;
+    
+    if (quoteData.status !== undefined) {
+      updates.push(`status = $${paramIndex}`);
+      values.push(quoteData.status);
+      paramIndex++;
+    }
+    
+    if (quoteData.lineItems !== undefined) {
+      const lineItems = quoteData.lineItems;
+      const discountPercentage = quoteData.discountPercentage || 0;
+      const discountAmount = quoteData.discountAmount || 0;
+      const taxRate = quoteData.taxRate || 0;
+      
+      const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
+      
+      updates.push(`line_items = $${paramIndex}`);
+      values.push(JSON.stringify(lineItems));
+      paramIndex++;
+      
+      updates.push(`total_amount = $${paramIndex}`);
+      values.push(totals.totalAmount);
+      paramIndex++;
+      
+      updates.push(`grand_total = $${paramIndex}`);
+      values.push(totals.grandTotal);
+      paramIndex++;
+    }
+    
+    if (quoteData.termsAndConditions !== undefined) {
+      updates.push(`terms_and_conditions = $${paramIndex}`);
+      values.push(quoteData.termsAndConditions);
+      paramIndex++;
+    }
+    
+    if (quoteData.internalNotes !== undefined) {
+      updates.push(`internal_notes = $${paramIndex}`);
+      values.push(quoteData.internalNotes);
+      paramIndex++;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No fields to update'
+      });
+    }
+    
+    updates.push(`updated_at = NOW()`);
+    
+    const updateQuery = `
+      UPDATE quotes
+      SET ${updates.join(', ')}
+      WHERE id = $1
+      RETURNING *
+    `;
+    
+    const { rows: updatedRows } = await db.query(updateQuery, values);
+    const quote = snakeToCamel(updatedRows[0]);
+    
+    res.json({ success: true, data: quote });
+    
+    reindexDocument('quotes', updatedRows[0]);
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/quotes/:id - Soft delete quote
+apiRouter.delete('/quotes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    await db.query(
+      'UPDATE quotes SET deleted_at = NOW() WHERE id = $1',
+      [id]
+    );
+    
+    res.status(204).send();
+    
+    removeFromVectorStore('quotes', id);
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/:id/versions - Create new quote version
+apiRouter.post('/quotes/:id/versions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { lineItems, changeReason, changedBy } = req.body;
+    
+    if (!lineItems) {
+      return res.status(400).json({
+        success: false,
+        error: 'lineItems is required'
+      });
+    }
+    
+    await db.query('BEGIN');
+    
+    try {
+      const { rows: quoteRows } = await db.query(
+        'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+        [id]
+      );
+      
+      if (quoteRows.length === 0) {
+        await db.query('ROLLBACK');
+        return res.status(404).json({
+          success: false,
+          error: 'Quote not found'
+        });
+      }
+      
+      const quote = quoteRows[0];
+      const newVersion = quote.version + 1;
+      
+      const discountPercentage = quote.discount_percentage || 0;
+      const discountAmount = quote.discount_amount || 0;
+      const taxRate = quote.tax_rate || 0;
+      
+      const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
+      
+      await db.query(
+        `UPDATE quotes
+         SET version = $1, line_items = $2, total_amount = $3,
+             tax_amount = $4, grand_total = $5, updated_at = NOW()
+         WHERE id = $6`,
+        [newVersion, JSON.stringify(lineItems), totals.totalAmount,
+         totals.taxAmount, totals.grandTotal, id]
+      );
+      
+      const versionId = uuidv4();
+      await db.query(
+        `INSERT INTO quote_versions (
+          id, quote_id, version_number, line_items, total_amount,
+          terms, notes, changed_by, change_reason, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
+        [
+          versionId,
+          id,
+          newVersion,
+          JSON.stringify(lineItems),
+          totals.grandTotal,
+          quote.terms_and_conditions || null,
+          null,
+          changedBy || 'system',
+          changeReason || 'Quote updated'
+        ]
+      );
+      
+      await db.query('COMMIT');
+      
+      const { rows: updatedQuoteRows } = await db.query(
+        'SELECT * FROM quotes WHERE id = $1',
+        [id]
+      );
+      
+      const updatedQuote = snakeToCamel(updatedQuoteRows[0]);
+      
+      const { rows: versionRows } = await db.query(
+        'SELECT * FROM quote_versions WHERE quote_id = $1 ORDER BY version_number DESC',
+        [id]
+      );
+      updatedQuote.versions = versionRows.map(snakeToCamel);
+      
+      res.json({ success: true, data: updatedQuote });
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/quotes/:id/versions - Get version history
+apiRouter.get('/quotes/:id/versions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT id FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const { rows: versionRows } = await db.query(
+      'SELECT * FROM quote_versions WHERE quote_id = $1 ORDER BY version_number DESC',
+      [id]
+    );
+    
+    const versions = versionRows.map(snakeToCamel);
+    
+    res.json({ success: true, data: versions });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/:id/approve - Approve quote
+apiRouter.post('/quotes/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { approvedBy, notes } = req.body;
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const updateQuery = `
+      UPDATE quotes
+      SET approval_status = 'approved',
+          approved_at = NOW(),
+          approved_by = $1,
+          internal_notes = COALESCE(internal_notes, '') || $2,
+          updated_at = NOW()
+      WHERE id = $3
+      RETURNING *
+    `;
+    
+    const approvalNote = notes ? `\n[Approved: ${notes}]` : '\n[Approved]';
+    
+    const { rows: updatedRows } = await db.query(updateQuery, [
+      approvedBy || 'system',
+      approvalNote,
+      id
+    ]);
+    
+    const quote = snakeToCamel(updatedRows[0]);
+    
+    res.json({ success: true, data: quote });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/:id/reject - Reject quote
+apiRouter.post('/quotes/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+    
+    if (!rejectionReason) {
+      return res.status(400).json({
+        success: false,
+        error: 'rejectionReason is required'
+      });
+    }
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const updateQuery = `
+      UPDATE quotes
+      SET approval_status = 'rejected',
+          internal_notes = COALESCE(internal_notes, '') || $1,
+          updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `;
+    
+    const rejectionNote = `\n[Rejected: ${rejectionReason}]`;
+    
+    const { rows: updatedRows } = await db.query(updateQuery, [
+      rejectionNote,
+      id
+    ]);
+    
+    const quote = snakeToCamel(updatedRows[0]);
+    
+    res.json({ success: true, data: quote });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/:id/send - Send quote to client
+apiRouter.post('/quotes/:id/send', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const quote = quoteRows[0];
+    
+    const updateQuery = `
+      UPDATE quotes
+      SET status = CASE WHEN status = 'Draft' THEN 'Sent' ELSE status END,
+          updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+    
+    const { rows: updatedRows } = await db.query(updateQuery, [id]);
+    
+    const updatedQuote = snakeToCamel(updatedRows[0]);
+    
+    res.json({
+      success: true,
+      data: updatedQuote,
+      message: 'Quote status updated. Email notification would be sent here.'
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/:id/convert-to-job - Convert quote to job
+apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await db.query('BEGIN');
+    
+    try {
+      const { rows: quoteRows } = await db.query(
+        'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+        [id]
+      );
+      
+      if (quoteRows.length === 0) {
+        await db.query('ROLLBACK');
+        return res.status(404).json({
+          success: false,
+          error: 'Quote not found'
+        });
+      }
+      
+      const quote = quoteRows[0];
+      
+      if (quote.approval_status !== 'approved') {
+        await db.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: 'Quote must be approved before converting to job'
+        });
+      }
+      
+      if (quote.status !== 'Accepted' && quote.status !== 'Sent') {
+        await db.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: 'Quote must be accepted by client before converting to job'
+        });
+      }
+      
+      const jobId = uuidv4();
+      const jobNumber = await generateJobNumber();
+      
+      const insertJobQuery = `
+        INSERT INTO jobs (
+          id, client_id, property_id, quote_id, job_number, status,
+          customer_name, job_location, special_instructions,
+          price, line_items, created_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, NOW()
+        ) RETURNING *
+      `;
+      
+      const { rows: jobRows } = await db.query(insertJobQuery, [
+        jobId,
+        quote.client_id,
+        quote.property_id,
+        id,
+        jobNumber,
+        quote.customer_name || 'Unknown',
+        quote.job_location || null,
+        quote.special_instructions || null,
+        quote.grand_total || quote.price || 0,
+        quote.line_items || '[]'
+      ]);
+      
+      await db.query(
+        `UPDATE quotes SET status = 'Converted', updated_at = NOW() WHERE id = $1`,
+        [id]
+      );
+      
+      await db.query('COMMIT');
+      
+      const job = transformRow(jobRows[0], 'jobs');
+      
+      res.status(201).json({
+        success: true,
+        data: job,
+        message: 'Quote successfully converted to job'
+      });
+      
+      reindexDocument('jobs', jobRows[0]);
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/:id/followups - Schedule follow-up
+apiRouter.post('/quotes/:id/followups', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { followupType, scheduledDate, subject, message } = req.body;
+    
+    if (!followupType || !scheduledDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'followupType and scheduledDate are required'
+      });
+    }
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT id FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const followupId = uuidv4();
+    
+    const insertQuery = `
+      INSERT INTO quote_followups (
+        id, quote_id, followup_type, scheduled_date, subject,
+        message, status, is_automated, created_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, 'scheduled', false, NOW()
+      ) RETURNING *
+    `;
+    
+    const { rows: followupRows } = await db.query(insertQuery, [
+      followupId,
+      id,
+      followupType,
+      scheduledDate,
+      subject || null,
+      message || null
+    ]);
+    
+    const followup = snakeToCamel(followupRows[0]);
+    
+    res.status(201).json({ success: true, data: followup });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/quotes/:id/followups - Get quote follow-ups
+apiRouter.get('/quotes/:id/followups', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: quoteRows } = await db.query(
+      'SELECT id FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (quoteRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Quote not found'
+      });
+    }
+    
+    const { rows: followupRows } = await db.query(
+      'SELECT * FROM quote_followups WHERE quote_id = $1 ORDER BY scheduled_date ASC',
+      [id]
+    );
+    
+    const followups = followupRows.map(snakeToCamel);
+    
+    res.json({ success: true, data: followups });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/quote-followups/:id - Update follow-up
+apiRouter.put('/quote-followups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, completedBy, clientResponse, outcome } = req.body;
+    
+    const { rows: existingRows } = await db.query(
+      'SELECT * FROM quote_followups WHERE id = $1',
+      [id]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Follow-up not found'
+      });
+    }
+    
+    const updates = [];
+    const values = [id];
+    let paramIndex = 2;
+    
+    if (status !== undefined) {
+      updates.push(`status = $${paramIndex}`);
+      values.push(status);
+      paramIndex++;
+      
+      if (status === 'completed') {
+        updates.push(`completed_at = NOW()`);
+      }
+    }
+    
+    if (completedBy !== undefined) {
+      updates.push(`completed_by = $${paramIndex}`);
+      values.push(completedBy);
+      paramIndex++;
+    }
+    
+    if (clientResponse !== undefined) {
+      updates.push(`client_response = $${paramIndex}`);
+      values.push(clientResponse);
+      paramIndex++;
+    }
+    
+    if (outcome !== undefined) {
+      updates.push(`outcome = $${paramIndex}`);
+      values.push(outcome);
+      paramIndex++;
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No fields to update'
+      });
+    }
+    
+    updates.push(`updated_at = NOW()`);
+    
+    const updateQuery = `
+      UPDATE quote_followups
+      SET ${updates.join(', ')}
+      WHERE id = $1
+      RETURNING *
+    `;
+    
+    const { rows: updatedRows } = await db.query(updateQuery, values);
+    const followup = snakeToCamel(updatedRows[0]);
+    
+    res.json({ success: true, data: followup });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/quotes/pending-followups - Get quotes needing follow-up
+apiRouter.get('/quotes/pending-followups', async (req, res) => {
+  try {
+    const queryText = `
+      SELECT 
+        qf.*,
+        q.quote_number,
+        q.status as quote_status,
+        q.grand_total,
+        c.first_name as client_first_name,
+        c.last_name as client_last_name,
+        c.company_name as client_company_name,
+        c.primary_email as client_email,
+        c.primary_phone as client_phone
+      FROM quote_followups qf
+      INNER JOIN quotes q ON qf.quote_id = q.id
+      LEFT JOIN clients c ON q.client_id = c.id
+      WHERE qf.status = 'scheduled'
+        AND qf.scheduled_date <= CURRENT_DATE
+        AND q.deleted_at IS NULL
+      ORDER BY qf.scheduled_date ASC
+    `;
+    
+    const { rows } = await db.query(queryText);
+    
+    const followups = rows.map(row => {
+      const followup = snakeToCamel(row);
+      
+      followup.quote = {
+        quoteNumber: row.quote_number,
+        status: row.quote_status,
+        grandTotal: row.grand_total
+      };
+      
+      if (row.client_first_name || row.client_company_name) {
+        followup.client = {
+          firstName: row.client_first_name,
+          lastName: row.client_last_name,
+          companyName: row.client_company_name,
+          email: row.client_email,
+          phone: row.client_phone
+        };
+      }
+      
+      delete followup.quoteNumber;
+      delete followup.quoteStatus;
+      delete followup.grandTotal;
+      delete followup.clientFirstName;
+      delete followup.clientLastName;
+      delete followup.clientCompanyName;
+      delete followup.clientEmail;
+      delete followup.clientPhone;
+      
+      return followup;
+    });
+    
+    res.json({ success: true, data: followups });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// QUOTE TEMPLATE ENDPOINTS
+// ============================================================================
+
+// GET /api/quote-templates - List templates
+apiRouter.get('/quote-templates', async (req, res) => {
+  try {
+    const { serviceCategory } = req.query;
+    
+    let queryText = 'SELECT * FROM quote_templates WHERE 1=1';
+    const params = [];
+    let paramIndex = 1;
+    
+    if (serviceCategory) {
+      queryText += ` AND service_category = $${paramIndex}`;
+      params.push(serviceCategory);
+      paramIndex++;
+    }
+    
+    queryText += ' ORDER BY use_count DESC, name ASC';
+    
+    const { rows } = await db.query(queryText, params);
+    const templates = rows.map(snakeToCamel);
+    
+    res.json({ success: true, data: templates });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quote-templates - Create template
+apiRouter.post('/quote-templates', async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      lineItems,
+      termsAndConditions,
+      serviceCategory,
+      validDays,
+      depositPercentage,
+      paymentTerms,
+      createdBy
+    } = req.body;
+    
+    if (!name || !lineItems) {
+      return res.status(400).json({
+        success: false,
+        error: 'name and lineItems are required'
+      });
+    }
+    
+    const templateId = uuidv4();
+    
+    const insertQuery = `
+      INSERT INTO quote_templates (
+        id, name, description, line_items, terms_and_conditions,
+        valid_days, deposit_percentage, payment_terms, service_category,
+        is_active, use_count, created_by, created_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, true, 0, $10, NOW()
+      ) RETURNING *
+    `;
+    
+    const { rows } = await db.query(insertQuery, [
+      templateId,
+      name,
+      description || null,
+      JSON.stringify(lineItems),
+      termsAndConditions || null,
+      validDays || 30,
+      depositPercentage || 0,
+      paymentTerms || 'Net 30',
+      serviceCategory || null,
+      createdBy || 'system'
+    ]);
+    
+    const template = snakeToCamel(rows[0]);
+    
+    res.status(201).json({ success: true, data: template });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/quote-templates/:id - Get template details
+apiRouter.get('/quote-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      'SELECT * FROM quote_templates WHERE id = $1',
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Template not found'
+      });
+    }
+    
+    const template = snakeToCamel(rows[0]);
+    
+    res.json({ success: true, data: template });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/quotes/from-template/:templateId - Create quote from template
+apiRouter.post('/quotes/from-template/:templateId', async (req, res) => {
+  try {
+    const { templateId } = req.params;
+    const { clientId, propertyId, leadId } = req.body;
+    
+    await db.query('BEGIN');
+    
+    try {
+      const { rows: templateRows } = await db.query(
+        'SELECT * FROM quote_templates WHERE id = $1 AND is_active = true',
+        [templateId]
+      );
+      
+      if (templateRows.length === 0) {
+        await db.query('ROLLBACK');
+        return res.status(404).json({
+          success: false,
+          error: 'Template not found or inactive'
+        });
+      }
+      
+      const template = templateRows[0];
+      
+      const quoteId = uuidv4();
+      const quoteNumber = await generateQuoteNumber();
+      
+      const lineItems = typeof template.line_items === 'string' 
+        ? JSON.parse(template.line_items) 
+        : template.line_items;
+      
+      const totals = calculateQuoteTotals(lineItems, 0, 0, 0);
+      
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + (template.valid_days || 30));
+      
+      const insertQuoteQuery = `
+        INSERT INTO quotes (
+          id, client_id, property_id, lead_id, quote_number, version,
+          approval_status, line_items, total_amount, discount_amount,
+          discount_percentage, tax_rate, tax_amount, grand_total,
+          terms_and_conditions, status, valid_until, deposit_amount,
+          payment_terms, created_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, 1, 'pending', $6, $7, 0, 0, 0, 0, $8,
+          $9, 'Draft', $10, $11, $12, NOW()
+        ) RETURNING *
+      `;
+      
+      const { rows: quoteRows } = await db.query(insertQuoteQuery, [
+        quoteId,
+        clientId || null,
+        propertyId || null,
+        leadId || null,
+        quoteNumber,
+        JSON.stringify(lineItems),
+        totals.totalAmount,
+        totals.grandTotal,
+        template.terms_and_conditions || null,
+        validUntil.toISOString().split('T')[0],
+        (totals.grandTotal * (template.deposit_percentage || 0)) / 100,
+        template.payment_terms || 'Net 30'
+      ]);
+      
+      const versionId = uuidv4();
+      await db.query(
+        `INSERT INTO quote_versions (
+          id, quote_id, version_number, line_items, total_amount,
+          terms, notes, changed_by, change_reason, created_at
+        ) VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, NOW())`,
+        [
+          versionId,
+          quoteId,
+          JSON.stringify(lineItems),
+          totals.grandTotal,
+          template.terms_and_conditions || null,
+          `Created from template: ${template.name}`,
+          'system',
+          'Quote created from template'
+        ]
+      );
+      
+      await db.query(
+        'UPDATE quote_templates SET use_count = use_count + 1, updated_at = NOW() WHERE id = $1',
+        [templateId]
+      );
+      
+      await db.query('COMMIT');
+      
+      const quote = snakeToCamel(quoteRows[0]);
+      
+      res.status(201).json({
+        success: true,
+        data: quote,
+        message: `Quote created from template: ${template.name}`
+      });
+      
+      reindexDocument('quotes', quoteRows[0]);
+      
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+const resources = ['customers', 'leads', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
 });
