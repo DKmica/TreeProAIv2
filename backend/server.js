@@ -6470,6 +6470,290 @@ apiRouter.delete('/crew-assignments/:id', async (req, res) => {
   }
 });
 
+// GET /api/crew-assignments/schedule - Get all crew assignments in a date range (for calendar)
+apiRouter.get('/crew-assignments/schedule', async (req, res) => {
+  try {
+    const { start_date, end_date, crew_id } = req.query;
+    
+    if (!start_date || !end_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'start_date and end_date are required'
+      });
+    }
+    
+    let query = `
+      SELECT 
+        ca.*,
+        c.name as crew_name,
+        c.color as crew_color,
+        j.id as job_id,
+        j.title as job_title,
+        j.client_name,
+        j.status as job_status,
+        j.scheduled_date,
+        j.job_location,
+        j.special_instructions
+      FROM crew_assignments ca
+      JOIN crews c ON ca.crew_id = c.id
+      JOIN jobs j ON ca.job_id = j.id
+      WHERE ca.assigned_date >= $1 AND ca.assigned_date <= $2
+        AND c.deleted_at IS NULL
+    `;
+    
+    const params = [start_date, end_date];
+    let paramCount = 3;
+    
+    if (crew_id) {
+      query += ` AND ca.crew_id = $${paramCount}`;
+      params.push(crew_id);
+      paramCount++;
+    }
+    
+    query += ' ORDER BY ca.assigned_date, c.name';
+    
+    const { rows } = await db.query(query, params);
+    
+    const assignments = rows.map(row => ({
+      ...transformRow(row, 'crew_assignments'),
+      crewName: row.crew_name,
+      crewColor: row.crew_color,
+      jobTitle: row.job_title,
+      clientName: row.client_name,
+      jobStatus: row.job_status,
+      scheduledDate: row.scheduled_date,
+      jobLocation: row.job_location,
+      specialInstructions: row.special_instructions
+    }));
+    
+    res.json({
+      success: true,
+      data: assignments
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/crew-assignments/check-conflicts - Check for scheduling conflicts
+apiRouter.post('/crew-assignments/check-conflicts', async (req, res) => {
+  try {
+    const { crew_id, assigned_date, job_id } = req.body;
+    
+    if (!crew_id || !assigned_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'crew_id and assigned_date are required'
+      });
+    }
+    
+    let query = `
+      SELECT 
+        ca.*,
+        j.title as job_title,
+        j.client_name,
+        j.job_location
+      FROM crew_assignments ca
+      JOIN jobs j ON ca.job_id = j.id
+      WHERE ca.crew_id = $1 AND ca.assigned_date = $2
+    `;
+    
+    const params = [crew_id, assigned_date];
+    
+    // Exclude the current job if provided (for editing existing assignments)
+    if (job_id) {
+      query += ' AND ca.job_id != $3';
+      params.push(job_id);
+    }
+    
+    const { rows } = await db.query(query, params);
+    
+    const hasConflict = rows.length > 0;
+    const conflicts = rows.map(row => ({
+      assignmentId: row.id,
+      jobTitle: row.job_title,
+      clientName: row.client_name,
+      jobLocation: row.job_location,
+      assignedDate: row.assigned_date
+    }));
+    
+    res.json({
+      success: true,
+      hasConflict,
+      conflicts
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/crew-assignments/bulk-assign - Bulk assign crew to multiple dates
+apiRouter.post('/crew-assignments/bulk-assign', async (req, res) => {
+  const client = await db.pool.connect();
+  
+  try {
+    const { crew_id, job_id, dates, notes } = req.body;
+    
+    if (!crew_id || !job_id || !dates || !Array.isArray(dates) || dates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'crew_id, job_id, and dates array are required'
+      });
+    }
+    
+    // Start transaction
+    await client.query('BEGIN');
+    
+    // Check if crew and job exist
+    const [crewCheck, jobCheck] = await Promise.all([
+      client.query('SELECT id FROM crews WHERE id = $1 AND deleted_at IS NULL', [crew_id]),
+      client.query('SELECT id FROM jobs WHERE id = $1', [job_id])
+    ]);
+    
+    if (crewCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        error: 'Crew not found'
+      });
+    }
+    
+    if (jobCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    // Check for conflicts before inserting
+    for (const date of dates) {
+      const conflictCheck = await client.query(
+        'SELECT id FROM crew_assignments WHERE crew_id = $1 AND assigned_date = $2 AND job_id != $3',
+        [crew_id, date, job_id]
+      );
+      
+      if (conflictCheck.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: `Crew is already assigned on ${date}`
+        });
+      }
+    }
+    
+    // Insert all assignments in a single batch operation
+    const values = dates.map((date, idx) => {
+      const offset = idx * 4;
+      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`;
+    }).join(', ');
+    
+    const params = dates.flatMap(date => [job_id, crew_id, date, notes || null]);
+    
+    const insertQuery = `
+      INSERT INTO crew_assignments (job_id, crew_id, assigned_date, notes)
+      VALUES ${values}
+      RETURNING *
+    `;
+    
+    const { rows } = await client.query(insertQuery, params);
+    
+    // Commit transaction
+    await client.query('COMMIT');
+    
+    const assignments = rows.map(row => transformRow(row, 'crew_assignments'));
+    
+    res.status(201).json({
+      success: true,
+      data: assignments,
+      message: `Successfully created ${assignments.length} crew assignments`
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    handleError(res, err);
+  } finally {
+    client.release();
+  }
+});
+
+// PUT /api/crew-assignments/:id/reassign - Reassign to different crew or date
+apiRouter.put('/crew-assignments/:id/reassign', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { crew_id, assigned_date, notes } = req.body;
+    
+    if (!crew_id && !assigned_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'Either crew_id or assigned_date must be provided'
+      });
+    }
+    
+    // Get existing assignment
+    const existingQuery = 'SELECT * FROM crew_assignments WHERE id = $1';
+    const { rows: existingRows } = await db.query(existingQuery, [id]);
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Assignment not found'
+      });
+    }
+    
+    const existing = existingRows[0];
+    
+    // Build update query
+    const updates = [];
+    const params = [];
+    let paramCount = 1;
+    
+    if (crew_id) {
+      // Verify new crew exists
+      const crewCheck = await db.query(
+        'SELECT id FROM crews WHERE id = $1 AND deleted_at IS NULL',
+        [crew_id]
+      );
+      if (crewCheck.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'New crew not found'
+        });
+      }
+      updates.push(`crew_id = $${paramCount++}`);
+      params.push(crew_id);
+    }
+    
+    if (assigned_date) {
+      updates.push(`assigned_date = $${paramCount++}`);
+      params.push(assigned_date);
+    }
+    
+    if (notes !== undefined) {
+      updates.push(`notes = $${paramCount++}`);
+      params.push(notes);
+    }
+    
+    params.push(id);
+    
+    const query = `
+      UPDATE crew_assignments 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, params);
+    
+    res.json({
+      success: true,
+      data: transformRow(rows[0], 'crew_assignments'),
+      message: 'Assignment reassigned successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 // ============================================================================
 // TIME TRACKING ENDPOINTS
 // ============================================================================
