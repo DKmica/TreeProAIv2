@@ -35,6 +35,7 @@ const getPageContext = (pathname: string): string => {
   if (pathname.startsWith('/leads')) return "The user is on the Leads page, managing potential customer inquiries.";
   if (pathname.startsWith('/quotes')) return "The user is on the Quotes page, creating and managing price estimates.";
   if (pathname.startsWith('/jobs')) return "The user is on the Jobs page, managing scheduled work.";
+  if (pathname.startsWith('/job-templates')) return "The user is on the Job Templates page, creating and managing reusable job templates.";
   if (pathname.startsWith('/customers')) return "The user is on the Customers page, viewing their client list.";
   if (pathname.startsWith('/invoices')) return "The user is on the Invoices page, managing billing.";
   if (pathname.startsWith('/calendar')) return "The user is on the Calendar page, scheduling jobs.";
