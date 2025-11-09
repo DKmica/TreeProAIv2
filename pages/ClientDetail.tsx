@@ -8,6 +8,7 @@ import CustomerIcon from '../components/icons/CustomerIcon';
 import MapPinIcon from '../components/icons/MapPinIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
 import JobIcon from '../components/icons/JobIcon';
+import ClientEditor from '../components/ClientEditor';
 
 type TabType = 'overview' | 'properties' | 'contacts' | 'quotes' | 'jobs' | 'activity';
 
@@ -25,6 +26,7 @@ const ClientDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [quoteStatusFilter, setQuoteStatusFilter] = useState<string>('all');
   const [jobStatusFilter, setJobStatusFilter] = useState<string>('all');
+  const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -149,7 +151,18 @@ const ClientDetail: React.FC = () => {
   };
 
   const handleEditClient = () => {
-    alert('Edit client modal will be implemented next');
+    setIsClientEditorOpen(true);
+  };
+
+  const handleClientSave = async (updatedClient: Client) => {
+    if (!id) return;
+    
+    try {
+      const clientData = await clientService.getById(id);
+      setClient(clientData);
+    } catch (err) {
+      console.error('Error refreshing client data:', err);
+    }
   };
 
   const handleDeleteClient = () => {
@@ -213,6 +226,13 @@ const ClientDetail: React.FC = () => {
 
   return (
     <div>
+      <ClientEditor
+        isOpen={isClientEditorOpen}
+        onClose={() => setIsClientEditorOpen(false)}
+        onSave={handleClientSave}
+        client={client || undefined}
+      />
+
       <nav className="flex mb-4 text-sm text-brand-gray-600">
         <button onClick={handleBack} className="hover:text-brand-cyan-600">
           CRM

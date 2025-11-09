@@ -6,6 +6,7 @@ import SpinnerIcon from '../components/icons/SpinnerIcon';
 import CustomerIcon from '../components/icons/CustomerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
+import ClientEditor from '../components/ClientEditor';
 
 type TabType = 'clients' | 'leads' | 'quotes';
 
@@ -17,6 +18,7 @@ const CRM: React.FC = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -145,11 +147,20 @@ const CRM: React.FC = () => {
 
   const handleAddNew = () => {
     if (activeTab === 'clients') {
-      alert('Add new client modal will be implemented next');
+      setIsClientEditorOpen(true);
     } else if (activeTab === 'leads') {
       alert('Add new lead modal will be implemented next');
     } else if (activeTab === 'quotes') {
       alert('Add new quote modal will be implemented next');
+    }
+  };
+
+  const handleClientSave = async (client: Client) => {
+    try {
+      const updatedClients = await clientService.getAll();
+      setClients(updatedClients);
+    } catch (err) {
+      console.error('Error refreshing clients:', err);
     }
   };
 
@@ -194,6 +205,12 @@ const CRM: React.FC = () => {
 
   return (
     <div>
+      <ClientEditor
+        isOpen={isClientEditorOpen}
+        onClose={() => setIsClientEditorOpen(false)}
+        onSave={handleClientSave}
+      />
+
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-gray-900">CRM Dashboard</h1>
