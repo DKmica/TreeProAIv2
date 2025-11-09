@@ -636,12 +636,47 @@ export interface TimeEntry {
   id: string;
   employeeId: string;
   jobId?: string;
-  date: string;
-  hoursWorked: number;
+  clockIn: string;
+  clockOut?: string;
+  breakMinutes?: number;
+  clockInLocation?: { lat: number; lng: number; address?: string };
+  clockOutLocation?: { lat: number; lng: number; address?: string };
+  clockInPhotoUrl?: string;
+  clockOutPhotoUrl?: string;
+  notes?: string;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  hoursWorked?: number;
   hourlyRate: number;
-  overtimeHours?: number;
+  totalAmount?: number;
+  createdAt: string;
+  updatedAt?: string;
+  
+  employeeName?: string;
+  jobTitle?: string;
+  jobClientName?: string;
+}
+
+export interface Timesheet {
+  id: string;
+  employeeId: string;
+  periodStart: string;
+  periodEnd: string;
+  totalHours: number;
+  totalRegularHours: number;
+  totalOvertimeHours: number;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  submittedAt?: string;
+  approvedBy?: string;
+  approvedAt?: string;
   notes?: string;
   createdAt: string;
+  updatedAt?: string;
+  
+  employeeName?: string;
+  approverName?: string;
 }
 
 export interface PayrollDeduction {

@@ -45,6 +45,9 @@ args = "npm run dev:backend"
 outputType = "console"
 
 [[ports]]
+localPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
