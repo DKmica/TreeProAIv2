@@ -62,13 +62,13 @@ const App: React.FC = () => {
           employeesData,
           equipmentData
         ] = await Promise.all([
-          api.customerService.getAll(),
-          api.leadService.getAll(),
-          api.quoteService.getAll(),
-          api.jobService.getAll(),
-          api.invoiceService.getAll(),
-          api.employeeService.getAll(),
-          api.equipmentService.getAll(),
+          api.customerService.getAll().catch(() => []),
+          api.leadService.getAll().catch(() => []),
+          api.quoteService.getAll().catch(() => []),
+          api.jobService.getAll().catch(() => []),
+          api.invoiceService.getAll().catch(() => []),
+          api.employeeService.getAll().catch(() => []),
+          api.equipmentService.getAll().catch(() => []),
         ]);
 
         console.log("✅ Data fetched successfully");

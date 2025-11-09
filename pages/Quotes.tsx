@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Quote, Customer, LineItem, AITreeEstimate, UpsellSuggestion, PortalMessage } from '../types';
+import { Quote, Customer, LineItem, AITreeEstimate, UpsellSuggestion, PortalMessage, Client, Property } from '../types';
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import { generateUpsellSuggestions } from '../services/geminiService';
+import { clientService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import PlusCircleIcon from '../components/icons/PlusCircleIcon';
@@ -17,13 +18,16 @@ const calculateQuoteTotal = (lineItems: LineItem[], stumpGrindingPrice: number):
 };
 
 interface AddQuoteFormProps {
-    customers: Customer[];
     onSave: (quote: Omit<Quote, 'id' | 'leadId'>) => void;
     onCancel: () => void;
     initialData?: Partial<Quote> | null;
 }
 
-const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel, initialData }) => {
+const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ onSave, onCancel, initialData }) => {
+    const [clients, setClients] = useState<Client[]>([]);
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [clientId, setClientId] = useState('');
+    const [propertyId, setPropertyId] = useState('');
     const [customerName, setCustomerName] = useState('');
     const [status, setStatus] = useState<Quote['status']>('Draft');
     const [lineItems, setLineItems] = useState<LineItem[]>([{ description: '', price: 0, selected: true }]);
@@ -36,10 +40,29 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [suggestions, setSuggestions] = useState<UpsellSuggestion[]>([]);
     const [suggestionError, setSuggestionError] = useState('');
+    const [loadingClients, setLoadingClients] = useState(true);
+    const [loadingProperties, setLoadingProperties] = useState(false);
+
+    useEffect(() => {
+        const fetchClients = async () => {
+            try {
+                setLoadingClients(true);
+                const fetchedClients = await clientService.getAll();
+                setClients(fetchedClients);
+            } catch (error) {
+                console.error('Error fetching clients:', error);
+            } finally {
+                setLoadingClients(false);
+            }
+        };
+        fetchClients();
+    }, []);
 
     useEffect(() => {
         if (initialData) {
-            setCustomerName(initialData.customerName || (customers.length > 0 ? customers[0].name : ''));
+            setClientId(initialData.clientId || '');
+            setPropertyId(initialData.propertyId || '');
+            setCustomerName(initialData.customerName || '');
             setStatus(initialData.status || 'Draft');
             setLineItems(initialData.lineItems && initialData.lineItems.length > 0 ? initialData.lineItems : [{ description: '', price: 0, selected: true }]);
             setStumpGrindingPrice(initialData.stumpGrindingPrice || 0);
@@ -48,9 +71,14 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
             setValidUntil(initialData.validUntil || '');
             setDepositAmount(initialData.depositAmount || 0);
             setPaymentTerms(initialData.paymentTerms || 'Net 30');
+            
+            if (initialData.clientId) {
+                fetchPropertiesForClient(initialData.clientId);
+            }
         } else {
-            // Reset for new entry
-            setCustomerName(customers.length > 0 ? customers[0].name : '');
+            setClientId('');
+            setPropertyId('');
+            setCustomerName('');
             setStatus('Draft');
             setLineItems([{ description: '', price: 0, selected: true }]);
             setStumpGrindingPrice(0);
@@ -59,8 +87,58 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
             setValidUntil('');
             setDepositAmount(0);
             setPaymentTerms('Net 30');
+            setProperties([]);
         }
-    }, [initialData, customers]);
+    }, [initialData]);
+
+    const fetchPropertiesForClient = async (selectedClientId: string) => {
+        if (!selectedClientId) {
+            setProperties([]);
+            return;
+        }
+        
+        try {
+            setLoadingProperties(true);
+            const fetchedProperties = await clientService.getProperties(selectedClientId);
+            setProperties(fetchedProperties);
+        } catch (error) {
+            console.error('Error fetching properties:', error);
+            setProperties([]);
+        } finally {
+            setLoadingProperties(false);
+        }
+    };
+
+    const handleClientChange = (selectedClientId: string) => {
+        setClientId(selectedClientId);
+        setPropertyId('');
+        setJobLocation('');
+        fetchPropertiesForClient(selectedClientId);
+        
+        const selectedClient = clients.find(c => c.id === selectedClientId);
+        if (selectedClient) {
+            const displayName = selectedClient.companyName || `${selectedClient.firstName || ''} ${selectedClient.lastName || ''}`.trim();
+            setCustomerName(displayName);
+        }
+    };
+
+    const handlePropertyChange = (selectedPropertyId: string) => {
+        setPropertyId(selectedPropertyId);
+        
+        if (selectedPropertyId) {
+            const selectedProperty = properties.find(p => p.id === selectedPropertyId);
+            if (selectedProperty) {
+                const address = [
+                    selectedProperty.addressLine1,
+                    selectedProperty.addressLine2,
+                    selectedProperty.city,
+                    selectedProperty.state,
+                    selectedProperty.zip
+                ].filter(Boolean).join(', ');
+                setJobLocation(address);
+            }
+        }
+    };
 
     const isEditing = !!(initialData && 'id' in initialData);
     
@@ -113,7 +191,15 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!clientId) {
+            alert('Please select a client');
+            return;
+        }
+        
         onSave({
+            clientId,
+            propertyId: propertyId || undefined,
             customerName,
             status,
             lineItems,
@@ -135,11 +221,47 @@ const AddQuoteForm: React.FC<AddQuoteFormProps> = ({ customers, onSave, onCancel
             <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
-                        <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-gray-900">Customer</label>
-                        <select id="customerName" name="customerName" value={customerName} onChange={e => setCustomerName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
-                             {customers.length === 0 && <option disabled>No customers available</option>}
-                            {customers.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        <label htmlFor="clientId" className="block text-sm font-medium leading-6 text-brand-gray-900">
+                            Client <span className="text-red-500">*</span>
+                        </label>
+                        <select 
+                            id="clientId" 
+                            name="clientId" 
+                            value={clientId} 
+                            onChange={e => handleClientChange(e.target.value)}
+                            disabled={loadingClients}
+                            required
+                            className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6 disabled:opacity-50"
+                        >
+                            <option value="">Select a client...</option>
+                            {clients.map(client => {
+                                const displayName = client.companyName || `${client.firstName || ''} ${client.lastName || ''}`.trim();
+                                return <option key={client.id} value={client.id}>{displayName}</option>;
+                            })}
                         </select>
+                        {loadingClients && <p className="mt-1 text-sm text-brand-gray-500">Loading clients...</p>}
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="propertyId" className="block text-sm font-medium leading-6 text-brand-gray-900">
+                            Property <span className="text-brand-gray-400 text-xs">(Optional)</span>
+                        </label>
+                        <select 
+                            id="propertyId" 
+                            name="propertyId" 
+                            value={propertyId} 
+                            onChange={e => handlePropertyChange(e.target.value)}
+                            disabled={!clientId || loadingProperties}
+                            className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6 disabled:opacity-50"
+                        >
+                            <option value="">No specific property</option>
+                            {properties.map(property => {
+                                const displayName = property.propertyName || 
+                                    `${property.addressLine1}, ${property.city}, ${property.state}`;
+                                return <option key={property.id} value={property.id}>{displayName}</option>;
+                            })}
+                        </select>
+                        {loadingProperties && <p className="mt-1 text-sm text-brand-gray-500">Loading properties...</p>}
+                        {!clientId && <p className="mt-1 text-sm text-brand-gray-500">Select a client first</p>}
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-gray-900">Status</label>
@@ -393,7 +515,7 @@ const Quotes: React.FC<QuotesProps> = ({ quotes, setQuotes, customers }) => {
                 </div>
             </div>
 
-            {showAddForm && <AddQuoteForm customers={customers} onSave={handleSave} onCancel={handleCancel} initialData={editingQuote || aiEstimateData} />}
+            {showAddForm && <AddQuoteForm onSave={handleSave} onCancel={handleCancel} initialData={editingQuote || aiEstimateData} />}
             
             <div className="mt-6">
                 <input
