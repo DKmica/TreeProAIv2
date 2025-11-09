@@ -1,0 +1,20 @@
+[plugin:vite:import-analysis] Failed to resolve import "./pages/TimeTracking" from "App.tsx". Does the file exist?
+/home/runner/workspace/App.tsx:12:25
+12 |  import Calendar from "./pages/Calendar";
+13 |  import Crews from "./pages/Crews";
+14 |  import TimeTracking from "./pages/TimeTracking";
+   |                            ^
+15 |  import Employees from "./pages/Employees";
+16 |  import Equipment from "./pages/Equipment";
+    at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+    at TransformPluginContext.error (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+    at normalizeUrl (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+    at async Promise.all (index 12)
+    at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+    at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+    at async loadAndTransform (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+    at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/.pnpm/vite@6.4.1_@types+node@22.18.12_jiti@2.6.1_lightningcss@1.30.2/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Calendar, DollarSign } from 'lucide-react';
 import { TimeEntry, Timesheet, Employee } from '../../types';
-import apiService from '../services/apiService';
+import { timeEntryService, employeeService } from '../../services/apiService';
 import ClockInOut from '../components/ClockInOut';
 import TimesheetApproval from '../components/TimesheetApproval';
 
@@ -33,7 +33,7 @@ export default function TimeTracking() {
 
   const loadEmployees = async () => {
     try {
-      const data = await apiService.getEmployees();
+      const data = await employeeService.getAll();
       setEmployees(data);
       if (data.length > 0) {
         setSelectedEmployee(data[0].id);

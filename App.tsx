@@ -9,7 +9,7 @@ import JobTemplates from './pages/JobTemplates';
 import Invoices from './pages/Invoices';
 import Calendar from './pages/Calendar';
 import Crews from './pages/Crews';
-import TimeTracking from './pages/TimeTracking';
+import TimeTracking from './src/pages/TimeTracking';
 import Employees from './pages/Employees';
 import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
