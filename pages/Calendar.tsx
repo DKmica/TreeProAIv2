@@ -1,24 +1,32 @@
 import React, { useState, useMemo } from 'react';
-import { Job, Employee } from '../types';
+import { Job, Employee, Customer } from '../types';
+import { CalendarView } from './Calendar/types';
 import JobIcon from '../components/icons/JobIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import { syncJobsToGoogleCalendar } from '../services/googleCalendarService';
 
+import MonthView from './Calendar/views/MonthView';
+import WeekView from './Calendar/views/WeekView';
+import DayView from './Calendar/views/DayView';
+import ThreeDayView from './Calendar/views/ThreeDayView';
+import ListView from './Calendar/views/ListView';
+import MapViewWrapper from './Calendar/views/MapViewWrapper';
+
 interface CalendarProps {
     jobs: Job[];
     employees: Employee[];
+    customers?: Customer[];
     setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
+const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], setJobs }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [activeView, setActiveView] = useState<CalendarView>('month');
     const [statusFilter, setStatusFilter] = useState('all');
     const [employeeFilter, setEmployeeFilter] = useState('all');
     const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
-
-    // --- Data Filtering & Memoization ---
 
     const schedulableJobs = useMemo(() => {
         return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'In Progress')
@@ -46,22 +54,35 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
         return map;
     }, [filteredJobsOnCalendar]);
 
-    // --- Calendar Grid Generation ---
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    const startDayOfWeek = startOfMonth.getDay(); 
-
-    const daysInMonth: (Date | null)[] = Array.from({ length: startDayOfWeek }, () => null);
-    for (let i = 1; i <= endOfMonth.getDate(); i++) {
-        daysInMonth.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), i));
-    }
-    
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    // --- Event Handlers ---
     const goToPreviousMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const goToNextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     
+    const goToPreviousWeek = () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() - 7);
+        setCurrentDate(newDate);
+    };
+    
+    const goToNextWeek = () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() + 7);
+        setCurrentDate(newDate);
+    };
+    
+    const goToPreviousDay = () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() - 1);
+        setCurrentDate(newDate);
+    };
+    
+    const goToNextDay = () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() + 1);
+        setCurrentDate(newDate);
+    };
+
+    const goToToday = () => setCurrentDate(new Date());
+
     const handleSyncCalendar = async () => {
         setIsSyncing(true);
         const jobsToSync = jobs.filter(j => j.status === 'Scheduled' && j.scheduledDate);
@@ -75,7 +96,6 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
         }
     };
 
-    // --- Drag and Drop Handlers ---
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, jobId: string) => {
         e.dataTransfer.setData('jobId', jobId);
         setDraggedJobId(jobId);
@@ -123,123 +143,241 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, setJobs }) => {
             case 'Unscheduled': return 'bg-gray-100 text-gray-800 border-gray-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
-    }
+    };
 
+    const getNavigationControls = () => {
+        switch (activeView) {
+            case 'month':
+                return (
+                    <>
+                        <button onClick={goToPreviousMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                            <span className="sr-only">Previous month</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-48">
+                            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </h2>
+                        <button onClick={goToNextMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                            <span className="sr-only">Next month</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </>
+                );
+            case 'week':
+                return (
+                    <>
+                        <button onClick={goToPreviousWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                            <span className="sr-only">Previous week</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-48">
+                            Week of {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </h2>
+                        <button onClick={goToNextWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                            <span className="sr-only">Next week</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </>
+                );
+            case 'day':
+            case '3-day':
+                return (
+                    <>
+                        <button onClick={goToPreviousDay} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                            <span className="sr-only">Previous day</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-48">
+                            {currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </h2>
+                        <button onClick={goToNextDay} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                            <span className="sr-only">Next day</span>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </>
+                );
+            default:
+                return <div className="w-48"></div>;
+        }
+    };
+
+    const viewProps = {
+        jobs,
+        employees,
+        currentDate,
+        statusFilter,
+        employeeFilter,
+        filteredJobs: filteredJobsOnCalendar,
+        jobsByDate,
+        onDateChange: setCurrentDate,
+        onJobDrop: (jobId: string, newDate: string) => {
+            setJobs(prevJobs => 
+                prevJobs.map(job => 
+                    job.id === jobId ? { ...job, scheduledDate: newDate, status: 'Scheduled' } : job
+                )
+            );
+        },
+        setJobs,
+        handleDragStart,
+        handleDragEnd,
+        handleDragOver,
+        handleDragEnter,
+        handleDragLeave,
+        handleDrop,
+        draggedJobId
+    };
 
     return (
         <div>
             <h1 className="text-2xl font-bold text-brand-gray-900">Jobs Calendar</h1>
             
             <div className="mt-6 flex flex-col lg:flex-row lg:space-x-8">
-                {/* Column 1: Jobs List */}
-                <div className="lg:w-1/3 xl:w-1/4">
-                    <h2 className="text-xl font-bold text-brand-gray-900">Jobs List</h2>
-                     <div className="mt-4 bg-white p-3 rounded-lg shadow-sm border border-brand-gray-200 space-y-3 max-h-[80vh] overflow-y-auto">
-                        {schedulableJobs.length > 0 ? schedulableJobs.map(job => (
-                            <div 
-                                key={job.id}
-                                draggable="true"
-                                onDragStart={(e) => handleDragStart(e, job.id)}
-                                onDragEnd={handleDragEnd}
-                                className={`p-3 rounded-lg border cursor-move hover:shadow-lg transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-xl bg-brand-green-50' : 'bg-white shadow-sm'}`}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <p className="font-semibold text-brand-gray-800 flex items-center"><JobIcon className="w-4 h-4 mr-2 text-brand-gray-400"/> {job.id}</p>
-                                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ getStatusColor(job.status) }`}>
-                                        {job.status}
-                                    </span>
+                {activeView !== 'list' && activeView !== 'map' && (
+                    <div className="lg:w-1/3 xl:w-1/4">
+                        <h2 className="text-xl font-bold text-brand-gray-900">Jobs List</h2>
+                        <div className="mt-4 bg-white p-3 rounded-lg shadow-sm border border-brand-gray-200 space-y-3 max-h-[80vh] overflow-y-auto">
+                            {schedulableJobs.length > 0 ? schedulableJobs.map(job => (
+                                <div 
+                                    key={job.id}
+                                    draggable="true"
+                                    onDragStart={(e) => handleDragStart(e, job.id)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`p-3 rounded-lg border cursor-move hover:shadow-lg transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-xl bg-brand-green-50' : 'bg-white shadow-sm'}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <p className="font-semibold text-brand-gray-800 flex items-center"><JobIcon className="w-4 h-4 mr-2 text-brand-gray-400"/> {job.id}</p>
+                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(job.status)}`}>
+                                            {job.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-brand-gray-600 mt-1">{job.customerName}</p>
                                 </div>
-                                <p className="text-sm text-brand-gray-600 mt-1">{job.customerName}</p>
-                            </div>
-                        )) : (
-                            <div className="text-center py-10">
-                                <p className="text-sm text-brand-gray-500">No active jobs to schedule.</p>
-                            </div>
-                        )}
+                            )) : (
+                                <div className="text-center py-10">
+                                    <p className="text-sm text-brand-gray-500">No active jobs to schedule.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Column 2: Calendar */}
                 <div className="flex-1 mt-8 lg:mt-0">
-                    <div className="sm:flex sm:items-center sm:justify-between">
-                        <div className="flex items-center space-x-2 md:space-x-4">
-                            <button onClick={goToPreviousMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
-                                <span className="sr-only">Previous month</span>
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
-                            </button>
-                            <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-36">
-                                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                            </h2>
-                            <button onClick={goToNextMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
-                                <span className="sr-only">Next month</span>
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
+                    <div className="sm:flex sm:items-center sm:justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                            {getNavigationControls()}
                         </div>
                         <div className="mt-4 sm:mt-0 flex items-center space-x-2">
-                             <button onClick={handleSyncCalendar} disabled={isSyncing} className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                            <button 
+                                onClick={goToToday}
+                                className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50"
+                            >
+                                Today
+                            </button>
+                            <button 
+                                onClick={handleSyncCalendar} 
+                                disabled={isSyncing} 
+                                className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
                                 {isSyncing ? <SpinnerIcon className="h-5 w-5" /> : <GoogleCalendarIcon className="h-5 w-5" />}
-                                {isSyncing ? 'Syncing...' : 'Sync with Google Calendar'}
+                                {isSyncing ? 'Syncing...' : 'Sync'}
                             </button>
                         </div>
                     </div>
-                    <div className="mt-4 bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                        <div className="grid grid-cols-7 gap-px text-center text-xs font-semibold leading-6 text-brand-gray-700 border-b border-brand-gray-200">
-                            {weekDays.map(day => <div key={day} className="py-2">{day}</div>)}
-                        </div>
-                        <div className="grid grid-cols-7 gap-px bg-brand-gray-200">
-                            {daysInMonth.map((day, index) => {
-                                const dateString = day ? day.toISOString().split('T')[0] : '';
-                                const jobsForDay = jobsByDate.get(dateString) || [];
-                                const isToday = day && dateString === new Date().toISOString().split('T')[0];
 
-                                return (
-                                    <div 
-                                        key={index} 
-                                        className={`calendar-day relative min-h-[120px] p-2 transition-colors duration-200 ${day ? 'bg-white' : 'bg-brand-gray-50'}`}
-                                        onDragOver={handleDragOver}
-                                        onDrop={(e) => handleDrop(e, day)}
-                                        onDragEnter={handleDragEnter}
-                                        onDragLeave={handleDragLeave}
-                                    >
-                                        {day && (
-                                            <time dateTime={dateString} className={`font-semibold ${isToday ? 'bg-brand-cyan-600 text-white rounded-full flex h-6 w-6 items-center justify-center' : ''}`}>
-                                                {day.getDate()}
-                                            </time>
-                                        )}
-                                        <div className="mt-2 space-y-1">
-                                            {jobsForDay.map(job => (
-                                                <div
-                                                    key={job.id}
-                                                    className="group relative"
-                                                    draggable="true"
-                                                    onDragStart={(e) => handleDragStart(e, job.id)}
-                                                    onDragEnd={handleDragEnd}
-                                                >
-                                                    <div className={`text-left text-xs bg-brand-green-100 p-1.5 rounded-md cursor-move hover:shadow-md transition-all ${draggedJobId === job.id ? 'opacity-50 scale-105 shadow-lg' : ''}`}>
-                                                        <p className="font-medium text-brand-green-800 truncate">{job.id}</p>
-                                                        <p className="text-brand-green-700 truncate">{job.customerName}</p>
-                                                    </div>
-                                                    
-                                                    {/* Tooltip */}
-                                                    <div className="absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-xs -translate-x-1/2 transform rounded-lg bg-brand-gray-900 px-3 py-2 text-sm font-normal text-white opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 pointer-events-none">
-                                                        <p className="font-bold text-white">{job.customerName}</p>
-                                                        <p className="text-brand-gray-300"><span className="font-semibold">Status:</span> {job.status}</p>
-                                                        <p className="text-brand-gray-300"><span className="font-semibold">Crew:</span> {
-                                                            job.assignedCrew
-                                                                .map(empId => employees.find(e => e.id === empId)?.name)
-                                                                .filter(Boolean)
-                                                                .join(', ') || 'Not Assigned'
-                                                        }</p>
-                                                        <div className="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-x-4 border-x-transparent border-t-4 border-t-brand-gray-900"></div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    <div className="mb-4 bg-white rounded-lg shadow-sm p-2 inline-flex space-x-1">
+                        <button
+                            onClick={() => setActiveView('day')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === 'day' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            Day
+                        </button>
+                        <button
+                            onClick={() => setActiveView('3-day')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === '3-day' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            3-Day
+                        </button>
+                        <button
+                            onClick={() => setActiveView('week')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === 'week' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            Week
+                        </button>
+                        <button
+                            onClick={() => setActiveView('month')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === 'month' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            Month
+                        </button>
+                        <button
+                            onClick={() => setActiveView('list')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === 'list' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            List
+                        </button>
+                        <button
+                            onClick={() => setActiveView('map')}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeView === 'map' 
+                                    ? 'bg-brand-cyan-600 text-white' 
+                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                            }`}
+                        >
+                            Map
+                        </button>
                     </div>
+
+                    {activeView !== 'list' && activeView !== 'map' && (
+                        <div className="mb-4 flex flex-wrap gap-2">
+                            <select 
+                                value={statusFilter} 
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
+                            >
+                                <option value="all">All Statuses</option>
+                                <option value="Unscheduled">Unscheduled</option>
+                                <option value="Scheduled">Scheduled</option>
+                                <option value="In Progress">In Progress</option>
+                            </select>
+                            <select 
+                                value={employeeFilter} 
+                                onChange={(e) => setEmployeeFilter(e.target.value)}
+                                className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
+                            >
+                                <option value="all">All Employees</option>
+                                {employees.map(emp => (
+                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {activeView === 'month' && <MonthView {...viewProps} />}
+                    {activeView === 'week' && <WeekView {...viewProps} />}
+                    {activeView === 'day' && <DayView {...viewProps} />}
+                    {activeView === '3-day' && <ThreeDayView {...viewProps} />}
+                    {activeView === 'list' && <ListView {...viewProps} />}
+                    {activeView === 'map' && <MapViewWrapper {...viewProps} customers={customers} />}
                 </div>
             </div>
         </div>
