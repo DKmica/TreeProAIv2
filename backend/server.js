@@ -24,7 +24,7 @@ const handleError = (res, err) => {
 };
 
 const collectionDocIdPrefixes = {
-  customers: 'customer',
+  clients: 'client',
   leads: 'lead',
   quotes: 'quote',
   jobs: 'job',
@@ -38,14 +38,18 @@ const reindexDocument = async (tableName, row) => {
   try {
     console.log(`[RAG] Re-indexing document for ${tableName} ID: ${row.id}`);
     switch (tableName) {
-      case 'customers':
+      case 'clients':
         await ragService.indexCustomers([row]);
         break;
       case 'leads':
         {
           const { rows: leads } = await db.query(`
-            SELECT l.*, c.name as customer_name, c.address, c.phone, c.email
-            FROM leads l LEFT JOIN customers c ON l.customer_id = c.id
+            SELECT l.*, 
+                   CONCAT(c.first_name, ' ', c.last_name) as customer_name,
+                   c.billing_address_line1 as address, 
+                   c.primary_phone as phone, 
+                   c.primary_email as email
+            FROM leads l LEFT JOIN clients c ON l.client_id_new = c.id
             WHERE l.id = $1
           `, [row.id]);
           if (leads.length) {
@@ -140,7 +144,7 @@ const transformRow = (row, tableName) => {
   const transformed = { ...row };
   
   // Handle coordinate fields
-  if (tableName === 'customers' || tableName === 'employees') {
+  if (tableName === 'clients' || tableName === 'employees') {
     if (row.lat !== undefined && row.lon !== undefined) {
       transformed.coordinates = { lat: row.lat, lng: row.lon };
       delete transformed.lat;
@@ -588,7 +592,7 @@ const transformToDb = (data, tableName) => {
   const transformed = { ...data };
   
   // Handle coordinate fields
-  if ((tableName === 'customers' || tableName === 'employees') && data.coordinates) {
+  if ((tableName === 'clients' || tableName === 'employees') && data.coordinates) {
     transformed.lat = data.coordinates.lat;
     transformed.lon = data.coordinates.lng;
     delete transformed.coordinates;
@@ -1111,10 +1115,13 @@ apiRouter.get('/leads', async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT l.*, 
-             c.id as customer_id, c.name as customer_name, c.email as customer_email, 
-             c.phone as customer_phone, c.address as customer_address
+             c.id as customer_id, 
+             CONCAT(c.first_name, ' ', c.last_name) as customer_name, 
+             c.primary_email as customer_email, 
+             c.primary_phone as customer_phone, 
+             c.billing_address_line1 as customer_address
       FROM leads l
-      LEFT JOIN customers c ON l.customer_id = c.id
+      LEFT JOIN clients c ON l.client_id_new = c.id
     `);
     
     const transformed = rows.map(row => {
@@ -1317,26 +1324,32 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
 
     const customerAddress = address || location || '';
     const leadDescription = comments || description || '';
-    let customerId;
+    let clientId;
     let customerName = name;
 
-    const { rows: existingCustomers } = await db.query(
-      `SELECT * FROM customers WHERE email = $1 OR phone = $2 LIMIT 1`,
+    const { rows: existingClients } = await db.query(
+      `SELECT * FROM clients WHERE primary_email = $1 OR primary_phone = $2 LIMIT 1`,
       [email, phone]
     );
 
-    if (existingCustomers.length > 0) {
-      customerId = existingCustomers[0].id;
-      customerName = existingCustomers[0].name;
-      console.log(`Angi Ads webhook: Found existing customer ${customerId}`);
+    if (existingClients.length > 0) {
+      clientId = existingClients[0].id;
+      customerName = existingClients[0].first_name && existingClients[0].last_name 
+        ? `${existingClients[0].first_name} ${existingClients[0].last_name}`.trim()
+        : existingClients[0].first_name || existingClients[0].last_name || existingClients[0].company_name || name;
+      console.log(`Angi Ads webhook: Found existing client ${clientId}`);
     } else {
-      customerId = uuidv4();
-      const { rows: newCustomerRows } = await db.query(
-        `INSERT INTO customers (id, name, email, phone, address, lat, lon) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [customerId, name, email, phone, customerAddress, 0, 0]
+      clientId = uuidv4();
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : null;
+      const lastName = nameParts.length > 0 ? nameParts[nameParts.length - 1] : null;
+      
+      const { rows: newClientRows } = await db.query(
+        `INSERT INTO clients (id, first_name, last_name, primary_email, primary_phone, billing_address_line1, status, client_type) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+        [clientId, firstName, lastName, email, phone, customerAddress, 'active', 'residential']
       );
-      console.log(`Angi Ads webhook: Created new customer ${customerId}`);
+      console.log(`Angi Ads webhook: Created new client ${clientId}`);
     }
 
     const newLeadId = uuidv4();
@@ -1345,17 +1358,17 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
       : `Angi Lead ID: ${leadId || 'N/A'}`;
 
     const { rows: newLeadRows } = await db.query(
-      `INSERT INTO leads (id, customer_id, source, status, description, created_at) 
+      `INSERT INTO leads (id, client_id_new, source, status, description, created_at) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [newLeadId, customerId, 'Angi Ads', 'New', leadDescriptionWithAngiId, new Date().toISOString()]
+      [newLeadId, clientId, 'Angi Ads', 'New', leadDescriptionWithAngiId, new Date().toISOString()]
     );
 
-    console.log(`Angi Ads webhook: Created new lead ${newLeadId} for customer ${customerId}`);
+    console.log(`Angi Ads webhook: Created new lead ${newLeadId} for client ${clientId}`);
 
     res.status(200).json({
       success: true,
       leadId: newLeadId,
-      customerId: customerId
+      clientId: clientId
     });
 
   } catch (err) {
@@ -5133,7 +5146,7 @@ apiRouter.post('/quotes/from-template/:templateId', async (req, res) => {
   }
 });
 
-const resources = ['customers', 'leads', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
+const resources = ['clients', 'leads', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
 });
