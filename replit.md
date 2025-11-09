@@ -37,7 +37,7 @@ The application utilizes a modern, dark theme with a primary color palette of br
 - **Environment Agnostic Configuration**: Frontend and backend are configured to run seamlessly in both development (using `localhost` and specific ports) and production (using `0.0.0.0` and port 5000) environments, leveraging Replit's infrastructure.
 - **Scalability**: Designed for stateless deployment (e.g., Cloud Run) with a `pnpm run build:production` script for optimized builds.
 
-## Phase 1 CRM Implementation
+## Phase 1: Win Jobs - CRM & Sales ✅ COMPLETE
 
 ### Clean Slate Approach
 - Started fresh with new CRM database structure (no simulated data migration)
@@ -67,7 +67,7 @@ The application utilizes a modern, dark theme with a primary color palette of br
 Existing tables updated with Phase 1 fields:
 - `leads`: Added client_id_new, property_id, lead_score, priority, assigned_to, estimated_value
 - `quotes`: Added client_id, property_id, quote_number, version, approval_status, financial fields
-- `jobs`: Added client_id, property_id, job_number
+- `jobs`: Added client_id, property_id, job_number, description
 
 ### Frontend Components (Phase 1)
 - **CRM Dashboard** (`pages/CRM.tsx`): Tabbed hub for clients, leads, quotes with search/filter
@@ -76,6 +76,86 @@ Existing tables updated with Phase 1 fields:
 - **Property Editor** (`components/PropertyEditor.tsx`): Modal form for properties with auto-address population
 - **Contact Editor** (`components/ContactEditor.tsx`): Modal form with dynamic channel management
 - **Updated Quote Builder** (`pages/Quotes.tsx`): Now selects client + property instead of legacy customers
+
+## Phase 2: Operations - Job Scheduling ✅ COMPLETE
+
+### Job State Machine
+Comprehensive job workflow with 10 distinct states, guarded transitions, and automated triggers:
+
+**States:**
+- `draft` - Initial state for new jobs
+- `needs_permit` - Awaiting permit approval
+- `waiting_on_client` - Client approval or info needed
+- `scheduled` - Job is on calendar
+- `weather_hold` - Delayed due to weather
+- `in_progress` - Crew actively working
+- `completed` - Work finished
+- `invoiced` - Invoice sent to client
+- `paid` - Payment received
+- `cancelled` - Job cancelled
+
+**Features:**
+- Strict transition validation (only valid state changes allowed)
+- Automated triggers (e.g., auto-transition to invoiced when job completed)
+- Complete audit trail via `job_state_transitions` table
+- Transaction safety with row-level locking
+- JSONB metadata support for additional context per transition
+
+**Database Schema (Migration 002):**
+- `job_state_transitions` - Full audit trail of all state changes
+- 15 new `jobs` table columns: state, state_reason, permit_required, permit_approved, client_approval, weather_dependent, priority, blocked_by_job_id, blocks_job_ids, estimated_start_date, estimated_end_date, actual_start_date, actual_end_date, state_changed_at, state_changed_by
+
+**Backend Service:**
+- `jobStateService.js` - Core state machine logic
+- 10 API endpoints for state transitions and history
+- Validation rules prevent invalid transitions
+- Automated triggers (e.g., completed → invoiced)
+
+**Frontend Components:**
+- `StateTransitionControl.tsx` - Interactive state change widget with available transitions
+- `StateHistoryTimeline.tsx` - Visual timeline of all state changes
+- `JobStatusBadge.tsx` - Color-coded state indicator
+- Updated Jobs page with 3-tab modal (Information, State Transitions, History)
+
+### Job Templates
+Reusable job configurations to standardize common tree services and accelerate job creation:
+
+**Features:**
+- Template library with 4 seed templates (Small Removal $800, Large Removal $4500, Pruning $650, Emergency $1200)
+- Category organization (Removal, Pruning, Emergency, Maintenance, Specialty, Consulting)
+- Usage tracking to identify most popular templates
+- Create templates from scratch or convert existing jobs
+- Quick-create jobs from templates with one click
+
+**Database Schema (Migration 003):**
+- `job_templates` table with 23 columns covering all job configuration:
+  - Basic info (name, description, category, default state)
+  - Pricing (default_amount, estimated_duration, payment_terms)
+  - Requirements (crew_size, equipment_ids, skills_required, safety_requirements)
+  - Checklists (default_checklist, safety_checklist, equipment_checklist)
+  - Metadata (is_active, usage_count, created_at/by, updated_at/by)
+- 3 indexes for efficient querying (category, is_active, usage_count)
+- Helper function `get_template_usage_stats()` for analytics
+
+**Backend Service:**
+- `jobTemplateService.js` - CRUD operations and template usage
+- 8 API endpoints:
+  - GET /api/job-templates (list with filters)
+  - GET /api/job-templates/by-category (grouped by category)
+  - GET /api/job-templates/usage-stats (top 10 most-used)
+  - GET /api/job-templates/:id (single template)
+  - POST /api/job-templates (create new)
+  - POST /api/job-templates/from-job/:jobId (convert job to template)
+  - PUT /api/job-templates/:id (update)
+  - DELETE /api/job-templates/:id (soft delete)
+  - POST /api/job-templates/:id/use (create job from template)
+
+**Frontend Components:**
+- `JobTemplates.tsx` page - Template library with card grid, search, and category filters
+- `JobTemplateEditor.tsx` - Comprehensive modal form for creating/editing templates
+- `TemplateSelector.tsx` - Reusable template picker modal
+- Quick-create integration in Jobs page and Calendar page
+- All components follow dark theme with cyan accents
 
 ## External Dependencies
 
