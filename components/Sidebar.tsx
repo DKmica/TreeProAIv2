@@ -19,6 +19,7 @@ import DocumentTextIcon from './icons/DocumentTextIcon';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
+  { name: 'CRM', href: '/crm', icon: CustomerIcon },
   { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
   { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
   { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon },
