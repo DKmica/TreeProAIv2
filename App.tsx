@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import CRM from './pages/CRM';
 import Leads from './pages/Leads';
 import Quotes from './pages/Quotes';
 import Jobs from './pages/Jobs';
@@ -203,6 +204,8 @@ const App: React.FC = () => {
         <Route element={<Layout appState={appState} />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={customers} leads={leads} quotes={quotes} />} />
+          <Route path="/crm" element={<CRM />} />
+          <Route path="/crm/clients/:id" element={<div className="p-8"><h1 className="text-2xl font-bold">Client Detail Page</h1><p className="mt-4 text-brand-gray-600">This page will be implemented next.</p></div>} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
           <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
