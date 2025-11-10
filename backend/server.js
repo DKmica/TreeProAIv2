@@ -7200,10 +7200,9 @@ apiRouter.get('/crew-assignments/schedule', async (req, res) => {
       SELECT 
         ca.*,
         c.name as crew_name,
-        c.color as crew_color,
         j.id as job_id,
-        j.title as job_title,
-        j.client_name,
+        j.customer_name as job_title,
+        j.customer_name,
         j.status as job_status,
         j.scheduled_date,
         j.job_location,
@@ -7231,9 +7230,8 @@ apiRouter.get('/crew-assignments/schedule', async (req, res) => {
     const assignments = rows.map(row => ({
       ...transformRow(row, 'crew_assignments'),
       crewName: row.crew_name,
-      crewColor: row.crew_color,
       jobTitle: row.job_title,
-      clientName: row.client_name,
+      clientName: row.customer_name,
       jobStatus: row.job_status,
       scheduledDate: row.scheduled_date,
       jobLocation: row.job_location,
@@ -7264,8 +7262,8 @@ apiRouter.post('/crew-assignments/check-conflicts', async (req, res) => {
     let query = `
       SELECT 
         ca.*,
-        j.title as job_title,
-        j.client_name,
+        j.customer_name as job_title,
+        j.customer_name,
         j.job_location
       FROM crew_assignments ca
       JOIN jobs j ON ca.job_id = j.id
@@ -7611,8 +7609,8 @@ apiRouter.get('/time-entries', async (req, res) => {
       SELECT 
         te.*,
         e.name as employee_name,
-        j.title as job_title,
-        j.client_name as job_client_name
+        j.customer_name as job_title,
+        j.customer_name as job_client_name
       FROM time_entries te
       LEFT JOIN employees e ON te.employee_id = e.id
       LEFT JOIN jobs j ON te.job_id = j.id
@@ -7635,24 +7633,24 @@ apiRouter.get('/time-entries', async (req, res) => {
     }
     
     if (status) {
-      query += ` AND te.status = $${paramCount}`;
+      query += ` AND te.approval_status = $${paramCount}`;
       params.push(status);
       paramCount++;
     }
     
     if (startDate) {
-      query += ` AND te.clock_in >= $${paramCount}`;
+      query += ` AND te.clock_in_time >= $${paramCount}`;
       params.push(startDate);
       paramCount++;
     }
     
     if (endDate) {
-      query += ` AND te.clock_in <= $${paramCount}`;
+      query += ` AND te.clock_in_time <= $${paramCount}`;
       params.push(endDate);
       paramCount++;
     }
     
-    query += ` ORDER BY te.clock_in DESC LIMIT $${paramCount}`;
+    query += ` ORDER BY te.clock_in_time DESC LIMIT $${paramCount}`;
     params.push(parseInt(limit));
     
     const { rows } = await db.query(query, params);
