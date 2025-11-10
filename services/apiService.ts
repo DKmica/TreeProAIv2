@@ -68,7 +68,18 @@ export const quoteService = {
   remove: (id: string): Promise<void> => apiFetch<void>(`quotes/${id}`, { method: 'DELETE' }),
 };
 export const jobService = createApiService<Job>('jobs');
-export const invoiceService = createApiService<Invoice>('invoices');
+export const invoiceService = {
+  getAll: async (): Promise<Invoice[]> => {
+    const response = await apiFetch<{ success: boolean; data: Invoice[] }>('invoices');
+    return response.data ?? [];
+  },
+  getById: (id: string): Promise<Invoice> => apiFetch(`invoices/${id}`),
+  create: (data: Partial<Omit<Invoice, 'id'>>): Promise<Invoice> => apiFetch('invoices', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Invoice>): Promise<Invoice> => apiFetch(`invoices/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  remove: (id: string): Promise<void> => apiFetch<void>(`invoices/${id}`, { method: 'DELETE' }),
+  recordPayment: (invoiceId: string, paymentData: { amount: number; paymentDate: string; paymentMethod: string; referenceNumber?: string; notes?: string }): Promise<{ success: boolean; payment: any; invoice: Invoice }> =>
+    apiFetch(`invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(paymentData) }),
+};
 export const employeeService = createApiService<Employee>('employees');
 export const equipmentService = createApiService<Equipment>('equipment');
 export const payPeriodService = {

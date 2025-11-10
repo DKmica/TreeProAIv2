@@ -1,88 +1,266 @@
-
-import React, { useState, useMemo } from 'react';
-import { Invoice } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Invoice, Quote } from '../types';
+import { invoiceService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
-import QuickBooksIcon from '../components/icons/QuickBooksIcon';
-import StripeIcon from '../components/icons/StripeIcon';
-import { syncInvoiceToQuickBooks } from '../services/quickbooksService';
-import { createStripePaymentLink } from '../services/stripeService';
-import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
+import PlusCircleIcon from '../components/icons/PlusCircleIcon';
+import DocumentTextIcon from '../components/icons/DocumentTextIcon';
+import DollarIcon from '../components/icons/DollarIcon';
+import InvoiceEditor from '../components/InvoiceEditor';
+import PaymentRecorder from '../components/PaymentRecorder';
+import InvoiceTemplate from '../components/InvoiceTemplate';
+
+type StatusFilter = 'All' | 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
 
 interface InvoicesProps {
-  invoices: Invoice[];
-  quotes: any[]; // Kept quotes prop for potential future use, but not used in this version
+  invoices?: Invoice[];
+  quotes?: Quote[];
 }
 
-const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
+const Invoices: React.FC<InvoicesProps> = () => {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loadingStates, setLoadingStates] = useState<{[key: string]: {qb?: boolean, stripe?: boolean}}>({});
-  const [linkCopied, setLinkCopied] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+  
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isPaymentRecorderOpen, setIsPaymentRecorderOpen] = useState(false);
+  const [isTemplateOpen, setIsTemplateOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
 
-  const handleCopyLink = (invoiceId: string) => {
-    const url = `${window.location.origin}${window.location.pathname}#/portal/invoice/${invoiceId}`;
-    navigator.clipboard.writeText(url);
-    setLinkCopied(invoiceId);
-    setTimeout(() => setLinkCopied(''), 2000);
-  };
-
-  const handleSyncQB = async (invoice: Invoice) => {
-    setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], qb: true } }));
+  const fetchInvoices = async () => {
     try {
-      const result = await syncInvoiceToQuickBooks(invoice);
-      alert(`Successfully synced invoice ${invoice.id}. QuickBooks ID: ${result.qbInvoiceId}`);
-    } catch (error: any) {
-      alert(`Failed to sync invoice: ${error.message}`);
+      setLoading(true);
+      const data = await invoiceService.getAll();
+      setInvoices(data);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      alert('Failed to load invoices');
     } finally {
-      setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], qb: false } }));
+      setLoading(false);
     }
   };
 
-  const handlePayStripe = async (invoice: Invoice) => {
-    setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], stripe: true } }));
-     try {
-      const result = await createStripePaymentLink(invoice);
-      // In a real app, you would redirect to result.url
-      alert(`Stripe payment link created (simulation): ${result.url}`);
-    } catch (error: any) {
-      alert(`Failed to create payment link: ${error.message}`);
-    } finally {
-      setLoadingStates(prev => ({ ...prev, [invoice.id]: { ...prev[invoice.id], stripe: false } }));
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const calculateStatus = (invoice: Invoice): Invoice['status'] => {
+    if (invoice.status === 'Void' || invoice.status === 'Paid') {
+      return invoice.status;
     }
+    
+    if (invoice.amountDue <= 0) {
+      return 'Paid';
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(invoice.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    if (invoice.status === 'Sent' && dueDate < today) {
+      return 'Overdue';
+    }
+    
+    return invoice.status;
   };
 
-  const filteredInvoices = useMemo(() => invoices.filter(invoice =>
-    invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.amount.toString().includes(searchTerm) ||
-    invoice.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.dueDate.toLowerCase().includes(searchTerm.toLowerCase())
-  ), [invoices, searchTerm]);
+  const filteredInvoices = useMemo(() => {
+    let filtered = invoices;
+
+    if (statusFilter !== 'All') {
+      filtered = filtered.filter(invoice => {
+        const calculatedStatus = calculateStatus(invoice);
+        return calculatedStatus === statusFilter;
+      });
+    }
+
+    if (searchTerm) {
+      filtered = filtered.filter(invoice =>
+        (invoice.invoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.grandTotal.toString().includes(searchTerm)
+      );
+    }
+
+    return filtered.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
+  }, [invoices, statusFilter, searchTerm]);
 
   const getStatusColor = (status: Invoice['status']) => {
     switch (status) {
-        case 'Paid': return 'bg-green-100 text-green-800';
-        case 'Sent': return 'bg-blue-100 text-blue-800';
-        case 'Overdue': return 'bg-red-100 text-red-800';
-        default: return 'bg-yellow-100 text-yellow-800'; // Draft
+      case 'Paid': return 'bg-green-100 text-green-800';
+      case 'Sent': return 'bg-blue-100 text-blue-800';
+      case 'Overdue': return 'bg-red-100 text-red-800';
+      case 'Void': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-yellow-100 text-yellow-800';
     }
+  };
+
+  const getStatusCounts = () => {
+    return {
+      All: invoices.length,
+      Draft: invoices.filter(inv => calculateStatus(inv) === 'Draft').length,
+      Sent: invoices.filter(inv => calculateStatus(inv) === 'Sent').length,
+      Paid: invoices.filter(inv => calculateStatus(inv) === 'Paid').length,
+      Overdue: invoices.filter(inv => calculateStatus(inv) === 'Overdue').length,
+      Void: invoices.filter(inv => inv.status === 'Void').length,
+    };
+  };
+
+  const statusCounts = getStatusCounts();
+
+  const handleCreateInvoice = () => {
+    setSelectedInvoice(undefined);
+    setIsEditorOpen(true);
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsEditorOpen(true);
+  };
+
+  const handleRecordPayment = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsPaymentRecorderOpen(true);
+  };
+
+  const handleViewInvoice = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setIsTemplateOpen(true);
+  };
+
+  const handleSendInvoice = async (invoice: Invoice) => {
+    if (invoice.status !== 'Draft') {
+      alert('Only draft invoices can be sent');
+      return;
+    }
+
+    if (window.confirm(`Mark invoice ${invoice.invoiceNumber || invoice.id} as sent?`)) {
+      try {
+        const updated = await invoiceService.update(invoice.id, {
+          status: 'Sent',
+          sentDate: new Date().toISOString(),
+        });
+        setInvoices(prev => prev.map(inv => inv.id === updated.id ? updated : inv));
+        alert('Invoice marked as sent');
+      } catch (error: any) {
+        console.error('Error updating invoice:', error);
+        alert('Failed to update invoice: ' + error.message);
+      }
+    }
+  };
+
+  const handleDeleteInvoice = async (invoice: Invoice) => {
+    if (window.confirm(`Are you sure you want to delete invoice ${invoice.invoiceNumber || invoice.id}? This action cannot be undone.`)) {
+      try {
+        await invoiceService.remove(invoice.id);
+        setInvoices(prev => prev.filter(inv => inv.id !== invoice.id));
+        alert('Invoice deleted successfully');
+      } catch (error: any) {
+        console.error('Error deleting invoice:', error);
+        alert('Failed to delete invoice: ' + error.message);
+      }
+    }
+  };
+
+  const handleVoidInvoice = async (invoice: Invoice) => {
+    if (window.confirm(`Are you sure you want to void invoice ${invoice.invoiceNumber || invoice.id}?`)) {
+      try {
+        const updated = await invoiceService.update(invoice.id, { status: 'Void' });
+        setInvoices(prev => prev.map(inv => inv.id === updated.id ? updated : inv));
+        alert('Invoice voided');
+      } catch (error: any) {
+        console.error('Error voiding invoice:', error);
+        alert('Failed to void invoice: ' + error.message);
+      }
+    }
+  };
+
+  const handleInvoiceSaved = (savedInvoice: Invoice) => {
+    setInvoices(prev => {
+      const existing = prev.find(inv => inv.id === savedInvoice.id);
+      if (existing) {
+        return prev.map(inv => inv.id === savedInvoice.id ? savedInvoice : inv);
+      } else {
+        return [savedInvoice, ...prev];
+      }
+    });
+  };
+
+  const handlePaymentRecorded = (updatedInvoice: Invoice) => {
+    setInvoices(prev => prev.map(inv => inv.id === updatedInvoice.id ? updatedInvoice : inv));
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <SpinnerIcon className="h-8 w-8 text-brand-green-500" />
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="sm:flex sm:items-center">
+      <div className="sm:flex sm:items-center sm:justify-between">
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-bold text-brand-gray-900">Invoices</h1>
-          <p className="mt-2 text-sm text-brand-gray-700">A list of all invoices.</p>
+          <p className="mt-2 text-sm text-brand-gray-700">
+            Manage invoices, record payments, and track outstanding balances
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0">
+          <button
+            onClick={handleCreateInvoice}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-green-600 text-white rounded-md hover:bg-brand-green-700 transition-colors shadow-sm"
+          >
+            <PlusCircleIcon className="h-5 w-5" />
+            Create Invoice
+          </button>
         </div>
       </div>
 
       <div className="mt-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            {(['All', 'Draft', 'Sent', 'Paid', 'Overdue', 'Void'] as StatusFilter[]).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`
+                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${statusFilter === status
+                    ? 'border-brand-green-500 text-brand-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                {status}
+                <span className={`ml-2 py-0.5 px-2.5 rounded-full text-xs ${
+                  statusFilter === status ? 'bg-brand-green-100 text-brand-green-600' : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {statusCounts[status]}
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      <div className="mt-4">
         <input
           type="text"
-          placeholder="Search invoices..."
+          placeholder="Search by invoice number, customer, or amount..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="block w-full max-w-sm rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+          className="block w-full max-w-md rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
           aria-label="Search invoices"
         />
       </div>
@@ -94,53 +272,156 @@ const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
               <table className="min-w-full divide-y divide-brand-gray-300">
                 <thead className="bg-brand-gray-50">
                   <tr>
-                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-gray-900 sm:pl-6">Invoice ID</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Customer</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Amount</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Status</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">Due Date</th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brand-gray-900 sm:pl-6">
+                      Invoice #
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
+                      Customer
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
+                      Total
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
+                      Amount Due
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
+                      Status
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
+                      Due Date
+                    </th>
+                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                      <span className="sr-only">Actions</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-brand-gray-200 bg-white">
-                  {filteredInvoices.map((invoice) => (
-                    <tr key={invoice.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">{invoice.id}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{invoice.customerName}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">${invoice.amount.toFixed(2)}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{invoice.dueDate}</td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
-                        <div className="inline-flex rounded-md shadow-sm">
-                            <a href={`#/portal/invoice/${invoice.id}`} target="_blank" rel="noopener noreferrer" className="relative inline-flex items-center rounded-l-md bg-white px-2 py-1.5 text-sm font-semibold text-brand-gray-900 ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 focus:z-10">
-                                Link
-                            </a>
-                            <button onClick={() => handleCopyLink(invoice.id)} type="button" className="relative -ml-px inline-flex items-center rounded-r-md bg-white px-2 py-1.5 text-sm font-semibold text-brand-gray-900 ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 focus:z-10" title="Copy public link">
-                                <ClipboardSignatureIcon className="h-4 w-4 text-brand-gray-600" />
-                                {linkCopied === invoice.id && <span className="absolute -top-7 -right-1 text-xs bg-brand-gray-800 text-white px-2 py-0.5 rounded">Copied!</span>}
-                            </button>
-                        </div>
-                        <button onClick={() => handleSyncQB(invoice)} disabled={loadingStates[invoice.id]?.qb} className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50" title="Sync to QuickBooks">
-                          {loadingStates[invoice.id]?.qb ? <SpinnerIcon className="h-4 w-4" /> : <QuickBooksIcon className="h-4 w-4" />}
-                          QB
-                        </button>
-                        <button onClick={() => handlePayStripe(invoice)} disabled={loadingStates[invoice.id]?.stripe} className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-50" title="Pay with Stripe">
-                           {loadingStates[invoice.id]?.stripe ? <SpinnerIcon className="h-4 w-4" /> : <StripeIcon className="h-4 w-4" />}
-                           Pay
-                        </button>
+                  {filteredInvoices.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-sm text-gray-500">
+                        {searchTerm || statusFilter !== 'All' ? 'No invoices found matching your criteria' : 'No invoices yet. Create your first invoice to get started.'}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredInvoices.map((invoice) => {
+                      const displayStatus = calculateStatus(invoice);
+                      return (
+                        <tr key={invoice.id} className="hover:bg-gray-50">
+                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
+                            {invoice.invoiceNumber || invoice.id}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-700">
+                            {invoice.customerName}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-700">
+                            ${invoice.grandTotal.toFixed(2)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm">
+                            <span className={invoice.amountDue > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
+                              ${invoice.amountDue.toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(displayStatus)}`}>
+                              {displayStatus}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-700">
+                            {formatDate(invoice.dueDate)}
+                          </td>
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleViewInvoice(invoice)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                title="View Invoice"
+                              >
+                                <DocumentTextIcon className="h-4 w-4" />
+                                View
+                              </button>
+                              
+                              <button
+                                onClick={() => handleEditInvoice(invoice)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                title="Edit Invoice"
+                              >
+                                Edit
+                              </button>
+
+                              {displayStatus !== 'Paid' && displayStatus !== 'Void' && (
+                                <button
+                                  onClick={() => handleRecordPayment(invoice)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                                  title="Record Payment"
+                                >
+                                  <DollarIcon className="h-4 w-4" />
+                                  Pay
+                                </button>
+                              )}
+
+                              {invoice.status === 'Draft' && (
+                                <button
+                                  onClick={() => handleSendInvoice(invoice)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                  title="Send Invoice"
+                                >
+                                  Send
+                                </button>
+                              )}
+
+                              {invoice.status !== 'Void' && (
+                                <button
+                                  onClick={() => handleVoidInvoice(invoice)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                  title="Void Invoice"
+                                >
+                                  Void
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => handleDeleteInvoice(invoice)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                title="Delete Invoice"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
+
+      <InvoiceEditor
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        onSave={handleInvoiceSaved}
+        invoice={selectedInvoice}
+      />
+
+      {selectedInvoice && (
+        <>
+          <PaymentRecorder
+            isOpen={isPaymentRecorderOpen}
+            onClose={() => setIsPaymentRecorderOpen(false)}
+            onPaymentRecorded={handlePaymentRecorded}
+            invoice={selectedInvoice}
+          />
+
+          <InvoiceTemplate
+            isOpen={isTemplateOpen}
+            onClose={() => setIsTemplateOpen(false)}
+            invoice={selectedInvoice}
+          />
+        </>
+      )}
     </div>
   );
 };

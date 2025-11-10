@@ -10,6 +10,7 @@ import StateHistoryTimeline from '../components/StateHistoryTimeline';
 import XIcon from '../components/icons/XIcon';
 import TemplateSelector from '../components/TemplateSelector';
 import JobForms from '../components/JobForms';
+import InvoiceEditor from '../components/InvoiceEditor';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 
@@ -210,6 +211,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   const [viewingJobDetail, setViewingJobDetail] = useState<Job | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'transitions' | 'history'>('info');
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [isInvoiceEditorOpen, setIsInvoiceEditorOpen] = useState(false);
+  const [invoicePrefilledData, setInvoicePrefilledData] = useState<{ customerName?: string; jobId?: string; lineItems?: LineItem[] } | undefined>();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -302,20 +305,38 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
         return;
     }
 
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 30);
-    const newInvoice: Invoice = {
-      id: `inv-${Date.now()}`,
-      jobId: job.id,
+    const lineItems: LineItem[] = quote.lineItems.map(item => ({
+      description: item.description,
+      price: item.price,
+      selected: item.selected
+    }));
+
+    if (quote.stumpGrindingPrice && quote.stumpGrindingPrice > 0) {
+      lineItems.push({
+        description: 'Stump Grinding',
+        price: quote.stumpGrindingPrice,
+        selected: true
+      });
+    }
+
+    setInvoicePrefilledData({
       customerName: job.customerName,
-      status: 'Draft',
-      amount: calculateQuoteTotal(quote.lineItems, quote.stumpGrindingPrice || 0),
-      lineItems: quote.lineItems,
-      dueDate: dueDate.toISOString().split('T')[0],
-    };
-    setInvoices(prev => [newInvoice, ...prev]);
-    alert(`Invoice ${newInvoice.id} created successfully!`);
-    navigate('/invoices');
+      jobId: job.id,
+      lineItems: lineItems
+    });
+    setIsInvoiceEditorOpen(true);
+  };
+
+  const handleInvoiceSaved = (savedInvoice: Invoice) => {
+    setInvoices(prev => {
+      const existing = prev.find(inv => inv.id === savedInvoice.id);
+      if (existing) {
+        return prev.map(inv => inv.id === savedInvoice.id ? savedInvoice : inv);
+      } else {
+        return [savedInvoice, ...prev];
+      }
+    });
+    alert('Invoice created successfully!');
   };
 
   const handleCopyLink = (jobId: string) => {
@@ -712,6 +733,13 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
         isOpen={showTemplateSelector}
         onClose={() => setShowTemplateSelector(false)}
         onSelect={handleUseTemplate}
+      />
+
+      <InvoiceEditor
+        isOpen={isInvoiceEditorOpen}
+        onClose={() => setIsInvoiceEditorOpen(false)}
+        onSave={handleInvoiceSaved}
+        prefilledData={invoicePrefilledData}
       />
     </div>
   );

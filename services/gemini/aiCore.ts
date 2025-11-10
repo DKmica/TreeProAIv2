@@ -1149,6 +1149,7 @@ function getContextSummary(): string {
   const ctx = businessContext;
   
   const quotes = Array.isArray(ctx.quotes) ? ctx.quotes : [];
+  const invoices = Array.isArray(ctx.invoices) ? ctx.invoices : [];
   
   return JSON.stringify({
     summary: {
@@ -1165,8 +1166,8 @@ function getContextSummary(): string {
       totalEquipment: ctx.equipment.length,
       operationalEquipment: ctx.equipment.filter(e => e.status === 'Operational').length,
       needsMaintenanceEquipment: ctx.equipment.filter(e => e.status === 'Needs Maintenance').length,
-      totalInvoices: ctx.invoices.length,
-      unpaidInvoices: ctx.invoices.filter(i => i.status !== 'Paid').length,
+      totalInvoices: invoices.length,
+      unpaidInvoices: invoices.filter(i => i.status !== 'Paid').length,
       companyName: ctx.companyProfile?.companyName || 'Tree Service Company'
     },
     clients: ctx.clients.slice(0, 10).map(c => ({ id: c.id, firstName: c.firstName, lastName: c.lastName, companyName: c.companyName })),
@@ -1175,7 +1176,7 @@ function getContextSummary(): string {
     jobs: ctx.jobs.map(j => ({ id: j.id, customerName: j.customerName, status: j.status, scheduledDate: j.scheduledDate, assignedCrew: j.assignedCrew })),
     employees: ctx.employees.map(e => ({ id: e.id, name: e.name, jobTitle: e.jobTitle, payRate: e.payRate })),
     equipment: ctx.equipment.map(eq => ({ id: eq.id, name: eq.name, status: eq.status, lastServiceDate: eq.lastServiceDate })),
-    invoices: ctx.invoices.map(i => ({ id: i.id, customerName: i.customerName, status: i.status, amount: i.amount }))
+    invoices: invoices.map(i => ({ id: i.id, customerName: i.customerName, status: i.status, amount: i.amount }))
   }, null, 2);
 }
 
@@ -1445,13 +1446,15 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         return { success: true, employees: employeesByRole, count: employeesByRole.length };
 
       case 'trackTime':
+        const startTime = args.date ? new Date(args.date + 'T08:00:00Z').toISOString() : new Date().toISOString();
+        const endTime = args.date ? new Date(args.date + 'T' + (8 + (args.hours || 0)).toString().padStart(2, '0') + ':00:00Z').toISOString() : new Date(Date.now() + (args.hours || 0) * 60 * 60 * 1000).toISOString();
         const timeEntry = await timeEntryService.create({
           employeeId: args.employeeId,
           jobId: args.jobId,
-          date: args.date,
-          hoursWorked: args.hours,
-          hourlyRate: businessContext.employees.find(e => e.id === args.employeeId)?.payRate || 0,
-          createdAt: new Date().toISOString()
+          clockIn: startTime,
+          clockOut: endTime,
+          status: 'approved',
+          notes: `Tracked ${args.hours} hours via AI`
         });
         businessContext.timeEntries.push(timeEntry);
         return { success: true, timeEntry, message: `Tracked ${args.hours} hours for employee` };
