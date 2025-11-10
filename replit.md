@@ -39,6 +39,13 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
   - **Job Assignment System**: Atomic crew-to-job assignments with conflict detection, bulk operations, and reassignment capabilities. 4 backend endpoints with transactional guarantees.
   - **Calendar Integration**: New Crew view mode with Gantt-style schedule, drag-and-drop job assignments, real-time conflict warnings (visual indicators, tooltips, summary banners), and seamless integration with existing calendar views.
   - **Job Forms System**: Dynamic form templates and job-specific forms (safety checklists, inspections, work orders, approvals) with 7 field types, validation, completion tracking, and manager workflows. 12 backend endpoints, 5 seed templates, integrated into Jobs page.
+- **Phase 3A Invoice Management System (COMPLETE)**: Professional invoicing with comprehensive financial tracking:
+  - **Database Schema**: Enhanced invoices table with 21 fields including auto-generated invoice_number (INV-YYYY-####), tax_rate, discount_amount/percent, subtotal, payment tracking (amount_paid, amount_due), and payment_records table for payment history with CASCADE DELETE.
+  - **Backend API**: 8 RESTful endpoints providing full invoice lifecycle management - CRUD operations (create, read, update, delete), payment recording (POST /invoices/:id/payments), status management (Draft→Sent→Paid/Overdue→Void), and auto-calculation of subtotals, taxes, discounts, and totals.
+  - **Frontend Components**: 4 production-ready modals - InvoiceEditor (create/edit with LineItemBuilder, tax/discount calculations, validation), PaymentRecorder (partial payment support with balance tracking), InvoiceTemplate (professional print-ready view with payment history), and dynamic LineItemBuilder for flexible line item management.
+  - **Enhanced Invoices Page**: Complete CRUD interface with status filter tabs (All, Draft, Sent, Paid, Overdue, Void), color-coded status badges, search functionality, contextual actions (View, Edit, Pay, Send, Void, Delete), and real-time data refresh.
+  - **Invoice Workflow**: Professional status workflow (Draft→Sent→Paid/Overdue→Void) with automatic status updates on payment, overdue detection, and "Create from Job" functionality that pre-populates invoices from completed jobs with quote line items and customer data.
+  - **Production-Safe Migration**: CTE-based invoice_number migration for existing databases with NOT NULL constraint enforcement and year-based sequential numbering.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
