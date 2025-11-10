@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, MapPin, CheckCircle } from 'lucide-react';
 import { Employee, Job } from '../../types';
 
@@ -18,13 +18,13 @@ export default function ClockInOut({ employees, onClockAction }: ClockInOutProps
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
 
-  useState(() => {
+  useEffect(() => {
     loadJobs();
     if (employees.length > 0) {
       setSelectedEmployee(employees[0].id);
       checkActiveEntry(employees[0].id);
     }
-  });
+  }, [employees]);
 
   const loadJobs = async () => {
     try {

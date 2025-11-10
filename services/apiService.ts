@@ -188,7 +188,10 @@ export const jobTemplateService = {
 };
 
 export const crewService = {
-  getAll: (): Promise<Crew[]> => apiFetch('crews'),
+  getAll: async (): Promise<Crew[]> => {
+    const response = await apiFetch<{ success: boolean; data: Crew[] }>('crews');
+    return response.data ?? [];
+  },
   getById: (id: string): Promise<Crew> => apiFetch(`crews/${id}`),
   create: (data: Partial<Omit<Crew, 'id'>>): Promise<Crew> => apiFetch('crews', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Crew>): Promise<Crew> => apiFetch(`crews/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -246,9 +249,13 @@ export const formService = {
     if (filters?.category) params.category = filters.category;
     if (filters?.search) params.search = filters.search;
     const queryString = new URLSearchParams(params).toString();
-    return apiFetch(`form-templates${queryString ? `?${queryString}` : ''}`);
+    const response = await apiFetch<{ success: boolean; data: FormTemplate[] }>(`form-templates${queryString ? `?${queryString}` : ''}`);
+    return response.data ?? [];
   },
-  getCategories: (): Promise<string[]> => apiFetch('form-templates/categories'),
+  getCategories: async (): Promise<string[]> => {
+    const response = await apiFetch<{ success: boolean; data: string[] }>('form-templates/categories');
+    return response.data ?? [];
+  },
   getTemplate: (id: string): Promise<FormTemplate> => apiFetch(`form-templates/${id}`),
   createTemplate: (data: Partial<Omit<FormTemplate, 'id'>>): Promise<FormTemplate> => 
     apiFetch('form-templates', { method: 'POST', body: JSON.stringify(data) }),

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Clock, CheckCircle, XCircle, Calendar, DollarSign } from 'lucide-react';
-import { TimeEntry, Timesheet, Employee } from '../../types';
-import { timeEntryService, employeeService } from '../../services/apiService';
-import ClockInOut from '../components/ClockInOut';
-import TimesheetApproval from '../components/TimesheetApproval';
+import { TimeEntry, Timesheet, Employee } from '../types';
+import { timeEntryService, employeeService } from '../services/apiService';
+import ClockInOut from '../src/components/ClockInOut';
+import TimesheetApproval from '../src/components/TimesheetApproval';
 
 type TabType = 'clock' | 'entries' | 'approval' | 'timesheets';
 

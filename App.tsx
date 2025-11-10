@@ -10,7 +10,7 @@ import FormTemplates from './pages/FormTemplates';
 import Invoices from './pages/Invoices';
 import Calendar from './pages/Calendar';
 import Crews from './pages/Crews';
-import TimeTracking from './src/pages/TimeTracking';
+import TimeTracking from './pages/TimeTracking';
 import Employees from './pages/Employees';
 import Equipment from './pages/Equipment';
 import Marketing from './pages/Marketing';
