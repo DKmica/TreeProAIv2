@@ -740,6 +740,142 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform invoices fields
+  if (tableName === 'invoices') {
+    if (row.job_id !== undefined) {
+      transformed.jobId = row.job_id;
+      delete transformed.job_id;
+    }
+    if (row.client_id !== undefined) {
+      transformed.clientId = row.client_id;
+      delete transformed.client_id;
+    }
+    if (row.property_id !== undefined) {
+      transformed.propertyId = row.property_id;
+      delete transformed.property_id;
+    }
+    if (row.customer_name !== undefined) {
+      transformed.customerName = row.customer_name;
+      delete transformed.customer_name;
+    }
+    if (row.invoice_number !== undefined) {
+      transformed.invoiceNumber = row.invoice_number;
+      delete transformed.invoice_number;
+    }
+    if (row.issue_date !== undefined) {
+      transformed.issueDate = row.issue_date;
+      delete transformed.issue_date;
+    }
+    if (row.sent_date !== undefined) {
+      transformed.sentDate = row.sent_date;
+      delete transformed.sent_date;
+    }
+    if (row.due_date !== undefined) {
+      transformed.dueDate = row.due_date;
+      delete transformed.due_date;
+    }
+    if (row.paid_at !== undefined) {
+      transformed.paidAt = row.paid_at;
+      delete transformed.paid_at;
+    }
+    if (row.line_items !== undefined) {
+      transformed.lineItems = row.line_items;
+      delete transformed.line_items;
+    }
+    if (row.subtotal !== undefined) {
+      transformed.subtotal = (row.subtotal !== null && row.subtotal !== '') ? parseFloat(row.subtotal) : row.subtotal;
+      delete transformed.subtotal;
+    }
+    if (row.discount_amount !== undefined) {
+      transformed.discountAmount = (row.discount_amount !== null && row.discount_amount !== '') ? parseFloat(row.discount_amount) : row.discount_amount;
+      delete transformed.discount_amount;
+    }
+    if (row.discount_percentage !== undefined) {
+      transformed.discountPercentage = (row.discount_percentage !== null && row.discount_percentage !== '') ? parseFloat(row.discount_percentage) : row.discount_percentage;
+      delete transformed.discount_percentage;
+    }
+    if (row.tax_rate !== undefined) {
+      transformed.taxRate = (row.tax_rate !== null && row.tax_rate !== '') ? parseFloat(row.tax_rate) : row.tax_rate;
+      delete transformed.tax_rate;
+    }
+    if (row.tax_amount !== undefined) {
+      transformed.taxAmount = (row.tax_amount !== null && row.tax_amount !== '') ? parseFloat(row.tax_amount) : row.tax_amount;
+      delete transformed.tax_amount;
+    }
+    if (row.total_amount !== undefined) {
+      transformed.totalAmount = (row.total_amount !== null && row.total_amount !== '') ? parseFloat(row.total_amount) : row.total_amount;
+      delete transformed.total_amount;
+    }
+    if (row.grand_total !== undefined) {
+      transformed.grandTotal = (row.grand_total !== null && row.grand_total !== '') ? parseFloat(row.grand_total) : row.grand_total;
+      delete transformed.grand_total;
+    }
+    if (row.amount_paid !== undefined) {
+      transformed.amountPaid = (row.amount_paid !== null && row.amount_paid !== '') ? parseFloat(row.amount_paid) : row.amount_paid;
+      delete transformed.amount_paid;
+    }
+    if (row.amount_due !== undefined) {
+      transformed.amountDue = (row.amount_due !== null && row.amount_due !== '') ? parseFloat(row.amount_due) : row.amount_due;
+      delete transformed.amount_due;
+    }
+    if (row.payment_terms !== undefined) {
+      transformed.paymentTerms = row.payment_terms;
+      delete transformed.payment_terms;
+    }
+    if (row.customer_email !== undefined) {
+      transformed.customerEmail = row.customer_email;
+      delete transformed.customer_email;
+    }
+    if (row.customer_phone !== undefined) {
+      transformed.customerPhone = row.customer_phone;
+      delete transformed.customer_phone;
+    }
+    if (row.customer_address !== undefined) {
+      transformed.customerAddress = row.customer_address;
+      delete transformed.customer_address;
+    }
+    if (row.customer_notes !== undefined) {
+      transformed.customerNotes = row.customer_notes;
+      delete transformed.customer_notes;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+  }
+  
+  // Transform payment_records fields
+  if (tableName === 'payment_records') {
+    if (row.invoice_id !== undefined) {
+      transformed.invoiceId = row.invoice_id;
+      delete transformed.invoice_id;
+    }
+    if (row.payment_date !== undefined) {
+      transformed.paymentDate = row.payment_date;
+      delete transformed.payment_date;
+    }
+    if (row.payment_method !== undefined) {
+      transformed.paymentMethod = row.payment_method;
+      delete transformed.payment_method;
+    }
+    if (row.transaction_id !== undefined) {
+      transformed.transactionId = row.transaction_id;
+      delete transformed.transaction_id;
+    }
+    if (row.reference_number !== undefined) {
+      transformed.referenceNumber = row.reference_number;
+      delete transformed.reference_number;
+    }
+    if (row.recorded_by !== undefined) {
+      transformed.recordedBy = row.recorded_by;
+      delete transformed.recorded_by;
+    }
+    if (row.created_at !== undefined) {
+      transformed.createdAt = row.created_at;
+      delete transformed.created_at;
+    }
+  }
+  
   // Transform other snake_case fields
   if (row.created_at !== undefined) {
     transformed.createdAt = row.created_at;
@@ -1186,6 +1322,134 @@ const transformToDb = (data, tableName) => {
     }
   }
   
+  // Transform invoices fields
+  if (tableName === 'invoices') {
+    if (data.jobId !== undefined) {
+      transformed.job_id = data.jobId;
+      delete transformed.jobId;
+    }
+    if (data.clientId !== undefined) {
+      transformed.client_id = data.clientId;
+      delete transformed.clientId;
+    }
+    if (data.propertyId !== undefined) {
+      transformed.property_id = data.propertyId;
+      delete transformed.propertyId;
+    }
+    if (data.customerName !== undefined) {
+      transformed.customer_name = data.customerName;
+      delete transformed.customerName;
+    }
+    if (data.invoiceNumber !== undefined) {
+      transformed.invoice_number = data.invoiceNumber;
+      delete transformed.invoiceNumber;
+    }
+    if (data.issueDate !== undefined) {
+      transformed.issue_date = data.issueDate;
+      delete transformed.issueDate;
+    }
+    if (data.sentDate !== undefined) {
+      transformed.sent_date = data.sentDate;
+      delete transformed.sentDate;
+    }
+    if (data.dueDate !== undefined) {
+      transformed.due_date = data.dueDate;
+      delete transformed.dueDate;
+    }
+    if (data.paidAt !== undefined) {
+      transformed.paid_at = data.paidAt;
+      delete transformed.paidAt;
+    }
+    if (data.lineItems !== undefined) {
+      transformed.line_items = data.lineItems;
+      delete transformed.lineItems;
+    }
+    if (data.discountAmount !== undefined) {
+      transformed.discount_amount = data.discountAmount;
+      delete transformed.discountAmount;
+    }
+    if (data.discountPercentage !== undefined) {
+      transformed.discount_percentage = data.discountPercentage;
+      delete transformed.discountPercentage;
+    }
+    if (data.taxRate !== undefined) {
+      transformed.tax_rate = data.taxRate;
+      delete transformed.taxRate;
+    }
+    if (data.taxAmount !== undefined) {
+      transformed.tax_amount = data.taxAmount;
+      delete transformed.taxAmount;
+    }
+    if (data.totalAmount !== undefined) {
+      transformed.total_amount = data.totalAmount;
+      delete transformed.totalAmount;
+    }
+    if (data.grandTotal !== undefined) {
+      transformed.grand_total = data.grandTotal;
+      delete transformed.grandTotal;
+    }
+    if (data.amountPaid !== undefined) {
+      transformed.amount_paid = data.amountPaid;
+      delete transformed.amountPaid;
+    }
+    if (data.amountDue !== undefined) {
+      transformed.amount_due = data.amountDue;
+      delete transformed.amountDue;
+    }
+    if (data.paymentTerms !== undefined) {
+      transformed.payment_terms = data.paymentTerms;
+      delete transformed.paymentTerms;
+    }
+    if (data.customerEmail !== undefined) {
+      transformed.customer_email = data.customerEmail;
+      delete transformed.customerEmail;
+    }
+    if (data.customerPhone !== undefined) {
+      transformed.customer_phone = data.customerPhone;
+      delete transformed.customerPhone;
+    }
+    if (data.customerAddress !== undefined) {
+      transformed.customer_address = data.customerAddress;
+      delete transformed.customerAddress;
+    }
+    if (data.customerNotes !== undefined) {
+      transformed.customer_notes = data.customerNotes;
+      delete transformed.customerNotes;
+    }
+    if (data.updatedAt !== undefined) {
+      transformed.updated_at = data.updatedAt;
+      delete transformed.updatedAt;
+    }
+  }
+  
+  // Transform payment_records fields
+  if (tableName === 'payment_records') {
+    if (data.invoiceId !== undefined) {
+      transformed.invoice_id = data.invoiceId;
+      delete transformed.invoiceId;
+    }
+    if (data.paymentDate !== undefined) {
+      transformed.payment_date = data.paymentDate;
+      delete transformed.paymentDate;
+    }
+    if (data.paymentMethod !== undefined) {
+      transformed.payment_method = data.paymentMethod;
+      delete transformed.paymentMethod;
+    }
+    if (data.transactionId !== undefined) {
+      transformed.transaction_id = data.transactionId;
+      delete transformed.transactionId;
+    }
+    if (data.referenceNumber !== undefined) {
+      transformed.reference_number = data.referenceNumber;
+      delete transformed.referenceNumber;
+    }
+    if (data.recordedBy !== undefined) {
+      transformed.recorded_by = data.recordedBy;
+      delete transformed.recordedBy;
+    }
+  }
+  
   if (data.createdAt !== undefined) {
     transformed.created_at = data.createdAt;
     delete transformed.createdAt;
@@ -1225,6 +1489,13 @@ const transformToDb = (data, tableName) => {
   if (tableName === 'equipment') {
     if (transformed.maintenance_history !== undefined && typeof transformed.maintenance_history === 'object') {
       transformed.maintenance_history = JSON.stringify(transformed.maintenance_history);
+    }
+  }
+  
+  // Invoices table JSONB fields
+  if (tableName === 'invoices') {
+    if (transformed.line_items !== undefined && typeof transformed.line_items === 'object') {
+      transformed.line_items = JSON.stringify(transformed.line_items);
     }
   }
   
@@ -7301,7 +7572,7 @@ apiRouter.post('/crew-assignments/check-conflicts', async (req, res) => {
 
 // POST /api/crew-assignments/bulk-assign - Bulk assign crew to multiple dates
 apiRouter.post('/crew-assignments/bulk-assign', async (req, res) => {
-  const client = await db.pool.connect();
+  const client = await db.getClient();
   
   try {
     const { crew_id, job_id, dates, notes } = req.body;
@@ -7460,6 +7731,583 @@ apiRouter.put('/crew-assignments/:id/reassign', async (req, res) => {
       success: true,
       data: transformRow(rows[0], 'crew_assignments'),
       message: 'Assignment reassigned successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// INVOICE MANAGEMENT ENDPOINTS (Phase 3A)
+// ============================================================================
+
+// Helper function to generate invoice number: INV-YYYY-####
+const generateInvoiceNumber = async () => {
+  const currentYear = new Date().getFullYear();
+  const prefix = `INV-${currentYear}-`;
+  
+  // Query for the highest invoice number for the current year
+  const query = `
+    SELECT invoice_number 
+    FROM invoices 
+    WHERE invoice_number LIKE $1
+    ORDER BY invoice_number DESC 
+    LIMIT 1
+  `;
+  
+  const { rows } = await db.query(query, [`${prefix}%`]);
+  
+  let nextNumber = 1;
+  if (rows.length > 0) {
+    // Extract the number part and increment
+    const lastNumber = rows[0].invoice_number.split('-')[2];
+    nextNumber = parseInt(lastNumber, 10) + 1;
+  }
+  
+  // Format with leading zeros (4 digits)
+  const invoiceNumber = `${prefix}${String(nextNumber).padStart(4, '0')}`;
+  return invoiceNumber;
+};
+
+// Helper function to calculate invoice totals
+const calculateInvoiceTotals = (lineItems, discountAmount = 0, discountPercentage = 0, taxRate = 0) => {
+  // Calculate subtotal from line items
+  const subtotal = lineItems.reduce((sum, item) => {
+    const price = parseFloat(item.price) || 0;
+    return sum + price;
+  }, 0);
+  
+  // Apply discount
+  let totalDiscount = parseFloat(discountAmount) || 0;
+  if (discountPercentage > 0) {
+    totalDiscount = subtotal * (parseFloat(discountPercentage) / 100);
+  }
+  
+  const totalAmount = subtotal - totalDiscount;
+  
+  // Calculate tax
+  const taxAmount = totalAmount * (parseFloat(taxRate) / 100);
+  
+  // Calculate grand total
+  const grandTotal = totalAmount + taxAmount;
+  
+  return {
+    subtotal: parseFloat(subtotal.toFixed(2)),
+    discountAmount: parseFloat(totalDiscount.toFixed(2)),
+    discountPercentage: parseFloat(discountPercentage) || 0,
+    taxRate: parseFloat(taxRate) || 0,
+    taxAmount: parseFloat(taxAmount.toFixed(2)),
+    totalAmount: parseFloat(totalAmount.toFixed(2)),
+    grandTotal: parseFloat(grandTotal.toFixed(2))
+  };
+};
+
+// POST /api/invoices - Create new invoice with auto-generated invoice_number
+apiRouter.post('/invoices', async (req, res) => {
+  try {
+    const invoiceData = req.body;
+    
+    // Validate required fields
+    if (!invoiceData.customerName) {
+      return res.status(400).json({
+        success: false,
+        error: 'customerName is required'
+      });
+    }
+    
+    if (!invoiceData.lineItems || !Array.isArray(invoiceData.lineItems) || invoiceData.lineItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'lineItems is required and must be a non-empty array'
+      });
+    }
+    
+    // Generate invoice number
+    const invoiceNumber = await generateInvoiceNumber();
+    
+    // Calculate totals
+    const totals = calculateInvoiceTotals(
+      invoiceData.lineItems,
+      invoiceData.discountAmount || 0,
+      invoiceData.discountPercentage || 0,
+      invoiceData.taxRate || 0
+    );
+    
+    // Prepare invoice data
+    const id = uuidv4();
+    const status = invoiceData.status || 'Draft';
+    const issueDate = invoiceData.issueDate || new Date().toISOString().split('T')[0];
+    const dueDate = invoiceData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const paymentTerms = invoiceData.paymentTerms || 'Net 30';
+    
+    // For backward compatibility, set amount field
+    const amount = totals.grandTotal;
+    
+    // Calculate amount_due (grand_total - amount_paid)
+    const amountPaid = 0;
+    const amountDue = totals.grandTotal;
+    
+    const query = `
+      INSERT INTO invoices (
+        id, job_id, client_id, property_id, customer_name, status,
+        invoice_number, issue_date, due_date, 
+        line_items, subtotal, discount_amount, discount_percentage,
+        tax_rate, tax_amount, total_amount, grand_total,
+        amount_paid, amount_due, payment_terms,
+        customer_email, customer_phone, customer_address,
+        notes, customer_notes, amount
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9,
+        $10, $11, $12, $13,
+        $14, $15, $16, $17,
+        $18, $19, $20,
+        $21, $22, $23,
+        $24, $25, $26
+      )
+      RETURNING *
+    `;
+    
+    const values = [
+      id,
+      invoiceData.jobId || null,
+      invoiceData.clientId || null,
+      invoiceData.propertyId || null,
+      invoiceData.customerName,
+      status,
+      invoiceNumber,
+      issueDate,
+      dueDate,
+      JSON.stringify(invoiceData.lineItems),
+      totals.subtotal,
+      totals.discountAmount,
+      totals.discountPercentage,
+      totals.taxRate,
+      totals.taxAmount,
+      totals.totalAmount,
+      totals.grandTotal,
+      amountPaid,
+      amountDue,
+      paymentTerms,
+      invoiceData.customerEmail || null,
+      invoiceData.customerPhone || null,
+      invoiceData.customerAddress || null,
+      invoiceData.notes || null,
+      invoiceData.customerNotes || null,
+      amount
+    ];
+    
+    const { rows } = await db.query(query, values);
+    const result = transformRow(rows[0], 'invoices');
+    
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: `Invoice ${invoiceNumber} created successfully`
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/invoices - List invoices with filtering
+apiRouter.get('/invoices', async (req, res) => {
+  try {
+    const { status, clientId, startDate, endDate, page = 1, limit = 50 } = req.query;
+    
+    let query = 'SELECT * FROM invoices WHERE 1=1';
+    const params = [];
+    let paramCount = 1;
+    
+    if (status) {
+      query += ` AND status = $${paramCount++}`;
+      params.push(status);
+    }
+    
+    if (clientId) {
+      query += ` AND client_id = $${paramCount++}`;
+      params.push(clientId);
+    }
+    
+    if (startDate) {
+      query += ` AND issue_date >= $${paramCount++}`;
+      params.push(startDate);
+    }
+    
+    if (endDate) {
+      query += ` AND issue_date <= $${paramCount++}`;
+      params.push(endDate);
+    }
+    
+    query += ' ORDER BY created_at DESC';
+    
+    // Add pagination
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    query += ` LIMIT $${paramCount++} OFFSET $${paramCount++}`;
+    params.push(parseInt(limit), offset);
+    
+    const { rows } = await db.query(query, params);
+    
+    // Get payment records for each invoice
+    const invoicesWithPayments = await Promise.all(rows.map(async (invoice) => {
+      const paymentQuery = 'SELECT * FROM payment_records WHERE invoice_id = $1 ORDER BY payment_date DESC';
+      const { rows: payments } = await db.query(paymentQuery, [invoice.id]);
+      
+      const transformed = transformRow(invoice, 'invoices');
+      transformed.payments = payments.map(p => transformRow(p, 'payment_records'));
+      
+      return transformed;
+    }));
+    
+    res.json({
+      success: true,
+      data: invoicesWithPayments
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/invoices/:id - Get single invoice with related data
+apiRouter.get('/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get invoice
+    const invoiceQuery = 'SELECT * FROM invoices WHERE id = $1';
+    const { rows: invoiceRows } = await db.query(invoiceQuery, [id]);
+    
+    if (invoiceRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    const invoice = transformRow(invoiceRows[0], 'invoices');
+    
+    // Get payment records
+    const paymentQuery = 'SELECT * FROM payment_records WHERE invoice_id = $1 ORDER BY payment_date DESC';
+    const { rows: payments } = await db.query(paymentQuery, [id]);
+    invoice.payments = payments.map(p => transformRow(p, 'payment_records'));
+    
+    // Optionally get related job, client, property
+    if (invoice.jobId) {
+      const jobQuery = 'SELECT * FROM jobs WHERE id = $1';
+      const { rows: jobRows } = await db.query(jobQuery, [invoice.jobId]);
+      if (jobRows.length > 0) {
+        invoice.job = transformRow(jobRows[0], 'jobs');
+      }
+    }
+    
+    if (invoice.clientId) {
+      const clientQuery = 'SELECT * FROM clients WHERE id = $1';
+      const { rows: clientRows } = await db.query(clientQuery, [invoice.clientId]);
+      if (clientRows.length > 0) {
+        invoice.client = transformRow(clientRows[0], 'clients');
+      }
+    }
+    
+    res.json({
+      success: true,
+      data: invoice
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/invoices/:id - Update invoice with status management
+apiRouter.put('/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // Get current invoice
+    const currentQuery = 'SELECT * FROM invoices WHERE id = $1';
+    const { rows: currentRows } = await db.query(currentQuery, [id]);
+    
+    if (currentRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    const currentInvoice = currentRows[0];
+    
+    // Recalculate totals if lineItems or financial fields changed
+    let totals = {};
+    if (updates.lineItems || updates.discountAmount !== undefined || updates.discountPercentage !== undefined || updates.taxRate !== undefined) {
+      const lineItems = updates.lineItems || currentInvoice.line_items;
+      const discountAmount = updates.discountAmount !== undefined ? updates.discountAmount : currentInvoice.discount_amount;
+      const discountPercentage = updates.discountPercentage !== undefined ? updates.discountPercentage : currentInvoice.discount_percentage;
+      const taxRate = updates.taxRate !== undefined ? updates.taxRate : currentInvoice.tax_rate;
+      
+      totals = calculateInvoiceTotals(lineItems, discountAmount, discountPercentage, taxRate);
+      
+      // Update amount_due based on new grand_total
+      totals.amountDue = totals.grandTotal - (currentInvoice.amount_paid || 0);
+    }
+    
+    // Handle status transitions
+    const newStatus = updates.status || currentInvoice.status;
+    let sentDate = currentInvoice.sent_date;
+    let paidAt = currentInvoice.paid_at;
+    
+    if (newStatus === 'Sent' && currentInvoice.status !== 'Sent' && !sentDate) {
+      sentDate = new Date().toISOString();
+    }
+    
+    if (newStatus === 'Paid' && currentInvoice.status !== 'Paid' && !paidAt) {
+      paidAt = new Date().toISOString();
+    }
+    
+    // Build update query
+    const updateData = transformToDb(updates, 'invoices');
+    
+    // Override with calculated totals if they exist
+    if (Object.keys(totals).length > 0) {
+      updateData.subtotal = totals.subtotal;
+      updateData.discount_amount = totals.discountAmount;
+      updateData.discount_percentage = totals.discountPercentage;
+      updateData.tax_rate = totals.taxRate;
+      updateData.tax_amount = totals.taxAmount;
+      updateData.total_amount = totals.totalAmount;
+      updateData.grand_total = totals.grandTotal;
+      updateData.amount_due = totals.amountDue;
+      updateData.amount = totals.grandTotal; // For backward compatibility
+    }
+    
+    // Override status transition dates
+    if (updates.status) {
+      updateData.status = newStatus;
+    }
+    if (sentDate && sentDate !== currentInvoice.sent_date) {
+      updateData.sent_date = sentDate;
+    }
+    if (paidAt && paidAt !== currentInvoice.paid_at) {
+      updateData.paid_at = paidAt;
+    }
+    
+    updateData.updated_at = new Date().toISOString();
+    
+    // Remove undefined and id fields
+    delete updateData.id;
+    delete updateData.created_at;
+    delete updateData.invoice_number; // Don't allow changing invoice number
+    
+    const columns = Object.keys(updateData).filter(key => updateData[key] !== undefined);
+    const values = columns.map(key => updateData[key]);
+    const setString = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
+    
+    const query = `UPDATE invoices SET ${setString} WHERE id = $1 RETURNING *`;
+    const { rows } = await db.query(query, [id, ...values]);
+    
+    const result = transformRow(rows[0], 'invoices');
+    
+    res.json({
+      success: true,
+      data: result,
+      message: 'Invoice updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /api/invoices/:id - Void/soft delete invoice
+apiRouter.delete('/invoices/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if invoice exists
+    const checkQuery = 'SELECT * FROM invoices WHERE id = $1';
+    const { rows: checkRows } = await db.query(checkQuery, [id]);
+    
+    if (checkRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    // Soft delete by setting status to 'Void'
+    const query = `
+      UPDATE invoices 
+      SET status = 'Void', updated_at = NOW()
+      WHERE id = $1 
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [id]);
+    const result = transformRow(rows[0], 'invoices');
+    
+    res.json({
+      success: true,
+      data: result,
+      message: 'Invoice voided successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/invoices/:id/payments - Record a payment against an invoice
+apiRouter.post('/invoices/:id/payments', async (req, res) => {
+  const client = await db.getClient();
+  
+  try {
+    const { id: invoiceId } = req.params;
+    const { amount, paymentDate, paymentMethod, transactionId, referenceNumber, notes, recordedBy } = req.body;
+    
+    // Validate required fields
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'amount is required and must be greater than 0'
+      });
+    }
+    
+    if (!paymentMethod) {
+      return res.status(400).json({
+        success: false,
+        error: 'paymentMethod is required'
+      });
+    }
+    
+    await client.query('BEGIN');
+    
+    // Get current invoice
+    const invoiceQuery = 'SELECT * FROM invoices WHERE id = $1';
+    const { rows: invoiceRows } = await client.query(invoiceQuery, [invoiceId]);
+    
+    if (invoiceRows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    const invoice = invoiceRows[0];
+    
+    // Check if payment amount exceeds amount due
+    const currentAmountDue = parseFloat(invoice.amount_due || invoice.grand_total || invoice.amount || 0);
+    const paymentAmount = parseFloat(amount);
+    
+    if (paymentAmount > currentAmountDue) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: `Payment amount ($${paymentAmount}) exceeds amount due ($${currentAmountDue})`
+      });
+    }
+    
+    // Insert payment record
+    const paymentId = uuidv4();
+    const paymentInsertQuery = `
+      INSERT INTO payment_records (
+        id, invoice_id, amount, payment_date, payment_method,
+        transaction_id, reference_number, notes, recorded_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `;
+    
+    const paymentValues = [
+      paymentId,
+      invoiceId,
+      paymentAmount,
+      paymentDate || new Date().toISOString().split('T')[0],
+      paymentMethod,
+      transactionId || null,
+      referenceNumber || null,
+      notes || null,
+      recordedBy || null
+    ];
+    
+    const { rows: paymentRows } = await client.query(paymentInsertQuery, paymentValues);
+    
+    // Update invoice amounts
+    const newAmountPaid = parseFloat(invoice.amount_paid || 0) + paymentAmount;
+    const newAmountDue = currentAmountDue - paymentAmount;
+    
+    // Determine new status
+    let newStatus = invoice.status;
+    let paidAt = invoice.paid_at;
+    
+    if (newAmountDue <= 0.01) { // Account for floating point precision
+      newStatus = 'Paid';
+      paidAt = paidAt || new Date().toISOString();
+    }
+    
+    // Update invoice
+    const invoiceUpdateQuery = `
+      UPDATE invoices 
+      SET 
+        amount_paid = $1,
+        amount_due = $2,
+        status = $3,
+        paid_at = $4,
+        updated_at = NOW()
+      WHERE id = $5
+      RETURNING *
+    `;
+    
+    const { rows: updatedInvoiceRows } = await client.query(invoiceUpdateQuery, [
+      newAmountPaid,
+      newAmountDue,
+      newStatus,
+      paidAt,
+      invoiceId
+    ]);
+    
+    await client.query('COMMIT');
+    
+    const payment = transformRow(paymentRows[0], 'payment_records');
+    const updatedInvoice = transformRow(updatedInvoiceRows[0], 'invoices');
+    
+    res.status(201).json({
+      success: true,
+      data: {
+        payment,
+        invoice: updatedInvoice
+      },
+      message: `Payment of $${paymentAmount} recorded successfully`
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    handleError(res, err);
+  } finally {
+    client.release();
+  }
+});
+
+// GET /api/invoices/:id/payments - Get all payments for an invoice
+apiRouter.get('/invoices/:id/payments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if invoice exists
+    const invoiceQuery = 'SELECT id FROM invoices WHERE id = $1';
+    const { rows: invoiceRows } = await db.query(invoiceQuery, [id]);
+    
+    if (invoiceRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    // Get payment records
+    const paymentQuery = 'SELECT * FROM payment_records WHERE invoice_id = $1 ORDER BY payment_date DESC, created_at DESC';
+    const { rows } = await db.query(paymentQuery, [id]);
+    
+    const payments = rows.map(row => transformRow(row, 'payment_records'));
+    
+    res.json({
+      success: true,
+      data: payments
     });
   } catch (err) {
     handleError(res, err);
@@ -7944,7 +8792,7 @@ apiRouter.put('/timesheets/:id/approve', async (req, res) => {
 // GENERIC CRUD ENDPOINTS
 // ============================================================================
 
-const resources = ['clients', 'leads', 'jobs', 'invoices', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
+const resources = ['clients', 'leads', 'jobs', 'employees', 'equipment', 'pay_periods', 'time_entries', 'payroll_records', 'estimate_feedback'];
 resources.forEach(resource => {
   setupCrudEndpoints(apiRouter, resource);
 });

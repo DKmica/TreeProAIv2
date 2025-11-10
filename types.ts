@@ -155,13 +155,68 @@ export interface Job {
 
 export interface Invoice {
   id: string;
-  jobId: string;
+  jobId?: string;
+  clientId?: string;
+  propertyId?: string;
   customerName: string;
-  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue';
-  amount: number;
-  lineItems: LineItem[];
+  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
+  
+  // Invoice identification
+  invoiceNumber: string;
+  issueDate: string;
+  sentDate?: string;
   dueDate: string;
-  paidAt?: string; // ISO date string
+  paidAt?: string;
+  
+  // Line items and amounts
+  lineItems: LineItem[];
+  subtotal: number;
+  discountAmount: number;
+  discountPercentage: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  grandTotal: number;
+  
+  // Payment tracking
+  amountPaid: number;
+  amountDue: number;
+  paymentTerms: string;
+  
+  // Customer information
+  customerEmail?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  
+  // Notes
+  notes?: string;
+  customerNotes?: string;
+  
+  // Legacy field for backward compatibility
+  amount: number;
+  
+  // Audit
+  createdAt: string;
+  updatedAt?: string;
+  
+  // Nested (when fetched with includes)
+  payments?: PaymentRecord[];
+  job?: Job;
+  client?: Client;
+  property?: Property;
+}
+
+export interface PaymentRecord {
+  id: string;
+  invoiceId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: 'Cash' | 'Check' | 'Credit Card' | 'Debit Card' | 'ACH' | 'Wire Transfer' | 'Other';
+  transactionId?: string;
+  referenceNumber?: string;
+  notes?: string;
+  recordedBy?: string;
+  createdAt: string;
 }
 
 export interface Employee {

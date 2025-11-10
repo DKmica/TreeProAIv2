@@ -112,6 +112,77 @@ CREATE TABLE IF NOT EXISTS invoices (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Phase 3A: Enhanced Invoice Management
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(50);
+
+-- Add constraints separately (handles existing installations)
+DO $$ 
+BEGIN
+    -- Add UNIQUE constraint if it doesn't exist
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'invoices_invoice_number_key' AND table_name = 'invoices'
+    ) THEN
+        ALTER TABLE invoices ADD CONSTRAINT invoices_invoice_number_key UNIQUE (invoice_number);
+    END IF;
+    
+    -- Add NOT NULL constraint if column is nullable
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'invoices' AND column_name = 'invoice_number' AND is_nullable = 'YES'
+    ) THEN
+        -- First, ensure all existing invoices have invoice numbers using CTE
+        WITH numbered AS (
+            SELECT id, 
+                   'INV-' || EXTRACT(YEAR FROM created_at) || '-' || 
+                   LPAD(ROW_NUMBER() OVER (PARTITION BY EXTRACT(YEAR FROM created_at) ORDER BY created_at)::text, 4, '0') as new_invoice_number
+            FROM invoices
+            WHERE invoice_number IS NULL
+        )
+        UPDATE invoices i
+        SET invoice_number = n.new_invoice_number
+        FROM numbered n
+        WHERE i.id = n.id;
+        
+        -- Now add NOT NULL constraint
+        ALTER TABLE invoices ALTER COLUMN invoice_number SET NOT NULL;
+    END IF;
+END $$;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_id UUID;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS property_id UUID;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS issue_date DATE DEFAULT NOW();
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS sent_date TIMESTAMP WITH TIME ZONE;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS subtotal NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discount_percentage NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS total_amount NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS grand_total NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount_paid NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount_due NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_terms TEXT DEFAULT 'Net 30';
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_notes TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_email TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_phone TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS customer_address TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+-- Payment Records Table (Phase 3A)
+CREATE TABLE IF NOT EXISTS payment_records (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE,
+    amount NUMERIC(12,2) NOT NULL,
+    payment_date DATE NOT NULL DEFAULT NOW(),
+    payment_method TEXT NOT NULL DEFAULT 'Cash',
+    transaction_id TEXT,
+    reference_number TEXT,
+    notes TEXT,
+    recorded_by TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Employees Table
 CREATE TABLE IF NOT EXISTS employees (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -218,6 +289,10 @@ CREATE INDEX IF NOT EXISTS idx_jobs_quote_id ON jobs(quote_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_job_id ON invoices(job_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_invoice_number ON invoices(invoice_number);
+CREATE INDEX IF NOT EXISTS idx_invoices_due_date ON invoices(due_date);
+CREATE INDEX IF NOT EXISTS idx_payment_records_invoice_id ON payment_records(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_pay_periods_status ON pay_periods(status);
 CREATE INDEX IF NOT EXISTS idx_time_entries_employee_id ON time_entries(employee_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_job_id ON time_entries(job_id);
@@ -256,10 +331,10 @@ INSERT INTO jobs (id, quote_id, customer_name, status, scheduled_date, assigned_
     ('job3', 'quote3', 'Sarah Wilson', 'Unscheduled', '', '["emp1", "emp3"]', NULL, NULL, NULL, NULL, NULL, NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO invoices (id, job_id, customer_name, status, amount, line_items, due_date, paid_at) VALUES
-    ('inv1', 'job1', 'Jane Smith', 'Paid', 850, '[{"description": "Oak tree removal", "price": 850, "selected": true}]', '2023-11-20', '2023-11-15T14:25:00Z'),
-    ('inv2', 'job2', 'John Doe', 'Sent', 1200, '[{"description": "Trimming large maple tree", "price": 1200, "selected": true}]', '2024-01-15', NULL)
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO invoices (job_id, customer_name, status, amount, line_items, due_date, paid_at, invoice_number, subtotal, tax_rate, tax_amount, grand_total, amount_paid, amount_due, issue_date, payment_terms) VALUES
+    ('job1', 'Jane Smith', 'Paid', 850, '[{"description": "Oak tree removal", "price": 850, "selected": true}]', '2023-11-20', '2023-11-15T14:25:00Z', 'INV-2023-0001', 850.00, 0, 0, 850.00, 850.00, 0, '2023-11-05', 'Net 30'),
+    ('job2', 'John Doe', 'Sent', 1200, '[{"description": "Trimming large maple tree", "price": 1200, "selected": true}]', '2024-01-15', NULL, 'INV-2024-0001', 1200.00, 0, 0, 1200.00, 0, 1200.00, '2023-12-15', 'Net 30')
+ON CONFLICT (invoice_number) DO NOTHING;
 
 INSERT INTO employees (id, name, phone, address, lat, lon, ssn, dob, job_title, pay_rate, hire_date, certifications, performance_metrics) VALUES
     ('emp1', 'Mike Miller', '555-8765', '789 Maple Dr, Los Angeles, CA', 34.0550, -118.2450, 'XXX-XX-1234', '1985-05-15', 'Crew Leader', 35, '2020-03-01', 'ISA Certified Arborist, First Aid/CPR', '{"jobsCompleted": 152, "safetyIncidents": 0, "customerRating": 4.9}'),
