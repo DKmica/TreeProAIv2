@@ -31,6 +31,7 @@ const CRM: React.FC = () => {
   const [isQuoteViewerOpen, setIsQuoteViewerOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -173,6 +174,54 @@ const CRM: React.FC = () => {
     }
   };
 
+  const convertLeadToQuote = (lead: Lead): Quote | undefined => {
+    const client = clients.find(c => c.id === lead.clientId);
+    
+    // Build customer name from client data or lead customer data
+    let customerName = 'Unknown Customer';
+    if (client) {
+      if (client.companyName) {
+        customerName = client.companyName;
+      } else if (client.firstName || client.lastName) {
+        customerName = [client.firstName, client.lastName].filter(Boolean).join(' ');
+      }
+    } else if (lead.customer?.name) {
+      customerName = lead.customer.name;
+    }
+    
+    // Return undefined if we can't create a valid quote
+    if (!lead.clientId) {
+      return undefined;
+    }
+    
+    const now = new Date().toISOString();
+    
+    return {
+      id: '', // Will be assigned by backend
+      leadId: lead.id,
+      clientId: lead.clientId,
+      propertyId: lead.propertyId,
+      customerName,
+      status: 'Draft',
+      lineItems: [],
+      stumpGrindingPrice: 0,
+      createdAt: now,
+      paymentTerms: 'Net 30',
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      specialInstructions: lead.description || '',
+      quoteNumber: '', // Will be assigned by backend
+      version: 1,
+      approvalStatus: 'pending',
+      totalAmount: 0,
+      discountAmount: 0,
+      discountPercentage: 0,
+      taxRate: 0,
+      taxAmount: 0,
+      grandTotal: 0,
+      updatedAt: now,
+    };
+  };
+
   const handleClientSave = async (client: Client) => {
     try {
       const updatedClients = await clientService.getAll();
@@ -213,7 +262,11 @@ const CRM: React.FC = () => {
   };
 
   const handleConvertToQuote = (leadId: string) => {
-    alert(`Convert lead ${leadId} to quote modal will be implemented next`);
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      setLeadToConvert(lead);
+      setIsQuoteEditorOpen(true);
+    }
   };
 
   const handleQuoteView = (quoteId: string) => {
@@ -225,7 +278,11 @@ const CRM: React.FC = () => {
   };
 
   const handleQuoteEdit = (quoteId: string) => {
-    alert(`Edit quote ${quoteId} modal will be implemented next`);
+    const quote = quotes.find(q => q.id === quoteId);
+    if (quote) {
+      setSelectedQuote(quote);
+      setIsQuoteEditorOpen(true);
+    }
   };
 
   if (isLoading) {
@@ -265,8 +322,13 @@ const CRM: React.FC = () => {
       />
       <QuoteEditor
         isOpen={isQuoteEditorOpen}
-        onClose={() => setIsQuoteEditorOpen(false)}
+        onClose={() => {
+          setIsQuoteEditorOpen(false);
+          setSelectedQuote(null);
+          setLeadToConvert(null);
+        }}
         onSave={handleQuoteSave}
+        quote={selectedQuote || (leadToConvert ? convertLeadToQuote(leadToConvert) || undefined : undefined)}
       />
       <QuoteViewer
         isOpen={isQuoteViewerOpen}

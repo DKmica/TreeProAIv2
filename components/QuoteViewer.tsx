@@ -11,9 +11,14 @@ interface QuoteViewerProps {
 export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote }) => {
   if (!isOpen || !quote) return null;
 
-  const total = quote.lineItems
+  // Use totals from quote object if available, otherwise calculate from line items
+  const subtotal = quote.totalAmount || quote.lineItems
     .filter(item => item.selected)
     .reduce((sum, item) => sum + item.price, 0) + (quote.stumpGrindingPrice || 0);
+  
+  const discount = quote.discountAmount || 0;
+  const tax = quote.taxAmount || 0;
+  const total = quote.grandTotal || (subtotal - discount + tax);
 
   const statusColors = {
     Draft: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50',
@@ -152,15 +157,43 @@ export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote
                   )}
                 </tbody>
                 <tfoot>
+                  <tr className="bg-brand-navy-900/50 border-t border-brand-cyan-500/20">
+                    <td className="px-4 py-3 text-white text-right" colSpan={2}>
+                      Subtotal:
+                    </td>
+                    <td className="px-4 py-3 text-right text-white font-medium">
+                      ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  {discount > 0 && (
+                    <tr className="bg-brand-navy-900/50">
+                      <td className="px-4 py-3 text-white text-right" colSpan={2}>
+                        Discount {quote.discountPercentage > 0 && `(${quote.discountPercentage}%)`}:
+                      </td>
+                      <td className="px-4 py-3 text-right text-red-400 font-medium">
+                        -${discount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  )}
+                  {tax > 0 && (
+                    <tr className="bg-brand-navy-900/50">
+                      <td className="px-4 py-3 text-white text-right" colSpan={2}>
+                        Tax {quote.taxRate > 0 && `(${quote.taxRate}%)`}:
+                      </td>
+                      <td className="px-4 py-3 text-right text-white font-medium">
+                        ${tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  )}
                   <tr className="bg-brand-navy-900/70 border-t-2 border-brand-cyan-500/30">
                     <td className="px-4 py-4 text-white font-semibold flex items-center gap-2">
                       <DollarSign className="h-5 w-5 text-brand-cyan-400" />
-                      Total
+                      Grand Total
                     </td>
+                    <td></td>
                     <td className="px-4 py-4 text-right text-brand-cyan-400 font-bold text-lg">
                       ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
-                    <td></td>
                   </tr>
                 </tfoot>
               </table>
