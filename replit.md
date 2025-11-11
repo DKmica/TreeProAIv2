@@ -51,6 +51,8 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
 - **Environment Agnostic Configuration**: Supports seamless operation in development and production environments.
 - **Scalability**: Designed for stateless deployment with a production build script.
+- **Database Connection Resilience**: PostgreSQL connection pool includes error handlers to prevent crashes from connection terminations. Session store reuses the main pool to minimize connection overhead and avoid exhausting database limits.
+- **Graceful Error Handling**: All critical services (database pool, session store, server) include error handlers that log issues without crashing the application.
 
 ## External Dependencies
 
