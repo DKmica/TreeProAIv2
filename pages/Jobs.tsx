@@ -13,6 +13,7 @@ import JobForms from '../components/JobForms';
 import InvoiceEditor from '../components/InvoiceEditor';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
+import RecurringJobsPanel from '../components/RecurringJobsPanel';
 
 
 // Helper to calculate total
@@ -430,6 +431,13 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     }
   };
 
+  const handleRecurringJobCreated = (job: Job) => {
+    setJobs(prevJobs => {
+      const filtered = prevJobs.filter(existing => existing.id !== job.id);
+      return [job, ...filtered];
+    });
+  };
+
   const handleViewDetails = (job: Job) => {
     setViewingJobDetail(job);
     setActiveTab('info');
@@ -728,6 +736,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
           </div>
         </div>
       )}
+
+      <RecurringJobsPanel onJobCreated={handleRecurringJobCreated} />
 
       <TemplateSelector
         isOpen={showTemplateSelector}

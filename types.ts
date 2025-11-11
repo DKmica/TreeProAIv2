@@ -152,6 +152,87 @@ export interface Job {
   tags?: Tag[];
 }
 
+export interface RouteStop {
+  order: number;
+  jobId: string;
+  customerName: string;
+  scheduledDate?: string;
+  status: Job['status'];
+  location: {
+    lat: number;
+    lng: number;
+    address?: string | null;
+  };
+  travelDistanceMiles: number;
+  travelDurationMinutes: number;
+  cumulativeDriveMinutes: number;
+  arrivalTimeLocal: string;
+  estimatedDurationHours: number;
+  assignedCrewIds: string[];
+  notes?: string;
+}
+
+export interface RouteOptimizationResult {
+  date: string;
+  crewId?: string;
+  crewName?: string;
+  startLocation?: string;
+  totalDistanceMiles: number;
+  totalDriveMinutes: number;
+  totalEstimatedHours: number;
+  stops: RouteStop[];
+  warnings?: string[];
+  generatedAt: string;
+}
+
+export interface CrewAvailabilitySummary {
+  crewId: string;
+  crewName: string;
+  date: string;
+  totalCapacityHours: number;
+  scheduledHours: number;
+  availableHours: number;
+  utilizationPercentage: number;
+  assignments: number;
+  status: 'healthy' | 'tight' | 'overbooked';
+  notes?: string;
+}
+
+export interface WeatherImpact {
+  jobId: string;
+  jobNumber?: string;
+  customerName: string;
+  scheduledDate: string;
+  crewIds: string[];
+  location: {
+    lat: number;
+    lng: number;
+    address?: string | null;
+  };
+  condition: string;
+  precipProbability: number;
+  windMph: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  recommendation: string;
+  advisory?: string;
+}
+
+export interface DispatchNotification {
+  crewId?: string;
+  crewName?: string;
+  jobId: string;
+  scheduledDate: string;
+  message: string;
+  channel: 'sms' | 'push' | 'email';
+  scheduledAt: string;
+}
+
+export interface DispatchResult {
+  summary: string;
+  notifications: DispatchNotification[];
+  generatedAt: string;
+}
+
 
 export interface Invoice {
   id: string;
@@ -866,6 +947,41 @@ export interface CrewAssignment {
   assignedDate: string;
   assignedBy?: string;
   notes?: string;
+  createdAt: string;
+  job?: Job;
+}
+
+export interface RecurringJobSeries {
+  id: string;
+  clientId: string;
+  propertyId?: string | null;
+  seriesName: string;
+  description?: string | null;
+  serviceType?: string | null;
+  recurrencePattern: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
+  recurrenceInterval: number;
+  recurrenceDayOfWeek?: number | null;
+  recurrenceDayOfMonth?: number | null;
+  recurrenceMonth?: number | null;
+  startDate: string;
+  endDate?: string | null;
+  isActive: boolean;
+  jobTemplateId?: string | null;
+  defaultCrewId?: string | null;
+  estimatedDurationHours?: number | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  nextOccurrence?: string | null;
+  upcomingInstanceCount?: number;
+}
+
+export interface RecurringJobInstance {
+  id: string;
+  jobSeriesId: string;
+  jobId?: string | null;
+  scheduledDate: string;
+  status: 'scheduled' | 'skipped' | 'created' | 'cancelled';
   createdAt: string;
   job?: Job;
 }
