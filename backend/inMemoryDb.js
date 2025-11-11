@@ -16,6 +16,7 @@ const jsonColumns = new Set([
   'deductions',
   'ai_estimate_data',
   'correction_reasons',
+  'property_features',
 ]);
 
 const parseColumnValue = (column, value) => {
@@ -88,6 +89,145 @@ function seedData() {
     },
   ];
 
+  const clients = [
+    {
+      id: uuidv4(),
+      title: 'Mr',
+      first_name: 'John',
+      last_name: 'Doe',
+      primary_email: 'john.doe@example.com',
+      primary_phone: '555-1234',
+      client_type: 'residential',
+      status: 'active',
+      lead_source: 'Website',
+      payment_terms: 'Net 30',
+      credit_limit: 5000,
+      tax_exempt: false,
+      billing_address_line1: '123 Oak St',
+      billing_city: 'Los Angeles',
+      billing_state: 'CA',
+      billing_zip: '90001',
+      billing_country: 'USA',
+      notes: 'Prefers morning appointments',
+      internal_notes: 'High upsell potential',
+      referral_source: 'Neighborhood Facebook group',
+      lifetime_value: 6200,
+      created_at: createdAt,
+      updated_at: createdAt,
+      created_by: 'system',
+      deleted_at: null,
+    },
+    {
+      id: uuidv4(),
+      title: 'Ms',
+      first_name: 'Jane',
+      last_name: 'Smith',
+      primary_email: 'jane.smith@example.com',
+      primary_phone: '555-5678',
+      client_type: 'commercial',
+      status: 'active',
+      lead_source: 'Referral',
+      payment_terms: 'Net 45',
+      credit_limit: 15000,
+      tax_exempt: false,
+      billing_address_line1: '456 Pine Ave',
+      billing_city: 'Pasadena',
+      billing_state: 'CA',
+      billing_zip: '91101',
+      billing_country: 'USA',
+      notes: 'Requires certificate of insurance on file',
+      internal_notes: 'Handles AP through centralized office',
+      referral_source: 'General Contractor Partner',
+      lifetime_value: 18200,
+      created_at: createdAt,
+      updated_at: createdAt,
+      created_by: 'system',
+      deleted_at: null,
+    },
+    {
+      id: uuidv4(),
+      company_name: 'Sunset Villas HOA',
+      primary_email: 'board@sunsetvillas.com',
+      primary_phone: '555-9012',
+      client_type: 'property_manager',
+      status: 'active',
+      lead_source: 'Conference',
+      payment_terms: 'Net 30',
+      credit_limit: 25000,
+      tax_exempt: false,
+      billing_address_line1: '789 Maple Dr',
+      billing_city: 'Burbank',
+      billing_state: 'CA',
+      billing_zip: '91501',
+      billing_country: 'USA',
+      notes: 'Quarterly walkthroughs scheduled with facilities director',
+      internal_notes: 'Prefers consolidated monthly invoicing',
+      referral_source: 'Existing client',
+      lifetime_value: 25400,
+      created_at: createdAt,
+      updated_at: createdAt,
+      created_by: 'system',
+      deleted_at: null,
+    },
+  ];
+
+  const properties = [
+    {
+      id: uuidv4(),
+      client_id: clients[0].id,
+      property_name: 'Doe Residence',
+      address_line1: '123 Oak St',
+      city: 'Los Angeles',
+      state: 'CA',
+      zip: '90001',
+      country: 'USA',
+      lat: 34.0522,
+      lon: -118.2437,
+      property_type: 'residential_single_family',
+      lot_size: 0.25,
+      is_primary: true,
+      property_features: ['Mature maple', 'Driveway access'],
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      client_id: clients[1].id,
+      property_name: 'Smith Commercial Complex',
+      address_line1: '456 Pine Ave',
+      city: 'Pasadena',
+      state: 'CA',
+      zip: '91101',
+      country: 'USA',
+      lat: 34.1478,
+      lon: -118.1445,
+      property_type: 'commercial',
+      lot_size: 1.5,
+      is_primary: true,
+      property_features: ['Parking lot perimeter', 'Loading dock access'],
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      client_id: clients[2].id,
+      property_name: 'Sunset Villas - Main Grounds',
+      address_line1: '789 Maple Dr',
+      city: 'Burbank',
+      state: 'CA',
+      zip: '91501',
+      country: 'USA',
+      lat: 34.1808,
+      lon: -118.3089,
+      property_type: 'multi_family',
+      lot_size: 6.2,
+      is_primary: true,
+      property_features: ['Shared courtyard', 'Irrigation system'],
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+  ];
+
   const employees = [
     {
       id: uuidv4(),
@@ -155,6 +295,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[0].id,
+      client_id_new: clients[0].id,
       source: 'Website',
       status: 'New',
       description: 'Request for trimming a large maple tree.',
@@ -163,6 +304,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[1].id,
+      client_id_new: clients[1].id,
       source: 'Referral',
       status: 'Qualified',
       description: 'Oak tree removal near house.',
@@ -171,6 +313,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[2].id,
+      client_id_new: clients[2].id,
       source: 'Emergency Call',
       status: 'Contacted',
       description: 'Storm damage cleanup for multiple trees.',
@@ -179,6 +322,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[3].id,
+      client_id_new: clients[0].id,
       source: 'Google Ads',
       status: 'New',
       description: 'Palm tree maintenance and fertilization.',
@@ -338,6 +482,175 @@ function seedData() {
       special_instructions: 'Secure loose shingles near garage.',
       equipment_needed: ['Chipper'],
       estimated_hours: 7,
+      created_at: createdAt,
+    },
+  ];
+
+  const crews = [
+    {
+      id: uuidv4(),
+      name: 'Climbers Alpha',
+      description: 'Lead climbers and rigging specialists',
+      is_active: true,
+      default_start_time: '08:00',
+      default_end_time: '17:00',
+      capacity: 10,
+      created_at: createdAt,
+      updated_at: createdAt,
+      deleted_at: null,
+    },
+    {
+      id: uuidv4(),
+      name: 'Ground Crew Bravo',
+      description: 'Support crew for chipping and hauling',
+      is_active: true,
+      default_start_time: '07:30',
+      default_end_time: '16:30',
+      capacity: 8,
+      created_at: createdAt,
+      updated_at: createdAt,
+      deleted_at: null,
+    },
+  ];
+
+  const crew_members = [
+    {
+      id: uuidv4(),
+      crew_id: crews[0].id,
+      employee_id: employees[0].id,
+      role: 'Crew Lead',
+      joined_at: new Date('2023-01-15T08:00:00Z').toISOString(),
+      left_at: null,
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      crew_id: crews[0].id,
+      employee_id: employees[2].id,
+      role: 'Climber',
+      joined_at: new Date('2023-05-01T08:00:00Z').toISOString(),
+      left_at: null,
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      crew_id: crews[1].id,
+      employee_id: employees[1].id,
+      role: 'Ground Tech',
+      joined_at: new Date('2024-02-10T08:00:00Z').toISOString(),
+      left_at: null,
+      created_at: createdAt,
+    },
+  ];
+
+  const crew_assignments = [
+    {
+      id: uuidv4(),
+      job_id: jobs[0].id,
+      crew_id: crews[0].id,
+      assigned_date: jobs[0].scheduled_date,
+      assigned_by: 'dispatcher@treepro.ai',
+      notes: 'Completed ahead of schedule',
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      job_id: jobs[1].id,
+      crew_id: crews[0].id,
+      assigned_date: jobs[1].scheduled_date,
+      assigned_by: 'dispatcher@treepro.ai',
+      notes: 'Requires bucket truck on site',
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      job_id: jobs[2].id,
+      crew_id: crews[1].id,
+      assigned_date: jobs[2].scheduled_date,
+      assigned_by: 'dispatcher@treepro.ai',
+      notes: 'Monitor slope stability',
+      created_at: createdAt,
+    },
+  ];
+
+  const job_series = [
+    {
+      id: uuidv4(),
+      client_id: clients[0].id,
+      property_id: properties[0].id,
+      series_name: 'Monthly Maple Maintenance',
+      description: 'Routine canopy inspections and shaping',
+      service_type: 'Maintenance',
+      recurrence_pattern: 'monthly',
+      recurrence_interval: 1,
+      recurrence_day_of_week: null,
+      recurrence_day_of_month: 15,
+      recurrence_month: null,
+      start_date: todayIso,
+      end_date: null,
+      is_active: true,
+      job_template_id: null,
+      default_crew_id: crews[0].id,
+      estimated_duration_hours: 4,
+      notes: 'Focus on front yard specimen tree',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      client_id: clients[2].id,
+      property_id: properties[2].id,
+      series_name: 'Weekly HOA Grounds Walkthrough',
+      description: 'Inspect common areas and clear hazards',
+      service_type: 'Inspection',
+      recurrence_pattern: 'weekly',
+      recurrence_interval: 1,
+      recurrence_day_of_week: 1,
+      recurrence_day_of_month: null,
+      recurrence_month: null,
+      start_date: todayIso,
+      end_date: null,
+      is_active: true,
+      job_template_id: null,
+      default_crew_id: crews[1].id,
+      estimated_duration_hours: 3,
+      notes: 'Report findings to HOA manager',
+      created_at: createdAt,
+      updated_at: createdAt,
+    },
+  ];
+
+  const recurring_job_instances = [
+    {
+      id: uuidv4(),
+      job_series_id: job_series[0].id,
+      job_id: null,
+      scheduled_date: todayIso,
+      status: 'scheduled',
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      job_series_id: job_series[0].id,
+      job_id: null,
+      scheduled_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'scheduled',
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      job_series_id: job_series[1].id,
+      job_id: jobs[2].id,
+      scheduled_date: jobs[2].scheduled_date,
+      status: 'created',
+      created_at: createdAt,
+    },
+    {
+      id: uuidv4(),
+      job_series_id: job_series[1].id,
+      job_id: null,
+      scheduled_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'scheduled',
       created_at: createdAt,
     },
   ];
@@ -553,9 +866,16 @@ function seedData() {
 
   return {
     customers,
+    clients,
+    properties,
     leads,
     quotes,
     jobs,
+    crews,
+    crew_members,
+    crew_assignments,
+    job_series,
+    recurring_job_instances,
     invoices,
     employees,
     equipment,
@@ -618,6 +938,7 @@ class InMemoryDatabase {
   async query(text, params = []) {
     const normalized = text.replace(/\s+/g, ' ').trim();
     const lower = normalized.toLowerCase();
+    let match;
 
     // Leads with customer join
     if (lower.startsWith('select l.*') && lower.includes('from leads l left join customers c on l.customer_id = c.id')) {
@@ -658,6 +979,143 @@ class InMemoryDatabase {
       return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
     }
 
+    if (lower === 'select lead_id, job_location from quotes where id = $1') {
+      const [id] = params;
+      const row = this.selectById('quotes', id);
+      if (!row) {
+        return { rows: [], rowCount: 0 };
+      }
+      const result = {
+        lead_id: row.lead_id || null,
+        job_location: row.job_location || null,
+      };
+      return { rows: [result], rowCount: 1 };
+    }
+
+    if (lower === 'select customer_id from leads where id = $1') {
+      const [id] = params;
+      const row = this.selectById('leads', id);
+      if (!row) {
+        return { rows: [], rowCount: 0 };
+      }
+      return { rows: [{ customer_id: row.customer_id || null }], rowCount: 1 };
+    }
+
+    if (lower === 'select lat, lon, address from customers where id = $1') {
+      const [id] = params;
+      const row = this.selectById('customers', id);
+      if (!row) {
+        return { rows: [], rowCount: 0 };
+      }
+      return {
+        rows: [
+          {
+            lat: row.lat || null,
+            lon: row.lon || null,
+            address: row.address || null,
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (lower === 'select lat, lon, address from customers where lower(name) = lower($1) limit 1') {
+      const [name] = params;
+      const table = this.getTable('customers');
+      const match = table.find((customer) => customer.name && customer.name.toLowerCase() === String(name || '').toLowerCase());
+      if (!match) {
+        return { rows: [], rowCount: 0 };
+      }
+      return {
+        rows: [
+          {
+            lat: match.lat || null,
+            lon: match.lon || null,
+            address: match.address || null,
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (lower === 'select name from crews where id = $1') {
+      const [id] = params;
+      const row = this.selectById('crews', id);
+      return { rows: row ? [{ name: row.name }] : [], rowCount: row ? 1 : 0 };
+    }
+
+    if (lower === 'select * from recurring_job_instances where job_series_id = $1 order by scheduled_date asc') {
+      const [seriesId] = params;
+      const rows = this
+        .selectAll('recurring_job_instances')
+        .filter((row) => row.job_series_id === seriesId)
+        .sort((a, b) => (a.scheduled_date || '').localeCompare(b.scheduled_date || ''));
+      return { rows, rowCount: rows.length };
+    }
+
+    if (lower === 'select * from recurring_job_instances where job_series_id = $1') {
+      const [seriesId] = params;
+      const rows = this.selectAll('recurring_job_instances').filter((row) => row.job_series_id === seriesId);
+      return { rows, rowCount: rows.length };
+    }
+
+    if (lower === 'select * from recurring_job_instances where id = $1 and job_series_id = $2') {
+      const [id, seriesId] = params;
+      const rows = this
+        .selectAll('recurring_job_instances')
+        .filter((row) => row.id === id && row.job_series_id === seriesId);
+      return { rows, rowCount: rows.length };
+    }
+
+    if (lower === 'select first_name, last_name, company_name, billing_address_line1 from clients where id = $1') {
+      const [id] = params;
+      const row = this.selectById('clients', id);
+      if (!row) {
+        return { rows: [], rowCount: 0 };
+      }
+      return {
+        rows: [
+          {
+            first_name: row.first_name || null,
+            last_name: row.last_name || null,
+            company_name: row.company_name || null,
+            billing_address_line1: row.billing_address_line1 || null,
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (lower === 'select address_line1, city, state, zip from properties where id = $1') {
+      const [id] = params;
+      const row = this.selectById('properties', id);
+      if (!row) {
+        return { rows: [], rowCount: 0 };
+      }
+      return {
+        rows: [
+          {
+            address_line1: row.address_line1 || null,
+            city: row.city || null,
+            state: row.state || null,
+            zip: row.zip || null,
+          },
+        ],
+        rowCount: 1,
+      };
+    }
+
+    if (lower === 'select employee_id from crew_members where crew_id = $1 and left_at is null') {
+      const [crewId] = params;
+      const rows = this
+        .selectAll('crew_members')
+        .filter((row) => row.crew_id === crewId && (row.left_at === null || row.left_at === undefined));
+      return {
+        rows: rows.map((row) => ({ employee_id: row.employee_id })),
+        rowCount: rows.length,
+      };
+    }
+
     // Company profile singleton
     if (lower.startsWith('select * from company_profile limit 1')) {
       const rows = this.selectAll('company_profile').slice(0, 1);
@@ -669,8 +1127,26 @@ class InMemoryDatabase {
       return { rows, rowCount: rows.length };
     }
 
+    // SELECT * FROM table WHERE column = 'literal'
+    match = normalized.match(/^SELECT \* FROM (\w+) WHERE (\w+) = '([^']+)'$/i);
+    if (match) {
+      const tableName = match[1];
+      const column = match[2];
+      const value = match[3];
+      const rows = this
+        .selectAll(tableName)
+        .filter((row) => {
+          const current = row[column];
+          if (current === undefined || current === null) {
+            return false;
+          }
+          return current.toString().toLowerCase() === value.toLowerCase();
+        });
+      return { rows, rowCount: rows.length };
+    }
+
     // General SELECT * FROM table WHERE id = $n
-    let match = lower.match(/^select \* from (\w+) where id = \$(\d+)$/);
+    match = lower.match(/^select \* from (\w+) where id = \$(\d+)$/);
     if (match) {
       const tableName = match[1];
       const paramIndex = parseInt(match[2], 10) - 1;
@@ -720,6 +1196,23 @@ class InMemoryDatabase {
     }
 
     // UPDATE table SET ... WHERE id = $n RETURNING *
+    match = normalized.match(/^UPDATE recurring_job_instances SET status = \$(\d+) WHERE id = \$(\d+) AND job_series_id = \$(\d+) RETURNING \*$/i);
+    if (match) {
+      const statusIndex = parseInt(match[1], 10) - 1;
+      const idIndex = parseInt(match[2], 10) - 1;
+      const seriesIndex = parseInt(match[3], 10) - 1;
+      const status = params[statusIndex];
+      const id = params[idIndex];
+      const seriesId = params[seriesIndex];
+      const table = this.getTable('recurring_job_instances');
+      const row = table.find((entry) => entry.id === id && entry.job_series_id === seriesId);
+      if (!row) {
+        return { rows: [], rowCount: 0 };
+      }
+      row.status = status;
+      return { rows: [deepClone(row)], rowCount: 1 };
+    }
+
     match = normalized.match(/^UPDATE (\w+) SET (.+) WHERE id = \$(\d+) RETURNING \*$/i);
     if (match) {
       const tableName = match[1];

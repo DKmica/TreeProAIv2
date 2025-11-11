@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm } from '../types';
+import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance } from '../types';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -281,8 +281,99 @@ export const formService = {
   getJobForm: (id: string): Promise<JobForm> => apiFetch(`job-forms/${id}`),
   submitFormData: (id: string, formData: Record<string, any>): Promise<JobForm> => 
     apiFetch(`job-forms/${id}/submit`, { method: 'PUT', body: JSON.stringify({ formData }) }),
-  completeForm: (id: string): Promise<JobForm> => 
+  completeForm: (id: string): Promise<JobForm> =>
     apiFetch(`job-forms/${id}/complete`, { method: 'PUT' }),
-  deleteJobForm: (id: string): Promise<void> => 
+  deleteJobForm: (id: string): Promise<void> =>
     apiFetch<void>(`job-forms/${id}`, { method: 'DELETE' }),
+};
+
+export const operationsService = {
+  optimizeRoute: async (payload: { date: string; crewId?: string; startLocation?: string; includeInProgress?: boolean }): Promise<RouteOptimizationResult> => {
+    const response = await apiFetch<{ success: boolean; data: RouteOptimizationResult }>('operations/route-optimize', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return response.data;
+  },
+  getAvailability: async (params: { startDate: string; endDate: string; crewId?: string }): Promise<CrewAvailabilitySummary[]> => {
+    const queryParams = new URLSearchParams({
+      start_date: params.startDate,
+      end_date: params.endDate
+    });
+    if (params.crewId) {
+      queryParams.append('crew_id', params.crewId);
+    }
+    const response = await apiFetch<{ success: boolean; data: CrewAvailabilitySummary[] }>(`operations/availability?${queryParams.toString()}`);
+    return response.data ?? [];
+  },
+  getWeatherImpacts: async (params: { startDate: string; endDate: string; crewId?: string }): Promise<WeatherImpact[]> => {
+    const queryParams = new URLSearchParams({
+      start_date: params.startDate,
+      end_date: params.endDate
+    });
+    if (params.crewId) {
+      queryParams.append('crew_id', params.crewId);
+    }
+    const response = await apiFetch<{ success: boolean; data: WeatherImpact[] }>(`operations/weather-impacts?${queryParams.toString()}`);
+    return response.data ?? [];
+  },
+  dispatchCrewNotifications: async (payload: { date: string; crewId?: string; channel?: 'sms' | 'push' | 'email' }): Promise<DispatchResult> => {
+    const response = await apiFetch<{ success: boolean; data: DispatchResult }>('operations/dispatch-messages', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return response.data;
+  }
+};
+
+export const jobSeriesService = {
+  getAll: async (): Promise<RecurringJobSeries[]> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobSeries[] }>('job-series');
+    return response.data ?? [];
+  },
+  getById: async (id: string): Promise<RecurringJobSeries> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobSeries }>(`job-series/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<RecurringJobSeries>): Promise<RecurringJobSeries> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobSeries }>('job-series', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    return response.data;
+  },
+  update: async (id: string, data: Partial<RecurringJobSeries>): Promise<RecurringJobSeries> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobSeries }>(`job-series/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    return response.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiFetch<{ success: boolean }>(`job-series/${id}`, { method: 'DELETE' });
+  },
+  getInstances: async (seriesId: string): Promise<RecurringJobInstance[]> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobInstance[] }>(`job-series/${seriesId}/instances`);
+    return response.data ?? [];
+  },
+  generateInstances: async (seriesId: string, options?: { horizonDays?: number; untilDate?: string }): Promise<RecurringJobInstance[]> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobInstance[] }>(`job-series/${seriesId}/generate`, {
+      method: 'POST',
+      body: JSON.stringify(options || {})
+    });
+    return response.data ?? [];
+  },
+  convertInstance: async (seriesId: string, instanceId: string): Promise<{ job: Job; instance: RecurringJobInstance }> => {
+    const response = await apiFetch<{ success: boolean; data: { job: Job; instance: RecurringJobInstance } }>(`job-series/${seriesId}/instances/${instanceId}/convert`, {
+      method: 'POST'
+    });
+    return response.data;
+  },
+  updateInstanceStatus: async (seriesId: string, instanceId: string, status: RecurringJobInstance['status']): Promise<RecurringJobInstance> => {
+    const response = await apiFetch<{ success: boolean; data: RecurringJobInstance }>(`job-series/${seriesId}/instances/${instanceId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    });
+    return response.data;
+  }
 };

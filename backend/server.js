@@ -10,6 +10,8 @@ const ragService = require('./services/ragService');
 const vectorStore = require('./services/vectorStore');
 const jobStateService = require('./services/jobStateService');
 const jobTemplateService = require('./services/jobTemplateService');
+const operationsService = require('./services/operationsService');
+const recurringJobsService = require('./services/recurringJobsService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -387,7 +389,85 @@ const transformRow = (row, tableName) => {
       delete transformed.jha_required;
     }
   }
-  
+
+  if (tableName === 'job_series') {
+    if (row.client_id !== undefined) {
+      transformed.clientId = row.client_id;
+      delete transformed.client_id;
+    }
+    if (row.property_id !== undefined) {
+      transformed.propertyId = row.property_id;
+      delete transformed.property_id;
+    }
+    if (row.series_name !== undefined) {
+      transformed.seriesName = row.series_name;
+      delete transformed.series_name;
+    }
+    if (row.service_type !== undefined) {
+      transformed.serviceType = row.service_type;
+      delete transformed.service_type;
+    }
+    if (row.recurrence_pattern !== undefined) {
+      transformed.recurrencePattern = row.recurrence_pattern;
+      delete transformed.recurrence_pattern;
+    }
+    if (row.recurrence_interval !== undefined) {
+      transformed.recurrenceInterval = Number(row.recurrence_interval);
+      delete transformed.recurrence_interval;
+    }
+    if (row.recurrence_day_of_week !== undefined) {
+      transformed.recurrenceDayOfWeek = row.recurrence_day_of_week;
+      delete transformed.recurrence_day_of_week;
+    }
+    if (row.recurrence_day_of_month !== undefined) {
+      transformed.recurrenceDayOfMonth = row.recurrence_day_of_month;
+      delete transformed.recurrence_day_of_month;
+    }
+    if (row.recurrence_month !== undefined) {
+      transformed.recurrenceMonth = row.recurrence_month;
+      delete transformed.recurrence_month;
+    }
+    if (row.start_date !== undefined) {
+      transformed.startDate = row.start_date;
+      delete transformed.start_date;
+    }
+    if (row.end_date !== undefined) {
+      transformed.endDate = row.end_date;
+      delete transformed.end_date;
+    }
+    if (row.is_active !== undefined) {
+      transformed.isActive = row.is_active;
+      delete transformed.is_active;
+    }
+    if (row.job_template_id !== undefined) {
+      transformed.jobTemplateId = row.job_template_id;
+      delete transformed.job_template_id;
+    }
+    if (row.default_crew_id !== undefined) {
+      transformed.defaultCrewId = row.default_crew_id;
+      delete transformed.default_crew_id;
+    }
+    if (row.estimated_duration_hours !== undefined) {
+      transformed.estimatedDurationHours = row.estimated_duration_hours !== null ? Number(row.estimated_duration_hours) : null;
+      delete transformed.estimated_duration_hours;
+    }
+  }
+
+  if (tableName === 'recurring_job_instances') {
+    if (row.job_series_id !== undefined) {
+      transformed.jobSeriesId = row.job_series_id;
+      delete transformed.job_series_id;
+    }
+    if (row.job_id !== undefined) {
+      transformed.jobId = row.job_id;
+      delete transformed.job_id;
+    }
+    if (row.scheduled_date !== undefined) {
+      transformed.scheduledDate = row.scheduled_date;
+      delete transformed.scheduled_date;
+    }
+  }
+
   // Transform pay_periods fields
   if (tableName === 'pay_periods') {
     if (row.start_date !== undefined) {
@@ -7808,6 +7888,196 @@ apiRouter.put('/crew-assignments/:id/reassign', async (req, res) => {
       data: transformRow(rows[0], 'crew_assignments'),
       message: 'Assignment reassigned successfully'
     });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// OPERATIONS INTELLIGENCE ENDPOINTS
+// ============================================================================
+
+// POST /api/operations/route-optimize - Compute optimal route for a crew/day
+apiRouter.post('/operations/route-optimize', async (req, res) => {
+  try {
+    const { date, crewId, startLocation, includeInProgress } = req.body || {};
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: 'date is required in YYYY-MM-DD format'
+      });
+    }
+
+    const result = await operationsService.optimizeCrewRoute({
+      date,
+      crewId,
+      startLocation,
+      includeInProgress: includeInProgress !== false
+    });
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/operations/availability - Crew availability summaries
+apiRouter.get('/operations/availability', async (req, res) => {
+  try {
+    const { start_date, end_date, crew_id } = req.query;
+
+    if (!start_date || !end_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'start_date and end_date query parameters are required'
+      });
+    }
+
+    const data = await operationsService.getCrewAvailability({
+      startDate: start_date,
+      endDate: end_date
+    });
+
+    const filtered = crew_id ? data.filter(item => item.crewId === crew_id) : data;
+
+    res.json({ success: true, data: filtered });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/operations/weather-impacts - Weather insights for scheduled jobs
+apiRouter.get('/operations/weather-impacts', async (req, res) => {
+  try {
+    const { start_date, end_date, crew_id } = req.query;
+    if (!start_date || !end_date) {
+      return res.status(400).json({
+        success: false,
+        error: 'start_date and end_date query parameters are required'
+      });
+    }
+
+    const data = await operationsService.generateWeatherInsights({
+      startDate: start_date,
+      endDate: end_date,
+      crewId: crew_id
+    });
+
+    res.json({ success: true, data });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/operations/dispatch-messages - Prepare crew dispatch digest
+apiRouter.post('/operations/dispatch-messages', async (req, res) => {
+  try {
+    const { date, crewId, channel } = req.body || {};
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        error: 'date is required in YYYY-MM-DD format'
+      });
+    }
+
+    const result = await operationsService.dispatchCrewDigest({
+      date,
+      crewId,
+      channel: channel || 'sms'
+    });
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ============================================================================
+// RECURRING JOB SERIES ENDPOINTS
+// ============================================================================
+
+apiRouter.get('/job-series', async (req, res) => {
+  try {
+    const data = await recurringJobsService.listSeries();
+    res.json({ success: true, data });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.get('/job-series/:id', async (req, res) => {
+  try {
+    const data = await recurringJobsService.getSeriesById(req.params.id);
+    res.json({ success: true, data });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.post('/job-series', async (req, res) => {
+  try {
+    const created = await recurringJobsService.createSeries(req.body || {});
+    res.status(201).json({ success: true, data: created });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.put('/job-series/:id', async (req, res) => {
+  try {
+    const updated = await recurringJobsService.updateSeries(req.params.id, req.body || {});
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.delete('/job-series/:id', async (req, res) => {
+  try {
+    await recurringJobsService.removeSeries(req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.get('/job-series/:id/instances', async (req, res) => {
+  try {
+    const instances = await recurringJobsService.listInstances(req.params.id);
+    res.json({ success: true, data: instances });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.post('/job-series/:id/generate', async (req, res) => {
+  try {
+    const instances = await recurringJobsService.generateInstances(req.params.id, req.body || {});
+    res.json({ success: true, data: instances });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.post('/job-series/:id/instances/:instanceId/convert', async (req, res) => {
+  try {
+    const { job, instance } = await recurringJobsService.convertInstanceToJob(req.params.id, req.params.instanceId);
+    res.status(201).json({
+      success: true,
+      data: {
+        job: transformRow(job, 'jobs'),
+        instance: transformRow(instance, 'recurring_job_instances')
+      }
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+apiRouter.put('/job-series/:id/instances/:instanceId/status', async (req, res) => {
+  try {
+    const updated = await recurringJobsService.updateInstanceStatus(req.params.id, req.params.instanceId, req.body?.status);
+    res.json({ success: true, data: updated });
   } catch (err) {
     handleError(res, err);
   }

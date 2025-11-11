@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Job, Employee, Customer } from '../types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Job, Employee, Customer, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult } from '../types';
 import { CalendarView } from './Calendar/types';
 import JobIcon from '../components/icons/JobIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
@@ -31,11 +31,80 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
     const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+    const [crews, setCrews] = useState<Crew[]>([]);
+    const [selectedCrewId, setSelectedCrewId] = useState<string>('');
+    const [routePlan, setRoutePlan] = useState<RouteOptimizationResult | null>(null);
+    const [routeLoading, setRouteLoading] = useState(false);
+    const [availabilitySummaries, setAvailabilitySummaries] = useState<CrewAvailabilitySummary[]>([]);
+    const [weatherInsights, setWeatherInsights] = useState<WeatherImpact[]>([]);
+    const [dispatchResult, setDispatchResult] = useState<DispatchResult | null>(null);
+    const [opsLoading, setOpsLoading] = useState(false);
+    const [opsError, setOpsError] = useState<string | null>(null);
+    const [dispatchLoading, setDispatchLoading] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadCrews = async () => {
+            try {
+                const crewData = await api.crewService.getAll();
+                if (!isMounted) return;
+                setCrews(crewData);
+                if (crewData.length > 0) {
+                    setSelectedCrewId(prev => prev || crewData[0].id);
+                }
+            } catch (error) {
+                console.error('Failed to load crews:', error);
+            }
+        };
+
+        loadCrews();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const schedulableJobs = useMemo(() => {
         return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'In Progress')
             .sort((a, b) => a.id.localeCompare(b.id));
     }, [jobs]);
+
+    useEffect(() => {
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        const startDate = startOfWeek.toISOString().split('T')[0];
+        const endDate = endOfWeek.toISOString().split('T')[0];
+
+        const loadOperationalIntel = async () => {
+            setOpsLoading(true);
+            setOpsError(null);
+            try {
+                const [availabilityData, weatherData] = await Promise.all([
+                    api.operationsService.getAvailability({
+                        startDate,
+                        endDate,
+                        crewId: selectedCrewId || undefined
+                    }),
+                    api.operationsService.getWeatherImpacts({
+                        startDate,
+                        endDate,
+                        crewId: selectedCrewId || undefined
+                    })
+                ]);
+                setAvailabilitySummaries(availabilityData);
+                setWeatherInsights(weatherData);
+            } catch (error: any) {
+                console.error('Failed to load operations intelligence:', error);
+                setOpsError(error?.message || 'Unable to load scheduling intelligence');
+            } finally {
+                setOpsLoading(false);
+            }
+        };
+
+        loadOperationalIntel();
+    }, [currentDate, selectedCrewId]);
 
     const filteredJobsOnCalendar = useMemo(() => {
         return jobs.filter(job => {
@@ -44,6 +113,59 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
             return statusMatch && employeeMatch;
         });
     }, [jobs, statusFilter, employeeFilter]);
+
+    const currentDateString = useMemo(() => currentDate.toISOString().split('T')[0], [currentDate]);
+
+    const handleOptimizeRoute = async () => {
+        setRouteLoading(true);
+        setRoutePlan(null);
+        setOpsError(null);
+        try {
+            const plan = await api.operationsService.optimizeRoute({
+                date: currentDateString,
+                crewId: selectedCrewId || undefined,
+                includeInProgress: true
+            });
+            setRoutePlan(plan);
+        } catch (error: any) {
+            console.error('Failed to optimize crew route:', error);
+            setOpsError(error?.message || 'Unable to optimize route for the selected day');
+        } finally {
+            setRouteLoading(false);
+        }
+    };
+
+    const handleDispatchCrew = async () => {
+        setDispatchLoading(true);
+        setOpsError(null);
+        try {
+            const result = await api.operationsService.dispatchCrewNotifications({
+                date: currentDateString,
+                crewId: selectedCrewId || undefined
+            });
+            setDispatchResult(result);
+        } catch (error: any) {
+            console.error('Failed to prepare dispatch digest:', error);
+            setOpsError(error?.message || 'Unable to prepare crew dispatch digest');
+        } finally {
+            setDispatchLoading(false);
+        }
+    };
+
+    const weatherToDisplay = useMemo(() => {
+        const flagged = weatherInsights.filter(item => item.riskLevel !== 'low');
+        if (flagged.length > 0) {
+            return flagged.slice(0, 3);
+        }
+        return weatherInsights.slice(0, 3);
+    }, [weatherInsights]);
+
+    const availabilityToDisplay = useMemo(() => {
+        return availabilitySummaries
+            .slice()
+            .sort((a, b) => a.availableHours - b.availableHours)
+            .slice(0, 3);
+    }, [availabilitySummaries]);
 
     const jobsByDate = useMemo(() => {
         const map = new Map<string, Job[]>();
@@ -339,8 +461,8 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                         <button
                             onClick={() => setActiveView('day')}
                             className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'day' 
-                                    ? 'bg-brand-cyan-600 text-white' 
+                                activeView === 'day'
+                                    ? 'bg-brand-cyan-600 text-white'
                                     : 'text-brand-gray-700 hover:bg-brand-gray-100'
                             }`}
                         >
@@ -408,10 +530,168 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                         </button>
                     </div>
 
+                    <div className="mb-6 bg-white rounded-lg border border-brand-gray-200 shadow-sm p-4">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                            <div>
+                                <h3 className="text-base font-semibold text-brand-gray-900">Operations intelligence</h3>
+                                <p className="text-sm text-brand-gray-600">Weather, routing, and crew capacity insights for this week.</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <select
+                                    value={selectedCrewId}
+                                    onChange={(e) => {
+                                        setSelectedCrewId(e.target.value);
+                                        setRoutePlan(null);
+                                        setDispatchResult(null);
+                                    }}
+                                    className="rounded-md border-brand-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-cyan-500 focus:outline-none focus:ring-brand-cyan-500"
+                                >
+                                    <option value="">All crews</option>
+                                    {crews.map(crew => (
+                                        <option key={crew.id} value={crew.id}>{crew.name}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={handleOptimizeRoute}
+                                    disabled={routeLoading}
+                                    className="inline-flex items-center rounded-md border border-brand-gray-300 bg-white px-3 py-2 text-sm font-medium text-brand-gray-700 shadow-sm hover:bg-brand-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {routeLoading ? (
+                                        <>
+                                            <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" /> Optimizing…
+                                        </>
+                                    ) : (
+                                        'Optimize route'
+                                    )}
+                                </button>
+                                <button
+                                    onClick={handleDispatchCrew}
+                                    disabled={dispatchLoading}
+                                    className="inline-flex items-center rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                    {dispatchLoading ? 'Building digest…' : 'Dispatch digest'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {opsError && (
+                            <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{opsError}</div>
+                        )}
+
+                        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                            <div className="rounded-md border border-brand-gray-100 bg-brand-gray-50 p-3">
+                                <h4 className="text-sm font-semibold text-brand-gray-800">Weather watch</h4>
+                                {opsLoading && weatherInsights.length === 0 ? (
+                                    <p className="mt-2 text-sm text-brand-gray-600">Loading latest forecast…</p>
+                                ) : weatherToDisplay.length === 0 ? (
+                                    <p className="mt-2 text-sm text-brand-gray-600">No weather risks detected this week.</p>
+                                ) : (
+                                    <ul className="mt-2 space-y-2">
+                                        {weatherToDisplay.map(item => (
+                                            <li key={item.jobId} className="rounded-md bg-white p-2 shadow-sm">
+                                                <div className="flex items-center justify-between text-xs text-brand-gray-500">
+                                                    <span>{item.scheduledDate}</span>
+                                                    <span className={
+                                                        item.riskLevel === 'high'
+                                                            ? 'font-semibold text-red-600'
+                                                            : item.riskLevel === 'medium'
+                                                                ? 'font-semibold text-orange-600'
+                                                                : 'font-semibold text-brand-gray-600'
+                                                    }>
+                                                        {item.riskLevel.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-sm font-medium text-brand-gray-900">{item.customerName}</p>
+                                                <p className="text-xs text-brand-gray-600">{item.condition} • {Math.round(item.precipProbability)}% precip • {Math.round(item.windMph)} mph wind</p>
+                                                <p className="mt-1 text-xs text-brand-gray-700">{item.recommendation}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            <div className="rounded-md border border-brand-gray-100 bg-brand-gray-50 p-3">
+                                <h4 className="text-sm font-semibold text-brand-gray-800">Route summary</h4>
+                                {routePlan ? (
+                                    <div className="mt-2 space-y-2 text-sm text-brand-gray-700">
+                                        <p>
+                                            {routePlan.stops.length} stops • {routePlan.totalDistanceMiles.toFixed(1)} mi drive • {Math.round(routePlan.totalDriveMinutes)} min travel
+                                        </p>
+                                        <ul className="space-y-1 text-xs">
+                                            {routePlan.stops.slice(0, 3).map(stop => (
+                                                <li key={stop.jobId} className="rounded bg-white px-2 py-1 shadow-sm">
+                                                    <span className="font-semibold">#{stop.order}</span> {stop.customerName} — ETA {stop.arrivalTimeLocal}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        {routePlan.stops.length > 3 && (
+                                            <p className="text-xs text-brand-gray-500">…and {routePlan.stops.length - 3} more stops</p>
+                                        )}
+                                        {routePlan.warnings && routePlan.warnings.length > 0 && (
+                                            <ul className="space-y-1 text-xs text-orange-600">
+                                                {routePlan.warnings.map((warning, idx) => (
+                                                    <li key={idx}>⚠️ {warning}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                ) : routeLoading ? (
+                                    <p className="mt-2 text-sm text-brand-gray-600">Optimizing route…</p>
+                                ) : (
+                                    <p className="mt-2 text-sm text-brand-gray-600">Run optimization to see the ideal stop order.</p>
+                                )}
+                            </div>
+
+                            <div className="rounded-md border border-brand-gray-100 bg-brand-gray-50 p-3">
+                                <h4 className="text-sm font-semibold text-brand-gray-800">Crew availability</h4>
+                                {opsLoading && availabilitySummaries.length === 0 ? (
+                                    <p className="mt-2 text-sm text-brand-gray-600">Checking capacity…</p>
+                                ) : availabilityToDisplay.length === 0 ? (
+                                    <p className="mt-2 text-sm text-brand-gray-600">No crew capacity signals this week.</p>
+                                ) : (
+                                    <ul className="mt-2 space-y-2 text-xs text-brand-gray-700">
+                                        {availabilityToDisplay.map(item => (
+                                            <li key={`${item.crewId}-${item.date}`} className="rounded bg-white px-2 py-1 shadow-sm">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold">{item.crewName}</span>
+                                                    <span className={
+                                                        item.status === 'overbooked'
+                                                            ? 'text-red-600'
+                                                            : item.status === 'tight'
+                                                                ? 'text-orange-600'
+                                                                : 'text-brand-gray-600'
+                                                    }>
+                                                        {item.availableHours.toFixed(1)}h free
+                                                    </span>
+                                                </div>
+                                                <p>{item.date}</p>
+                                                <p>Utilization {Math.round(item.utilizationPercentage)}%</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+
+                        {dispatchResult && (
+                            <div className="mt-4 rounded-md border border-brand-gray-100 bg-brand-gray-50 p-3">
+                                <h4 className="text-sm font-semibold text-brand-gray-800">Dispatch digest</h4>
+                                <p className="mt-1 text-sm text-brand-gray-700">{dispatchResult.summary}</p>
+                                <ul className="mt-2 space-y-1 text-xs text-brand-gray-600">
+                                    {dispatchResult.notifications.slice(0, 4).map((notification, index) => (
+                                        <li key={`${notification.jobId}-${index}`} className="rounded bg-white px-2 py-1 shadow-sm">
+                                            {notification.scheduledAt.split('T')[0]} • {notification.message}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
                     {activeView !== 'list' && activeView !== 'map' && activeView !== 'crew' && (
                         <div className="mb-4 flex flex-wrap gap-2">
-                            <select 
-                                value={statusFilter} 
+                            <select
+                                value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
                             >
