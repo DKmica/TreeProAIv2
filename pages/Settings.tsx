@@ -13,29 +13,53 @@ const Settings: React.FC = () => {
   const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>(mockDocumentTemplates);
 
   // State for the custom field form
-  const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entity']>('customer');
+  const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entityType']>('client');
   const [isAddingField, setIsAddingField] = useState(false);
   const [newFieldName, setNewFieldName] = useState('');
-  const [newFieldType, setNewFieldType] = useState<CustomFieldDefinition['type']>('text');
+  const [newFieldType, setNewFieldType] = useState<CustomFieldDefinition['fieldType']>('text');
 
   // State for template editing
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
   const [templateContent, setTemplateContent] = useState('');
 
   const filteredFields = useMemo(() => {
-    return customFields.filter(field => field.entity === selectedEntity);
+    return customFields.filter(field => field.entityType === selectedEntity);
   }, [customFields, selectedEntity]);
+
+  const entityOptions: { value: CustomFieldDefinition['entityType']; label: string }[] = [
+    { value: 'client', label: 'Clients' },
+    { value: 'lead', label: 'Leads' },
+    { value: 'quote', label: 'Quotes' },
+    { value: 'job', label: 'Jobs' },
+    { value: 'property', label: 'Properties' },
+  ];
   
   const handleSaveField = () => {
     if (!newFieldName.trim()) {
       alert('Field name cannot be empty.');
       return;
     }
+    const fieldLabel = newFieldName.trim();
+    const fieldName = fieldLabel
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim()
+      .replace(/\s+/g, '_');
+    const timestamp = new Date().toISOString();
+    const displayOrder = filteredFields.length + 1;
+
     const newField: CustomFieldDefinition = {
       id: `cf_${selectedEntity}_${Date.now()}`,
-      name: newFieldName.trim(),
-      type: newFieldType,
-      entity: selectedEntity,
+      entityType: selectedEntity,
+      fieldName: fieldName || `custom_field_${Date.now()}`,
+      fieldLabel,
+      fieldType: newFieldType,
+      isRequired: false,
+      displayOrder,
+      isActive: true,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      ...(newFieldType === 'checkbox' ? { defaultValue: 'false' } : {}),
     };
     setCustomFields(prev => [...prev, newField]);
     setNewFieldName('');
@@ -165,22 +189,23 @@ const Settings: React.FC = () => {
               <h3 className="text-md font-semibold flex items-center text-brand-gray-800"><PuzzlePieceIcon className="w-5 h-5 mr-2" /> Custom Fields</h3>
               <div className="mt-4 p-4 border rounded-lg bg-white">
                 <label htmlFor="entity-select" className="block text-sm font-medium text-brand-gray-700">Manage fields for:</label>
-                <select id="entity-select" value={selectedEntity} onChange={e => setSelectedEntity(e.target.value as CustomFieldDefinition['entity'])} className="mt-1 block w-full max-w-xs rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm">
-                  <option value="customer">Customers</option>
-                  <option value="lead">Leads</option>
-                  <option value="job">Jobs</option>
-                  <option value="quote">Quotes</option>
-                  <option value="invoice">Invoices</option>
-                  <option value="employee">Employees</option>
-                  <option value="equipment">Equipment</option>
+                <select
+                  id="entity-select"
+                  value={selectedEntity}
+                  onChange={e => setSelectedEntity(e.target.value as CustomFieldDefinition['entityType'])}
+                  className="mt-1 block w-full max-w-xs rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                >
+                  {entityOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
                 <div className="mt-4 flow-root">
                   <ul className="divide-y divide-brand-gray-200">
                     {filteredFields.map(field => (
                       <li key={field.id} className="flex items-center justify-between py-2">
                         <div>
-                          <p className="font-medium text-brand-gray-800">{field.name}</p>
-                          <span className="text-xs uppercase font-semibold text-brand-gray-500 bg-brand-gray-100 px-2 py-0.5 rounded-full">{field.type}</span>
+                          <p className="font-medium text-brand-gray-800">{field.fieldLabel}</p>
+                          <span className="text-xs uppercase font-semibold text-brand-gray-500 bg-brand-gray-100 px-2 py-0.5 rounded-full">{field.fieldType}</span>
                         </div>
                         <button onClick={() => handleDeleteField(field.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
                       </li>
@@ -195,11 +220,13 @@ const Settings: React.FC = () => {
                     <h4 className="font-medium text-sm">New Field Details</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <input type="text" placeholder="Field Name (e.g., Gate Code)" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm" />
-                      <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as CustomFieldDefinition['type'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm">
+                      <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as CustomFieldDefinition['fieldType'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm">
                         <option value="text">Text</option>
                         <option value="number">Number</option>
                         <option value="date">Date</option>
+                        <option value="dropdown">Dropdown</option>
                         <option value="checkbox">Checkbox</option>
+                        <option value="textarea">Textarea</option>
                       </select>
                     </div>
                     <div className="flex justify-end gap-x-3">

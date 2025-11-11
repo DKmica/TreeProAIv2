@@ -116,14 +116,19 @@ const Payroll: React.FC = () => {
       return;
     }
     try {
+      const totalHours = parseFloat(timeEntryForm.regularHours || '0') + parseFloat(timeEntryForm.overtimeHours || '0');
+      const overtimeHours = parseFloat(timeEntryForm.overtimeHours || '0') || undefined;
+      const clockInIso = new Date(`${timeEntryForm.date}T08:00:00Z`).toISOString();
+
       const newEntry = await timeEntryService.create({
         employeeId: timeEntryForm.employeeId,
         jobId: timeEntryForm.jobId || undefined,
-        date: timeEntryForm.date,
-        hoursWorked: parseFloat(timeEntryForm.regularHours || '0') + parseFloat(timeEntryForm.overtimeHours || '0'),
+        clockIn: clockInIso,
+        hoursWorked: totalHours,
         hourlyRate: selectedEmployee.payRate,
-        overtimeHours: parseFloat(timeEntryForm.overtimeHours || '0') || undefined,
+        overtimeHours,
         notes: timeEntryForm.notes || undefined,
+        status: 'submitted',
         createdAt: new Date().toISOString()
       });
       setTimeEntries([...timeEntries, newEntry]);
@@ -362,7 +367,7 @@ const Payroll: React.FC = () => {
                       </tr>
                     ) : (
                       timeEntries.map(entry => {
-                        const regularHours = entry.hoursWorked - (entry.overtimeHours || 0);
+                        const regularHours = (entry.hoursWorked || 0) - (entry.overtimeHours || 0);
                         const regularPay = regularHours * entry.hourlyRate;
                         const overtimePay = (entry.overtimeHours || 0) * (entry.hourlyRate * 1.5);
                         const totalPay = regularPay + overtimePay;
@@ -376,7 +381,7 @@ const Payroll: React.FC = () => {
                               {getJobName(entry.jobId)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-gray-900">
-                              {formatDate(entry.date)}
+                              {entry.clockIn ? formatDate(entry.clockIn) : (entry.createdAt ? formatDate(entry.createdAt) : '—')}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-gray-900">
                               {entry.hoursWorked}h

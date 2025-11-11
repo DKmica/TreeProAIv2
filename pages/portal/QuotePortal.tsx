@@ -62,7 +62,8 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
 
     try {
       const uploads: CustomerUpload[] = [];
-      for (const file of Array.from(event.target.files)) {
+      const files = Array.from<File>(event.target.files);
+      for (const file of files) {
         if (file.size > 25 * 1024 * 1024) {
           throw new Error(`"${file.name}" is larger than 25MB. Please upload smaller files.`);
         }

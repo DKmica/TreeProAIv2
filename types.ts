@@ -704,6 +704,7 @@ export interface TimeEntry {
   approvedAt?: string;
   rejectionReason?: string;
   hoursWorked?: number;
+  overtimeHours?: number;
   hourlyRate: number;
   totalAmount?: number;
   createdAt: string;
