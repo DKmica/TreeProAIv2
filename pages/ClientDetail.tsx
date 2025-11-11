@@ -152,6 +152,11 @@ const ClientDetail: React.FC = () => {
     });
   };
 
+  const formatClientType = (type: string | undefined | null) => {
+    if (!type) return '';
+    return type.replace('_', ' ');
+  };
+
   const handleBack = () => {
     navigate('/crm');
   };
@@ -318,7 +323,7 @@ const ClientDetail: React.FC = () => {
               <div className="flex items-center gap-3">
                 <h1 className="text-3xl font-bold text-brand-gray-900">{clientName}</h1>
                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${getClientTypeBadge(client.clientType)}`}>
-                  {client.clientType.replace('_', ' ')}
+                  {formatClientType(client.clientType)}
                 </span>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${
                   client.status === 'active' ? 'bg-green-50' : 'bg-gray-50'
@@ -439,7 +444,7 @@ const ClientDetail: React.FC = () => {
                     <label className="text-sm font-medium text-brand-gray-500">Client Type</label>
                     <p className="mt-1">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getClientTypeBadge(client.clientType)}`}>
-                        {client.clientType.replace('_', ' ')}
+                        {formatClientType(client.clientType)}
                       </span>
                     </p>
                   </div>
