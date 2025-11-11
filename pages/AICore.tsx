@@ -148,6 +148,8 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             status: 'Scheduled',
             scheduledDate: suggestion.suggestedDate,
             assignedCrew: crewIds,
+            jobNumber: `JOB-${Date.now()}`,
+            updatedAt: new Date().toISOString(),
         };
         setJobs(prev => [...prev, { ...newJob, id: `job-${Date.now()}` }]);
     };

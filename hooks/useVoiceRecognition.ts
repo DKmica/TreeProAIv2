@@ -63,6 +63,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
   const [mode, setMode] = useState<VoiceMode>('off');
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isWakeWordEnabled, setIsWakeWordEnabled] = useState(true);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const silenceTimeoutRef = useRef<number | null>(null);
@@ -71,6 +72,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
   const onCommandRef = useRef(onCommand);
   const isActiveRef = useRef(false);
   const hasRemovedWakeWordRef = useRef(false);
+  const wakeWordEnabledRef = useRef(isWakeWordEnabled);
 
   const hasSupport = !!(
     typeof window !== 'undefined' && 
@@ -85,6 +87,10 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
   useEffect(() => {
     onCommandRef.current = onCommand;
   }, [onCommand]);
+
+  useEffect(() => {
+    wakeWordEnabledRef.current = isWakeWordEnabled;
+  }, [isWakeWordEnabled]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -123,7 +129,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
       // WAKE MODE: Listen for "yo probot" (or variations)
       if (modeRef.current === 'wake') {
         console.log(`🔍 Listening for wake word... heard: "${fullTranscript}"`);
-        
+
         // Check if any wake word variation is detected
         const detectedWakeWord = WAKE_WORDS.find(word => fullTranscript.includes(word));
         if (detectedWakeWord) {
@@ -254,14 +260,16 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     }
 
     console.log('🎤 Starting voice recognition - listening for "Yo Probot"');
-    
+
     // Set to active and wake mode
     isActiveRef.current = true;
-    modeRef.current = 'wake';
-    setMode('wake');
+    const initialMode: VoiceMode = wakeWordEnabledRef.current ? 'wake' : 'command';
+    modeRef.current = initialMode;
+    setMode(initialMode);
     setTranscript('');
     setError(null);
     currentTranscriptRef.current = '';
+    hasRemovedWakeWordRef.current = !wakeWordEnabledRef.current;
 
     try {
       recognitionRef.current.start();
@@ -275,7 +283,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
 
   const stopListening = useCallback(() => {
     console.log('⏹️ Stopping voice recognition');
-    
+
     // Clear active flag and silence timeout
     isActiveRef.current = false;
     if (silenceTimeoutRef.current) {
@@ -295,6 +303,24 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     }
   }, []);
 
+  const toggleWakeWord = useCallback(() => {
+    setIsWakeWordEnabled(prev => {
+      const next = !prev;
+      wakeWordEnabledRef.current = next;
+
+      if (isActiveRef.current) {
+        const nextMode: VoiceMode = next ? 'wake' : 'command';
+        modeRef.current = nextMode;
+        setMode(nextMode);
+        currentTranscriptRef.current = '';
+        setTranscript('');
+        hasRemovedWakeWordRef.current = !next;
+      }
+
+      return next;
+    });
+  }, []);
+
   return {
     mode,
     transcript,
@@ -305,5 +331,7 @@ export const useVoiceRecognition = ({ onCommand, enabled = true }: VoiceRecognit
     isAwaitingCommand: mode === 'command',
     startListening,
     stopListening,
+    isWakeWordEnabled,
+    toggleWakeWord,
   };
 };
