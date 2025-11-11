@@ -9,6 +9,7 @@ import QuoteIcon from '../components/icons/QuoteIcon';
 import ClientEditor from '../components/ClientEditor';
 import LeadEditor from '../components/LeadEditor';
 import QuoteEditor from '../components/QuoteEditor';
+import { QuoteViewer } from '../components/QuoteViewer';
 
 type TabType = 'clients' | 'leads' | 'quotes';
 
@@ -27,6 +28,8 @@ const CRM: React.FC = () => {
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const [isLeadEditorOpen, setIsLeadEditorOpen] = useState(false);
   const [isQuoteEditorOpen, setIsQuoteEditorOpen] = useState(false);
+  const [isQuoteViewerOpen, setIsQuoteViewerOpen] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -209,7 +212,11 @@ const CRM: React.FC = () => {
   };
 
   const handleQuoteView = (quoteId: string) => {
-    alert(`View quote ${quoteId} modal will be implemented next`);
+    const quote = quotes.find(q => q.id === quoteId);
+    if (quote) {
+      setSelectedQuote(quote);
+      setIsQuoteViewerOpen(true);
+    }
   };
 
   const handleQuoteEdit = (quoteId: string) => {
@@ -251,6 +258,14 @@ const CRM: React.FC = () => {
         isOpen={isQuoteEditorOpen}
         onClose={() => setIsQuoteEditorOpen(false)}
         onSave={handleQuoteSave}
+      />
+      <QuoteViewer
+        isOpen={isQuoteViewerOpen}
+        onClose={() => {
+          setIsQuoteViewerOpen(false);
+          setSelectedQuote(null);
+        }}
+        quote={selectedQuote}
       />
 
       <div className="sm:flex sm:items-center sm:justify-between">
