@@ -30,6 +30,7 @@ const CRM: React.FC = () => {
   const [isQuoteEditorOpen, setIsQuoteEditorOpen] = useState(false);
   const [isQuoteViewerOpen, setIsQuoteViewerOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -204,7 +205,11 @@ const CRM: React.FC = () => {
   };
 
   const handleLeadEdit = (leadId: string) => {
-    alert(`Edit lead ${leadId} modal will be implemented next`);
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      setSelectedLead(lead);
+      setIsLeadEditorOpen(true);
+    }
   };
 
   const handleConvertToQuote = (leadId: string) => {
@@ -251,8 +256,12 @@ const CRM: React.FC = () => {
       />
       <LeadEditor
         isOpen={isLeadEditorOpen}
-        onClose={() => setIsLeadEditorOpen(false)}
+        onClose={() => {
+          setIsLeadEditorOpen(false);
+          setSelectedLead(null);
+        }}
         onSave={handleLeadSave}
+        lead={selectedLead || undefined}
       />
       <QuoteEditor
         isOpen={isQuoteEditorOpen}
