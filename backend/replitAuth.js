@@ -32,10 +32,14 @@ function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    pool: db.pool,
     createTableIfMissing: false,
     ttl: sessionTtl,
     tableName: 'sessions',
+    errorLog: (err) => {
+      console.error('❌ Session store error:', err.message);
+      console.error('   This error has been caught and will not crash the server.');
+    },
   });
   return session({
     secret: process.env.SESSION_SECRET,
