@@ -14,19 +14,39 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-// Generic fetch function
+// Generic fetch function with timeout
 async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `/api/${endpoint}`;
+  const timeout = 10000;
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-  
-  return handleResponse<T>(response);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    return handleResponse<T>(response);
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout - backend server may be unavailable');
+    }
+    
+    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+      throw new Error('Cannot connect to backend server - please check if it is running');
+    }
+    
+    throw error;
+  }
 }
 
 // Generic CRUD operations

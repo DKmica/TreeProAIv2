@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 let queryImpl;
 let getClientImpl;
 let pool;
+let isShuttingDown = false;
 
 if (process.env.DATABASE_URL) {
   pool = new Pool({
@@ -23,7 +24,28 @@ if (process.env.DATABASE_URL) {
     console.log('✅ Database client connected');
   });
 
-  queryImpl = (text, params) => pool.query(text, params);
+  const safeQuery = async (text, params) => {
+    if (isShuttingDown) {
+      throw new Error('Database is shutting down');
+    }
+    
+    try {
+      return await pool.query(text, params);
+    } catch (err) {
+      if (err.code === '57P01') {
+        console.error('⚠️ Connection terminated by administrator. Retrying once...');
+        try {
+          return await pool.query(text, params);
+        } catch (retryErr) {
+          console.error('❌ Retry failed:', retryErr.message);
+          throw retryErr;
+        }
+      }
+      throw err;
+    }
+  };
+
+  queryImpl = (text, params) => safeQuery(text, params);
   getClientImpl = () => pool.connect();
 } else {
   const { createInMemoryDatabase } = require('./inMemoryDb');
@@ -34,8 +56,22 @@ if (process.env.DATABASE_URL) {
   };
 }
 
+const closePool = async () => {
+  if (pool && !isShuttingDown) {
+    isShuttingDown = true;
+    console.log('🔄 Closing database pool...');
+    try {
+      await pool.end();
+      console.log('✅ Database pool closed');
+    } catch (err) {
+      console.error('❌ Error closing database pool:', err.message);
+    }
+  }
+};
+
 module.exports = {
   query: (text, params) => queryImpl(text, params),
   getClient: () => getClientImpl(),
+  closePool,
   pool,
 };

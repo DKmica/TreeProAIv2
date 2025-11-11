@@ -15,7 +15,10 @@ const recurringJobsService = require('./services/recurringJobsService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+const HOST = process.env.HOST || '0.0.0.0';
+
+let server;
+let reminderInterval;
 
 app.use(cors());
 app.use(express.json());
@@ -133,12 +136,13 @@ const scheduleFinancialReminders = () => {
         }
       });
     } catch (error) {
-      console.error('Automated reminder check failed:', error);
+      console.error('⚠️ Automated reminder check failed:', error.message);
+      console.error('   The reminder job will continue and retry on the next interval.');
     }
   };
 
   run();
-  setInterval(run, ONE_DAY);
+  reminderInterval = setInterval(run, ONE_DAY);
 };
 
 // Helper function to transform database row to API format
@@ -9169,7 +9173,7 @@ async function startServer() {
   // Frontend is served separately by Vite on port 5000
   // Backend only handles API routes
 
-  app.listen(PORT, HOST, async () => {
+  server = app.listen(PORT, HOST, async () => {
     console.log(`Backend server running on http://${HOST}:${PORT}`);
 
     try {
@@ -9182,7 +9186,67 @@ async function startServer() {
 
     scheduleFinancialReminders();
   });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use.`);
+      console.error('   This error has been caught and will not crash the server.');
+      console.error('   The server will remain stopped. Please check for other running instances.');
+    } else {
+      console.error('❌ Server error:', err);
+      shutdown(1);
+    }
+  });
 }
+
+async function shutdown(exitCode = 0) {
+  console.log('\n🔄 Initiating graceful shutdown...');
+  
+  if (reminderInterval) {
+    clearInterval(reminderInterval);
+    console.log('✅ Cleared reminder interval');
+  }
+
+  if (server) {
+    await new Promise((resolve) => {
+      server.close((err) => {
+        if (err) {
+          console.error('❌ Error closing HTTP server:', err.message);
+        } else {
+          console.log('✅ HTTP server closed');
+        }
+        resolve();
+      });
+    });
+  }
+
+  await db.closePool();
+
+  console.log('✅ Graceful shutdown complete');
+  if (exitCode !== 0) {
+    process.exit(exitCode);
+  }
+}
+
+process.on('SIGTERM', () => {
+  console.log('📥 SIGTERM received');
+  shutdown(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('📥 SIGINT received');
+  shutdown(0);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('💥 Uncaught Exception:', err);
+  shutdown(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+  shutdown(1);
+});
 
 startServer().catch(err => {
   console.error('Failed to start server:', err);
