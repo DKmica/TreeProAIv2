@@ -2789,6 +2789,44 @@ apiRouter.delete('/clients/:id', async (req, res) => {
 // PROPERTY CRUD API ENDPOINTS
 // ============================================================================
 
+// GET /api/clients/:clientId/properties - Get all properties for a client
+apiRouter.get('/clients/:clientId/properties', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    
+    // Validate client exists
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (clientRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    // Fetch all properties for this client
+    const { rows } = await db.query(
+      `SELECT * FROM properties 
+       WHERE client_id = $1 AND deleted_at IS NULL 
+       ORDER BY is_primary DESC, created_at DESC`,
+      [clientId]
+    );
+    
+    const properties = rows.map(row => snakeToCamel(row));
+    
+    res.json({ 
+      success: true, 
+      data: properties 
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 // POST /api/clients/:clientId/properties - Add property to client
 apiRouter.post('/clients/:clientId/properties', async (req, res) => {
   try {
@@ -3047,6 +3085,44 @@ apiRouter.delete('/properties/:id', async (req, res) => {
 // ============================================================================
 // CONTACT CRUD API ENDPOINTS
 // ============================================================================
+
+// GET /api/clients/:clientId/contacts - Get all contacts for a client
+apiRouter.get('/clients/:clientId/contacts', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    
+    // Validate client exists
+    const { rows: clientRows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [clientId]
+    );
+    
+    if (clientRows.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Client not found' 
+      });
+    }
+    
+    // Fetch all contacts for this client
+    const { rows } = await db.query(
+      `SELECT * FROM contacts 
+       WHERE client_id = $1 AND deleted_at IS NULL 
+       ORDER BY is_primary DESC, created_at DESC`,
+      [clientId]
+    );
+    
+    const contacts = rows.map(row => snakeToCamel(row));
+    
+    res.json({ 
+      success: true, 
+      data: contacts 
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 
 // POST /api/clients/:clientId/contacts - Add contact to client
 apiRouter.post('/clients/:clientId/contacts', async (req, res) => {
