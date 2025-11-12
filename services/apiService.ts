@@ -64,12 +64,21 @@ export const clientService = {
     const response = await apiFetch<{ success: boolean; data: Client[]; pagination: any }>('clients');
     return response.data ?? [];
   },
-  getById: (id: string): Promise<Client> => apiFetch(`clients/${id}`),
+  getById: async (id: string): Promise<Client> => {
+    const response = await apiFetch<{ success: boolean; data: Client }>(`clients/${id}`);
+    return response.data;
+  },
   create: (data: Partial<Omit<Client, 'id'>>): Promise<Client> => apiFetch('clients', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Client>): Promise<Client> => apiFetch(`clients/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id: string): Promise<void> => apiFetch<void>(`clients/${id}`, { method: 'DELETE' }),
-  getProperties: (clientId: string): Promise<Property[]> => apiFetch(`clients/${clientId}/properties`),
-  getContacts: (clientId: string): Promise<Contact[]> => apiFetch(`clients/${clientId}/contacts`),
+  getProperties: async (clientId: string): Promise<Property[]> => {
+    const response = await apiFetch<{ success: boolean; data: Property[] }>(`clients/${clientId}/properties`);
+    return response.data;
+  },
+  getContacts: async (clientId: string): Promise<Contact[]> => {
+    const response = await apiFetch<{ success: boolean; data: Contact[] }>(`clients/${clientId}/contacts`);
+    return response.data;
+  },
 };
 export const propertyService = {
   ...createApiService<Property>('properties'),
