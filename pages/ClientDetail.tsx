@@ -232,7 +232,7 @@ const ClientDetail: React.FC = () => {
   };
 
   const handleQuoteView = (quoteId: string) => {
-    alert(`View quote ${quoteId} - quote detail page will be implemented next`);
+    navigate(`/quotes/${quoteId}`);
   };
 
   const handleJobView = (jobId: string) => {

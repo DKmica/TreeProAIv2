@@ -91,7 +91,10 @@ export const quoteService = {
     const response = await apiFetch<{ success: boolean; data: Quote[]; pagination: any }>('quotes');
     return response.data ?? [];
   },
-  getById: (id: string): Promise<Quote> => apiFetch(`quotes/${id}`),
+  getById: async (id: string): Promise<Quote> => {
+    const response = await apiFetch<{ success: boolean; data: Quote }>(`quotes/${id}`);
+    return response.data;
+  },
   create: (data: Partial<Omit<Quote, 'id'>>): Promise<Quote> => apiFetch('quotes', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Quote>): Promise<Quote> => apiFetch(`quotes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id: string): Promise<void> => apiFetch<void>(`quotes/${id}`, { method: 'DELETE' }),

@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CRM from './pages/CRM';
 import ClientDetail from './pages/ClientDetail';
+import QuoteDetail from './pages/QuoteDetail';
 import Jobs from './pages/Jobs';
 import JobTemplates from './pages/JobTemplates';
 import FormTemplates from './pages/FormTemplates';
@@ -208,6 +209,7 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={clients} leads={leads} quotes={quotes} />} />
           <Route path="/crm" element={<CRM />} />
           <Route path="/crm/clients/:id" element={<ClientDetail />} />
+          <Route path="/quotes/:id" element={<QuoteDetail />} />
           <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
           <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
           <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
