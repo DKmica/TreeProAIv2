@@ -35,7 +35,7 @@ export const loadGoogleMapsScript = (): Promise<void> => {
       return reject(new Error('VITE_GOOGLE_MAPS_KEY environment variable is not set. The map cannot be loaded. Please ensure it is configured in your root .env file and passed during build.'));
     }
 
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta&libraries=marker&loading=async`;
     script.async = true;
 
     script.onload = () => {
