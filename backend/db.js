@@ -20,8 +20,12 @@ if (process.env.DATABASE_URL) {
     console.error('   This error has been caught and will not crash the server.');
   });
 
+  let connectionCount = 0;
   pool.on('connect', (client) => {
-    console.log('✅ Database client connected');
+    connectionCount++;
+    if (connectionCount === 1) {
+      console.log('✅ Database connection pool ready');
+    }
   });
 
   const safeQuery = async (text, params) => {
