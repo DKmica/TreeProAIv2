@@ -12,7 +12,7 @@ I prefer that the AI assistant prioritizes clear and concise explanations. When 
 The application features a modern, dark theme with bright cyan (#00c2ff) accents against a dark navy/gray background (#0a1628 to #102a43). It includes a custom "futuristic AI circuit tree" logo and consistent branding across all UI components, including form stylings and active states.
 
 ### Technical Implementations
-- **Frontend**: Built with React 19, TypeScript, and Vite, using TailwindCSS for styling and React Router DOM (HashRouter) for navigation.
+- **Frontend**: Built with React 19, TypeScript, and Vite, using TailwindCSS (PostCSS plugin) for styling and React Router DOM (BrowserRouter with v7 future flags) for navigation.
 - **Backend**: Developed using Node.js and Express, providing a RESTful API.
 - **Database**: PostgreSQL 14+ is used, with schema initialized from `backend/init.sql`.
 - **AI Core**: A centralized `aiCore.ts` service loads all business data to maintain real-time context and integrates an extensive arborist knowledge base. It supports 58 distinct function calls across various business categories.
@@ -57,10 +57,18 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 ## External Dependencies
 
 - **Google Gemini API**: Used for all AI functionalities (estimating, assistant, business intelligence).
-- **Google Maps API**: Integrated for location-based features.
+- **Google Maps API**: Integrated for location-based features with async loading optimization.
 - **PostgreSQL**: Primary database system.
 - **React**: Frontend JavaScript library.
 - **Node.js/Express**: Backend runtime and web framework.
-- **TailwindCSS**: CSS framework.
-- **React Router DOM**: For client-side routing.
+- **TailwindCSS**: CSS framework configured as PostCSS plugin for production optimization.
+- **React Router DOM**: For client-side routing with v7 future flags enabled.
 - **Vite**: Frontend build tool.
+
+## Recent Changes
+
+### Bug Fixes (November 2025)
+- **Database Logging**: Reduced verbose connection pool logging from 10 messages to a single "Database connection pool ready" message for cleaner logs.
+- **Tailwind CSS Production**: Migrated from CDN to PostCSS plugin configuration for better performance and bundle optimization. Created `tailwind.config.js`, `postcss.config.js`, and `index.css` with proper Tailwind directives.
+- **Google Maps Performance**: Added `loading=async` parameter to Maps API URL for optimal loading performance.
+- **React Router v7 Future Flags**: Added `v7_startTransition` and `v7_relativeSplatPath` flags to BrowserRouter for compatibility with upcoming React Router v7.
