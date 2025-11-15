@@ -144,7 +144,7 @@ const JobTemplates: React.FC = () => {
                 <h3 className="font-semibold text-white mb-1 truncate">{template.name}</h3>
                 <p className="text-sm text-gray-400">Used {template.usageCount} times</p>
                 {template.basePrice && (
-                  <p className="text-sm text-cyan-400 mt-1">${template.basePrice.toFixed(2)}</p>
+                  <p className="text-sm text-cyan-400 mt-1">${Number(template.basePrice).toFixed(2)}</p>
                 )}
               </button>
             ))}
@@ -211,13 +211,13 @@ const JobTemplates: React.FC = () => {
                   {template.basePrice && (
                     <div>
                       <span className="text-gray-500">Base Price:</span>
-                      <p className="text-white font-medium">${template.basePrice.toFixed(2)}</p>
+                      <p className="text-white font-medium">${Number(template.basePrice).toFixed(2)}</p>
                     </div>
                   )}
                   {template.pricePerHour && (
                     <div>
                       <span className="text-gray-500">Per Hour:</span>
-                      <p className="text-white font-medium">${template.pricePerHour.toFixed(2)}/h</p>
+                      <p className="text-white font-medium">${Number(template.pricePerHour).toFixed(2)}/h</p>
                     </div>
                   )}
                   {template.defaultDurationHours && (
