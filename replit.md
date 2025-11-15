@@ -67,7 +67,27 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 
 ## Recent Changes
 
+### Architectural Analysis & Refactoring Roadmap (November 15, 2025)
+- **Comprehensive Code Audit**: Completed deep analysis of entire application (148 TypeScript/JavaScript files, 25+ pages/routes)
+- **Critical Issues Identified**:
+  - Backend monolith: server.js (9,254 LOC) needs modularization into domain routers
+  - Frontend global state in App.tsx causing full re-renders - needs React Query/Zustand
+  - AI integration has large switch statements (58+ cases) - needs tool handler registry
+  - Duplicate seeding files (seed.js, seedDatabase.js) - needs consolidation
+  - Type safety gaps with `any` types - needs strict TypeScript enforcement
+  - Error handling anti-pattern: 7 instances of `.catch(() => [])` masking failures
+- **Project Cleanup**:
+  - Removed empty directories: `src/pages`, `pages/Calendar/components`, `backend/public`
+  - All major pages verified functional: Dashboard, CRM, Jobs, Calendar, Invoices, Time Tracking, Templates
+- **Documentation**: Created comprehensive `docs/REFACTORING_ROADMAP.md` with:
+  - 9 critical/high-priority issues
+  - Detailed implementation steps for each refactor
+  - 7-11 week implementation timeline (part-time) or 4-6 weeks (full-time)
+  - Success metrics and priority order
+- **Current State**: Application is fully functional but requires modularization for long-term maintainability and team scalability
+
 ### Bug Fixes (November 2025)
+- **Templates Page Type Safety**: Fixed crash caused by calling `.toFixed()` on string values. Wrapped `basePrice` and `pricePerHour` in `Number()` conversion before formatting.
 - **Database Logging**: Reduced verbose connection pool logging from 10 messages to a single "Database connection pool ready" message for cleaner logs.
 - **Tailwind CSS Production**: Migrated from CDN to PostCSS plugin configuration for better performance and bundle optimization. Created `tailwind.config.js`, `postcss.config.js`, and `index.css` with proper Tailwind directives.
 - **Google Maps Performance**: Added `loading=async` parameter to Maps API URL for optimal loading performance.
