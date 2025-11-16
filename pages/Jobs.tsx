@@ -22,6 +22,19 @@ const calculateQuoteTotal = (lineItems: LineItem[], stumpGrindingPrice: number):
     return itemsTotal + (stumpGrindingPrice || 0);
 };
 
+interface NewCustomerData {
+    companyName: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    zipCode: string;
+}
+
 // Common form component for adding and editing jobs
 const JobForm: React.FC<{
     quotes: Quote[];
@@ -46,6 +59,21 @@ const JobForm: React.FC<{
         estimatedHours: initialData?.estimatedHours || 0,
     });
 
+    const [customerMode, setCustomerMode] = useState<'existing' | 'new'>('existing');
+    const [newCustomerData, setNewCustomerData] = useState<NewCustomerData>({
+        companyName: '',
+        firstName: '',
+        lastName: '',
+        phone: '',
+        email: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        zipCode: '',
+    });
+    const [errors, setErrors] = useState<{[key: string]: string}>({});
+
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -61,6 +89,7 @@ const JobForm: React.FC<{
                 equipmentNeeded: initialData.equipmentNeeded || [],
                 estimatedHours: initialData.estimatedHours || 0,
             });
+            setCustomerMode('existing');
         } else {
             const defaultQuote = availableQuotes.length > 0 ? availableQuotes[0] : null;
             setFormData({
@@ -76,7 +105,21 @@ const JobForm: React.FC<{
                 equipmentNeeded: [],
                 estimatedHours: 0,
             });
+            setCustomerMode('existing');
+            setNewCustomerData({
+                companyName: '',
+                firstName: '',
+                lastName: '',
+                phone: '',
+                email: '',
+                addressLine1: '',
+                addressLine2: '',
+                city: '',
+                state: '',
+                zipCode: '',
+            });
         }
+        setErrors({});
     }, [initialData, quotes]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -92,6 +135,29 @@ const JobForm: React.FC<{
         } else {
             setFormData(prev => ({ ...prev, [name]: value as any }));
         }
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handleNewCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setNewCustomerData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handleCustomerModeChange = (mode: 'existing' | 'new') => {
+        setCustomerMode(mode);
+        if (mode === 'new') {
+            setFormData(prev => ({ 
+                ...prev, 
+                quoteId: '', 
+                customerName: '',
+                stumpGrindingPrice: 0
+            }));
+        }
     };
     
     const handleCrewChange = (employeeId: string) => {
@@ -103,13 +169,88 @@ const JobForm: React.FC<{
         }));
     };
 
+    const validateForm = (): boolean => {
+        const newErrors: {[key: string]: string} = {};
+
+        if (customerMode === 'existing') {
+            if (!formData.quoteId) {
+                newErrors.quoteId = 'Please select a quote';
+            }
+        } else {
+            if (!newCustomerData.firstName.trim()) {
+                newErrors.firstName = 'First name is required';
+            }
+            if (!newCustomerData.lastName.trim()) {
+                newErrors.lastName = 'Last name is required';
+            }
+            if (!newCustomerData.phone.trim()) {
+                newErrors.phone = 'Phone number is required';
+            }
+            if (!newCustomerData.email.trim()) {
+                newErrors.email = 'Email address is required';
+            }
+            if (!newCustomerData.addressLine1.trim()) {
+                newErrors.addressLine1 = 'Address is required';
+            }
+            if (!newCustomerData.city.trim()) {
+                newErrors.city = 'City is required';
+            }
+            if (!newCustomerData.state.trim()) {
+                newErrors.state = 'State is required';
+            }
+            if (!newCustomerData.zipCode.trim()) {
+                newErrors.zipCode = 'Zip code is required';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.quoteId) {
-            alert("Please select a quote.");
+        
+        if (!validateForm()) {
             return;
         }
-        await onSave(formData);
+
+        try {
+            let clientId: string | undefined;
+            let customerName = formData.customerName;
+
+            if (customerMode === 'new') {
+                const newClient = await api.clientService.create({
+                    firstName: newCustomerData.firstName,
+                    lastName: newCustomerData.lastName,
+                    companyName: newCustomerData.companyName || undefined,
+                    primaryPhone: newCustomerData.phone,
+                    primaryEmail: newCustomerData.email,
+                    billingAddressLine1: newCustomerData.addressLine1,
+                    billingAddressLine2: newCustomerData.addressLine2 || undefined,
+                    billingCity: newCustomerData.city,
+                    billingState: newCustomerData.state,
+                    billingZip: newCustomerData.zipCode,
+                    clientType: 'residential',
+                    status: 'active',
+                    paymentTerms: 'Net 30',
+                    taxExempt: false,
+                    billingCountry: 'USA',
+                    lifetimeValue: 0,
+                });
+                clientId = newClient.id;
+                customerName = newClient.companyName || `${newClient.firstName} ${newClient.lastName}`;
+            }
+
+            const jobData = {
+                ...formData,
+                customerName,
+                ...(clientId && { clientId }),
+            };
+
+            await onSave(jobData);
+        } catch (error: any) {
+            alert(`Failed to create customer/job: ${error.message || 'Unknown error'}`);
+        }
     };
 
     return (
@@ -117,17 +258,194 @@ const JobForm: React.FC<{
             <h2 className="text-xl font-bold text-brand-gray-900 mb-4">{initialData ? 'Edit Job' : 'Create New Job'}</h2>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    <div className="sm:col-span-3">
-                        <label htmlFor="quoteId" className="block text-sm font-medium leading-6 text-brand-gray-900">Accepted Quote</label>
-                        <select id="quoteId" name="quoteId" value={formData.quoteId} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
-                            {availableQuotes.length === 0 && <option disabled>No accepted quotes available</option>}
-                            {availableQuotes.map(quote => (<option key={quote.id} value={quote.id}>{`${quote.id} - ${quote.customerName}`}</option>))}
-                        </select>
+                    <div className="col-span-full">
+                        <label className="block text-sm font-medium leading-6 text-brand-gray-900 mb-2">Customer Source *</label>
+                        <div className="flex gap-6">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="customerMode"
+                                    value="existing"
+                                    checked={customerMode === 'existing'}
+                                    onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
+                                    className="mr-2 text-brand-cyan-600 focus:ring-brand-cyan-500"
+                                />
+                                <span className="text-brand-gray-900">From Accepted Quote</span>
+                            </label>
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="customerMode"
+                                    value="new"
+                                    checked={customerMode === 'new'}
+                                    onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
+                                    className="mr-2 text-brand-cyan-600 focus:ring-brand-cyan-500"
+                                />
+                                <span className="text-brand-gray-900">Create New Customer</span>
+                            </label>
+                        </div>
                     </div>
-                     <div className="sm:col-span-3">
-                         <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-gray-900">Customer</label>
-                         <input type="text" name="customerName" id="customerName" value={formData.customerName} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-100 text-brand-gray-500 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-0 sm:text-sm sm:leading-6" />
-                    </div>
+
+                    {customerMode === 'existing' ? (
+                        <>
+                            <div className="sm:col-span-3">
+                                <label htmlFor="quoteId" className="block text-sm font-medium leading-6 text-brand-gray-900">Accepted Quote *</label>
+                                <select id="quoteId" name="quoteId" value={formData.quoteId} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
+                                    <option value="">Select a quote...</option>
+                                    {availableQuotes.map(quote => (<option key={quote.id} value={quote.id}>{`${quote.id} - ${quote.customerName}`}</option>))}
+                                </select>
+                                {errors.quoteId && <p className="mt-1 text-sm text-red-600">{errors.quoteId}</p>}
+                            </div>
+                            <div className="sm:col-span-3">
+                                <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-gray-900">Customer</label>
+                                <input type="text" name="customerName" id="customerName" value={formData.customerName} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-100 text-brand-gray-500 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-0 sm:text-sm sm:leading-6" />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="col-span-full p-4 bg-brand-gray-50 rounded-lg border border-brand-gray-300">
+                            <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">New Customer Information</h3>
+                            
+                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                                <div className="col-span-full">
+                                    <label htmlFor="companyName" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Name (Optional)</label>
+                                    <input
+                                        type="text"
+                                        id="companyName"
+                                        name="companyName"
+                                        value={newCustomerData.companyName}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="Enter company name"
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="firstName" className="block text-sm font-medium leading-6 text-brand-gray-900">First Name *</label>
+                                    <input
+                                        type="text"
+                                        id="firstName"
+                                        name="firstName"
+                                        value={newCustomerData.firstName}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="First name"
+                                    />
+                                    {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="lastName" className="block text-sm font-medium leading-6 text-brand-gray-900">Last Name *</label>
+                                    <input
+                                        type="text"
+                                        id="lastName"
+                                        name="lastName"
+                                        value={newCustomerData.lastName}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="Last name"
+                                    />
+                                    {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="phone" className="block text-sm font-medium leading-6 text-brand-gray-900">Phone Number *</label>
+                                    <input
+                                        type="tel"
+                                        id="phone"
+                                        name="phone"
+                                        value={newCustomerData.phone}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="(555) 123-4567"
+                                    />
+                                    {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+                                </div>
+
+                                <div className="sm:col-span-3">
+                                    <label htmlFor="email" className="block text-sm font-medium leading-6 text-brand-gray-900">Email Address *</label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        value={newCustomerData.email}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="email@example.com"
+                                    />
+                                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                                </div>
+
+                                <div className="col-span-full">
+                                    <label htmlFor="addressLine1" className="block text-sm font-medium leading-6 text-brand-gray-900">Address Line 1 *</label>
+                                    <input
+                                        type="text"
+                                        id="addressLine1"
+                                        name="addressLine1"
+                                        value={newCustomerData.addressLine1}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="Street address"
+                                    />
+                                    {errors.addressLine1 && <p className="mt-1 text-sm text-red-600">{errors.addressLine1}</p>}
+                                </div>
+
+                                <div className="col-span-full">
+                                    <label htmlFor="addressLine2" className="block text-sm font-medium leading-6 text-brand-gray-900">Address Line 2 (Optional)</label>
+                                    <input
+                                        type="text"
+                                        id="addressLine2"
+                                        name="addressLine2"
+                                        value={newCustomerData.addressLine2}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="Apt, suite, unit, etc."
+                                    />
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label htmlFor="city" className="block text-sm font-medium leading-6 text-brand-gray-900">City *</label>
+                                    <input
+                                        type="text"
+                                        id="city"
+                                        name="city"
+                                        value={newCustomerData.city}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="City"
+                                    />
+                                    {errors.city && <p className="mt-1 text-sm text-red-600">{errors.city}</p>}
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label htmlFor="state" className="block text-sm font-medium leading-6 text-brand-gray-900">State *</label>
+                                    <input
+                                        type="text"
+                                        id="state"
+                                        name="state"
+                                        value={newCustomerData.state}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="CA"
+                                    />
+                                    {errors.state && <p className="mt-1 text-sm text-red-600">{errors.state}</p>}
+                                </div>
+
+                                <div className="sm:col-span-2">
+                                    <label htmlFor="zipCode" className="block text-sm font-medium leading-6 text-brand-gray-900">Zip Code *</label>
+                                    <input
+                                        type="text"
+                                        id="zipCode"
+                                        name="zipCode"
+                                        value={newCustomerData.zipCode}
+                                        onChange={handleNewCustomerChange}
+                                        className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
+                                        placeholder="12345"
+                                    />
+                                    {errors.zipCode && <p className="mt-1 text-sm text-red-600">{errors.zipCode}</p>}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <div className="sm:col-span-3">
                         <label htmlFor="scheduledDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Scheduled Date</label>
                         <input type="date" name="scheduledDate" id="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
