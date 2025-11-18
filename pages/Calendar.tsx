@@ -429,11 +429,11 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                 )}
 
                 <div className="flex-1 mt-8 lg:mt-0">
-                    <div className="sm:flex sm:items-center sm:justify-between mb-4">
-                        <div className="flex items-center space-x-2">
+                    <div className="sm:flex sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0">
+                        <div className="flex items-center justify-center space-x-2">
                             {getNavigationControls()}
                         </div>
-                        <div className="mt-4 sm:mt-0 flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
                             <button 
                                 onClick={() => setShowTemplateSelector(true)}
                                 className="inline-flex items-center gap-x-1.5 rounded-md bg-brand-cyan-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700"
@@ -457,77 +457,79 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                         </div>
                     </div>
 
-                    <div className="mb-4 bg-white rounded-lg shadow-sm p-2 inline-flex space-x-1">
-                        <button
-                            onClick={() => setActiveView('day')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'day'
-                                    ? 'bg-brand-cyan-600 text-white'
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            Day
-                        </button>
-                        <button
-                            onClick={() => setActiveView('3-day')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === '3-day' 
-                                    ? 'bg-brand-cyan-600 text-white' 
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            3-Day
-                        </button>
-                        <button
-                            onClick={() => setActiveView('week')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'week' 
-                                    ? 'bg-brand-cyan-600 text-white' 
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            Week
-                        </button>
-                        <button
-                            onClick={() => setActiveView('month')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'month' 
-                                    ? 'bg-brand-cyan-600 text-white' 
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            Month
-                        </button>
-                        <button
-                            onClick={() => setActiveView('list')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'list' 
-                                    ? 'bg-brand-cyan-600 text-white' 
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            List
-                        </button>
-                        <button
-                            onClick={() => setActiveView('map')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'map' 
-                                    ? 'bg-brand-cyan-600 text-white' 
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            Map
-                        </button>
-                        <button
-                            onClick={() => setActiveView('crew')}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                activeView === 'crew' 
-                                    ? 'bg-brand-cyan-600 text-white' 
-                                    : 'text-brand-gray-700 hover:bg-brand-gray-100'
-                            }`}
-                        >
-                            Crew
-                        </button>
+                    <div className="mb-4 bg-white rounded-lg shadow-sm p-2 overflow-x-auto">
+                        <div className="inline-flex space-x-1 min-w-min">
+                            <button
+                                onClick={() => setActiveView('day')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === 'day'
+                                        ? 'bg-brand-cyan-600 text-white'
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                Day
+                            </button>
+                            <button
+                                onClick={() => setActiveView('3-day')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === '3-day' 
+                                        ? 'bg-brand-cyan-600 text-white' 
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                3-Day
+                            </button>
+                            <button
+                                onClick={() => setActiveView('week')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === 'week' 
+                                        ? 'bg-brand-cyan-600 text-white' 
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                Week
+                            </button>
+                            <button
+                                onClick={() => setActiveView('month')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === 'month' 
+                                        ? 'bg-brand-cyan-600 text-white' 
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                Month
+                            </button>
+                            <button
+                                onClick={() => setActiveView('list')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === 'list' 
+                                        ? 'bg-brand-cyan-600 text-white' 
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                List
+                            </button>
+                            <button
+                                onClick={() => setActiveView('map')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === 'map' 
+                                        ? 'bg-brand-cyan-600 text-white' 
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                Map
+                            </button>
+                            <button
+                                onClick={() => setActiveView('crew')}
+                                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                                    activeView === 'crew' 
+                                        ? 'bg-brand-cyan-600 text-white' 
+                                        : 'text-brand-gray-700 hover:bg-brand-gray-100'
+                                }`}
+                            >
+                                Crew
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mb-6 bg-white rounded-lg border border-brand-gray-200 shadow-sm p-4">

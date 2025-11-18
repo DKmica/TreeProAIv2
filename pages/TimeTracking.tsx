@@ -173,7 +173,7 @@ export default function TimeTracking() {
 
       {activeTab === 'entries' && (
         <div>
-          <div className="mb-4 flex gap-4 items-center">
+          <div className="mb-4 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
             <select
               value={selectedEmployee}
               onChange={(e) => setSelectedEmployee(e.target.value)}
@@ -205,47 +205,91 @@ export default function TimeTracking() {
           ) : timeEntries.length === 0 ? (
             <div className="text-center py-8 text-gray-400">No time entries found</div>
           ) : (
-            <div className="bg-gray-800 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-900">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Employee</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Job</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Clock In</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Clock Out</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Hours</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {timeEntries.map(entry => (
-                    <tr key={entry.id} className="hover:bg-gray-750">
-                      <td className="px-4 py-3 text-white">{entry.employeeName}</td>
-                      <td className="px-4 py-3 text-gray-300">
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden lg:block bg-gray-800 rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-900">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Employee</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Job</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Clock In</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Clock Out</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Hours</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {timeEntries.map(entry => (
+                      <tr key={entry.id} className="hover:bg-gray-750">
+                        <td className="px-4 py-3 text-white">{entry.employeeName}</td>
+                        <td className="px-4 py-3 text-gray-300">
+                          {entry.jobTitle ? (
+                            <div>
+                              <div className="text-sm">{entry.jobTitle}</div>
+                              <div className="text-xs text-gray-500">{entry.jobClientName}</div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">No job</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-gray-300">
+                          {new Date(entry.clockIn).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-gray-300">
+                          {entry.clockOut ? new Date(entry.clockOut).toLocaleString() : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-gray-300">{formatDuration(entry.hoursWorked)}</td>
+                        <td className="px-4 py-3 text-gray-300">{formatCurrency(entry.totalAmount)}</td>
+                        <td className="px-4 py-3">{getStatusBadge(entry.status)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-4">
+                {timeEntries.map(entry => (
+                  <div key={entry.id} className="bg-gray-800 rounded-lg p-4 space-y-3 border border-gray-700">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <h3 className="font-semibold text-white">{entry.employeeName}</h3>
                         {entry.jobTitle ? (
-                          <div>
-                            <div className="text-sm">{entry.jobTitle}</div>
-                            <div className="text-xs text-gray-500">{entry.jobClientName}</div>
+                          <div className="mt-1">
+                            <p className="text-sm text-gray-300">{entry.jobTitle}</p>
+                            <p className="text-xs text-gray-500">{entry.jobClientName}</p>
                           </div>
                         ) : (
-                          <span className="text-gray-500">No job</span>
+                          <p className="text-sm text-gray-500 mt-1">No job</p>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-300">
-                        {new Date(entry.clockIn).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-gray-300">
-                        {entry.clockOut ? new Date(entry.clockOut).toLocaleString() : '-'}
-                      </td>
-                      <td className="px-4 py-3 text-gray-300">{formatDuration(entry.hoursWorked)}</td>
-                      <td className="px-4 py-3 text-gray-300">{formatCurrency(entry.totalAmount)}</td>
-                      <td className="px-4 py-3">{getStatusBadge(entry.status)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                      <div>{getStatusBadge(entry.status)}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-400">Clock In:</span>
+                        <p className="text-gray-300 text-xs mt-1">{new Date(entry.clockIn).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Clock Out:</span>
+                        <p className="text-gray-300 text-xs mt-1">{entry.clockOut ? new Date(entry.clockOut).toLocaleString() : '-'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Hours:</span>
+                        <p className="text-white font-medium mt-1">{formatDuration(entry.hoursWorked)}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Amount:</span>
+                        <p className="text-white font-medium mt-1">{formatCurrency(entry.totalAmount)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -259,7 +303,7 @@ export default function TimeTracking() {
 
       {activeTab === 'timesheets' && (
         <div>
-          <div className="mb-4 flex gap-4 items-center">
+          <div className="mb-4 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
             <select
               value={selectedEmployee}
               onChange={(e) => setSelectedEmployee(e.target.value)}
@@ -291,36 +335,78 @@ export default function TimeTracking() {
           ) : timesheets.length === 0 ? (
             <div className="text-center py-8 text-gray-400">No timesheets found</div>
           ) : (
-            <div className="bg-gray-800 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-900">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Employee</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Period</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Regular Hours</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">OT Hours</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Total Hours</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Approved By</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-700">
-                  {timesheets.map(sheet => (
-                    <tr key={sheet.id} className="hover:bg-gray-750">
-                      <td className="px-4 py-3 text-white">{sheet.employeeName}</td>
-                      <td className="px-4 py-3 text-gray-300">
-                        {new Date(sheet.periodStart).toLocaleDateString()} - {new Date(sheet.periodEnd).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-gray-300">{formatDuration(sheet.totalRegularHours)}</td>
-                      <td className="px-4 py-3 text-gray-300">{formatDuration(sheet.totalOvertimeHours)}</td>
-                      <td className="px-4 py-3 text-gray-300">{formatDuration(sheet.totalHours)}</td>
-                      <td className="px-4 py-3">{getStatusBadge(sheet.status)}</td>
-                      <td className="px-4 py-3 text-gray-300">{sheet.approverName || '-'}</td>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden lg:block bg-gray-800 rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-900">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Employee</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Period</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Regular Hours</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">OT Hours</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Total Hours</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Approved By</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {timesheets.map(sheet => (
+                      <tr key={sheet.id} className="hover:bg-gray-750">
+                        <td className="px-4 py-3 text-white">{sheet.employeeName}</td>
+                        <td className="px-4 py-3 text-gray-300">
+                          {new Date(sheet.periodStart).toLocaleDateString()} - {new Date(sheet.periodEnd).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-gray-300">{formatDuration(sheet.totalRegularHours)}</td>
+                        <td className="px-4 py-3 text-gray-300">{formatDuration(sheet.totalOvertimeHours)}</td>
+                        <td className="px-4 py-3 text-gray-300">{formatDuration(sheet.totalHours)}</td>
+                        <td className="px-4 py-3">{getStatusBadge(sheet.status)}</td>
+                        <td className="px-4 py-3 text-gray-300">{sheet.approverName || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-4">
+                {timesheets.map(sheet => (
+                  <div key={sheet.id} className="bg-gray-800 rounded-lg p-4 space-y-3 border border-gray-700">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <h3 className="font-semibold text-white">{sheet.employeeName}</h3>
+                        <p className="text-sm text-gray-400 mt-1">
+                          {new Date(sheet.periodStart).toLocaleDateString()} - {new Date(sheet.periodEnd).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>{getStatusBadge(sheet.status)}</div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <span className="text-gray-400">Regular:</span>
+                        <p className="text-white font-medium mt-1">{formatDuration(sheet.totalRegularHours)}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">OT:</span>
+                        <p className="text-white font-medium mt-1">{formatDuration(sheet.totalOvertimeHours)}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Total:</span>
+                        <p className="text-white font-medium mt-1">{formatDuration(sheet.totalHours)}</p>
+                      </div>
+                    </div>
+
+                    {sheet.approverName && (
+                      <div className="pt-2 border-t border-gray-700 text-sm">
+                        <span className="text-gray-400">Approved by: </span>
+                        <span className="text-gray-300">{sheet.approverName}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

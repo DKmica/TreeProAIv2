@@ -214,7 +214,8 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
                 />
             </div>
 
-            <div className="mt-4 flex flex-col">
+            {/* Desktop Table View */}
+            <div className="mt-4 hidden lg:flex lg:flex-col">
                 <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
                         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -254,6 +255,47 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="mt-4 lg:hidden space-y-4">
+                {filteredEquipment.map((item) => (
+                    <div key={item.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+                        <div className="flex justify-between items-start gap-2">
+                            <div>
+                                <Link to={`/equipment/${item.id}`} className="font-semibold text-brand-green-600 hover:text-brand-green-800 hover:underline">
+                                    {item.name}
+                                </Link>
+                                <p className="text-sm text-brand-gray-600 mt-1">{`${item.make} ${item.model}`}</p>
+                            </div>
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(item.status)}`}>
+                                {item.status}
+                            </span>
+                        </div>
+
+                        <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                                <span className="text-brand-gray-600">Assigned To:</span>
+                                <span className="font-medium text-brand-gray-900">{item.assignedTo || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2 border-t border-brand-gray-100">
+                            <button 
+                                onClick={() => handleEditClick(item)} 
+                                className="flex-1 px-3 py-2 text-sm font-medium text-brand-green-600 hover:text-brand-green-700 border border-brand-green-600 rounded-md hover:bg-brand-green-50"
+                            >
+                                Edit
+                            </button>
+                            <button 
+                                onClick={() => handleArchiveEquipment(item.id)} 
+                                className="flex-1 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-600 rounded-md hover:bg-red-50"
+                            >
+                                Archive
+                            </button>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

@@ -794,7 +794,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
         <input type="text" placeholder="Search jobs..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" aria-label="Search jobs" />
       </div>
 
-      <div className="mt-4 flex flex-col">
+      {/* Desktop Table View */}
+      <div className="mt-4 hidden lg:flex lg:flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -860,6 +861,95 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="mt-4 lg:hidden space-y-4">
+        {filteredJobs.map((job) => {
+          const isInvoiceCreated = invoices.some(inv => inv.jobId === job.id);
+          const canCreateInvoice = !isInvoiceCreated && job.status === 'Completed';
+          const portalUrl = `#/portal/job/${job.id}`;
+          return (
+            <div key={job.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-brand-gray-900">Job {job.id}</h3>
+                  {job.messages && job.messages.length > 0 && (
+                    <button onClick={() => setViewingMessages(job)} className="text-brand-gray-400 hover:text-brand-green-600">
+                      <ChatBubbleLeftRightIcon className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+                <JobStatusBadge status={job.status} size="sm" />
+              </div>
+              
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-brand-gray-600">Customer:</span>
+                  <span className="font-medium text-brand-gray-900">{job.customerName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-brand-gray-600">Scheduled:</span>
+                  <span className="font-medium text-brand-gray-900">{job.scheduledDate || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100">
+                <button 
+                  onClick={() => handleViewDetails(job)} 
+                  className="flex-1 min-w-[100px] px-3 py-2 text-sm font-medium text-brand-cyan-600 hover:text-brand-cyan-700 border border-brand-cyan-600 rounded-md hover:bg-brand-cyan-50"
+                >
+                  Details
+                </button>
+                <div className="flex gap-1">
+                  <a 
+                    href={portalUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="px-3 py-2 text-sm font-medium text-brand-gray-700 bg-white border border-brand-gray-300 rounded-l-md hover:bg-brand-gray-50"
+                  >
+                    Link
+                  </a>
+                  <button 
+                    onClick={() => handleCopyLink(job.id)} 
+                    type="button" 
+                    className="relative px-2 py-2 text-sm font-medium text-brand-gray-700 bg-white border border-brand-gray-300 rounded-r-md hover:bg-brand-gray-50" 
+                    title="Copy public link"
+                  >
+                    <ClipboardSignatureIcon className="h-4 w-4 text-brand-gray-600" />
+                    {linkCopied === job.id && (
+                      <span className="absolute -top-8 -right-1 text-xs bg-brand-gray-800 text-white px-2 py-0.5 rounded">Copied!</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button 
+                  type="button" 
+                  onClick={() => handleCreateInvoice(job)}
+                  disabled={!canCreateInvoice}
+                  title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'Completed' ? "Job must be completed" : "Create Invoice"}
+                  className="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-brand-green-50 text-brand-green-600 hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed"
+                >
+                  Invoice
+                </button>
+                <button 
+                  onClick={() => handleEditClick(job)} 
+                  className="flex-1 px-3 py-2 text-sm font-medium text-brand-green-600 hover:text-brand-green-700 border border-brand-green-600 rounded-md hover:bg-brand-green-50"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => handleArchiveJob(job.id)} 
+                  className="flex-1 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 border border-red-600 rounded-md hover:bg-red-50"
+                >
+                  Archive
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
       {viewingMessages && (
           <div className="fixed inset-0 bg-brand-gray-800 bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setViewingMessages(null)}>

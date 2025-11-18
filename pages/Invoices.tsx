@@ -229,7 +229,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
 
       <div className="mt-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
             {(['All', 'Draft', 'Sent', 'Paid', 'Overdue', 'Void'] as StatusFilter[]).map((status) => (
               <button
                 key={status}
@@ -265,7 +265,8 @@ const Invoices: React.FC<InvoicesProps> = () => {
         />
       </div>
 
-      <div className="mt-4 flex flex-col">
+      {/* Desktop Table View */}
+      <div className="mt-4 hidden lg:flex lg:flex-col">
         <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -397,6 +398,103 @@ const Invoices: React.FC<InvoicesProps> = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="mt-4 lg:hidden space-y-4">
+        {filteredInvoices.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <p className="text-sm text-gray-500">
+              {searchTerm || statusFilter !== 'All' ? 'No invoices found matching your criteria' : 'No invoices yet. Create your first invoice to get started.'}
+            </p>
+          </div>
+        ) : (
+          filteredInvoices.map((invoice) => {
+            const displayStatus = calculateStatus(invoice);
+            return (
+              <div key={invoice.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <h3 className="font-semibold text-brand-gray-900">
+                      {invoice.invoiceNumber || invoice.id}
+                    </h3>
+                    <p className="text-sm text-brand-gray-600 mt-1">{invoice.customerName}</p>
+                  </div>
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(displayStatus)}`}>
+                    {displayStatus}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-brand-gray-600">Total:</span>
+                    <p className="font-semibold text-brand-gray-900">${invoice.grandTotal.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-brand-gray-600">Amount Due:</span>
+                    <p className={`font-semibold ${invoice.amountDue > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      ${invoice.amountDue.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-brand-gray-600">Due Date:</span>
+                    <p className="font-medium text-brand-gray-900">{formatDate(invoice.dueDate)}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100">
+                  <button
+                    onClick={() => handleViewInvoice(invoice)}
+                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                  >
+                    <DocumentTextIcon className="h-4 w-4" />
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleEditInvoice(invoice)}
+                    className="flex-1 min-w-[100px] px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {displayStatus !== 'Paid' && displayStatus !== 'Void' && (
+                    <button
+                      onClick={() => handleRecordPayment(invoice)}
+                      className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium"
+                    >
+                      <DollarIcon className="h-4 w-4" />
+                      Pay
+                    </button>
+                  )}
+                  {invoice.status === 'Draft' && (
+                    <button
+                      onClick={() => handleSendInvoice(invoice)}
+                      className="flex-1 min-w-[100px] px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                    >
+                      Send
+                    </button>
+                  )}
+                  {invoice.status !== 'Void' && (
+                    <button
+                      onClick={() => handleVoidInvoice(invoice)}
+                      className="flex-1 min-w-[100px] px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm font-medium"
+                    >
+                      Void
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteInvoice(invoice)}
+                    className="flex-1 min-w-[100px] px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
       <InvoiceEditor
