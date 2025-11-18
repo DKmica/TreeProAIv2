@@ -40,8 +40,8 @@ export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gradient-to-br from-brand-navy-900 to-brand-navy-800 rounded-xl border border-brand-cyan-500/30 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-gradient-to-r from-brand-navy-900 to-brand-navy-800 border-b border-brand-cyan-500/30 px-6 py-4 flex items-center justify-between z-10">
+      <div className="bg-gradient-to-br from-brand-navy-900 to-brand-navy-800 rounded-xl border border-brand-cyan-500/30 shadow-2xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-gradient-to-r from-brand-navy-900 to-brand-navy-800 border-b border-brand-cyan-500/30 px-4 sm:px-6 py-4 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-brand-cyan-500/20 rounded-lg">
               <FileText className="h-6 w-6 text-brand-cyan-400" />
@@ -59,8 +59,8 @@ export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="px-4 sm:px-6 py-4 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
                 <label className="text-sm text-brand-gray-400 mb-1 block">Customer Name</label>
@@ -247,10 +247,10 @@ export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote
           )}
         </div>
 
-        <div className="sticky bottom-0 bg-gradient-to-r from-brand-navy-900 to-brand-navy-800 border-t border-brand-cyan-500/30 px-6 py-4 flex justify-end">
+        <div className="sticky bottom-0 bg-gradient-to-r from-brand-navy-900 to-brand-navy-800 border-t border-brand-cyan-500/30 px-4 sm:px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-brand-cyan-500/20 hover:bg-brand-cyan-500/30 text-brand-cyan-400 rounded-lg font-medium transition-colors border border-brand-cyan-500/30"
+            className="px-4 sm:px-6 py-2.5 bg-brand-cyan-500/20 hover:bg-brand-cyan-500/30 text-brand-cyan-400 rounded-lg font-medium transition-colors border border-brand-cyan-500/30"
           >
             Close
           </button>

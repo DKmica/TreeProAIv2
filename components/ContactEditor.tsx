@@ -299,9 +299,9 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white">
+      <div className="bg-gray-900 rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+          <h2 className="text-lg sm:text-xl font-bold text-white">
             {contact ? 'Edit Contact' : 'Add Contact'}
           </h2>
           <button
@@ -313,14 +313,14 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="p-6 space-y-6">
+          <div className="px-4 sm:px-6 py-4 space-y-6">
             {apiError && (
               <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded">
                 {apiError}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Contact Type <span className="text-red-400">*</span>
@@ -357,7 +357,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   First Name <span className="text-red-400">*</span>
@@ -545,11 +545,11 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-3 p-6 border-t border-gray-700">
+          <div className="flex gap-3 px-4 sm:px-6 py-4 border-t border-gray-700">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              className="flex-1 px-4 py-2.5 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
               disabled={isLoading}
             >
               Cancel

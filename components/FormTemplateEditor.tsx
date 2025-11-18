@@ -189,11 +189,11 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
       onClick={handleOverlayClick}
     >
       <div
-        className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+        className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bold text-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+          <h2 className="text-lg sm:text-xl font-bold text-white">
             {template ? 'Edit Form Template' : 'Create New Form Template'}
           </h2>
           <button
@@ -206,7 +206,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="p-6 space-y-6">
+          <div className="px-4 sm:px-6 py-4 space-y-6">
             {apiError && (
               <div className="bg-red-900/30 border border-red-500 text-red-200 px-4 py-3 rounded">
                 {apiError}
@@ -295,7 +295,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs text-gray-400 mb-1">Field Type</label>
                         <select
@@ -356,7 +356,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -385,11 +385,11 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-700 bg-[#0a1628]">
+          <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1628]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              className="px-4 sm:px-6 py-2.5 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
               disabled={isLoading}
             >
               Cancel
@@ -397,7 +397,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 sm:px-6 py-2.5 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {isLoading && (
                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
