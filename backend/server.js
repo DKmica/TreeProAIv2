@@ -1145,6 +1145,11 @@ const transformToDb = (data, tableName) => {
   }
 
   if (tableName === 'jobs') {
+    // Ensure status defaults to 'draft' if not provided (valid per job state machine)
+    if (!transformed.status || transformed.status === '' || transformed.status === 'Unscheduled') {
+      transformed.status = 'draft';
+    }
+    
     if (data.clockInCoordinates) {
       transformed.clock_in_lat = data.clockInCoordinates.lat;
       transformed.clock_in_lon = data.clockInCoordinates.lng;
@@ -2241,7 +2246,15 @@ const snakeToCamel = (obj) => {
   
   const camelObj = {};
   for (const [key, value] of Object.entries(obj)) {
-    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    // Special case mappings for database columns that don't follow standard pattern
+    let camelKey;
+    if (key === 'zip') {
+      camelKey = 'zipCode';
+    } else if (key === 'billing_zip') {
+      camelKey = 'billingZipCode';
+    } else {
+      camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    }
     camelObj[camelKey] = (value && typeof value === 'object') ? snakeToCamel(value) : value;
   }
   return camelObj;
@@ -2255,10 +2268,35 @@ const camelToSnake = (obj) => {
   
   const snakeObj = {};
   for (const [key, value] of Object.entries(obj)) {
-    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    // Special case mappings for database columns that don't follow standard pattern
+    let snakeKey;
+    if (key === 'zipCode') {
+      snakeKey = 'zip';
+    } else if (key === 'billingZipCode') {
+      snakeKey = 'billing_zip';
+    } else if (key === 'email' || key === 'phone' || key === 'role') {
+      // Skip email/phone/role for contacts - these should be in channels or mapped differently
+      // 'role' should map to 'job_title' or 'contact_type' depending on context
+      continue;
+    } else {
+      snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    }
     snakeObj[snakeKey] = (value && typeof value === 'object') ? camelToSnake(value) : value;
   }
   return snakeObj;
+};
+
+// Helper function: Sanitize UUID values - convert "undefined", "", or invalid values to null
+const sanitizeUUID = (value) => {
+  if (!value || value === 'undefined' || value === 'null' || value === '') {
+    return null;
+  }
+  // Basic UUID validation - check if it looks like a UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(value)) {
+    return null;
+  }
+  return value;
 };
 
 // Helper function: Build client stats
@@ -2948,8 +2986,17 @@ apiRouter.post('/clients/:clientId/properties', async (req, res) => {
         );
       }
       
-      // Build insert query
-      const columns = Object.keys(dbData).filter(k => k !== 'id');
+      // Build insert query - filter out undefined values and ensure we have at least some data
+      const columns = Object.keys(dbData).filter(k => k !== 'id' && dbData[k] !== undefined);
+      
+      if (columns.length === 0) {
+        await db.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: 'No valid property data provided'
+        });
+      }
+      
       const values = columns.map(k => dbData[k]);
       const placeholders = columns.map((_, i) => `$${i + 2}`).join(', ');
       
@@ -3245,10 +3292,38 @@ apiRouter.post('/clients/:clientId/contacts', async (req, res) => {
     await db.query('BEGIN');
     
     try {
-      // Extract channels
+      // Validate required fields
+      if (!contactData.firstName) {
+        await db.query('ROLLBACK');
+        return res.status(400).json({
+          success: false,
+          error: 'firstName is required'
+        });
+      }
+      
+      // Extract channels - handle both channels array and email/phone fields
       const channels = contactData.channels || [];
       
-      // Convert camelCase to snake_case
+      // Auto-convert email and phone to contact_channels for convenience
+      if (contactData.email) {
+        channels.push({
+          channelType: 'email',
+          channelValue: contactData.email,
+          label: 'Primary',
+          isPrimary: true
+        });
+      }
+      
+      if (contactData.phone) {
+        channels.push({
+          channelType: 'phone',
+          channelValue: contactData.phone,
+          label: 'Primary',
+          isPrimary: true
+        });
+      }
+      
+      // Convert camelCase to snake_case (email and phone will be skipped by camelToSnake)
       const dbData = camelToSnake(contactData);
       delete dbData.channels;
       
@@ -4743,6 +4818,11 @@ apiRouter.post('/quotes', async (req, res) => {
       const quoteId = uuidv4();
       const quoteNumber = await generateQuoteNumber();
       
+      // Sanitize UUID fields early to prevent "undefined" strings
+      const sanitizedClientId = sanitizeUUID(quoteData.clientId);
+      const sanitizedPropertyId = sanitizeUUID(quoteData.propertyId);
+      const sanitizedLeadId = sanitizeUUID(quoteData.leadId);
+      
       const lineItems = quoteData.lineItems || [];
       const discountPercentage = quoteData.discountPercentage || 0;
       const discountAmount = quoteData.discountAmount || 0;
@@ -4750,11 +4830,11 @@ apiRouter.post('/quotes', async (req, res) => {
       
       const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
       
-      let customerName = 'Unknown';
-      if (quoteData.clientId) {
+      let customerName = quoteData.customerName || 'Unknown';
+      if (sanitizedClientId) {
         const { rows: clientRows } = await db.query(
           'SELECT company_name, first_name, last_name FROM clients WHERE id = $1',
-          [quoteData.clientId]
+          [sanitizedClientId]
         );
         if (clientRows.length > 0) {
           const client = clientRows[0];
@@ -4777,9 +4857,9 @@ apiRouter.post('/quotes', async (req, res) => {
       
       const { rows: quoteRows } = await db.query(insertQuery, [
         quoteId,
-        quoteData.clientId || null,
-        quoteData.propertyId || null,
-        quoteData.leadId || null,
+        sanitizedClientId,
+        sanitizedPropertyId,
+        sanitizedLeadId,
         customerName,
         quoteNumber,
         JSON.stringify(lineItems),
@@ -4950,10 +5030,18 @@ apiRouter.get('/quotes', async (req, res) => {
 apiRouter.get('/quotes/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sanitizedId = sanitizeUUID(id);
+    
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid quote ID'
+      });
+    }
     
     const { rows: quoteRows } = await db.query(
       'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
-      [id]
+      [sanitizedId]
     );
     
     if (quoteRows.length === 0) {
@@ -4965,20 +5053,24 @@ apiRouter.get('/quotes/:id', async (req, res) => {
     
     const quote = snakeToCamel(quoteRows[0]);
     
-    if (quote.clientId) {
+    // Sanitize UUID fields to prevent "undefined" strings from being passed to queries
+    const sanitizedClientId = sanitizeUUID(quote.clientId);
+    const sanitizedPropertyId = sanitizeUUID(quote.propertyId);
+    
+    if (sanitizedClientId) {
       const { rows: clientRows } = await db.query(
         'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
-        [quote.clientId]
+        [sanitizedClientId]
       );
       if (clientRows.length > 0) {
         quote.client = snakeToCamel(clientRows[0]);
       }
     }
     
-    if (quote.propertyId) {
+    if (sanitizedPropertyId) {
       const { rows: propertyRows } = await db.query(
         'SELECT * FROM properties WHERE id = $1 AND deleted_at IS NULL',
-        [quote.propertyId]
+        [sanitizedPropertyId]
       );
       if (propertyRows.length > 0) {
         quote.property = snakeToCamel(propertyRows[0]);
@@ -4987,21 +5079,21 @@ apiRouter.get('/quotes/:id', async (req, res) => {
     
     const { rows: versionRows } = await db.query(
       'SELECT * FROM quote_versions WHERE quote_id = $1 ORDER BY version_number DESC',
-      [id]
+      [sanitizedId]
     );
     quote.versions = versionRows.map(snakeToCamel);
     
     const { rows: followupRows } = await db.query(
       'SELECT * FROM quote_followups WHERE quote_id = $1 ORDER BY scheduled_date ASC',
-      [id]
+      [sanitizedId]
     );
     quote.followups = followupRows.map(snakeToCamel);
     
-    const { rows: tagRows } = await db.query(
+    const { rows: tagRows} = await db.query(
       `SELECT t.* FROM tags t
        INNER JOIN entity_tags et ON et.tag_id = t.id
        WHERE et.entity_type = 'quote' AND et.entity_id = $1`,
-      [id]
+      [sanitizedId]
     );
     quote.tags = tagRows.map(snakeToCamel);
     
@@ -5016,11 +5108,20 @@ apiRouter.get('/quotes/:id', async (req, res) => {
 apiRouter.put('/quotes/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sanitizedId = sanitizeUUID(id);
+    
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid quote ID'
+      });
+    }
+    
     const quoteData = req.body;
     
     const { rows: existingRows } = await db.query(
       'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
-      [id]
+      [sanitizedId]
     );
     
     if (existingRows.length === 0) {
@@ -5031,7 +5132,7 @@ apiRouter.put('/quotes/:id', async (req, res) => {
     }
     
     const updates = [];
-    const values = [id];
+    const values = [sanitizedId];
     let paramIndex = 2;
     
     if (quoteData.status !== undefined) {
@@ -5105,10 +5206,18 @@ apiRouter.put('/quotes/:id', async (req, res) => {
 apiRouter.delete('/quotes/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const sanitizedId = sanitizeUUID(id);
+    
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid quote ID'
+      });
+    }
     
     const { rows } = await db.query(
       'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
-      [id]
+      [sanitizedId]
     );
     
     if (rows.length === 0) {
@@ -5120,12 +5229,12 @@ apiRouter.delete('/quotes/:id', async (req, res) => {
     
     await db.query(
       'UPDATE quotes SET deleted_at = NOW() WHERE id = $1',
-      [id]
+      [sanitizedId]
     );
     
     res.status(204).send();
     
-    removeFromVectorStore('quotes', id);
+    removeFromVectorStore('quotes', sanitizedId);
     
   } catch (err) {
     handleError(res, err);
@@ -5260,11 +5369,23 @@ apiRouter.get('/quotes/:id/versions', async (req, res) => {
 apiRouter.post('/quotes/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
-    const { approvedBy, notes } = req.body;
+    const sanitizedId = sanitizeUUID(id);
+    
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid quote ID'
+      });
+    }
+    
+    let { approvedBy, notes } = req.body;
+    
+    // Sanitize approvedBy - convert "undefined" string or empty string to null
+    approvedBy = sanitizeUUID(approvedBy);
     
     const { rows: quoteRows } = await db.query(
       'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
-      [id]
+      [sanitizedId]
     );
     
     if (quoteRows.length === 0) {
@@ -5290,7 +5411,7 @@ apiRouter.post('/quotes/:id/approve', async (req, res) => {
     const { rows: updatedRows } = await db.query(updateQuery, [
       approvedBy || 'system',
       approvalNote,
-      id
+      sanitizedId
     ]);
     
     const quote = snakeToCamel(updatedRows[0]);
@@ -5398,13 +5519,21 @@ apiRouter.post('/quotes/:id/send', async (req, res) => {
 apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
   try {
     const { id } = req.params;
+    const sanitizedId = sanitizeUUID(id);
+    
+    if (!sanitizedId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid quote ID'
+      });
+    }
     
     await db.query('BEGIN');
     
     try {
       const { rows: quoteRows } = await db.query(
         'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
-        [id]
+        [sanitizedId]
       );
       
       if (quoteRows.length === 0) {
@@ -5417,19 +5546,24 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
       
       const quote = quoteRows[0];
       
-      if (quote.approval_status !== 'approved') {
+      // Business Rule: Only allow Sent or Accepted quotes to be converted to jobs
+      // Block Draft, Pending, Rejected, and Converted quotes
+      const allowedStatuses = ['Sent', 'Accepted'];
+      
+      if (!allowedStatuses.includes(quote.status)) {
         await db.query('ROLLBACK');
         return res.status(400).json({
           success: false,
-          error: 'Quote must be approved before converting to job'
+          error: `Cannot convert quote with status '${quote.status}' to job. Quote must be 'Sent' or 'Accepted'.`
         });
       }
       
-      if (quote.status !== 'Accepted' && quote.status !== 'Sent') {
+      // Check approval status if the column exists and has a value
+      if (quote.approval_status === 'rejected') {
         await db.query('ROLLBACK');
         return res.status(400).json({
           success: false,
-          error: 'Quote must be accepted by client before converting to job'
+          error: 'Cannot convert rejected quote to job'
         });
       }
       
@@ -5450,7 +5584,7 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
         jobId,
         quote.client_id,
         quote.property_id,
-        id,
+        sanitizedId,
         jobNumber,
         quote.customer_name || 'Unknown',
         quote.job_location || null,
@@ -5461,7 +5595,7 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
       
       await db.query(
         `UPDATE quotes SET status = 'Converted', updated_at = NOW() WHERE id = $1`,
-        [id]
+        [sanitizedId]
       );
       
       await db.query('COMMIT');
@@ -9248,7 +9382,18 @@ process.on('unhandledRejection', (reason, promise) => {
   shutdown(1);
 });
 
-startServer().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+// Export for testing
+module.exports = {
+  app,
+  startServer,
+  stopServer: shutdown,
+  getServer: () => server
+};
+
+// Only start server automatically if this file is run directly (not imported for testing)
+if (require.main === module) {
+  startServer().catch(err => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });
+}

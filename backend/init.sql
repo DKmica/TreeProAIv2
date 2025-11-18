@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
     customer_name TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'Unscheduled',
+    status TEXT NOT NULL DEFAULT 'draft',
     scheduled_date TEXT,
     assigned_crew JSONB DEFAULT '[]',
     stump_grinding_price NUMERIC DEFAULT 0,

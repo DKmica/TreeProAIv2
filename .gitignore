@@ -41,3 +41,8 @@ backend/.env
 
 # OS files
 Thumbs.db
+
+# Playwright
+test-results
+playwright-report
+playwright/.cache

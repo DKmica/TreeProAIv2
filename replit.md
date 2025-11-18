@@ -67,6 +67,51 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 
 ## Recent Changes
 
+### Phase 0: Testing & Safety Infrastructure (November 18, 2025) - IN PROGRESS
+**Status**: Substantially Complete (78.6% test pass rate)
+
+**What Was Delivered**:
+- ✅ **Testing Frameworks**: Installed Vitest, Testing Library, Playwright, Supertest, jsdom
+- ✅ **Test Infrastructure**: Created vitest.config.ts, playwright.config.ts, test directory structure, test helpers
+- ✅ **125 Automated Tests Created**:
+  - Backend API Integration Tests: 70 tests (55 passing, 15 failing)
+  - Frontend Component Unit Tests: 37 tests (all passing)
+  - Smoke Tests (Business Workflows): 5 tests
+  - E2E Tests (Playwright): 18 tests
+- ✅ **Backend Auto-Start**: Tests automatically start/stop backend server (no manual setup required)
+- ✅ **Test Scripts**: 12 npm scripts for running different test suites
+- ✅ **Documentation**: Comprehensive README files for all test types
+
+**Backend Fixes Applied**:
+- Fixed database schema mismatches (zip/billing_zip column naming)
+- Fixed quote-to-job conversion logic (only allows Sent/Accepted quotes)
+- Fixed UUID validation (sanitizes "undefined" strings to null)
+- Fixed job status defaults and validation
+
+**Remaining Work** (15 failing integration tests):
+- Quote creation endpoint (POST /api/quotes) - returns string instead of number for totals
+- Lead endpoints - missing leadScore field transformation
+- Job state transitions endpoint - not fully implemented  
+- Client/invoice validation issues
+
+**Files Changed**:
+- backend/server.js - exports for testing, schema fixes, business logic improvements
+- backend/init.sql - job status default fix
+- tests/ directory - 125 test files across unit/integration/smoke/e2e
+- package.json - added 12 test scripts
+- vitest.config.ts, playwright.config.ts - test configuration
+
+**Test Commands**:
+```bash
+npm test                    # Run all Vitest tests
+npm run test:unit          # Run component tests only
+npm run test:integration   # Run API integration tests
+npm run test:e2e           # Run E2E browser tests
+npm run test:coverage      # Generate coverage report
+```
+
+**Next Steps**: Complete remaining test fixes to achieve 100% pass rate, then proceed to Phase 1 (Quick Wins).
+
 ### Architectural Analysis & Refactoring Roadmap (November 15, 2025)
 - **Comprehensive Code Audit**: Completed deep analysis of entire application (148 TypeScript/JavaScript files, 25+ pages/routes)
 - **Critical Issues Identified**:
