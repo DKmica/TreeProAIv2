@@ -1,7 +1,7 @@
 # TreePro AI - Replit Project Documentation
 
 ## Overview
-TreePro AI is a comprehensive business management platform for tree service companies, powered by Google Gemini AI. This full-stack application provides AI-powered tools for estimating, lead management, job scheduling, and overall business intelligence, aiming to enhance efficiency and decision-making for tree service professionals.
+TreePro AI is a comprehensive business management platform for tree service companies, powered by Google Gemini AI. This full-stack application provides AI-powered tools for estimating, lead management, job scheduling, and overall business intelligence, aiming to enhance efficiency and decision-making for tree service professionals. Its purpose is to enhance efficiency and decision-making for tree service professionals by offering a complete solution for their operational needs.
 
 ## User Preferences
 I prefer that the AI assistant prioritizes clear and concise explanations. When proposing code changes, please provide a high-level overview of the approach first and ask for confirmation before implementing detailed modifications. I value iterative development, so small, reviewable changes are preferred over large, monolithic updates. For any significant architectural decisions or third-party integrations, please consult me beforehand. I prefer to use the latest stable versions of frameworks and libraries unless there's a compelling reason otherwise.
@@ -9,50 +9,40 @@ I prefer that the AI assistant prioritizes clear and concise explanations. When 
 ## System Architecture
 
 ### UI/UX Decisions
-The application features a modern, dark theme with bright cyan (#00c2ff) accents against a dark navy/gray background (#0a1628 to #102a43). It includes a custom "futuristic AI circuit tree" logo and consistent branding across all UI components, including form stylings and active states.
+The application features a modern, dark theme with bright cyan (#00c2ff) accents against a dark navy/gray background (#0a1628 to #102a43). It includes a custom "futuristic AI circuit tree" logo and consistent branding across all UI components, including form stylings and active states. The UI is designed to be fully mobile-responsive across all pages and forms, with tables converting to card layouts on mobile devices and modals adapting to small screens (375px+ viewport).
 
 ### Technical Implementations
 - **Frontend**: Built with React 19, TypeScript, and Vite, using TailwindCSS (PostCSS plugin) for styling and React Router DOM (BrowserRouter with v7 future flags) for navigation.
 - **Backend**: Developed using Node.js and Express, providing a RESTful API.
 - **Database**: PostgreSQL 14+ is used, with schema initialized from `backend/init.sql`.
-- **AI Core**: A centralized `aiCore.ts` service loads all business data to maintain real-time context and integrates an extensive arborist knowledge base. It supports 58 distinct function calls across various business categories.
-- **CRM System**: Implements a professional client hierarchy: Client → Properties → Contacts. Editors use consistent modal patterns with dark theme, cyan accents, and validation.
-- **RAG (Retrieval-Augmented Generation)**: Provides semantic search over business data using Google Gemini text-embedding-004. Relevant context is retrieved and injected into Gemini prompts to ground AI responses in actual business data.
-- **AI Assistant Integration**: The `useAICore.ts` hook manages chat history with Gemini 2.0 Flash, executes AI function calls, and handles navigation, with RAG context injection for enhanced accuracy.
-- **Voice Recognition**: Features continuous listening, wake word detection ("yo probot"), command accumulation, and wake word removal.
+- **AI Core**: A centralized `aiCore.ts` service loads business data, integrates an arborist knowledge base, and supports 58 distinct function calls.
+- **CRM System**: Implements a client hierarchy (Client → Properties → Contacts) with consistent modal patterns for editing.
+- **RAG (Retrieval-Augmented Generation)**: Uses Google Gemini text-embedding-004 for semantic search, grounding AI responses with relevant business data.
+- **AI Assistant Integration**: The `useAICore.ts` hook manages chat history, executes AI function calls, and handles navigation, with RAG context injection.
+- **Voice Recognition**: Features continuous listening, "yo probot" wake word detection, and command accumulation.
 - **Data Flow**: Backend APIs handle `snake_case` to `camelCase` transformations and embed related objects.
 
 ### Feature Specifications
-- **AI-Powered Tree Estimating**: Utilizes Gemini for detailed estimates, including removal prices and suggested additional services, adhering to updated pricing guidelines.
-- **AI Estimator Feedback & Learning System**: Allows users to rate estimates and provide correction reasons, storing feedback in the `estimate_feedback` table. An analytics dashboard tracks accuracy metrics.
-- **AI Assistant**: Offers contextual help, arborist expertise, and can perform app actions.
-- **Lead and Job Management**: Provides CRUD operations for clients, leads, quotes, and jobs, including lead status tracking and quote conversion.
-- **Multi-View Calendar System**: Advanced job scheduling with Day, 3-Day, Week, Month, List, and Map views. Supports drag-and-drop rescheduling and filtering.
+- **AI-Powered Estimating**: Uses Gemini for detailed estimates, including pricing and suggested services.
+- **AI Estimator Feedback & Learning**: Allows users to rate estimates and provide correction reasons, improving AI accuracy.
+- **AI Assistant**: Provides contextual help, arborist expertise, and can perform app actions.
+- **Lead and Job Management**: Comprehensive CRUD operations for clients, leads, quotes, and jobs, including lead status tracking and quote conversion.
+- **Multi-View Calendar System**: Advanced job scheduling with various views, drag-and-drop rescheduling, and filtering.
 - **Financial Tools**: Includes revenue tracking, outstanding invoices, and payroll.
 - **Business Analytics**: Provides metrics like lead conversion and crew utilization.
 - **Authentication**: Supports owner accounts with full access.
-- **Job State Machine**: Comprehensive job workflow with 10 states, guarded transitions, automated triggers, and an audit trail.
-- **Job Templates**: Reusable job configurations to standardize services and accelerate job creation, with a library of seed templates and usage tracking.
-- **Phase 2B Operations & Scheduling (COMPLETE)**: Comprehensive operational management system with five major deliverables:
-  - **Crew Management**: Complete crew organization with crew creation, member assignment, role management (leader, climber, groundsman, driver), capacity tracking, and job assignments. 14 backend endpoints and full CRUD UI.
-  - **Time Tracking**: Clock in/out with GPS tracking, break management, manager approval workflow, and automated timesheet generation. 9 backend endpoints with TimeTracking page featuring 4 tabs.
-  - **Job Assignment System**: Atomic crew-to-job assignments with conflict detection, bulk operations, and reassignment capabilities. 4 backend endpoints with transactional guarantees.
-  - **Calendar Integration**: New Crew view mode with Gantt-style schedule, drag-and-drop job assignments, real-time conflict warnings (visual indicators, tooltips, summary banners), and seamless integration with existing calendar views.
-  - **Job Forms System**: Dynamic form templates and job-specific forms (safety checklists, inspections, work orders, approvals) with 7 field types, validation, completion tracking, and manager workflows. 12 backend endpoints, 5 seed templates, integrated into Jobs page.
-- **Phase 3A Invoice Management System (COMPLETE)**: Professional invoicing with comprehensive financial tracking:
-  - **Database Schema**: Enhanced invoices table with 21 fields including auto-generated invoice_number (INV-YYYY-####), tax_rate, discount_amount/percent, subtotal, payment tracking (amount_paid, amount_due), and payment_records table for payment history with CASCADE DELETE.
-  - **Backend API**: 8 RESTful endpoints providing full invoice lifecycle management - CRUD operations (create, read, update, delete), payment recording (POST /invoices/:id/payments), status management (Draft→Sent→Paid/Overdue→Void), and auto-calculation of subtotals, taxes, discounts, and totals.
-  - **Frontend Components**: 4 production-ready modals - InvoiceEditor (create/edit with LineItemBuilder, tax/discount calculations, validation), PaymentRecorder (partial payment support with balance tracking), InvoiceTemplate (professional print-ready view with payment history), and dynamic LineItemBuilder for flexible line item management.
-  - **Enhanced Invoices Page**: Complete CRUD interface with status filter tabs (All, Draft, Sent, Paid, Overdue, Void), color-coded status badges, search functionality, contextual actions (View, Edit, Pay, Send, Void, Delete), and real-time data refresh.
-  - **Invoice Workflow**: Professional status workflow (Draft→Sent→Paid/Overdue→Void) with automatic status updates on payment, overdue detection, and "Create from Job" functionality that pre-populates invoices from completed jobs with quote line items and customer data.
-  - **Production-Safe Migration**: CTE-based invoice_number migration for existing databases with NOT NULL constraint enforcement and year-based sequential numbering.
+- **Job State Machine**: A 10-state job workflow with guarded transitions, automated triggers, and an audit trail.
+- **Job Templates**: Reusable configurations for standardizing services and accelerating job creation.
+- **Operations & Scheduling**: Includes crew management (creation, assignment, roles, capacity), time tracking (clock in/out, GPS, approvals), atomic job assignment with conflict detection, calendar integration (Gantt-style crew view with conflict warnings), and a dynamic job forms system (safety checklists, inspections, work orders).
+- **Invoice Management System**: Professional invoicing with comprehensive financial tracking including auto-generated invoice numbers, tax/discount calculations, payment recording, and a status workflow (Draft→Sent→Paid/Overdue→Void). Supports "Create from Job" functionality.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
 - **Environment Agnostic Configuration**: Supports seamless operation in development and production environments.
 - **Scalability**: Designed for stateless deployment with a production build script.
-- **Database Connection Resilience**: PostgreSQL connection pool includes error handlers to prevent crashes from connection terminations. Session store reuses the main pool to minimize connection overhead and avoid exhausting database limits.
-- **Graceful Error Handling**: All critical services (database pool, session store, server) include error handlers that log issues without crashing the application.
+- **Database Connection Resilience**: PostgreSQL connection pool includes error handlers and reuses the main pool for session storage.
+- **Graceful Error Handling**: Critical services include error handlers to log issues without crashing the application.
+- **Testing Infrastructure**: Comprehensive testing setup with Vitest, Testing Library, Playwright, and Supertest for unit, integration, and E2E tests, with automated backend server management for tests.
 
 ## External Dependencies
 
@@ -61,79 +51,6 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **PostgreSQL**: Primary database system.
 - **React**: Frontend JavaScript library.
 - **Node.js/Express**: Backend runtime and web framework.
-- **TailwindCSS**: CSS framework configured as PostCSS plugin for production optimization.
-- **React Router DOM**: For client-side routing with v7 future flags enabled.
+- **TailwindCSS**: CSS framework configured as PostCSS plugin.
+- **React Router DOM**: For client-side routing.
 - **Vite**: Frontend build tool.
-
-## Recent Changes
-
-### Phase 0: Testing & Safety Infrastructure (November 18, 2025) - IN PROGRESS
-**Status**: Substantially Complete (78.6% test pass rate)
-
-**What Was Delivered**:
-- ✅ **Testing Frameworks**: Installed Vitest, Testing Library, Playwright, Supertest, jsdom
-- ✅ **Test Infrastructure**: Created vitest.config.ts, playwright.config.ts, test directory structure, test helpers
-- ✅ **125 Automated Tests Created**:
-  - Backend API Integration Tests: 70 tests (55 passing, 15 failing)
-  - Frontend Component Unit Tests: 37 tests (all passing)
-  - Smoke Tests (Business Workflows): 5 tests
-  - E2E Tests (Playwright): 18 tests
-- ✅ **Backend Auto-Start**: Tests automatically start/stop backend server (no manual setup required)
-- ✅ **Test Scripts**: 12 npm scripts for running different test suites
-- ✅ **Documentation**: Comprehensive README files for all test types
-
-**Backend Fixes Applied**:
-- Fixed database schema mismatches (zip/billing_zip column naming)
-- Fixed quote-to-job conversion logic (only allows Sent/Accepted quotes)
-- Fixed UUID validation (sanitizes "undefined" strings to null)
-- Fixed job status defaults and validation
-
-**Remaining Work** (15 failing integration tests):
-- Quote creation endpoint (POST /api/quotes) - returns string instead of number for totals
-- Lead endpoints - missing leadScore field transformation
-- Job state transitions endpoint - not fully implemented  
-- Client/invoice validation issues
-
-**Files Changed**:
-- backend/server.js - exports for testing, schema fixes, business logic improvements
-- backend/init.sql - job status default fix
-- tests/ directory - 125 test files across unit/integration/smoke/e2e
-- package.json - added 12 test scripts
-- vitest.config.ts, playwright.config.ts - test configuration
-
-**Test Commands**:
-```bash
-npm test                    # Run all Vitest tests
-npm run test:unit          # Run component tests only
-npm run test:integration   # Run API integration tests
-npm run test:e2e           # Run E2E browser tests
-npm run test:coverage      # Generate coverage report
-```
-
-**Next Steps**: Complete remaining test fixes to achieve 100% pass rate, then proceed to Phase 1 (Quick Wins).
-
-### Architectural Analysis & Refactoring Roadmap (November 15, 2025)
-- **Comprehensive Code Audit**: Completed deep analysis of entire application (148 TypeScript/JavaScript files, 25+ pages/routes)
-- **Critical Issues Identified**:
-  - Backend monolith: server.js (9,254 LOC) needs modularization into domain routers
-  - Frontend global state in App.tsx causing full re-renders - needs React Query/Zustand
-  - AI integration has large switch statements (58+ cases) - needs tool handler registry
-  - Duplicate seeding files (seed.js, seedDatabase.js) - needs consolidation
-  - Type safety gaps with `any` types - needs strict TypeScript enforcement
-  - Error handling anti-pattern: 7 instances of `.catch(() => [])` masking failures
-- **Project Cleanup**:
-  - Removed empty directories: `src/pages`, `pages/Calendar/components`, `backend/public`
-  - All major pages verified functional: Dashboard, CRM, Jobs, Calendar, Invoices, Time Tracking, Templates
-- **Documentation**: Created comprehensive `docs/REFACTORING_ROADMAP.md` with:
-  - 9 critical/high-priority issues
-  - Detailed implementation steps for each refactor
-  - 7-11 week implementation timeline (part-time) or 4-6 weeks (full-time)
-  - Success metrics and priority order
-- **Current State**: Application is fully functional but requires modularization for long-term maintainability and team scalability
-
-### Bug Fixes (November 2025)
-- **Templates Page Type Safety**: Fixed crash caused by calling `.toFixed()` on string values. Wrapped `basePrice` and `pricePerHour` in `Number()` conversion before formatting.
-- **Database Logging**: Reduced verbose connection pool logging from 10 messages to a single "Database connection pool ready" message for cleaner logs.
-- **Tailwind CSS Production**: Migrated from CDN to PostCSS plugin configuration for better performance and bundle optimization. Created `tailwind.config.js`, `postcss.config.js`, and `index.css` with proper Tailwind directives.
-- **Google Maps Performance**: Added `loading=async` parameter to Maps API URL for optimal loading performance.
-- **React Router v7 Future Flags**: Added `v7_startTransition` and `v7_relativeSplatPath` flags to BrowserRouter for compatibility with upcoming React Router v7.
