@@ -1409,6 +1409,9 @@ const transformToDb = (data, tableName) => {
       transformed.customer_name = data.customerName;
       delete transformed.customerName;
     }
+    if (data.hazards !== undefined && typeof data.hazards === 'object') {
+      transformed.hazards = JSON.stringify(data.hazards);
+    }
   }
   
   // Transform invoices fields
