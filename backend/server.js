@@ -1361,8 +1361,8 @@ const transformToDb = (data, tableName) => {
       transformed.quote_id = data.quoteId;
       delete transformed.quoteId;
     }
-    if (data.aiEstimateData !== undefined) {
-      transformed.ai_estimate_data = data.aiEstimateData;
+    if (data.aiEstimateData !== undefined && typeof data.aiEstimateData === 'object') {
+      transformed.ai_estimate_data = JSON.stringify(data.aiEstimateData);
       delete transformed.aiEstimateData;
     }
     if (data.aiSuggestedPriceMin !== undefined) {
@@ -1381,8 +1381,8 @@ const transformToDb = (data, tableName) => {
       transformed.feedback_rating = data.feedbackRating;
       delete transformed.feedbackRating;
     }
-    if (data.correctionReasons !== undefined) {
-      transformed.correction_reasons = data.correctionReasons;
+    if (data.correctionReasons !== undefined && typeof data.correctionReasons === 'object') {
+      transformed.correction_reasons = JSON.stringify(data.correctionReasons);
       delete transformed.correctionReasons;
     }
     if (data.userNotes !== undefined) {
