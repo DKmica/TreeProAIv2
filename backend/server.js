@@ -12,6 +12,8 @@ const jobStateService = require('./services/jobStateService');
 const jobTemplateService = require('./services/jobTemplateService');
 const operationsService = require('./services/operationsService');
 const recurringJobsService = require('./services/recurringJobsService');
+const stripeService = require('./services/stripeService');
+const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,7 +22,185 @@ const HOST = process.env.HOST || '0.0.0.0';
 let server;
 let reminderInterval;
 
+// SECURITY: Cache Stripe secrets at server initialization to prevent fetching on each webhook request.
+// This ensures webhook verification fails fast if secrets are unavailable, preventing potential
+// security vulnerabilities where forged webhooks could be processed if credential fetching fails.
+let cachedStripeSecretKey = null;
+let cachedWebhookSecret = null;
+let stripeInitialized = false;
+
+async function initStripe() {
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  if (!databaseUrl) {
+    console.warn('⚠️ DATABASE_URL not found. Stripe integration will be disabled.');
+    return false;
+  }
+
+  try {
+    console.log('🔄 Initializing Stripe schema...');
+    const { runMigrations, StripeSync } = require('stripe-replit-sync');
+    
+    await runMigrations({ 
+      databaseUrl,
+      schema: 'stripe'
+    });
+    console.log('✅ Stripe schema ready');
+
+    console.log('🔄 Fetching and caching Stripe credentials...');
+    cachedStripeSecretKey = await getStripeSecretKey();
+    cachedWebhookSecret = await getStripeWebhookSecret();
+    console.log('✅ Stripe credentials cached');
+
+    console.log('🔄 Syncing Stripe data...');
+    const stripeSync = new StripeSync({
+      poolConfig: {
+        connectionString: databaseUrl,
+        max: 10,
+      },
+      stripeSecretKey: cachedStripeSecretKey,
+      stripeWebhookSecret: cachedWebhookSecret,
+    });
+    await stripeSync.syncBackfill();
+    console.log('✅ Stripe data synced');
+    stripeInitialized = true;
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize Stripe:', error.message);
+    console.warn('⚠️ Continuing without Stripe integration. Payment features will be unavailable.');
+    cachedStripeSecretKey = null;
+    cachedWebhookSecret = null;
+    stripeInitialized = false;
+    return false;
+  }
+}
+
 app.use(cors());
+
+app.post(
+  '/api/stripe/webhook',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const signature = req.headers['stripe-signature'];
+    
+    if (!signature) {
+      console.error('❌ Webhook error: Missing stripe-signature header');
+      return res.status(400).json({ error: 'Missing stripe-signature' });
+    }
+    
+    // SECURITY: Check if Stripe is initialized before processing any webhooks.
+    // This prevents security vulnerabilities where webhooks could be processed
+    // with null secrets, potentially allowing forged webhooks through.
+    if (!stripeInitialized) {
+      console.error('⚠️ Stripe webhook called but Stripe not initialized');
+      return res.status(503).json({ error: 'Stripe not initialized' });
+    }
+    
+    try {
+      const sig = Array.isArray(signature) ? signature[0] : signature;
+      
+      if (!Buffer.isBuffer(req.body)) {
+        const errorMsg = 'STRIPE WEBHOOK ERROR: req.body is not a Buffer. ' +
+          'This means express.json() ran before this webhook route.';
+        console.error(errorMsg);
+        return res.status(500).json({ error: 'Webhook processing error' });
+      }
+
+      // SECURITY: Use cached secrets instead of fetching on each request.
+      // This prevents security vulnerabilities where credential fetch failures could
+      // allow forged webhooks to be processed. Fail fast if secrets aren't initialized.
+      if (!cachedWebhookSecret || !cachedStripeSecretKey) {
+        console.error('❌ CRITICAL: Webhook secret not initialized. Rejecting webhook.');
+        return res.status(503).json({ error: 'Webhook secret not initialized' });
+      }
+
+      const { StripeSync } = require('stripe-replit-sync');
+      
+      const stripeSync = new StripeSync({
+        poolConfig: {
+          connectionString: process.env.DATABASE_URL,
+          max: 2,
+        },
+        stripeSecretKey: cachedStripeSecretKey,
+        stripeWebhookSecret: cachedWebhookSecret,
+      });
+      
+      await stripeSync.processWebhook(req.body, sig, undefined);
+
+      const stripe = require('stripe')(cachedStripeSecretKey);
+      const event = stripe.webhooks.constructEvent(req.body, sig, cachedWebhookSecret);
+
+      // CUSTOMER ID PERSISTENCE: Customer IDs are persisted here in the webhook handler
+      // rather than in the checkout endpoint. This is the safer approach because:
+      // 1. The webhook only fires after Stripe confirms successful checkout session completion
+      // 2. This prevents orphaned Stripe customer references if checkout fails
+      // 3. Webhook verification ensures the event is authentic before updating our database
+      // 4. If the webhook fails, the customer ID won't be saved, maintaining data integrity
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const invoiceId = session.metadata?.invoiceId;
+        const stripeCustomerId = session.customer;
+        
+        if (invoiceId) {
+          const clientId = await stripeService.updateInvoiceAfterPayment(
+            invoiceId,
+            session
+          );
+
+          // Only persist customer ID after confirmed successful checkout
+          if (clientId && stripeCustomerId) {
+            try {
+              await db.query(
+                'UPDATE clients SET stripe_customer_id = $1 WHERE id = $2 AND stripe_customer_id IS NULL',
+                [stripeCustomerId, clientId]
+              );
+              console.log(`✅ Updated client ${clientId} with Stripe customer ID: ${stripeCustomerId}`);
+            } catch (err) {
+              console.error(`❌ Failed to update client ${clientId} with Stripe customer ID:`, err.message);
+            }
+          }
+        }
+      }
+      
+      res.status(200).json({ received: true });
+    } catch (error) {
+      // WEBHOOK ERROR HANDLING: Return appropriate HTTP codes for Stripe retry logic
+      // 200 = Already processed (idempotent case, don't retry)
+      // 400 = Invalid request/signature (don't retry)
+      // 500 = Transient error (Stripe should retry)
+      
+      // Check if this is a signature verification error
+      if (error.message && error.message.includes('No signatures found matching the expected signature')) {
+        console.error('❌ Webhook signature verification failed:', error.message);
+        console.error('   This indicates an invalid webhook signature. Rejecting request.');
+        return res.status(400).json({ error: 'Invalid signature' });
+      }
+      
+      // Check if this is an idempotency case (already processed)
+      if (error.message && error.message.includes('already recorded')) {
+        console.log('✅ Webhook already processed (idempotent). Returning 200.');
+        return res.status(200).json({ received: true, note: 'Already processed' });
+      }
+      
+      // Check for validation errors (don't retry)
+      if (error.message && (
+        error.message.includes('validation failed') ||
+        error.message.includes('Invalid currency') ||
+        error.message.includes('not found')
+      )) {
+        console.error('❌ Webhook validation error:', error.message);
+        console.error('   This is a permanent error. Stripe should not retry.');
+        return res.status(400).json({ error: 'Validation error', details: error.message });
+      }
+      
+      // All other errors are considered transient - return 500 so Stripe retries
+      console.error('❌ Webhook processing error (transient):', error.message);
+      console.error('   Returning 500 so Stripe will retry this webhook.');
+      res.status(500).json({ error: 'Transient processing error' });
+    }
+  }
+);
+
 app.use(express.json());
 
 const apiRouter = express.Router();
@@ -9228,6 +9408,95 @@ apiRouter.get('/invoices/:id/payments', async (req, res) => {
   }
 });
 
+// POST /api/invoices/:id/create-checkout-session - Create Stripe checkout session for invoice payment
+apiRouter.post('/invoices/:id/create-checkout-session', async (req, res) => {
+  try {
+    const { id: invoiceId } = req.params;
+    
+    const invoiceQuery = `
+      SELECT i.*, c.id as client_id, c.primary_email, c.stripe_customer_id
+      FROM invoices i
+      LEFT JOIN clients c ON i.client_id = c.id
+      WHERE i.id = $1
+    `;
+    const { rows: invoiceRows } = await db.query(invoiceQuery, [invoiceId]);
+    
+    if (invoiceRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Invoice not found'
+      });
+    }
+    
+    const invoice = invoiceRows[0];
+    
+    if (invoice.status === 'Paid') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invoice is already paid'
+      });
+    }
+    
+    const amountDue = parseFloat(invoice.amount_due || invoice.grand_total || invoice.amount || 0);
+    
+    if (amountDue <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No amount due on this invoice'
+      });
+    }
+    
+    // DATA INTEGRITY: We do NOT persist the Stripe customer ID here at checkout session creation.
+    // Instead, customer IDs are persisted exclusively in the webhook handler after payment succeeds.
+    // This design choice prevents orphaned Stripe customer references if:
+    // - The checkout session is created but the user never completes payment
+    // - The checkout session fails or is cancelled
+    // - There are network issues during checkout
+    // The webhook handler receives verified events from Stripe only after successful payment,
+    // ensuring our database only contains customer IDs for actual paying customers.
+    let stripeCustomerId = invoice.stripe_customer_id;
+    
+    if (!stripeCustomerId && invoice.client_id && invoice.primary_email) {
+      try {
+        const customer = await stripeService.createCustomer(invoice.primary_email, invoice.client_id);
+        stripeCustomerId = customer.id;
+        console.log(`✅ Created Stripe customer ${stripeCustomerId} for client ${invoice.client_id}`);
+        // NOTE: Customer ID will be persisted to database by webhook handler after successful payment
+      } catch (err) {
+        console.error(`❌ Failed to create Stripe customer for client ${invoice.client_id}:`, err.message);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to create Stripe customer'
+        });
+      }
+    }
+    
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const successUrl = `${baseUrl}/portal/invoices/${invoiceId}?payment=success`;
+    const cancelUrl = `${baseUrl}/portal/invoices/${invoiceId}?payment=cancelled`;
+    
+    const session = await stripeService.createCheckoutSession(
+      stripeCustomerId,
+      invoiceId,
+      amountDue,
+      invoice.invoice_number || invoiceId,
+      invoice.customer_email || invoice.primary_email,
+      successUrl,
+      cancelUrl
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        sessionId: session.sessionId,
+        url: session.url
+      }
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 // ============================================================================
 // TIME TRACKING ENDPOINTS
 // ============================================================================
@@ -9712,6 +9981,8 @@ resources.forEach(resource => {
 });
 
 async function startServer() {
+  await initStripe();
+  
   await setupAuth(app);
   
   apiRouter.get('/auth/user', isAuthenticated, async (req, res) => {
