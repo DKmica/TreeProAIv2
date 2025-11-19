@@ -1698,9 +1698,9 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         const upsellCustomer = businessContext.clients.find(c => c.id === args.customerId);
         if (!upsellCustomer) return { success: false, message: 'Customer not found' };
         
-        const customerName = `${upsellCustomer.firstName} ${upsellCustomer.lastName}`;
-        const customerJobs = businessContext.jobs.filter(j => j.customerName === customerName);
-        const customerQuotes = businessContext.quotes.filter(q => q.customerName === customerName);
+        const upsellCustomerName = `${upsellCustomer.firstName} ${upsellCustomer.lastName}`;
+        const customerJobs = businessContext.jobs.filter(j => j.customerName === upsellCustomerName);
+        const customerQuotes = businessContext.quotes.filter(q => q.customerName === upsellCustomerName);
         
         const opportunities = [];
         if (customerJobs.length > 0 && !customerQuotes.some(q => 
@@ -1716,7 +1716,7 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         
         return {
           success: true,
-          customer: customerName,
+          customer: upsellCustomerName,
           opportunities,
           message: opportunities.length > 0 ? `Found ${opportunities.length} upsell opportunities` : 'No immediate opportunities identified'
         };
