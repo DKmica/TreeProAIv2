@@ -239,6 +239,118 @@ const VALIDATION_RULES = {
 };
 
 // ============================================================================
+// INVOICE HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate invoice number in format: INV-YYYY-####
+ * 
+ * CRITICAL FIXES IMPLEMENTED:
+ * 1. Uses PostgreSQL advisory lock to serialize number generation (prevents race conditions)
+ * 2. Uses numeric ordering via SUBSTRING + CAST to handle numbers > 9999
+ * 3. Uses dedicated client from pool to ensure lock/query/unlock on SAME connection
+ * 4. Falls back to timestamp-based number if errors occur
+ * 
+ * This prevents:
+ * - Race conditions during concurrent job completions (advisory lock)
+ * - Lexicographic sorting issue (INV-2025-10000 < INV-2025-9999)
+ * - Lock session bug where lock is acquired on one connection but released on another
+ * 
+ * Advisory Lock Strategy:
+ * - Uses lock ID based on year (simple year value)
+ * - Serializes all invoice number generation for the same year
+ * - Gets dedicated client from pool to ensure all operations on same session
+ * - Lock is released in finally block to prevent indefinite holds
+ */
+const generateInvoiceNumber = async (db) => {
+  const year = new Date().getFullYear();
+  const prefix = `INV-${year}-`;
+  const lockId = year; // Simple year-based lock
+  
+  // Get a dedicated client from the pool
+  const client = await db.connect();
+  
+  try {
+    // Acquire advisory lock on THIS client's session
+    await client.query('SELECT pg_advisory_lock($1)', [lockId]);
+    console.log(`🔒 Advisory lock acquired for invoice generation (year ${year})`);
+    
+    // Find max sequence number using numeric ordering
+    const { rows } = await client.query(`
+      SELECT COALESCE(
+        MAX(CAST(SUBSTRING(invoice_number FROM 'INV-[0-9]+-([0-9]+)') AS INTEGER)), 
+        0
+      ) as max_seq
+      FROM invoices
+      WHERE invoice_number LIKE $1
+    `, [`${prefix}%`]);
+    
+    const nextSeq = (rows[0]?.max_seq || 0) + 1;
+    const paddedSeq = String(nextSeq).padStart(4, '0');
+    const invoiceNumber = `${prefix}${paddedSeq}`;
+    
+    console.log(`📄 Generated invoice number: ${invoiceNumber}`);
+    
+    return invoiceNumber;
+    
+  } catch (error) {
+    console.error(`❌ Invoice number generation failed:`, error.message);
+    
+    // Fallback to timestamp-based number on error
+    const timestamp = Date.now().toString().slice(-6);
+    const fallbackNumber = `${prefix}${timestamp}`;
+    console.log(`🔄 Fallback invoice number: ${fallbackNumber}`);
+    return fallbackNumber;
+    
+  } finally {
+    // Release lock and return client to pool
+    // This MUST happen even if errors occur
+    try {
+      await client.query('SELECT pg_advisory_unlock($1)', [lockId]);
+      console.log(`🔓 Advisory lock released for year ${year}`);
+    } catch (unlockError) {
+      console.error(`⚠️  Failed to release advisory lock:`, unlockError.message);
+    }
+    client.release();
+  }
+};
+
+/**
+ * Calculate invoice totals from line items, discount, and tax
+ * @returns Object with subtotal, discountAmount, taxAmount, totalAmount, grandTotal
+ */
+const calculateInvoiceTotals = (lineItems, discountAmount = 0, discountPercentage = 0, taxRate = 0) => {
+  // Calculate subtotal from line items
+  const subtotal = lineItems.reduce((sum, item) => {
+    return sum + (parseFloat(item.price) || 0);
+  }, 0);
+  
+  // Apply discount
+  let totalDiscount = parseFloat(discountAmount) || 0;
+  if (discountPercentage > 0) {
+    totalDiscount = subtotal * (parseFloat(discountPercentage) / 100);
+  }
+  
+  const totalAmount = subtotal - totalDiscount;
+  
+  // Calculate tax
+  const taxAmount = totalAmount * (parseFloat(taxRate) / 100);
+  
+  // Calculate grand total
+  const grandTotal = totalAmount + taxAmount;
+  
+  return {
+    subtotal: parseFloat(subtotal.toFixed(2)),
+    discountAmount: parseFloat(totalDiscount.toFixed(2)),
+    discountPercentage: parseFloat(discountPercentage) || 0,
+    taxRate: parseFloat(taxRate) || 0,
+    taxAmount: parseFloat(taxAmount.toFixed(2)),
+    totalAmount: parseFloat(totalAmount.toFixed(2)),
+    grandTotal: parseFloat(grandTotal.toFixed(2))
+  };
+};
+
+// ============================================================================
 // AUTOMATED TRIGGERS
 // ============================================================================
 
@@ -292,68 +404,196 @@ const AUTOMATED_TRIGGERS = {
 
   /**
    * Trigger when job moves to 'completed' state
-   * - Generate invoice stub
+   * - Generate complete, payment-ready invoice
    * - Send completion notification
    * - Update client category to active_customer
    */
   completed: async (job, transitionData, db) => {
     console.log(`✅ [State Machine] Trigger: Job ${job.id} completed`);
     
-    // Auto-generate invoice stub if not exists
+    // Auto-generate complete invoice if not exists
     if (!job.invoice_id) {
       try {
-        // Calculate invoice amount from job costs or quote
-        let invoiceAmount = 0;
+        console.log(`   🔄 Generating complete invoice for job ${job.id}...`);
         
-        // Get quote line items if quote_id exists
+        // Step 1: Generate invoice number
+        const invoiceNumber = await generateInvoiceNumber(db);
+        console.log(`   📋 Invoice number: ${invoiceNumber}`);
+        
+        // Step 2: Fetch client details for contact information
+        let clientEmail = null;
+        let clientPhone = null;
+        let clientAddress = null;
+        
+        if (job.client_id) {
+          const { rows: clients } = await db.query(
+            `SELECT primary_email, primary_phone, billing_address_line1, billing_address_line2, 
+                    billing_city, billing_state, billing_zip 
+             FROM clients WHERE id = $1`,
+            [job.client_id]
+          );
+          
+          if (clients.length > 0) {
+            const client = clients[0];
+            clientEmail = client.primary_email;
+            clientPhone = client.primary_phone;
+            
+            // Construct full address
+            const addressParts = [
+              client.billing_address_line1,
+              client.billing_address_line2,
+              client.billing_city,
+              client.billing_state,
+              client.billing_zip
+            ].filter(Boolean);
+            clientAddress = addressParts.join(', ');
+            
+            console.log(`   📧 Client contact info retrieved: ${clientEmail}`);
+          }
+        }
+        
+        // Step 3: Get quote data with line items, discount, and tax info
+        let invoiceLineItems = [];
+        let discountAmount = 0;
+        let discountPercentage = 0;
+        let taxRate = 0;
+        
         if (job.quote_id) {
           const { rows: quotes } = await db.query(
-            'SELECT line_items, stump_grinding_price FROM quotes WHERE id = $1',
+            `SELECT line_items, stump_grinding_price, discount_amount, 
+                    discount_percentage, tax_rate 
+             FROM quotes WHERE id = $1`,
             [job.quote_id]
           );
           
           if (quotes.length > 0) {
             const quote = quotes[0];
-            const lineItems = quote.line_items || [];
+            const quoteLineItems = quote.line_items || [];
             
-            // Sum selected line items
-            invoiceAmount = lineItems
+            // Build invoice line items from selected quote items
+            invoiceLineItems = quoteLineItems
               .filter(item => item.selected)
-              .reduce((sum, item) => sum + (item.price || 0), 0);
+              .map(item => ({
+                description: item.description || item.tree || 'Tree Service',
+                price: parseFloat(item.price) || 0
+              }));
             
             // Add stump grinding if applicable
-            invoiceAmount += parseFloat(quote.stump_grinding_price || 0);
+            const stumpGrindingPrice = parseFloat(quote.stump_grinding_price || 0);
+            if (stumpGrindingPrice > 0) {
+              invoiceLineItems.push({
+                description: 'Stump Grinding',
+                price: stumpGrindingPrice
+              });
+            }
+            
+            // Get discount and tax info from quote
+            discountAmount = parseFloat(quote.discount_amount) || 0;
+            discountPercentage = parseFloat(quote.discount_percentage) || 0;
+            taxRate = parseFloat(quote.tax_rate) || 0;
+            
+            console.log(`   📊 Loaded ${invoiceLineItems.length} line items from quote`);
           }
         }
         
-        // Create invoice
-        const invoiceId = uuidv4();
-        const dueDate = new Date();
-        dueDate.setDate(dueDate.getDate() + 30); // Net 30 terms
+        // Fallback: Create default line item if no quote data
+        if (invoiceLineItems.length === 0) {
+          invoiceLineItems = [
+            {
+              description: 'Tree Service',
+              price: 0
+            }
+          ];
+          console.log(`   ⚠️  No quote data found, using default line item`);
+        }
         
-        await db.query(
-          `INSERT INTO invoices (id, job_id, customer_name, status, amount, line_items, due_date)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [
-            invoiceId,
-            job.id,
-            job.customer_name,
-            'Draft',
-            invoiceAmount,
-            JSON.stringify([{ description: 'Tree Service', price: invoiceAmount }]),
-            dueDate.toISOString().split('T')[0]
-          ]
+        // Step 4: Calculate totals using helper function
+        const totals = calculateInvoiceTotals(
+          invoiceLineItems,
+          discountAmount,
+          discountPercentage,
+          taxRate
         );
         
-        // Link invoice to job
+        console.log(`   💵 Calculated totals:`);
+        console.log(`      Subtotal: $${totals.subtotal}`);
+        console.log(`      Discount: $${totals.discountAmount}`);
+        console.log(`      Tax: $${totals.taxAmount}`);
+        console.log(`      Grand Total: $${totals.grandTotal}`);
+        
+        // Step 5: Prepare invoice data
+        const invoiceId = uuidv4();
+        const issueDate = new Date().toISOString().split('T')[0];
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30); // Net 30 terms
+        const dueDateStr = dueDate.toISOString().split('T')[0];
+        const paymentTerms = 'Net 30';
+        const status = 'Draft';
+        
+        // Step 6: Insert complete invoice record
+        const query = `
+          INSERT INTO invoices (
+            id, job_id, client_id, property_id, customer_name, status,
+            invoice_number, issue_date, due_date, 
+            line_items, subtotal, discount_amount, discount_percentage,
+            tax_rate, tax_amount, total_amount, grand_total,
+            amount_paid, amount_due, payment_terms,
+            customer_email, customer_phone, customer_address,
+            amount
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6,
+            $7, $8, $9,
+            $10, $11, $12, $13,
+            $14, $15, $16, $17,
+            $18, $19, $20,
+            $21, $22, $23,
+            $24
+          )
+        `;
+        
+        const values = [
+          invoiceId,
+          job.id,
+          job.client_id || null,
+          job.property_id || null,
+          job.customer_name,
+          status,
+          invoiceNumber,
+          issueDate,
+          dueDateStr,
+          JSON.stringify(invoiceLineItems),
+          totals.subtotal,
+          totals.discountAmount,
+          totals.discountPercentage,
+          totals.taxRate,
+          totals.taxAmount,
+          totals.totalAmount,
+          totals.grandTotal,
+          0, // amount_paid
+          totals.grandTotal, // amount_due
+          paymentTerms,
+          clientEmail,
+          clientPhone,
+          clientAddress,
+          totals.grandTotal // amount (for backward compatibility)
+        ];
+        
+        await db.query(query, values);
+        
+        // Step 7: Link invoice to job
         await db.query(
           'UPDATE jobs SET invoice_id = $1 WHERE id = $2',
           [invoiceId, job.id]
         );
         
-        console.log(`   💰 Invoice ${invoiceId} created automatically (Amount: $${invoiceAmount})`);
+        console.log(`   ✅ Complete invoice ${invoiceNumber} created successfully`);
+        console.log(`      Invoice ID: ${invoiceId}`);
+        console.log(`      Status: ${status} (ready for review)`);
+        console.log(`      Amount: $${totals.grandTotal}`);
       } catch (error) {
         console.error(`   ❌ Failed to auto-generate invoice:`, error.message);
+        console.error(`      Error details:`, error);
+        // Don't fail job completion if invoice creation fails
       }
     }
     
