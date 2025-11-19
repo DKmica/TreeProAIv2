@@ -1,7 +1,7 @@
 import { GoogleGenAI, Chat, FunctionDeclaration, Type } from "@google/genai";
 import {
-  Customer,
   Client,
+  CustomerDetailsInput,
   Lead,
   Quote,
   Job,
@@ -59,6 +59,100 @@ function ensureContext(): BusinessContext {
     throw new Error('AI Core context is not initialized.');
   }
   return businessContext;
+}
+
+const normalizeInputString = (value?: string | null): string | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const trimmed = value.toString().trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const splitNameParts = (fullName?: string | null): { firstName?: string; lastName?: string } => {
+  const normalized = normalizeInputString(fullName);
+  if (!normalized) return {};
+  const parts = normalized.split(/\s+/);
+  const firstName = parts.shift();
+  const lastName = parts.length > 0 ? parts.join(' ') : undefined;
+  return {
+    firstName: normalizeInputString(firstName),
+    lastName: normalizeInputString(lastName)
+  };
+};
+
+const buildCustomerDetails = (input: {
+  fullName?: string | null;
+  companyName?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  country?: string | null;
+} = {}): CustomerDetailsInput | undefined => {
+  const details: CustomerDetailsInput = {};
+  const nameParts = splitNameParts(input.fullName);
+
+  if (nameParts.firstName) {
+    details.firstName = nameParts.firstName;
+  }
+  if (nameParts.lastName) {
+    details.lastName = nameParts.lastName;
+  }
+
+  const assignIfPresent = (key: keyof CustomerDetailsInput, value?: string | null) => {
+    const normalized = normalizeInputString(value);
+    if (normalized) {
+      details[key] = normalized;
+    }
+  };
+
+  assignIfPresent('companyName', input.companyName);
+  assignIfPresent('email', input.email);
+  assignIfPresent('phone', input.phone);
+  assignIfPresent('addressLine1', input.addressLine1);
+  assignIfPresent('addressLine2', input.addressLine2);
+  assignIfPresent('city', input.city);
+  assignIfPresent('state', input.state);
+  assignIfPresent('zipCode', input.zipCode);
+  assignIfPresent('country', input.country);
+
+  return Object.keys(details).length > 0 ? details : undefined;
+};
+
+const buildCustomerDetailsFromClient = (client?: Client, fallbackName?: string): CustomerDetailsInput | undefined => {
+  if (!client && !fallbackName) {
+    return undefined;
+  }
+
+  return buildCustomerDetails({
+    fullName: fallbackName || `${client?.firstName || ''} ${client?.lastName || ''}`,
+    companyName: client?.companyName,
+    email: client?.primaryEmail,
+    phone: client?.primaryPhone,
+    addressLine1: client?.billingAddressLine1,
+    addressLine2: client?.billingAddressLine2,
+    city: client?.billingCity,
+    state: client?.billingState,
+    zipCode: client?.billingZip,
+    country: client?.billingCountry
+  });
+};
+
+const buildCustomerDetailsFromName = (name?: string): CustomerDetailsInput | undefined =>
+  buildCustomerDetails({ fullName: name });
+
+async function refreshClientsCache(): Promise<void> {
+  if (!businessContext) return;
+
+  try {
+    const latestClients = await clientService.getAll();
+    businessContext.clients = latestClients;
+    businessContext.lastUpdated = new Date();
+  } catch (error) {
+    console.warn('Unable to refresh client list after mutation:', error);
+  }
 }
 
 let chatSession: Chat | null = null;
@@ -1259,47 +1353,41 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         return { success: true, customer: newCustomer, message: `Created customer: ${newCustomer.firstName} ${newCustomer.lastName}` };
 
       case 'createLead':
-        let targetCustomer = businessContext.clients.find(c => 
-          `${c.firstName} ${c.lastName}`.toLowerCase() === args.customerName.toLowerCase() ||
-          c.companyName?.toLowerCase() === args.customerName.toLowerCase()
-        );
-        if (!targetCustomer) {
-          targetCustomer = await clientService.create({
-            firstName: args.customerName.split(' ')[0] || '',
-            lastName: args.customerName.split(' ').slice(1).join(' ') || '',
-            primaryEmail: '',
-            primaryPhone: '',
-            billingAddressLine1: '',
-            clientType: 'residential',
-            status: 'active',
-            paymentTerms: 'Net 30',
-            taxExempt: false,
-            billingCountry: 'USA',
-            lifetimeValue: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-          businessContext.clients.push(targetCustomer);
+        const normalizedLeadName = args.customerName.trim().toLowerCase();
+        const matchedClient = businessContext.clients.find(c => {
+          const individualName = `${c.firstName || ''} ${c.lastName || ''}`.trim().toLowerCase();
+          const companyName = c.companyName?.toLowerCase();
+          return individualName === normalizedLeadName || companyName === normalizedLeadName;
+        });
+
+        const leadCustomerDetails = matchedClient
+          ? buildCustomerDetailsFromClient(matchedClient, args.customerName)
+          : buildCustomerDetailsFromName(args.customerName);
+
+        if (!leadCustomerDetails) {
+          return { success: false, message: 'Customer information is required to create a lead.' };
         }
-        
-        const customerForLead: Customer = {
-          id: targetCustomer.id,
-          name: `${targetCustomer.firstName} ${targetCustomer.lastName}`,
-          email: targetCustomer.primaryEmail || '',
-          phone: targetCustomer.primaryPhone || '',
-          address: targetCustomer.billingAddressLine1 || '',
-          coordinates: { lat: 0, lng: 0 }
-        };
-        
-        const lead = await leadService.create({
-          customer: customerForLead,
+
+        const leadPayload: Partial<Lead> & { customerDetails: CustomerDetailsInput } = {
+          clientId: matchedClient?.id,
           source: args.source,
           status: 'New',
           description: args.description,
-          createdAt: new Date().toISOString()
-        });
-        businessContext.leads.push(lead);
-        return { success: true, lead, message: `Created lead for ${customerForLead.name}` };
+          customerDetails: leadCustomerDetails
+        };
+
+        const createdLead = await leadService.create(leadPayload);
+        let hydratedLead: Lead;
+        try {
+          hydratedLead = await leadService.getById(createdLead.id);
+        } catch (hydrateErr) {
+          console.warn('Unable to hydrate lead after creation:', hydrateErr);
+          hydratedLead = createdLead;
+        }
+
+        businessContext.leads.push(hydratedLead);
+        await refreshClientsCache();
+        return { success: true, lead: hydratedLead, message: `Created lead for ${args.customerName}` };
 
       case 'updateLeadStatus':
         const leadToUpdate = await leadService.update(args.leadId, { status: args.status });
@@ -1323,16 +1411,36 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
 
       case 'createQuote':
         const quoteClient = businessContext.clients.find(c => c.id === args.customerId);
-        const quote = await quoteService.create({
-          customerName: quoteClient ? `${quoteClient.firstName} ${quoteClient.lastName}` : 'Unknown',
+        const customerName = quoteClient
+          ? quoteClient.companyName || `${quoteClient.firstName || ''} ${quoteClient.lastName || ''}`.trim() || 'Unknown'
+          : 'Unknown';
+
+        const quoteCustomerDetails = buildCustomerDetailsFromClient(quoteClient, customerName);
+
+        const quotePayload: Partial<Quote> & { customerDetails?: CustomerDetailsInput } = {
+          clientId: args.customerId,
+          customerName,
           leadId: '',
           status: 'Draft',
           lineItems: args.lineItems.map((item: any) => ({ ...item, selected: true })),
-          stumpGrindingPrice: args.stumpGrindingPrice || 0,
-          createdAt: new Date().toISOString()
-        });
-        businessContext.quotes.push(quote);
-        return { success: true, quote, message: `Created quote for customer` };
+          stumpGrindingPrice: args.stumpGrindingPrice || 0
+        };
+
+        if (quoteCustomerDetails) {
+          quotePayload.customerDetails = quoteCustomerDetails;
+        }
+
+        const createdQuote = await quoteService.create(quotePayload);
+        let hydratedQuote: Quote;
+        try {
+          hydratedQuote = await quoteService.getById(createdQuote.id);
+        } catch (hydrateErr) {
+          console.warn('Unable to hydrate quote after creation:', hydrateErr);
+          hydratedQuote = createdQuote;
+        }
+
+        businessContext.quotes.push(hydratedQuote);
+        return { success: true, quote: hydratedQuote, message: `Created quote for ${customerName}` };
 
       case 'getQuoteById':
         const foundQuote = businessContext.quotes.find(q => q.id === args.quoteId);
@@ -1341,16 +1449,32 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
       case 'convertQuoteToJob':
         const quoteToConvert = businessContext.quotes.find(q => q.id === args.quoteId);
         if (!quoteToConvert) return { success: false, message: 'Quote not found' };
-        const employeeNames = args.crew.map((empId: string) => 
+        const employeeNames = args.crew.map((empId: string) =>
           businessContext.employees.find(e => e.id === empId)?.name || empId
         );
-        const job = await jobService.create({
+        const quoteClientRecord = quoteToConvert.clientId
+          ? businessContext.clients.find(c => c.id === quoteToConvert.clientId)
+          : undefined;
+
+        const jobCustomerDetails = quoteToConvert.customerDetails
+          ? { ...quoteToConvert.customerDetails }
+          : buildCustomerDetailsFromClient(quoteClientRecord, quoteToConvert.customerName) ||
+            buildCustomerDetailsFromName(quoteToConvert.customerName);
+
+        const jobPayload: Partial<Job> & { customerDetails?: CustomerDetailsInput } = {
           quoteId: args.quoteId,
           customerName: quoteToConvert.customerName,
           status: 'Scheduled',
           scheduledDate: args.scheduledDate,
-          assignedCrew: employeeNames
-        });
+          assignedCrew: employeeNames,
+          clientId: quoteToConvert.clientId
+        };
+
+        if (jobCustomerDetails) {
+          jobPayload.customerDetails = jobCustomerDetails;
+        }
+
+        const job = await jobService.create(jobPayload);
         businessContext.jobs.push(job);
         return { success: true, job, message: `Created job scheduled for ${args.scheduledDate}` };
 
@@ -2336,39 +2460,42 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
         };
 
       case 'createEmergencyJob':
-        let emergencyCustomer = businessContext.clients.find(c => 
+        let emergencyCustomer = businessContext.clients.find(c =>
           `${c.firstName} ${c.lastName}`.toLowerCase() === args.customerName.toLowerCase() ||
           c.companyName?.toLowerCase() === args.customerName.toLowerCase()
         );
-        
-        if (!emergencyCustomer) {
-          emergencyCustomer = await clientService.create({
-            firstName: args.customerName.split(' ')[0] || '',
-            lastName: args.customerName.split(' ').slice(1).join(' ') || '',
-            primaryEmail: '',
-            primaryPhone: '',
-            billingAddressLine1: args.location,
-            clientType: 'residential',
-            status: 'active',
-            paymentTerms: 'Net 30',
-            taxExempt: false,
-            billingCountry: 'USA',
-            lifetimeValue: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          });
-          businessContext.clients.push(emergencyCustomer);
-        }
-        
-        const emergencyJob = await jobService.create({
+
+        const emergencyDetailsFromClient = emergencyCustomer
+          ? buildCustomerDetailsFromClient(emergencyCustomer, args.customerName)
+          : undefined;
+
+        const emergencyCustomerDetails = emergencyDetailsFromClient || buildCustomerDetails({
+          fullName: args.customerName,
+          addressLine1: args.location
+        });
+
+        const emergencyJobPayload: Partial<Job> & { customerDetails?: CustomerDetailsInput } = {
           quoteId: '',
           customerName: args.customerName,
           status: 'Scheduled',
           scheduledDate: new Date().toISOString().split('T')[0],
-          assignedCrew: []
-        });
+          assignedCrew: [],
+          jobLocation: args.location,
+          specialInstructions: args.description,
+          clientId: emergencyCustomer?.id
+        };
+
+        if (emergencyCustomerDetails) {
+          emergencyJobPayload.customerDetails = emergencyCustomerDetails;
+        }
+
+        const emergencyJob = await jobService.create(emergencyJobPayload);
         businessContext.jobs.push(emergencyJob);
-        
+
+        if (!emergencyCustomer) {
+          await refreshClientsCache();
+        }
+
         return {
           success: true,
           job: emergencyJob,

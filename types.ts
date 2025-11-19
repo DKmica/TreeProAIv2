@@ -9,6 +9,20 @@ export interface Customer {
   coordinates: { lat: number; lng: number; };
 }
 
+export interface CustomerDetailsInput {
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  phone?: string;
+  email?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}
+
 export interface Lead {
   id: string;
   customer: Customer;
@@ -17,6 +31,7 @@ export interface Lead {
   createdAt: string;
   description?: string;
   customerUploads?: CustomerUpload[];
+  customerDetails?: CustomerDetailsInput;
   
   // NEW Phase 1 fields:
   clientId?: string;
@@ -66,6 +81,7 @@ export interface Quote {
   depositAmount?: number;
   paymentTerms: string;
   customerUploads?: CustomerUpload[];
+  customerDetails?: CustomerDetailsInput;
   
   // NEW Phase 1 fields:
   clientId?: string;
@@ -138,6 +154,7 @@ export interface Job {
   estimatedHours?: number;
   riskLevel?: 'Low' | 'Medium' | 'High' | 'Critical';
   jhaRequired?: boolean;
+  customerDetails?: CustomerDetailsInput;
   
   // NEW Phase 1 fields:
   clientId?: string;
@@ -362,6 +379,7 @@ export interface Client {
   
   // Status
   status: 'active' | 'inactive' | 'archived';
+  clientCategory: 'potential_client' | 'active_customer';
   leadSource?: string;
   
   // Financial

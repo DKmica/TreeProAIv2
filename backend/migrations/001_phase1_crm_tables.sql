@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS clients (
     
     -- Status & Lifecycle
     status VARCHAR(50) DEFAULT 'active',  -- active, inactive, archived
+    client_category VARCHAR(50) DEFAULT 'potential_client', -- potential_client, active_customer
     lead_source VARCHAR(100),
     
     -- Financial Settings
