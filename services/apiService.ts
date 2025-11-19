@@ -60,8 +60,10 @@ const createApiService = <T extends { id: string }>(resource: string) => ({
 
 export const customerService = createApiService<Customer>('customers');
 export const clientService = {
-  getAll: async (): Promise<Client[]> => {
-    const response = await apiFetch<{ success: boolean; data: Client[]; pagination: any }>('clients');
+  getAll: async (params?: { clientCategory?: string }): Promise<Client[]> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, value]) => value)).toString() : '';
+    const endpoint = query ? `clients?${query}` : 'clients';
+    const response = await apiFetch<{ success: boolean; data: Client[]; pagination: any }>(endpoint);
     return response.data ?? [];
   },
   getById: async (id: string): Promise<Client> => {

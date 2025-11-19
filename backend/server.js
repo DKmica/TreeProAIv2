@@ -1714,7 +1714,26 @@ apiRouter.post('/leads', async (req, res) => {
   try {
     const leadData = req.body;
     const leadId = uuidv4();
-    
+
+    const sanitizedClientId = sanitizeUUID(leadData.clientId);
+    let associatedClientId = sanitizedClientId;
+
+    if (leadData.customerDetails) {
+      try {
+        const ensured = await ensureClientAssociation({
+          clientId: sanitizedClientId,
+          customerDetails: leadData.customerDetails
+        });
+        associatedClientId = ensured.clientId;
+      } catch (clientErr) {
+        return res.status(400).json({ error: clientErr.message });
+      }
+    } else if (!associatedClientId) {
+      return res.status(400).json({ error: 'Client information is required to create a lead' });
+    }
+
+    delete leadData.customerDetails;
+
     const insertQuery = `
       INSERT INTO leads (
         id, client_id_new, property_id, source, status, priority,
@@ -1724,10 +1743,10 @@ apiRouter.post('/leads', async (req, res) => {
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
       ) RETURNING *
     `;
-    
+
     const { rows } = await db.query(insertQuery, [
       leadId,
-      leadData.clientId || null,
+      associatedClientId,
       leadData.propertyId || null,
       leadData.source || null,
       leadData.status || 'New',
@@ -1739,10 +1758,10 @@ apiRouter.post('/leads', async (req, res) => {
       leadData.nextFollowupDate || null,
       leadData.description || null
     ]);
-    
+
     const lead = transformRow(rows[0], 'leads');
     res.status(201).json(lead);
-    
+
     reindexDocument('leads', rows[0]);
   } catch (err) {
     handleError(res, err);
@@ -1788,7 +1807,24 @@ apiRouter.put('/leads/:id', async (req, res) => {
   try {
     const leadData = req.body;
     const { id } = req.params;
-    
+
+    const sanitizedClientId = sanitizeUUID(leadData.clientId);
+    let associatedClientId = sanitizedClientId;
+
+    if (leadData.customerDetails) {
+      try {
+        const ensured = await ensureClientAssociation({
+          clientId: sanitizedClientId,
+          customerDetails: leadData.customerDetails
+        });
+        associatedClientId = ensured.clientId;
+      } catch (clientErr) {
+        return res.status(400).json({ error: clientErr.message });
+      }
+    }
+
+    delete leadData.customerDetails;
+
     const updateQuery = `
       UPDATE leads SET
         client_id_new = COALESCE($1, client_id_new),
@@ -1806,9 +1842,9 @@ apiRouter.put('/leads/:id', async (req, res) => {
       WHERE id = $12
       RETURNING *
     `;
-    
+
     const { rows } = await db.query(updateQuery, [
-      leadData.clientId,
+      associatedClientId,
       leadData.propertyId,
       leadData.source,
       leadData.status,
@@ -2302,28 +2338,202 @@ const sanitizeUUID = (value) => {
   return value;
 };
 
+const CLIENT_CATEGORIES = {
+  POTENTIAL: 'potential_client',
+  ACTIVE: 'active_customer'
+};
+
+const normalizeText = (value) => {
+  if (!value || typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeEmail = (value) => {
+  const trimmed = normalizeText(value);
+  return trimmed ? trimmed.toLowerCase() : null;
+};
+
+const normalizePhone = (value) => {
+  if (!value) return null;
+  const digits = value.toString().replace(/[^0-9]/g, '');
+  return digits.length > 0 ? digits : null;
+};
+
+const setClientCategory = async (clientId, category) => {
+  if (!clientId || !category) {
+    return;
+  }
+
+  await db.query(
+    `UPDATE clients
+       SET client_category = $1,
+           updated_at = NOW()
+     WHERE id = $2
+       AND (client_category IS DISTINCT FROM $1 OR client_category IS NULL)`,
+    [category, clientId]
+  );
+};
+
+const updateClientCategoryFromJobs = async (clientId) => {
+  if (!clientId) return;
+
+  const { rows } = await db.query(
+    `SELECT COUNT(*) AS completed_jobs
+       FROM jobs
+      WHERE client_id = $1
+        AND LOWER(status) = 'completed'`,
+    [clientId]
+  );
+
+  const completedJobs = parseInt(rows[0]?.completed_jobs || 0, 10);
+  const nextCategory = completedJobs > 0 ? CLIENT_CATEGORIES.ACTIVE : CLIENT_CATEGORIES.POTENTIAL;
+  await setClientCategory(clientId, nextCategory);
+};
+
+const markClientAsPotential = async (clientId) => {
+  if (!clientId) return;
+
+  const { rows } = await db.query(
+    `SELECT COUNT(*) AS completed_jobs
+       FROM jobs
+      WHERE client_id = $1
+        AND LOWER(status) = 'completed'`,
+    [clientId]
+  );
+
+  const completedJobs = parseInt(rows[0]?.completed_jobs || 0, 10);
+  if (completedJobs === 0) {
+    await setClientCategory(clientId, CLIENT_CATEGORIES.POTENTIAL);
+  }
+};
+
+const ensureClientAssociation = async ({ clientId, customerDetails = {}, defaultClientType = 'residential' }) => {
+  const sanitizedClientId = sanitizeUUID(clientId);
+  const normalizedDetails = {
+    first_name: normalizeText(customerDetails.firstName),
+    last_name: normalizeText(customerDetails.lastName),
+    company_name: normalizeText(customerDetails.companyName),
+    primary_email: normalizeEmail(customerDetails.email),
+    primary_phone: normalizePhone(customerDetails.phone),
+    billing_address_line1: normalizeText(customerDetails.addressLine1),
+    billing_address_line2: normalizeText(customerDetails.addressLine2),
+    billing_city: normalizeText(customerDetails.city),
+    billing_state: normalizeText(customerDetails.state),
+    billing_zip: normalizeText(customerDetails.zipCode),
+    billing_country: normalizeText(customerDetails.country) || 'USA'
+  };
+
+  let clientRow = null;
+
+  if (sanitizedClientId) {
+    const { rows } = await db.query(
+      'SELECT * FROM clients WHERE id = $1 AND deleted_at IS NULL',
+      [sanitizedClientId]
+    );
+    clientRow = rows[0] || null;
+  }
+
+  if (!clientRow) {
+    const conditions = [];
+    const params = [];
+    if (normalizedDetails.primary_email) {
+      conditions.push(`LOWER(primary_email) = $${params.length + 1}`);
+      params.push(normalizedDetails.primary_email);
+    }
+    if (normalizedDetails.primary_phone) {
+      conditions.push(`REGEXP_REPLACE(COALESCE(primary_phone, ''), '[^0-9]', '', 'g') = $${params.length + 1}`);
+      params.push(normalizedDetails.primary_phone);
+    }
+
+    if (conditions.length > 0) {
+      const { rows } = await db.query(
+        `SELECT * FROM clients WHERE deleted_at IS NULL AND (${conditions.join(' OR ')}) LIMIT 1`,
+        params
+      );
+      clientRow = rows[0] || null;
+    }
+  }
+
+  if (clientRow) {
+    const updates = {};
+    Object.entries(normalizedDetails).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        updates[key] = value;
+      }
+    });
+
+    if (Object.keys(updates).length > 0) {
+      const columns = Object.keys(updates);
+      const values = Object.values(updates);
+      const setString = columns.map((col, index) => `${col} = $${index + 2}`).join(', ');
+      await db.query(
+        `UPDATE clients SET ${setString}, updated_at = NOW() WHERE id = $1`,
+        [clientRow.id, ...values]
+      );
+
+      const { rows } = await db.query('SELECT * FROM clients WHERE id = $1', [clientRow.id]);
+      clientRow = rows[0];
+    }
+
+    await markClientAsPotential(clientRow.id);
+    return { clientId: clientRow.id, client: clientRow, created: false };
+  }
+
+  if (!normalizedDetails.first_name && !normalizedDetails.last_name && !normalizedDetails.company_name) {
+    throw new Error('Client name or company is required to create a record');
+  }
+
+  const newClientId = sanitizedClientId || uuidv4();
+  const insertData = {
+    id: newClientId,
+    first_name: normalizedDetails.first_name,
+    last_name: normalizedDetails.last_name,
+    company_name: normalizedDetails.company_name,
+    primary_email: normalizedDetails.primary_email,
+    primary_phone: normalizedDetails.primary_phone,
+    billing_address_line1: normalizedDetails.billing_address_line1,
+    billing_address_line2: normalizedDetails.billing_address_line2,
+    billing_city: normalizedDetails.billing_city,
+    billing_state: normalizedDetails.billing_state,
+    billing_zip: normalizedDetails.billing_zip,
+    billing_country: normalizedDetails.billing_country,
+    status: 'active',
+    client_type: defaultClientType,
+    client_category: CLIENT_CATEGORIES.POTENTIAL,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const columns = Object.keys(insertData).filter((key) => insertData[key] !== undefined);
+  const values = columns.map((key) => insertData[key]);
+  const placeholders = columns.map((_, index) => `$${index + 1}`);
+
+  const { rows } = await db.query(
+    `INSERT INTO clients (${columns.join(', ')}) VALUES (${placeholders.join(', ')}) RETURNING *`,
+    values
+  );
+
+  clientRow = rows[0];
+  await markClientAsPotential(clientRow.id);
+  return { clientId: clientRow.id, client: clientRow, created: true };
+};
+
 // Helper function: Build client stats
 const buildClientStats = async (clientId) => {
   try {
     const statsQuery = `
-      SELECT 
-        (SELECT COUNT(*) FROM quotes WHERE customer_name IN (
-          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
-        )) as total_quotes,
-        (SELECT COUNT(*) FROM jobs WHERE customer_name IN (
-          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
-        )) as total_jobs,
-        (SELECT COUNT(*) FROM invoices WHERE customer_name IN (
-          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
-        )) as total_invoices,
-        (SELECT COALESCE(SUM(amount::numeric), 0) FROM invoices WHERE customer_name IN (
-          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
-        ) AND status = 'Paid') as lifetime_value,
-        (SELECT MAX(scheduled_date) FROM jobs WHERE customer_name IN (
-          SELECT CONCAT(first_name, ' ', last_name) FROM clients WHERE id = $1
-        )) as last_job_date
+      SELECT
+        (SELECT COUNT(*) FROM quotes WHERE client_id = $1 AND deleted_at IS NULL) as total_quotes,
+        (SELECT COUNT(*) FROM jobs WHERE client_id = $1) as total_jobs,
+        (SELECT COUNT(*) FROM invoices WHERE client_id = $1 AND status = 'Paid') as total_invoices,
+        (SELECT COALESCE(SUM(COALESCE(grand_total, total_amount, amount)::numeric), 0)
+           FROM invoices WHERE client_id = $1 AND status = 'Paid') as lifetime_value,
+        (SELECT MAX(scheduled_date) FROM jobs WHERE client_id = $1) as last_job_date
     `;
-    
+
     const { rows } = await db.query(statsQuery, [clientId]);
     return {
       totalQuotes: parseInt(rows[0]?.total_quotes || 0),
@@ -2399,6 +2609,7 @@ apiRouter.post('/clients', async (req, res) => {
       dbData.id = clientId;
       dbData.status = dbData.status || 'active';
       dbData.client_type = dbData.client_type || 'residential';
+      dbData.client_category = dbData.client_category || CLIENT_CATEGORIES.POTENTIAL;
       
       // Insert client
       const clientColumns = Object.keys(dbData).filter(k => k !== 'id');
@@ -2547,6 +2758,7 @@ apiRouter.get('/clients', async (req, res) => {
     const {
       status,
       clientType,
+      clientCategory,
       search,
       tags,
       page = 1,
@@ -2574,6 +2786,13 @@ apiRouter.get('/clients', async (req, res) => {
       paramIndex++;
     }
     
+    // Client category filter
+    if (clientCategory) {
+      conditions.push(`client_category = $${paramIndex}`);
+      params.push(clientCategory);
+      paramIndex++;
+    }
+
     // Full-text search
     if (search) {
       conditions.push(`(
@@ -2608,7 +2827,7 @@ apiRouter.get('/clients', async (req, res) => {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     
     // Validate sortBy to prevent SQL injection
-    const validSortColumns = ['created_at', 'updated_at', 'first_name', 'last_name', 'company_name', 'lifetime_value'];
+    const validSortColumns = ['created_at', 'updated_at', 'first_name', 'last_name', 'company_name', 'lifetime_value', 'client_category'];
     const sortColumn = validSortColumns.includes(sortBy) ? sortBy : 'created_at';
     const sortDirection = sortOrder.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
     
@@ -2619,11 +2838,12 @@ apiRouter.get('/clients', async (req, res) => {
     
     // Get clients with basic stats
     const clientsQuery = `
-      SELECT 
+      SELECT
         c.*,
-        (SELECT COUNT(*) FROM quotes q WHERE q.customer_name = CONCAT(c.first_name, ' ', c.last_name)) as job_count,
-        (SELECT COUNT(*) FROM quotes WHERE customer_name = CONCAT(c.first_name, ' ', c.last_name)) as quote_count,
-        (SELECT COALESCE(SUM(amount::numeric), 0) FROM invoices WHERE customer_name = CONCAT(c.first_name, ' ', c.last_name) AND status = 'Paid') as calculated_lifetime_value
+        (SELECT COUNT(*) FROM jobs j WHERE j.client_id = c.id) as job_count,
+        (SELECT COUNT(*) FROM quotes q WHERE q.client_id = c.id AND q.deleted_at IS NULL) as quote_count,
+        (SELECT COALESCE(SUM(COALESCE(grand_total, total_amount, amount)::numeric), 0)
+           FROM invoices i WHERE i.client_id = c.id AND i.status = 'Paid') as calculated_lifetime_value
       FROM clients c
       ${whereClause}
       ORDER BY ${sortColumn} ${sortDirection}
@@ -4820,12 +5040,34 @@ apiRouter.post('/quotes', async (req, res) => {
     try {
       const quoteId = uuidv4();
       const quoteNumber = await generateQuoteNumber();
-      
+
       // Sanitize UUID fields early to prevent "undefined" strings
       const sanitizedClientId = sanitizeUUID(quoteData.clientId);
       const sanitizedPropertyId = sanitizeUUID(quoteData.propertyId);
       const sanitizedLeadId = sanitizeUUID(quoteData.leadId);
-      
+
+      let associatedClientId = sanitizedClientId;
+      let ensuredClient;
+
+      if (quoteData.customerDetails) {
+        try {
+          const ensured = await ensureClientAssociation({
+            clientId: sanitizedClientId,
+            customerDetails: quoteData.customerDetails
+          });
+          associatedClientId = ensured.clientId;
+          ensuredClient = ensured.client;
+        } catch (clientErr) {
+          await db.query('ROLLBACK');
+          return res.status(400).json({ success: false, error: clientErr.message });
+        }
+      } else if (!associatedClientId) {
+        await db.query('ROLLBACK');
+        return res.status(400).json({ success: false, error: 'Client information is required to create a quote' });
+      }
+
+      delete quoteData.customerDetails;
+
       const lineItems = quoteData.lineItems || [];
       const discountPercentage = quoteData.discountPercentage || 0;
       const discountAmount = quoteData.discountAmount || 0;
@@ -4834,15 +5076,17 @@ apiRouter.post('/quotes', async (req, res) => {
       const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
       
       let customerName = quoteData.customerName || 'Unknown';
-      if (sanitizedClientId) {
-        const { rows: clientRows } = await db.query(
+      let clientRecord = ensuredClient;
+      if (!clientRecord && associatedClientId) {
+        const { rows: fallbackRows } = await db.query(
           'SELECT company_name, first_name, last_name FROM clients WHERE id = $1',
-          [sanitizedClientId]
+          [associatedClientId]
         );
-        if (clientRows.length > 0) {
-          const client = clientRows[0];
-          customerName = client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Unknown';
-        }
+        clientRecord = fallbackRows[0];
+      }
+
+      if (clientRecord) {
+        customerName = clientRecord.company_name || `${clientRecord.first_name || ''} ${clientRecord.last_name || ''}`.trim() || 'Unknown';
       }
       
       const insertQuery = `
@@ -4860,7 +5104,7 @@ apiRouter.post('/quotes', async (req, res) => {
       
       const { rows: quoteRows } = await db.query(insertQuery, [
         quoteId,
-        sanitizedClientId,
+        associatedClientId,
         sanitizedPropertyId,
         sanitizedLeadId,
         customerName,
@@ -5121,7 +5365,7 @@ apiRouter.put('/quotes/:id', async (req, res) => {
     }
     
     const quoteData = req.body;
-    
+
     const { rows: existingRows } = await db.query(
       'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
       [sanitizedId]
@@ -5134,9 +5378,46 @@ apiRouter.put('/quotes/:id', async (req, res) => {
       });
     }
     
+    const existingQuote = existingRows[0];
     const updates = [];
     const values = [sanitizedId];
     let paramIndex = 2;
+
+    const sanitizedClientId = sanitizeUUID(quoteData.clientId) || existingQuote.client_id;
+    let associatedClientId = sanitizedClientId;
+    let clientRecord = null;
+
+    if (quoteData.customerDetails) {
+      try {
+        const ensured = await ensureClientAssociation({
+          clientId: sanitizedClientId,
+          customerDetails: quoteData.customerDetails
+        });
+        associatedClientId = ensured.clientId;
+        clientRecord = ensured.client;
+      } catch (clientErr) {
+        return res.status(400).json({ success: false, error: clientErr.message });
+      }
+    }
+
+    delete quoteData.customerDetails;
+
+    if (associatedClientId && associatedClientId !== existingQuote.client_id) {
+      updates.push(`client_id = $${paramIndex}`);
+      values.push(associatedClientId);
+      paramIndex++;
+    }
+
+    if (clientRecord) {
+      const computedName = clientRecord.company_name || `${clientRecord.first_name || ''} ${clientRecord.last_name || ''}`.trim() || 'Unknown';
+      updates.push(`customer_name = $${paramIndex}`);
+      values.push(computedName);
+      paramIndex++;
+    } else if (quoteData.customerName !== undefined) {
+      updates.push(`customer_name = $${paramIndex}`);
+      values.push(quoteData.customerName);
+      paramIndex++;
+    }
     
     if (quoteData.status !== undefined) {
       updates.push(`status = $${paramIndex}`);
@@ -5618,6 +5899,148 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
       throw err;
     }
     
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/jobs - Custom create with client auto-linking
+apiRouter.post('/jobs', async (req, res) => {
+  try {
+    const jobData = req.body;
+    const sanitizedClientId = sanitizeUUID(jobData.clientId);
+    let associatedClientId = sanitizedClientId;
+    let clientRecord = null;
+
+    if (jobData.customerDetails) {
+      try {
+        const ensured = await ensureClientAssociation({
+          clientId: sanitizedClientId,
+          customerDetails: jobData.customerDetails
+        });
+        associatedClientId = ensured.clientId;
+        clientRecord = ensured.client;
+      } catch (clientErr) {
+        return res.status(400).json({ error: clientErr.message });
+      }
+    } else if (!associatedClientId) {
+      return res.status(400).json({ error: 'Client information is required to create a job' });
+    }
+
+    delete jobData.customerDetails;
+
+    if (!jobData.customerName) {
+      if (clientRecord) {
+        jobData.customerName = clientRecord.company_name || `${clientRecord.first_name || ''} ${clientRecord.last_name || ''}`.trim() || 'Unknown';
+      } else {
+        const { rows: fallbackRows } = await db.query(
+          'SELECT company_name, first_name, last_name FROM clients WHERE id = $1',
+          [associatedClientId]
+        );
+        const fallbackClient = fallbackRows[0];
+        jobData.customerName = fallbackClient
+          ? fallbackClient.company_name || `${fallbackClient.first_name || ''} ${fallbackClient.last_name || ''}`.trim() || 'Unknown'
+          : 'Unknown';
+      }
+    }
+
+    const payload = { ...jobData, clientId: associatedClientId };
+    const dbData = transformToDb(payload, 'jobs');
+    if (!dbData.job_number) {
+      dbData.job_number = await generateJobNumber();
+    }
+
+    const jobId = uuidv4();
+    const columns = Object.keys(dbData);
+    const values = columns.map((key) => dbData[key]);
+    const placeholders = columns.map((_, index) => `$${index + 2}`).join(', ');
+
+    const insertQuery = `
+      INSERT INTO jobs (id, ${columns.join(', ')})
+      VALUES ($1, ${placeholders})
+      RETURNING *
+    `;
+
+    const { rows } = await db.query(insertQuery, [jobId, ...values]);
+    const jobRow = rows[0];
+    await updateClientCategoryFromJobs(associatedClientId);
+
+    const job = transformRow(jobRow, 'jobs');
+    res.status(201).json(job);
+
+    reindexDocument('jobs', jobRow);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /api/jobs/:id - Custom update with client categorization
+apiRouter.put('/jobs/:id', async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const sanitizedId = sanitizeUUID(jobId);
+
+    if (!sanitizedId) {
+      return res.status(400).json({ error: 'Invalid job ID' });
+    }
+
+    const jobData = req.body;
+    const { rows: existingRows } = await db.query('SELECT * FROM jobs WHERE id = $1', [sanitizedId]);
+    if (existingRows.length === 0) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const existingJob = existingRows[0];
+    const incomingClientId = sanitizeUUID(jobData.clientId) || existingJob.client_id;
+    let associatedClientId = incomingClientId;
+    let clientRecord = null;
+
+    if (jobData.customerDetails) {
+      try {
+        const ensured = await ensureClientAssociation({
+          clientId: incomingClientId,
+          customerDetails: jobData.customerDetails
+        });
+        associatedClientId = ensured.clientId;
+        clientRecord = ensured.client;
+      } catch (clientErr) {
+        return res.status(400).json({ error: clientErr.message });
+      }
+    }
+
+    delete jobData.customerDetails;
+
+    if (!jobData.customerName && clientRecord) {
+      jobData.customerName = clientRecord.company_name || `${clientRecord.first_name || ''} ${clientRecord.last_name || ''}`.trim() || 'Unknown';
+    }
+
+    const payload = { ...jobData, clientId: associatedClientId };
+    const dbData = transformToDb(payload, 'jobs');
+
+    if (Object.keys(dbData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const columns = Object.keys(dbData);
+    const values = columns.map((key, index) => dbData[key]);
+    const setString = columns.map((col, index) => `${col} = $${index + 2}`).join(', ');
+    const updateQuery = `UPDATE jobs SET ${setString}, updated_at = NOW() WHERE id = $1 RETURNING *`;
+
+    const { rows: updatedRows } = await db.query(updateQuery, [sanitizedId, ...values]);
+    if (updatedRows.length === 0) {
+      return res.status(404).json({ error: 'Job not found' });
+    }
+
+    const updatedJob = updatedRows[0];
+    await updateClientCategoryFromJobs(associatedClientId);
+    if (existingJob.client_id && existingJob.client_id !== associatedClientId) {
+      await updateClientCategoryFromJobs(existingJob.client_id);
+    }
+
+    const response = transformRow(updatedJob, 'jobs');
+    res.json(response);
+
+    reindexDocument('jobs', updatedJob);
   } catch (err) {
     handleError(res, err);
   }
@@ -6154,7 +6577,11 @@ apiRouter.post('/jobs/:id/state-transitions', async (req, res) => {
         errors: result.errors
       });
     }
-    
+
+    if (result.job?.client_id) {
+      await updateClientCategoryFromJobs(result.job.client_id);
+    }
+
     // Re-index job in RAG system after state change
     await reindexDocument('jobs', result.job);
     

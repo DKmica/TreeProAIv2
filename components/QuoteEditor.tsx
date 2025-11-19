@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Quote, Client, Property, LineItem, AITreeEstimate } from '../types';
+import { Quote, Client, Property, LineItem, AITreeEstimate, CustomerDetailsInput } from '../types';
 import { quoteService, clientService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 import PlusCircleIcon from './icons/PlusCircleIcon';
@@ -319,36 +319,50 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
     setApiError(null);
 
     try {
-      let clientId = formData.clientId;
+      let clientId = formData.clientId || '';
+      let customerDetails: CustomerDetailsInput | undefined;
 
       if (customerMode === 'new') {
-        const newClient = await clientService.create({
+        customerDetails = {
           firstName: newCustomerData.firstName,
           lastName: newCustomerData.lastName,
           companyName: newCustomerData.companyName || undefined,
-          primaryPhone: newCustomerData.phone,
-          primaryEmail: newCustomerData.email,
-          billingAddressLine1: newCustomerData.addressLine1,
-          billingAddressLine2: newCustomerData.addressLine2 || undefined,
-          billingCity: newCustomerData.city,
-          billingState: newCustomerData.state,
-          billingZip: newCustomerData.zipCode,
-          clientType: 'residential',
-          status: 'active',
-          paymentTerms: 'Net 30',
-          taxExempt: false,
-          billingCountry: 'USA',
-          lifetimeValue: 0,
-        });
-        clientId = newClient.id;
+          phone: newCustomerData.phone,
+          email: newCustomerData.email,
+          addressLine1: newCustomerData.addressLine1,
+          addressLine2: newCustomerData.addressLine2 || undefined,
+          city: newCustomerData.city,
+          state: newCustomerData.state,
+          zipCode: newCustomerData.zipCode,
+          country: 'USA'
+        };
+        clientId = '';
       }
 
       const validLineItems = lineItems.filter(item => item.description.trim());
       const totals = calculateTotals();
-      
-      const quoteData: Partial<Quote> = {
+
+      let customerName = '';
+      if (customerMode === 'new') {
+        customerName = newCustomerData.companyName || `${newCustomerData.firstName} ${newCustomerData.lastName}`.trim();
+      } else if (formData.clientId) {
+        const matchedClient = clients.find(c => c.id === formData.clientId);
+        if (matchedClient) {
+          customerName = matchedClient.companyName || `${matchedClient.firstName || ''} ${matchedClient.lastName || ''}`.trim();
+        } else if (quote?.customerName) {
+          customerName = quote.customerName;
+        }
+      } else if (quote?.customerName) {
+        customerName = quote.customerName;
+      }
+      if (!customerName) {
+        customerName = 'Pending Customer';
+      }
+
+      const quoteData: Partial<Quote> & { customerDetails?: CustomerDetailsInput } = {
         clientId: clientId || undefined,
         propertyId: formData.propertyId || undefined,
+        customerName,
         status: formData.status,
         lineItems: validLineItems,
         paymentTerms: formData.paymentTerms,
@@ -364,6 +378,10 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
         version: 1,
         approvalStatus: 'pending',
       };
+
+      if (customerDetails) {
+        quoteData.customerDetails = customerDetails;
+      }
 
       let savedQuote: Quote;
       if (quote) {
