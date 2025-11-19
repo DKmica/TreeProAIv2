@@ -1,0 +1,310 @@
+You are a senior full-stack engineer and product-minded architect working INSIDE this existing Replit project.
+
+This Replit project contains my TREE SERVICE BUSINESS MANAGEMENT platform (similar to Jobber / ArborGold / SingleOps) with AI features (“TreePro AI”). It already includes modules for:
+
+- Clients / CRM (clients, properties, contacts)
+- Leads
+- Quotes / Estimates (including AI estimator using Gemini)
+- Jobs / Scheduling / Calendar
+- Crews & Employees
+- Time tracking & Payroll
+- Equipment & Maintenance
+- Invoices
+- Marketing tools (AI social/email/SEO)
+- AI Core / ProBot assistant (chat + voice, RAG)
+- Forms & checklists
+- Basic analytics
+
+Your job is to implement a series of improvements IN PHASES to make this app production-ready, more user-friendly, and clearly superior to existing tree-service platforms.
+
+IMPORTANT:
+- Work ONLY with this Replit repo’s code and stack. Detect the stack from the code; do not try to re-platform.
+- Preserve existing functionality. When refactoring, update all dependent code so the app keeps running.
+- After each phase, the app must compile and run in Replit with no blocking errors.
+- Add concise comments and docs where non-obvious.
+
+==================================
+PHASE 0 – QUICK DISCOVERY / BASELINE
+==================================
+1. Scan the entire codebase:
+   - Identify the tech stack (frontend, backend, DB/ORM, AI libraries, auth, etc.).
+   - Map the key modules: CRM, Leads, Quotes, Jobs, Invoices, Payroll, Employees, Equipment, Marketing, AI Core, Forms, Analytics, Voice assistant.
+2. Create or update a top-level doc:
+   - /ARCHITECTURE_OVERVIEW.md
+   - Summarize:
+     - Tech stack and main frameworks.
+     - Core entities and relationships (Client, Property, Lead, Quote, Job, Invoice, Employee, Crew, Equipment, TimeEntry, PayrollRecord, etc.).
+     - High-level data flow for:
+       - Lead → Quote → Job → Invoice → Payment
+       - Time tracking → Payroll
+       - Equipment → Maintenance logs
+       - AI Estimator + AI Core insights
+3. Run the app and briefly sanity-check:
+   - Login, basic navigation.
+   - Create a client, lead, quote, job, invoice.
+   - Open AI features (AI estimator, AI Core, ProBot).
+   - Note any obvious crashes / console errors / broken flows in the doc under “Known Issues”.
+
+Do NOT spend too long here; just enough to inform later changes.
+
+==================================
+PHASE 1 – PAYMENTS & INVOICE FLOW
+==================================
+Goal: Turn the invoice portal into a real payment pipeline and tighten the Job → Invoice flow.
+
+1. Payment integration:
+   - Integrate a real payment processor (prefer Stripe by default) in a way that fits the existing backend.
+   - Add secure server-side endpoints to:
+     - Create payment intents / sessions for invoices.
+     - Handle webhooks for successful / failed payments.
+   - In the client portal:
+     - Replace the fake “Pay Now” simulation with real payment flow.
+     - After successful payment:
+       - Mark invoice as PAID.
+       - Create a Payment record linked to the Invoice (amount, method, date, transaction id).
+   - Support partial payments if that fits the data model, or at least full payment for now.
+
+2. Invoice lifecycle:
+   - Ensure invoice statuses are consistent and meaningful: DRAFT, SENT, PAID, OVERDUE.
+   - Implement (or fix) logic to:
+     - Automatically set SENT when an invoice is emailed or shared.
+     - Mark OVERDUE when due_date < today and not paid.
+   - From a COMPLETED Job, provide:
+     - A one-click “Create Invoice” that pre-fills line items from the Quote/Job.
+     - Link the resulting invoice back to the job & client.
+
+3. Reminders:
+   - Use existing reminder scaffolding (if present) to:
+     - Detect invoices due soon or overdue.
+     - For now, log reminders in a clear server log or simple notification list.
+     - Prepare hooks for future email/SMS automation (Phase 4).
+
+Update docs:
+- Add a “Payments & Invoice Flow” section to ARCHITECTURE_OVERVIEW.md (or a separate PAYMENTS.md).
+- Document how to configure Stripe keys (or chosen processor) via env vars.
+
+==================================
+PHASE 2 – MOBILE UX & CREW FIELD EXPERIENCE
+==================================
+Goal: Make the app actually usable in the field on phones and tablets.
+
+1. Responsive layout:
+   - Audit key pages for mobile responsiveness:
+     - Dashboard, Clients, Leads, Quotes, Jobs, Calendar, Crew view, Job detail, Forms, AI estimator, AI Core.
+   - Use the existing Tailwind setup:
+     - Ensure layouts collapse gracefully on small screens (no overflowing tables off-screen).
+     - For large data tables, add horizontal scroll or stacked card view on mobile.
+
+2. Crew-focused views:
+   - Ensure there is a dedicated “Crew” / “Field” dashboard with:
+     - Today’s jobs (list with time, client, address, notes).
+     - Simple actions: View job details, start/stop work, upload photos, complete forms.
+   - On job detail for crew:
+     - Show essential info only: address (with link to maps), contact, scope of work, safety notes, attached forms.
+     - Provide quick status buttons (e.g., “Start Job”, “Mark Completed”).
+
+3. Time tracking for crews:
+   - Provide a simple mobile-friendly way for crew members to:
+     - Clock in / clock out.
+     - Log time per job (start job / end job).
+   - Wire these actions to TimeEntry / Payroll records.
+
+4. PWA readiness (optional if easy):
+   - If feasible, add PWA meta (manifest, icons) so crews can “install” the web app on mobile home screens.
+   - This can be light – focus more on responsive experience first.
+
+Update docs:
+- Add a “Mobile & Crew UX” section with notes on breakpoints, main crew workflows, and any PWA setup.
+
+==================================
+PHASE 3 – AUTH, ROLES & PERMISSIONS
+==================================
+Goal: Move from single-user/dev auth to production-ready multi-role access control.
+
+1. Authentication:
+   - Use the existing auth scaffold (or introduce a standard solution) to:
+     - Handle login and logout.
+     - Issue server-validated sessions or JWTs.
+   - Ensure all mutating backend endpoints require authentication.
+
+2. Roles & access:
+   - Introduce at least these roles:
+     - ADMIN / OWNER – full access.
+     - MANAGER – full operational access but limited settings.
+     - CREW – only see their assigned jobs and relevant info.
+     - (Optional) SALES – focused on leads/quotes, limited access to financials.
+   - Implement role-based authorization:
+     - Protect sensitive routes and actions (e.g., payroll, SSN, full financial reports) to ADMIN/MANAGER only.
+     - CREW role:
+       - Only see jobs they’re assigned to.
+       - Hide financial details except what’s needed (e.g., not invoice totals).
+
+3. Sensitive data handling:
+   - Identify fields like employee SSN, DOB, any tokens.
+   - Ensure they are:
+     - Not sent to frontend unless absolutely necessary.
+     - Never shown to CREW role.
+   - If appropriate, encrypt these at rest.
+
+Update docs:
+- In ARCHITECTURE_OVERVIEW.md, add “Auth & Roles”:
+  - Roles list.
+  - High-level access rules for each module.
+
+==================================
+PHASE 4 – WORKFLOW AUTOMATION & TRIGGERS
+==================================
+Goal: Automate obvious business steps so the system “runs itself” as much as possible.
+
+1. Event model:
+   - Define a simple pattern for reacting to state changes (Domain Events or just well-placed hooks), for example:
+     - On Quote status change → call handlers.
+     - On Job status change → call handlers.
+     - On Invoice status change → call handlers.
+   - Implement these as cleanly as possible in the existing backend.
+
+2. Automations:
+   Implement these core automations (backed by config if reasonable):
+
+   - Quote → Follow-ups:
+     - When a quote is SENT and not accepted/rejected in N days (e.g. 7, 14):
+       - Log a follow-up task or send a reminder (for now, log/notification).
+   - Accepted Quote → Job:
+     - When a quote is accepted:
+       - Prompt the user to create/schedule a job.
+       - Optionally auto-create a job in UNSCHEDULED state, linked to the quote.
+   - Completed Job → Invoice:
+     - When a job is marked COMPLETED:
+       - Auto-create a draft invoice with line items from the quote/job.
+       - Notify the user that a draft invoice is ready.
+   - Completed Job → Review:
+       - After job completion, prepare a review request (email content) and log it or send via placeholder mechanism.
+   - Client status transitions:
+       - Ensure client_status changes automatically:
+         - Default to POTENTIAL.
+         - When a client has at least one COMPLETED job → mark ACTIVE.
+
+3. Reminder scheduling:
+   - Use whatever scheduling mechanism already exists to:
+     - Run daily checks (invoices due, stale quotes, upcoming jobs needing confirmations).
+     - For now, log “TODO: send email/SMS” and store them somewhere visible in the UI (e.g. a Reminders panel).
+
+Update docs:
+- Add a WORKFLOWS_AUTOMATION.md describing:
+  - Events.
+  - Triggered actions.
+  - Future email/SMS hooks.
+
+==================================
+PHASE 5 – UX POLISH, NAVIGATION & SEARCH
+==================================
+Goal: Make the app feel coherent, obvious, and fast to use.
+
+1. Navigation & IA:
+   - Review the sidebar / header navigation:
+     - Group related items clearly (CRM, Operations, Financials, AI, Settings).
+     - Use consistent terminology (e.g., always “Jobs” or always “Work Orders”).
+   - On key entity detail pages (Client, Lead, Quote, Job, Invoice, Equipment), ensure:
+     - All related actions are obvious (e.g., “Convert to Quote”, “Schedule Job”, “Create Invoice”).
+     - Related records are easy to get to (e.g., from Client you can see Leads, Quotes, Jobs, Invoices tabs).
+
+2. Global search:
+   - Implement a global search bar (if not already present) that can search across:
+     - Clients, properties, contacts.
+     - Leads & quotes.
+     - Jobs.
+     - Invoices.
+   - Use existing search APIs and add any missing indexes as needed.
+   - Provide typeahead suggestions and a results page.
+
+3. Consistent forms & error handling:
+   - Standardize form components:
+     - Labels, help text, error messages.
+     - Success feedback (e.g., toast or banner on successful save).
+   - Ensure all entity creation/edit forms:
+     - Validate required fields (name, contact, address, etc.).
+     - Auto-format phone numbers, currency, dates consistently.
+     - Show clear inline validation errors.
+
+4. Visual clarity:
+   - Ensure status badges (quote status, job status, invoice status) are consistent in color and wording.
+   - Use cards and sections to organize complex pages (AI Core, Analytics, Marketing).
+   - Minimize clutter: hide rarely-used advanced options behind “Advanced” toggles.
+
+Update docs:
+- Add a UX_NOTES.md capturing:
+  - Major UX decisions.
+  - Patterns (e.g. how you show statuses, how forms behave).
+
+==================================
+PHASE 6 – SECURITY, PERFORMANCE & SCALING
+==================================
+Goal: Hardening for real-world use.
+
+1. Security:
+   - Ensure all mutating endpoints are auth-protected and role-checked.
+   - Review API inputs and add server-side validation to prevent injection/invalid data.
+   - Check for any secrets accidentally exposed in frontend code; move them to env vars.
+   - Consider CSRF protection for web forms if relevant.
+
+2. Performance:
+   - Identify any “load everything” calls on app startup or main pages.
+   - Introduce pagination or lazy loading for potentially large lists:
+     - Clients, Leads, Quotes, Jobs, Invoices.
+   - Ensure list endpoints support page/limit and filtering; update frontend accordingly.
+
+3. Logging & monitoring:
+   - Add structured logs for key events (failed AI calls, payment errors, auth failures, automation failures).
+   - If feasible within this project, add a simple admin view of recent errors / warnings.
+
+Update docs:
+- In ARCHITECTURE_OVERVIEW.md, add sections for “Security Considerations” and “Performance Notes”.
+
+==================================
+PHASE 7 – AI CORE REFINEMENT & LEARNING LOOPS
+==================================
+Goal: Make the AI core (ProBot + estimators + insights) robust, trustworthy, and self-improving.
+
+1. AI estimator feedback:
+   - Ensure there is a clean UX for entering feedback on estimates:
+     - Too high / too low / accurate.
+     - Actual final price.
+   - Make sure feedback is stored consistently and used when building prompt context:
+     - Include recent feedback examples in prompts to Gemini to refine pricing behavior.
+
+2. Business insights:
+   - Refine AI Core Insights:
+     - Verify that the data sent into the AI is comprehensive but not bloated.
+     - Summarize outputs as clear, actionable cards (e.g., “Top 3 follow-up opportunities”, “Upcoming equipment that needs service”, “Payroll vs revenue this month”).
+   - Where insight types already exist (lead scores, job schedules, maintenance alerts, payroll insights), ensure:
+     - Data feeding is accurate.
+     - The UI labels and explanations are understandable to non-technical users.
+
+3. ProBot tools & chat:
+   - Review the defined function tools (navigate, create/update entities, etc.):
+     - Make sure each tool is implemented and works as described.
+     - Add missing tools for key operations if needed (e.g., “Schedule job for quote”).
+   - Test multi-step commands:
+     - E.g., “Create a new client, then a quote for large oak removal at their property next Friday.”
+   - Improve system prompt and tool descriptions where necessary to reduce hallucinations and ensure correct tool usage.
+
+4. Voice assistant:
+   - Verify wake-word flow and command mode.
+   - Ensure voice interactions call the same backend ProBot pipeline and can execute the same tools.
+   - Improve error handling and user feedback for mic permission errors, timeouts, etc.
+
+Update docs:
+- Add AI_CORE.md explaining:
+  - AI features (estimator, insights, ProBot, voice).
+  - Where prompts live.
+  - How feedback loops work.
+  - How to update models or prompts in future.
+
+==================================
+EXECUTION NOTES
+==================================
+- Execute phases in order. Do not start a new phase before the previous phase’s core tasks are complete and the app runs.
+- At the end of each phase, update the relevant docs and leave TODO comments where further polish is needed.
+- At every step, favor clean, well-structured, and idiomatic code for the existing stack.
+
+Begin now with PHASE 0: analyze this codebase and create/update ARCHITECTURE_OVERVIEW.md, then proceed sequentially through the phases.
