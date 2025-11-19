@@ -3,6 +3,8 @@
 ## Overview
 TreePro AI is a comprehensive business management platform for tree service companies, powered by Google Gemini AI. This full-stack application provides AI-powered tools for estimating, lead management, job scheduling, and overall business intelligence, aiming to enhance efficiency and decision-making for tree service professionals. Its purpose is to enhance efficiency and decision-making for tree service professionals by offering a complete solution for their operational needs.
 
+**📋 For detailed technical architecture, see [ARCHITECTURE_OVERVIEW.md](./ARCHITECTURE_OVERVIEW.md)**
+
 ## User Preferences
 I prefer that the AI assistant prioritizes clear and concise explanations. When proposing code changes, please provide a high-level overview of the approach first and ask for confirmation before implementing detailed modifications. I value iterative development, so small, reviewable changes are preferred over large, monolithic updates. For any significant architectural decisions or third-party integrations, please consult me beforehand. I prefer to use the latest stable versions of frameworks and libraries unless there's a compelling reason otherwise.
 
