@@ -294,6 +294,7 @@ const AUTOMATED_TRIGGERS = {
    * Trigger when job moves to 'completed' state
    * - Generate invoice stub
    * - Send completion notification
+   * - Update client category to active_customer
    */
   completed: async (job, transitionData, db) => {
     console.log(`✅ [State Machine] Trigger: Job ${job.id} completed`);
@@ -356,6 +357,21 @@ const AUTOMATED_TRIGGERS = {
       }
     }
     
+    // Update client category to active_customer (they now have a completed job)
+    if (job.client_id) {
+      try {
+        await db.query(
+          `UPDATE clients 
+           SET client_category = 'active_customer', updated_at = NOW() 
+           WHERE id = $1 AND client_category != 'active_customer'`,
+          [job.client_id]
+        );
+        console.log(`   ✨ Client ${job.client_id} upgraded to active_customer`);
+      } catch (error) {
+        console.error(`   ❌ Failed to update client category:`, error.message);
+      }
+    }
+    
     // TODO: Send completion notification to customer
     console.log(`   📧 Customer notification: Job completed`);
   },
@@ -409,10 +425,38 @@ const AUTOMATED_TRIGGERS = {
    * Trigger when job moves to 'cancelled' state
    * - Free up crew schedule
    * - Send cancellation notifications
+   * - Re-evaluate client category (may downgrade if no completed jobs)
    */
   cancelled: async (job, transitionData, db) => {
     console.log(`❌ [State Machine] Trigger: Job ${job.id} cancelled`);
     console.log(`   → Reason: ${transitionData.reason || 'Not specified'}`);
+    
+    // Check if client should be downgraded to potential_client
+    if (job.client_id) {
+      try {
+        const { rows } = await db.query(
+          `SELECT COUNT(*) AS completed_jobs
+           FROM jobs
+           WHERE client_id = $1
+             AND LOWER(status) = 'completed'`,
+          [job.client_id]
+        );
+        
+        const completedJobs = parseInt(rows[0]?.completed_jobs || 0, 10);
+        
+        if (completedJobs === 0) {
+          await db.query(
+            `UPDATE clients 
+             SET client_category = 'potential_client', updated_at = NOW() 
+             WHERE id = $1 AND client_category != 'potential_client'`,
+            [job.client_id]
+          );
+          console.log(`   ⬇️  Client ${job.client_id} downgraded to potential_client (no completed jobs)`);
+        }
+      } catch (error) {
+        console.error(`   ❌ Failed to update client category:`, error.message);
+      }
+    }
     
     // TODO: Free up crew schedule
     // TODO: Send cancellation notifications
