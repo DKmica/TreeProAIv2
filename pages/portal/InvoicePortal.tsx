@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Invoice } from '../../types';
 import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
@@ -11,19 +11,41 @@ interface InvoicePortalProps {
 
 const InvoicePortal: React.FC<InvoicePortalProps> = ({ invoices, setInvoices }) => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const invoice = useMemo(() => invoices.find(inv => inv.id === invoiceId), [invoices, invoiceId]);
 
-  const handlePayNow = () => {
+  const handlePayNow = async () => {
     if (!invoice) return;
-    // Simulate payment processing
-    setTimeout(() => {
-      setInvoices(prev => prev.map(inv => 
-        inv.id === invoiceId 
-          ? { ...inv, status: 'Paid', paidAt: new Date().toISOString() }
-          : inv
-      ));
-    }, 1500);
+    
+    setError(null);
+    setIsProcessing(true);
+
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const data = await response.json();
+      
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      setError('Unable to process payment. Please try again or contact support.');
+      setIsProcessing(false);
+    }
   };
 
   if (!invoice) {
@@ -90,11 +112,24 @@ const InvoicePortal: React.FC<InvoicePortalProps> = ({ invoices, setInvoices }) 
 
       {invoice.status !== 'Paid' && (
         <div className="p-6 border-t text-center">
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
           <button 
             onClick={handlePayNow}
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-8 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2"
+            disabled={isProcessing}
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-transparent bg-brand-green-600 px-8 py-3 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Pay Now
+            {isProcessing ? (
+              <>
+                <SpinnerIcon className="mr-2 h-5 w-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Pay Now'
+            )}
           </button>
           <p className="mt-4 text-xs text-brand-gray-500">Secure payment processing powered by Stripe</p>
         </div>
