@@ -125,10 +125,25 @@ app.post(
         stripeWebhookSecret: cachedWebhookSecret,
       });
       
-      await stripeSync.processWebhook(req.body, sig, undefined);
+      // Process webhook with stripe-replit-sync (for syncing Stripe data)
+      try {
+        await stripeSync.processWebhook(req.body, sig, undefined);
+      } catch (syncError) {
+        // stripe-replit-sync throws "Unhandled webhook event" for event types it doesn't sync
+        // This is NOT an error - just means the event isn't one we sync to the database
+        if (syncError.message && syncError.message.includes('Unhandled webhook event')) {
+          console.log(`ℹ️ Stripe event not synced (unhandled by stripe-replit-sync): ${syncError.message}`);
+          // Continue processing - we may still want to handle the event for our business logic
+        } else {
+          // Real sync error - rethrow to be handled by outer catch block
+          throw syncError;
+        }
+      }
 
       const stripe = require('stripe')(cachedStripeSecretKey);
       const event = stripe.webhooks.constructEvent(req.body, sig, cachedWebhookSecret);
+
+      console.log(`📨 Stripe webhook received: ${event.type}`);
 
       // CUSTOMER ID PERSISTENCE: Customer IDs are persisted here in the webhook handler
       // rather than in the checkout endpoint. This is the safer approach because:
@@ -140,6 +155,8 @@ app.post(
         const session = event.data.object;
         const invoiceId = session.metadata?.invoiceId;
         const stripeCustomerId = session.customer;
+        
+        console.log(`💳 Processing checkout.session.completed for invoice: ${invoiceId}`);
         
         if (invoiceId) {
           const clientId = await stripeService.updateInvoiceAfterPayment(
@@ -160,6 +177,9 @@ app.post(
             }
           }
         }
+      } else {
+        // Log other event types for debugging (but don't error)
+        console.log(`ℹ️ Stripe event ${event.type} received but no specific handler implemented`);
       }
       
       res.status(200).json({ received: true });

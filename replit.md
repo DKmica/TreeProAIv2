@@ -36,7 +36,7 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Job State Machine**: A 10-state job workflow with guarded transitions, automated triggers, and an audit trail.
 - **Job Templates**: Reusable configurations for standardizing services and accelerating job creation.
 - **Operations & Scheduling**: Includes crew management (creation, assignment, roles, capacity), time tracking (clock in/out, GPS, approvals), atomic job assignment with conflict detection, calendar integration (Gantt-style crew view with conflict warnings), and a dynamic job forms system (safety checklists, inspections, work orders).
-- **Invoice Management System**: Professional invoicing with comprehensive financial tracking including auto-generated invoice numbers, tax/discount calculations, payment recording, and a status workflow (Draft→Sent→Paid/Overdue→Void). Supports "Create from Job" functionality.
+- **Invoice Management System**: Professional invoicing with comprehensive financial tracking including auto-generated invoice numbers (INV-YYYY-####), tax/discount calculations, payment recording, and a status workflow (Draft→Sent→Paid/Overdue→Void). Features Stripe payment processing for customer portal checkout, auto-invoice creation from completed jobs, and webhook-driven payment status updates. Supports "Create from Job" functionality.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
@@ -45,11 +45,14 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Database Connection Resilience**: PostgreSQL connection pool includes error handlers and reuses the main pool for session storage.
 - **Graceful Error Handling**: Critical services include error handlers to log issues without crashing the application.
 - **Testing Infrastructure**: Comprehensive testing setup with Vitest, Testing Library, Playwright, and Supertest for unit, integration, and E2E tests, with automated backend server management for tests.
+- **Payment Processing**: Stripe integration with webhook-driven invoice status updates, secure credential caching, signature verification, idempotency checks, and transaction-safe payment processing. Uses Replit connector for environment-aware credential management (development sandbox vs production).
+- **Invoice Automation**: Auto-generated invoices on job completion with sequential numbering system (INV-YYYY-####). Invoices created in Draft status for review before sending, ensuring billing accuracy and reducing manual workflow steps.
 
 ## External Dependencies
 
 - **Google Gemini API**: Used for all AI functionalities (estimating, assistant, business intelligence).
 - **Google Maps API**: Integrated for location-based features with async loading optimization.
+- **Stripe API**: For payment processing (sandbox environment via Replit connector). Handles customer portal invoice payments, secure checkout sessions, and webhook-driven payment status updates.
 - **PostgreSQL**: Primary database system.
 - **React**: Frontend JavaScript library.
 - **Node.js/Express**: Backend runtime and web framework.

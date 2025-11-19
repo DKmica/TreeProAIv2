@@ -879,14 +879,15 @@ Text-to-speech response: "I've created a quote for John Smith"
    - Auto-configured in Replit environment
    - Offline mode for development
 
-### Planned Integrations (Phase 1-4)
+4. **Stripe** (Phase 1 - Payment Processing) ✅ **IMPLEMENTED**
+   - Production-ready payment processing via Replit connector
+   - Sandbox environment for development/testing
+   - Webhook-driven invoice status updates
+   - See detailed implementation in **Stripe Payment Processing** section below
 
-1. **Stripe** (Phase 1 - Payment Processing)
-   - Invoice payments
-   - Card on file
-   - Subscription billing for recurring jobs
+### Planned Integrations (Phase 2-4)
 
-2. **Twilio** (Phase 4 - Automation)
+1. **Twilio** (Phase 4 - Automation)
    - SMS notifications
    - Automated reminders
    - Two-factor authentication
@@ -900,6 +901,583 @@ Text-to-speech response: "I've created a quote for John Smith"
    - Sync invoices
    - Financial reporting
    - Tax preparation
+
+---
+
+## Stripe Payment Processing (Phase 1)
+
+**Status:** ✅ **Production-Ready** | **Completed:** November 2025
+
+TreePro AI implements a comprehensive Stripe payment integration that enables customers to pay invoices online through a secure checkout flow. The system uses Replit's Stripe connector for credential management and operates in sandbox mode for development/testing with production-ready architecture.
+
+### Overview
+
+The payment system provides:
+- **Customer Portal Checkout**: Customers can pay invoices directly from the customer portal
+- **Automated Invoice Updates**: Webhook-driven status changes (Draft → Paid)
+- **Auto-Invoice Generation**: Invoices automatically created when jobs are completed
+- **Secure Payment Processing**: PCI-compliant through Stripe Checkout
+- **Customer Management**: Automatic Stripe customer creation and ID persistence
+- **Payment Tracking**: Full audit trail via `payment_records` table
+
+**Environment:**
+- **Development:** Stripe sandbox (test mode) via Replit connector
+- **Production:** Production Stripe keys (when connector configured for production)
+- **API Version:** `2025-08-27.basil`
+
+### Backend Components
+
+#### 1. `stripeClient.js` - Credential Management
+
+Handles secure retrieval of Stripe credentials from Replit's connector API:
+
+```javascript
+// Key features:
+- Automatic environment detection (development vs production)
+- Fetches credentials from Replit connector hostname
+- Returns: publishableKey, secretKey, webhookSecretKey
+- Uses REPL_IDENTITY or WEB_REPL_RENEWAL for authentication
+- Supports both repl (development) and depl (deployment) contexts
+```
+
+**Functions:**
+- `getUncachableStripeClient()` - Returns fresh Stripe SDK instance
+- `getStripePublishableKey()` - Frontend needs for Stripe.js
+- `getStripeSecretKey()` - Backend API calls
+- `getStripeWebhookSecret()` - Webhook signature verification
+
+#### 2. `stripeService.js` - Business Logic
+
+Core service providing payment operations:
+
+**Key Methods:**
+
+```javascript
+// Customer Management
+createCustomer(email, clientId)
+  - Creates Stripe customer with metadata linking to TreePro client
+  - Stores clientId in metadata for cross-reference
+
+getCustomerByEmail(email)
+  - Searches Stripe for existing customer by email
+  - Prevents duplicate customer creation
+
+// Checkout Sessions
+createCheckoutSession(customerId, invoiceId, amount, invoiceNumber, ...)
+  - Creates Stripe Checkout session for invoice payment
+  - Supports both existing customers and new customer creation
+  - Returns: session URL, customer ID, session ID
+  - Metadata includes: invoiceId, invoiceNumber (for webhook processing)
+
+// Payment Processing
+updateInvoiceAfterPayment(invoiceId, session)
+  - Called by webhook handler after successful payment
+  - Updates invoice status to 'Paid'
+  - Creates payment_record with transaction details
+  - Returns clientId for potential post-payment actions
+```
+
+#### 3. Webhook Handler (`server.js`)
+
+**Endpoint:** `POST /api/stripe/webhook`
+
+**Security Features:**
+- **Raw Body Parsing**: Uses `express.raw({ type: 'application/json' })` to preserve signature
+- **Signature Verification**: Validates webhook authenticity using Stripe SDK
+- **Cached Secrets**: Pre-fetches webhook secret at server startup (fails fast if unavailable)
+- **Initialization Guard**: Rejects webhooks if Stripe not properly initialized
+
+**Event Handling:**
+
+```javascript
+Event: checkout.session.completed
+  ├─ Extract metadata: invoiceId, stripeCustomerId
+  ├─ Validate payment status: 'paid'
+  ├─ Validate currency: 'usd'
+  ├─ Validate amount matches invoice grand_total
+  ├─ Check for duplicate payment_intent (idempotency)
+  ├─ Update invoice: status='Paid', paid_at=NOW(), amount_paid, amount_due
+  ├─ Create payment_record: transaction_id, amount, payment_method
+  └─ Persist Stripe customer ID to clients.stripe_customer_id
+```
+
+**Error Handling:**
+- **400 Errors** (permanent - no retry): Invalid signature, validation failures, missing invoice
+- **500 Errors** (transient - Stripe retries): Database errors, network issues
+
+### Security Measures
+
+#### 1. Credential Caching
+```javascript
+// Cached at server initialization
+let cachedStripeSecretKey = null;
+let cachedWebhookSecret = null;
+
+// Prevents:
+- Performance overhead of fetching on each request
+- Security vulnerabilities if credential fetch fails mid-request
+- Webhook processing with null secrets (fail-fast design)
+```
+
+#### 2. Webhook Signature Verification
+```javascript
+const event = stripe.webhooks.constructEvent(
+  req.body,              // Raw buffer (not parsed JSON)
+  signature,             // stripe-signature header
+  cachedWebhookSecret    // Pre-cached secret
+);
+// Throws error if signature invalid - prevents forged webhooks
+```
+
+#### 3. Idempotency (Duplicate Prevention)
+```javascript
+// BEGIN TRANSACTION
+const { rows } = await client.query(
+  'SELECT id FROM payment_records WHERE transaction_id = $1',
+  [paymentIntentId]
+);
+
+if (rows.length > 0) {
+  ROLLBACK;
+  console.log('Duplicate webhook detected. Skipping.');
+  return; // Prevents double-charging
+}
+// ... process payment ...
+// COMMIT
+```
+
+**Why This Matters:**
+- Stripe may retry webhooks if response is slow
+- Network issues can cause duplicate deliveries
+- Idempotency ensures payment processed exactly once
+
+#### 4. Payment Validation
+```javascript
+Validates BEFORE updating invoice:
+✓ Payment status === 'paid' (not 'unpaid', 'no_payment_required')
+✓ Currency === 'usd' (prevents multi-currency errors)
+✓ Amount matches invoice.grand_total (within $0.01 tolerance)
+✓ Invoice exists in database
+✓ No duplicate payment_intent ID
+
+If any validation fails:
+  ROLLBACK transaction
+  Return 400 error (permanent - no retry)
+```
+
+#### 5. Transaction Safety
+All database updates wrapped in PostgreSQL transaction:
+```sql
+BEGIN;
+  -- Check duplicates
+  -- Validate payment
+  UPDATE invoices SET status='Paid', ...;
+  INSERT INTO payment_records ...;
+  UPDATE clients SET stripe_customer_id=...;
+COMMIT;
+
+-- If ANY step fails:
+ROLLBACK; (no partial updates)
+```
+
+### Auto-Invoice Creation on Job Completion
+
+**Trigger:** Job state transitions to `completed`
+
+**Implementation:** `backend/services/jobStateService.js`
+
+```javascript
+State Transition: in_progress → completed
+  ├─ Check if invoice already exists for job
+  ├─ If not, generate complete invoice:
+  │   ├─ Generate invoice number (INV-YYYY-####)
+  │   ├─ Copy line items from job
+  │   ├─ Calculate totals (subtotal, tax, discounts)
+  │   ├─ Set status: 'Draft' (ready for review before sending)
+  │   ├─ Link to: job_id, client_id, property_id
+  │   └─ Update job.invoice_id
+  └─ Auto-upgrade client category to 'active_customer'
+```
+
+**Benefits:**
+- Eliminates manual invoice creation step
+- Ensures every completed job has invoice
+- Reduces billing errors and delays
+- Maintains draft status for review before sending
+
+### Invoice Numbering System
+
+**Format:** `INV-YYYY-####` (e.g., `INV-2025-0001`, `INV-2025-0042`)
+
+**Implementation:**
+```javascript
+function generateInvoiceNumber() {
+  const currentYear = new Date().getFullYear();
+  const prefix = `INV-${currentYear}-`;
+  
+  // Query for highest invoice number this year
+  SELECT invoice_number 
+  FROM invoices 
+  WHERE invoice_number LIKE 'INV-2025-%'
+  ORDER BY invoice_number DESC 
+  LIMIT 1;
+  
+  // Extract number, increment
+  if (found) {
+    const match = lastNumber.match(/INV-\d{4}-(\d+)/);
+    nextNumber = parseInt(match[1]) + 1;
+  } else {
+    nextNumber = 1;
+  }
+  
+  // Format with zero-padding
+  return `INV-${currentYear}-${String(nextNumber).padStart(4, '0')}`;
+}
+```
+
+**Characteristics:**
+- **Year-based reset**: Numbering restarts at 0001 each year
+- **Zero-padded**: Always 4 digits (0001, 0042, 1234)
+- **Query-based**: Finds highest existing number to prevent gaps
+- **Not transaction-safe**: Concurrent invoice creation could cause duplicates (rare edge case)
+
+**Note:** The current implementation does NOT use PostgreSQL advisory locks. For high-concurrency scenarios, consider adding `pg_advisory_lock` to prevent race conditions:
+
+```sql
+-- Future enhancement example:
+SELECT pg_advisory_lock(hashtext('invoice_number_generation'));
+-- ... generate number ...
+SELECT pg_advisory_unlock(hashtext('invoice_number_generation'));
+```
+
+### Customer Portal Checkout Flow
+
+**User Journey:**
+
+```
+1. Customer receives invoice email with portal link
+   │
+   ▼
+2. Customer opens portal: /portal/invoices/{invoiceId}
+   │
+   ▼
+3. Customer clicks "Pay Now" button
+   │
+   ├─→ Frontend: POST /api/invoices/{id}/create-checkout-session
+   │
+   ▼
+4. Backend creates Stripe checkout session:
+   │
+   ├─ Check invoice.amount_due > 0
+   ├─ Get or create Stripe customer ID
+   ├─ Create Checkout session with:
+   │   ├─ Line item: "Invoice INV-2025-0042"
+   │   ├─ Amount: invoice.amount_due
+   │   ├─ Metadata: { invoiceId, invoiceNumber }
+   │   ├─ Success URL: /portal/invoices/{id}?payment=success
+   │   └─ Cancel URL: /portal/invoices/{id}?payment=cancelled
+   │
+   ▼
+5. Customer redirected to Stripe Checkout (hosted page)
+   │
+   ├─→ Customer enters card details
+   ├─→ Stripe processes payment
+   │
+   ▼
+6. Payment successful:
+   │
+   ├─→ Stripe redirects to success URL
+   └─→ Stripe sends webhook: checkout.session.completed
+       │
+       ▼
+7. Webhook handler processes payment:
+   │
+   ├─ Verify signature
+   ├─ Validate payment (status, amount, currency)
+   ├─ Update invoice: status='Paid', paid_at=NOW()
+   ├─ Create payment_record
+   └─ Persist Stripe customer ID to clients table
+   │
+   ▼
+8. Customer sees "Payment Successful" message in portal
+   Invoice status now shows: Paid ✓
+```
+
+**Data Integrity Design Choice:**
+
+Stripe customer IDs are **only persisted in the webhook handler**, not at checkout session creation. This prevents orphaned customer references if:
+- Checkout session created but customer never completes payment
+- Checkout session fails or is cancelled
+- Network issues during checkout
+
+Webhooks only fire after verified successful payment, ensuring database contains customer IDs for actual paying customers only.
+
+### Payment Data Flow Diagram
+
+```
+┌─────────────────┐
+│ Customer Portal │
+│  /invoices/:id  │
+└────────┬────────┘
+         │ Click "Pay Now"
+         ▼
+┌─────────────────────────────────────────────────────────┐
+│ POST /api/invoices/:id/create-checkout-session         │
+│                                                         │
+│  1. Fetch invoice + client data                        │
+│  2. Validate amount_due > 0                            │
+│  3. Get/Create Stripe customer                         │
+│  4. Create Stripe Checkout session                     │
+│  5. Return session.url                                 │
+└────────┬────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│  Stripe Checkout    │  (Hosted by Stripe)
+│  stripe.com/...     │
+│                     │
+│  - Enter card info  │
+│  - Process payment  │
+└────────┬────────────┘
+         │
+         ├─────────────────────────┐
+         │                         │
+         ▼                         ▼
+   [Payment Success]        [Payment Cancelled]
+         │                         │
+         │                         └─→ Redirect to cancel_url
+         │                             (No webhook, no DB update)
+         │
+         ├─→ Redirect to success_url (/portal/invoices/:id?payment=success)
+         │
+         └─→ Stripe sends webhook: checkout.session.completed
+                    │
+                    ▼
+┌──────────────────────────────────────────────────────────┐
+│ POST /api/stripe/webhook                                │
+│                                                          │
+│  SECURITY CHECKS:                                       │
+│  ✓ Verify stripe-signature header                       │
+│  ✓ Check Stripe initialized                            │
+│  ✓ Validate event type                                 │
+│                                                          │
+│  IDEMPOTENCY CHECK:                                     │
+│  BEGIN TRANSACTION                                      │
+│  ✓ Check payment_records for duplicate payment_intent   │
+│  ✓ If duplicate → ROLLBACK & return (prevent double)    │
+│                                                          │
+│  VALIDATION:                                            │
+│  ✓ payment_status === 'paid'                           │
+│  ✓ currency === 'usd'                                  │
+│  ✓ amount === invoice.grand_total (within $0.01)       │
+│  ✓ Invoice exists                                       │
+│                                                          │
+│  DATABASE UPDATES:                                      │
+│  UPDATE invoices SET                                    │
+│    status = 'Paid',                                    │
+│    paid_at = NOW(),                                    │
+│    amount_paid = amount_paid + X,                      │
+│    amount_due = amount_due - X                         │
+│  WHERE id = invoiceId;                                 │
+│                                                          │
+│  INSERT INTO payment_records (                         │
+│    invoice_id, amount, payment_date,                   │
+│    payment_method, transaction_id                      │
+│  );                                                     │
+│                                                          │
+│  UPDATE clients SET                                     │
+│    stripe_customer_id = session.customer               │
+│  WHERE id = clientId;                                  │
+│                                                          │
+│  COMMIT TRANSACTION                                     │
+│                                                          │
+│  Return 200 OK to Stripe                               │
+└──────────────────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│ Invoice Status:     │
+│   Paid ✓            │
+│ Payment Record:     │
+│   $500.00           │
+│   Transaction ID    │
+│ Client:             │
+│   stripe_customer_id│
+│   = cus_ABC123      │
+└─────────────────────┘
+```
+
+### Database Changes
+
+#### Migration 008: `stripe_customer_id` Column
+
+**File:** `backend/migrations/008_stripe_customer_id.sql`
+
+```sql
+ALTER TABLE clients 
+ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_clients_stripe_customer_id 
+ON clients(stripe_customer_id);
+
+COMMENT ON COLUMN clients.stripe_customer_id 
+IS 'Stripe customer ID for payment processing';
+```
+
+**Purpose:**
+- Links TreePro clients to Stripe customers
+- Enables payment method storage (cards on file)
+- Supports customer portal sessions
+- Indexed for fast lookups
+
+#### Stripe Schema (via `stripe-replit-sync`)
+
+**Package:** `stripe-replit-sync`
+
+Automatically creates `stripe` schema with tables mirroring Stripe data:
+
+```
+stripe.customers
+stripe.checkout_sessions
+stripe.payment_intents
+stripe.invoices (Stripe invoices, not TreePro invoices)
+stripe.subscriptions
+... (30+ tables)
+```
+
+**Features:**
+- **Backfill Sync**: Initial sync of all Stripe data on first run
+- **Webhook Sync**: Automatic updates as Stripe events occur
+- **Query Performance**: Local database queries instead of Stripe API calls
+- **Schema Isolation**: Separate `stripe` schema prevents conflicts with app tables
+
+**Initialization:**
+```javascript
+const { runMigrations, StripeSync } = require('stripe-replit-sync');
+
+// Run migrations to create stripe schema
+await runMigrations({ 
+  databaseUrl: process.env.DATABASE_URL,
+  schema: 'stripe'
+});
+
+// Sync Stripe data
+const stripeSync = new StripeSync({
+  poolConfig: { connectionString: databaseUrl },
+  stripeSecretKey: cachedStripeSecretKey,
+  stripeWebhookSecret: cachedWebhookSecret
+});
+await stripeSync.syncBackfill();
+```
+
+### Known Limitations & Future Enhancements
+
+#### Current Limitations
+
+1. **Payment Methods**
+   - ✅ **Supported:** Credit/debit cards (synchronous payment)
+   - ❌ **Not Supported:** ACH, SEPA, bank transfers (async payment methods)
+   
+   **Why:** Current webhook handler only validates `session.payment_status`. Async payment methods require checking `PaymentIntent` status separately, as session may complete before payment clears.
+
+   **Future Fix:** Add PaymentIntent webhook listeners (`payment_intent.succeeded`, `payment_intent.payment_failed`)
+
+2. **Invoice Numbering Race Conditions**
+   - **Risk:** Concurrent invoice creation could generate duplicate numbers
+   - **Likelihood:** Low (rare for small businesses)
+   - **Impact:** Non-critical (invoices still created, just duplicate numbers)
+   
+   **Future Fix:** Implement PostgreSQL advisory locks:
+   ```sql
+   SELECT pg_advisory_lock(hashtext('invoice_number_generation'));
+   -- generate number
+   SELECT pg_advisory_unlock(hashtext('invoice_number_generation'));
+   ```
+
+3. **No Partial Payments**
+   - Currently customers must pay full `amount_due`
+   - Cannot split payment across multiple transactions
+   - **Future:** Add support for partial payment amounts
+
+4. **No Payment Plans**
+   - No installment/subscription-based invoice payment
+   - All payments are one-time charges
+   - **Future:** Integrate Stripe Subscriptions for payment plans
+
+5. **No Card on File**
+   - Customers re-enter card details for each payment
+   - No saved payment methods
+   - **Future:** Implement Stripe Customer Portal for payment method management
+
+6. **No Refunds/Credits**
+   - No UI or API for processing refunds
+   - Manual refund required via Stripe Dashboard
+   - **Future:** Add refund API and UI workflow
+
+#### Future Enhancements
+
+**Phase 1B (Short-term):**
+- [ ] Add async payment method support (ACH, bank transfers)
+- [ ] Implement payment method storage (cards on file)
+- [ ] Add Stripe Customer Portal integration (manage payment methods)
+- [ ] Invoice numbering with advisory locks
+- [ ] Partial payment support
+
+**Phase 2 (Medium-term):**
+- [ ] Payment plans / installments via Stripe Subscriptions
+- [ ] Refund processing API and UI
+- [ ] Automatic payment retry for failed payments
+- [ ] Email notifications for payment confirmations
+- [ ] Payment receipts (PDF generation)
+
+**Phase 3 (Long-term):**
+- [ ] Multi-currency support
+- [ ] Stripe Terminal integration (in-person payments)
+- [ ] Advanced analytics (payment trends, success rates)
+- [ ] QuickBooks sync for payments
+- [ ] Automated late payment fees
+
+### Testing & Verification
+
+**Development Testing (Stripe Sandbox):**
+
+1. **Test Cards:**
+   ```
+   Success: 4242 4242 4242 4242
+   Decline: 4000 0000 0000 0002
+   Requires Auth: 4000 0025 0000 3155
+   ```
+
+2. **Webhook Testing:**
+   ```bash
+   # Use Stripe CLI to forward webhooks to local
+   stripe listen --forward-to localhost:3001/api/stripe/webhook
+   
+   # Trigger test events
+   stripe trigger checkout.session.completed
+   ```
+
+3. **Verification Checklist:**
+   - [ ] Checkout session creates successfully
+   - [ ] Redirect to Stripe Checkout works
+   - [ ] Test card payment processes
+   - [ ] Webhook received and verified
+   - [ ] Invoice status updates to 'Paid'
+   - [ ] Payment record created
+   - [ ] Stripe customer ID persisted
+   - [ ] Success redirect works
+   - [ ] Amount validation works (try mismatched amounts)
+   - [ ] Duplicate webhook handling (send same webhook twice)
+
+**Production Checklist:**
+- [ ] Replit Stripe connector configured for production environment
+- [ ] Production Stripe keys tested
+- [ ] Webhook endpoint publicly accessible
+- [ ] Webhook secret matches production
+- [ ] SSL/HTTPS enabled
+- [ ] Error monitoring configured (Sentry, etc.)
+- [ ] Database backups enabled
+- [ ] Payment reconciliation process defined
 
 ---
 
