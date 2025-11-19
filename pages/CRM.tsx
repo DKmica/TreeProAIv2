@@ -24,7 +24,10 @@ const CRM: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isClientsLoading, setIsClientsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clientLoadError, setClientLoadError] = useState<string | null>(null);
+  const [clientCategoryFilter, setClientCategoryFilter] = useState<'all' | 'potential_client' | 'active_customer'>('all');
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const [isLeadEditorOpen, setIsLeadEditorOpen] = useState(false);
   const [isQuoteEditorOpen, setIsQuoteEditorOpen] = useState(false);
@@ -40,19 +43,40 @@ const CRM: React.FC = () => {
     }
   }, [tabParam]);
 
+  const fetchClients = async (category: 'all' | 'potential_client' | 'active_customer', bubbleError = false) => {
+    setIsClientsLoading(true);
+    if (!bubbleError) {
+      setClientLoadError(null);
+    }
+    try {
+      const params = category !== 'all' ? { clientCategory: category } : undefined;
+      const clientsData = await clientService.getAll(params);
+      setClients(clientsData);
+    } catch (err: any) {
+      const message = err.message || 'Failed to load clients';
+      if (bubbleError) {
+        setError(message);
+        throw err;
+      } else {
+        setClientLoadError(message);
+      }
+    } finally {
+      setIsClientsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const [clientsData, leadsData, quotesData] = await Promise.all([
-          clientService.getAll(),
-          leadService.getAll(),
-          quoteService.getAll(),
+        const leadsPromise = leadService.getAll();
+        const quotesPromise = quoteService.getAll();
+        await Promise.all([
+          fetchClients(clientCategoryFilter, true),
+          leadsPromise.then(setLeads),
+          quotesPromise.then(setQuotes)
         ]);
-        setClients(clientsData);
-        setLeads(leadsData);
-        setQuotes(quotesData);
       } catch (err: any) {
         console.error('Error fetching CRM data:', err);
         setError(err.message || 'Failed to load CRM data');
@@ -61,8 +85,14 @@ const CRM: React.FC = () => {
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      fetchClients(clientCategoryFilter);
+    }
+  }, [clientCategoryFilter, isLoading]);
 
   const filteredClients = useMemo(() => {
     if (!searchTerm) return clients;
@@ -430,6 +460,27 @@ const CRM: React.FC = () => {
 
       {activeTab === 'clients' && (
         <div className="mt-6">
+          <div className="flex flex-wrap gap-2 mb-4">
+            {clientCategoryOptions.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setClientCategoryFilter(option.value)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  clientCategoryFilter === option.value
+                    ? 'bg-brand-cyan-600 text-white border-brand-cyan-600'
+                    : 'bg-white text-brand-gray-700 border-brand-gray-200 hover:border-brand-cyan-400'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {clientLoadError && (
+            <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {clientLoadError}
+            </div>
+          )}
           {filteredClients.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow">
               <CustomerIcon className="h-12 w-12 text-brand-gray-400 mx-auto" />
@@ -453,6 +504,9 @@ const CRM: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {isClientsLoading && (
+                <div className="col-span-full text-center text-sm text-brand-gray-500">Refreshing clients...</div>
+              )}
               {filteredClients.map((client) => (
                 <div
                   key={client.id}
@@ -465,17 +519,22 @@ const CRM: React.FC = () => {
                         <h3 className="text-lg font-semibold text-brand-gray-900">
                           {client.companyName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unnamed Client'}
                         </h3>
-                        <span
-                          className={`mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            client.clientType === 'commercial'
-                              ? 'bg-purple-100 text-purple-800'
-                              : client.clientType === 'residential'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {client.clientType || 'N/A'}
-                        </span>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              client.clientType === 'commercial'
+                                ? 'bg-purple-100 text-purple-800'
+                                : client.clientType === 'residential'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {client.clientType || 'N/A'}
+                          </span>
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${getCategoryClasses(client.clientCategory)}`}>
+                            {getCategoryLabel(client.clientCategory)}
+                          </span>
+                        </div>
                       </div>
                       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                         client.status === 'active' ? 'bg-green-100' : 'bg-gray-100'
@@ -775,3 +834,21 @@ const CRM: React.FC = () => {
 };
 
 export default CRM;
+  const clientCategoryOptions = [
+    { value: 'all' as const, label: 'All Clients' },
+    { value: 'active_customer' as const, label: 'Active Customers' },
+    { value: 'potential_client' as const, label: 'Potential Clients' }
+  ];
+
+  const getCategoryLabel = (category?: string) => {
+    if (category === 'active_customer') return 'Active Customer';
+    return 'Potential Client';
+  };
+
+  const getCategoryClasses = (category?: string) => {
+    if (category === 'active_customer') {
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    }
+    return 'bg-amber-100 text-amber-800 border-amber-200';
+  };
+

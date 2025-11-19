@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lead, Client, Property } from '../types';
+import { Lead, Client, Property, CustomerDetailsInput } from '../types';
 import { leadService, clientService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 
@@ -252,31 +252,27 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, lead }
     setApiError(null);
 
     try {
-      let clientId = formData.clientId;
+      let clientId = formData.clientId || '';
+      let customerDetails: CustomerDetailsInput | undefined;
 
       if (customerMode === 'new') {
-        const newClient = await clientService.create({
+        customerDetails = {
           firstName: newCustomerData.firstName,
           lastName: newCustomerData.lastName,
           companyName: newCustomerData.companyName || undefined,
-          primaryPhone: newCustomerData.phone,
-          primaryEmail: newCustomerData.email,
-          billingAddressLine1: newCustomerData.addressLine1,
-          billingAddressLine2: newCustomerData.addressLine2 || undefined,
-          billingCity: newCustomerData.city,
-          billingState: newCustomerData.state,
-          billingZip: newCustomerData.zipCode,
-          clientType: 'residential',
-          status: 'active',
-          paymentTerms: 'Net 30',
-          taxExempt: false,
-          billingCountry: 'USA',
-          lifetimeValue: 0,
-        });
-        clientId = newClient.id;
+          phone: newCustomerData.phone,
+          email: newCustomerData.email,
+          addressLine1: newCustomerData.addressLine1,
+          addressLine2: newCustomerData.addressLine2 || undefined,
+          city: newCustomerData.city,
+          state: newCustomerData.state,
+          zipCode: newCustomerData.zipCode,
+          country: 'USA'
+        };
+        clientId = '';
       }
 
-      const leadData: Partial<Lead> = {
+      const leadData: Partial<Lead> & { customerDetails?: CustomerDetailsInput } = {
         clientId: clientId || undefined,
         propertyId: formData.propertyId || undefined,
         source: formData.source,
@@ -289,6 +285,10 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, lead }
         nextFollowupDate: formData.nextFollowupDate || undefined,
         leadScore: 50,
       };
+
+      if (customerDetails) {
+        leadData.customerDetails = customerDetails;
+      }
 
       let savedLead: Lead;
       if (lead) {

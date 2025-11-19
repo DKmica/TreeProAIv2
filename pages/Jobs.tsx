@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessage } from '../types';
+import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessage, CustomerDetailsInput } from '../types';
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
 import PortalMessaging from '../components/PortalMessaging';
@@ -89,7 +89,7 @@ const JobForm: React.FC<{
                 equipmentNeeded: initialData.equipmentNeeded || [],
                 estimatedHours: initialData.estimatedHours || 0,
             });
-            setCustomerMode('existing');
+            setCustomerMode(initialData.quoteId ? 'existing' : 'new');
         } else {
             const defaultQuote = availableQuotes.length > 0 ? availableQuotes[0] : null;
             setFormData({
@@ -216,38 +216,46 @@ const JobForm: React.FC<{
 
         try {
             let clientId: string | undefined;
+            let customerDetails: CustomerDetailsInput | undefined;
             let customerName = formData.customerName;
 
-            if (customerMode === 'new') {
-                const newClient = await api.clientService.create({
+            if (customerMode === 'existing') {
+                const selectedQuote = quotes.find(q => q.id === formData.quoteId);
+                clientId = selectedQuote?.clientId;
+                if (!clientId) {
+                    alert('Selected quote is missing client information.');
+                    return;
+                }
+            } else {
+                customerDetails = {
                     firstName: newCustomerData.firstName,
                     lastName: newCustomerData.lastName,
                     companyName: newCustomerData.companyName || undefined,
-                    primaryPhone: newCustomerData.phone,
-                    primaryEmail: newCustomerData.email,
-                    billingAddressLine1: newCustomerData.addressLine1,
-                    billingAddressLine2: newCustomerData.addressLine2 || undefined,
-                    billingCity: newCustomerData.city,
-                    billingState: newCustomerData.state,
-                    billingZip: newCustomerData.zipCode,
-                    clientType: 'residential',
-                    status: 'active',
-                    paymentTerms: 'Net 30',
-                    taxExempt: false,
-                    billingCountry: 'USA',
-                    lifetimeValue: 0,
-                });
-                clientId = newClient.id;
-                customerName = newClient.companyName || `${newClient.firstName} ${newClient.lastName}`;
+                    phone: newCustomerData.phone,
+                    email: newCustomerData.email,
+                    addressLine1: newCustomerData.addressLine1,
+                    addressLine2: newCustomerData.addressLine2 || undefined,
+                    city: newCustomerData.city,
+                    state: newCustomerData.state,
+                    zipCode: newCustomerData.zipCode,
+                    country: 'USA'
+                };
+                customerName = newCustomerData.companyName || `${newCustomerData.firstName} ${newCustomerData.lastName}`;
             }
 
-            const jobData = {
+            const jobData: Partial<Job> & { customerDetails?: CustomerDetailsInput } = {
                 ...formData,
                 customerName,
-                ...(clientId && { clientId }),
             };
 
-            await onSave(jobData);
+            if (clientId) {
+                jobData.clientId = clientId;
+            }
+            if (customerDetails) {
+                jobData.customerDetails = customerDetails;
+            }
+
+            await onSave(jobData as Job | Omit<Job, 'id'>);
         } catch (error: any) {
             alert(`Failed to create customer/job: ${error.message || 'Unknown error'}`);
         }
