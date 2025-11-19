@@ -247,7 +247,7 @@ const AITreeEstimator: React.FC = () => {
                                     
                                     <div className="flex gap-3 mb-4">
                                         <button
-                                            onClick={() => { setFeedbackRating('accurate'); resetFeedback(); setFeedbackRating('accurate'); }}
+                                            onClick={() => setFeedbackRating('accurate')}
                                             className={`flex-1 py-2 px-4 rounded-md border transition-colors ${
                                                 feedbackRating === 'accurate'
                                                     ? 'bg-green-100 border-green-500 text-green-800'

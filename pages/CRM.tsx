@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Client, Lead, Quote } from '../types';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { Client, Lead, Quote, AITreeEstimate } from '../types';
 import { clientService, leadService, quoteService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import CustomerIcon from '../components/icons/CustomerIcon';
@@ -15,6 +15,8 @@ type TabType = 'clients' | 'leads' | 'quotes';
 
 const CRM: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const tabParam = searchParams.get('tab') as TabType | null;
   const initialTab: TabType = tabParam && ['clients', 'leads', 'quotes'].includes(tabParam) ? tabParam : 'clients';
   
@@ -32,13 +34,21 @@ const CRM: React.FC = () => {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
-  const navigate = useNavigate();
+  const [aiEstimateData, setAiEstimateData] = useState<AITreeEstimate | null>(null);
 
   useEffect(() => {
     if (tabParam && ['clients', 'leads', 'quotes'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
+
+  useEffect(() => {
+    if (location.state?.aiEstimate) {
+      setAiEstimateData(location.state.aiEstimate);
+      setIsQuoteEditorOpen(true);
+      navigate(location.pathname + location.search, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname, location.search]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -326,9 +336,11 @@ const CRM: React.FC = () => {
           setIsQuoteEditorOpen(false);
           setSelectedQuote(null);
           setLeadToConvert(null);
+          setAiEstimateData(null);
         }}
         onSave={handleQuoteSave}
         quote={selectedQuote || (leadToConvert ? convertLeadToQuote(leadToConvert) || undefined : undefined)}
+        aiEstimate={aiEstimateData || undefined}
       />
       <QuoteViewer
         isOpen={isQuoteViewerOpen}

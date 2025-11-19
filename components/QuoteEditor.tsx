@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Quote, Client, Property, LineItem } from '../types';
+import { Quote, Client, Property, LineItem, AITreeEstimate } from '../types';
 import { quoteService, clientService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 import PlusCircleIcon from './icons/PlusCircleIcon';
@@ -9,6 +9,7 @@ interface QuoteEditorProps {
   onClose: () => void;
   onSave: (quote: Quote) => void;
   quote?: Quote;
+  aiEstimate?: AITreeEstimate;
 }
 
 interface FormData {
@@ -51,7 +52,7 @@ interface FormErrors {
   zipCode?: string;
 }
 
-const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quote }) => {
+const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quote, aiEstimate }) => {
   const [formData, setFormData] = useState<FormData>({
     clientId: '',
     propertyId: '',
@@ -126,7 +127,18 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
         discountPercentage: '0',
         validUntil: '',
       });
-      setLineItems([{ description: '', price: 0, selected: true }]);
+      
+      if (aiEstimate && !quote) {
+        const aiLineItems: LineItem[] = aiEstimate.suggested_services.map(service => ({
+          description: service.service_name + ': ' + service.description,
+          price: (service.price_range.min + service.price_range.max) / 2,
+          selected: true
+        }));
+        setLineItems(aiLineItems);
+      } else {
+        setLineItems([{ description: '', price: 0, selected: true }]);
+      }
+      
       setProperties([]);
       setCustomerMode('existing');
       setNewCustomerData({
@@ -144,7 +156,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
     }
     setErrors({});
     setApiError(null);
-  }, [quote, isOpen]);
+  }, [quote, isOpen, aiEstimate]);
 
   const fetchClients = async () => {
     setLoadingClients(true);
