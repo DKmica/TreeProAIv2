@@ -721,7 +721,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                     {activeView === '3-day' && <ThreeDayView {...viewProps} />}
                     {activeView === 'list' && <ListView {...viewProps} />}
                     {activeView === 'map' && <MapViewWrapper {...viewProps} customers={customers} />}
-                    {activeView === 'crew' && <CrewView jobs={jobs} currentDate={currentDate} setJobs={setJobs} handleDragStart={handleDragStart} handleDragEnd={handleDragEnd} draggedJobId={draggedJobId} />}
+                    {activeView === 'crew' && <CrewView jobs={jobs} currentDate={currentDate} setJobs={setJobs} onJobDrop={viewProps.onJobDrop} handleDragStart={handleDragStart} handleDragEnd={handleDragEnd} draggedJobId={draggedJobId} />}
                 </div>
             </div>
 

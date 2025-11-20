@@ -7,12 +7,14 @@ interface CrewViewProps extends DragHandlers {
   jobs: Job[];
   currentDate: Date;
   setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
+  onJobDrop: (jobId: string, newDate: string) => void;
 }
 
 const CrewView: React.FC<CrewViewProps> = ({ 
   jobs,
   currentDate,
   setJobs,
+  onJobDrop,
   handleDragStart,
   handleDragEnd,
   draggedJobId
@@ -22,6 +24,10 @@ const CrewView: React.FC<CrewViewProps> = ({
   const [conflicts, setConflicts] = useState<{ crewId: string; date: string; assignments: CrewAssignment[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCrewId, setSelectedCrewId] = useState<string | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [newDate, setNewDate] = useState('');
 
   const getWeekDates = (date: Date): Date[] => {
     const startOfWeek = new Date(date);
@@ -104,6 +110,12 @@ const CrewView: React.FC<CrewViewProps> = ({
     loadData();
   }, [currentDate]);
 
+  useEffect(() => {
+    if (crews.length > 0 && !selectedCrewId) {
+      setSelectedCrewId(crews[0].id);
+    }
+  }, [crews, selectedCrewId]);
+
   const getAssignmentsForCrewAndDate = (crewId: string, date: Date): CrewAssignment[] => {
     const dateString = date.toISOString().split('T')[0];
     return assignments.filter(a => a.crewId === crewId && a.assignedDate === dateString);
@@ -176,6 +188,22 @@ const CrewView: React.FC<CrewViewProps> = ({
     }
   };
 
+  const handleJobTap = (job: Job) => {
+    setSelectedJob(job);
+    setNewDate(job.scheduledDate || '');
+    setShowRescheduleModal(true);
+  };
+
+  const handleReschedule = () => {
+    if (selectedJob && newDate) {
+      onJobDrop(selectedJob.id, newDate);
+      setShowRescheduleModal(false);
+      setSelectedJob(null);
+      setNewDate('');
+      loadData();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96 bg-white rounded-lg shadow">
@@ -211,10 +239,15 @@ const CrewView: React.FC<CrewViewProps> = ({
     );
   }
 
+  const selectedCrew = crews.find(c => c.id === selectedCrewId);
+  const selectedCrewColor = selectedCrewId ? getCrewColor(selectedCrewId) : '#3b82f6';
+
   return (
-    <div className="mt-4 bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-brand-gray-200">
+    <div className="mt-4">
+      {/* Desktop: Table layout */}
+      <div className="hidden lg:block bg-white shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-brand-gray-200">
           <thead className="bg-brand-gray-50">
             <tr>
               <th className="sticky left-0 z-10 bg-brand-gray-50 px-4 py-3 text-left text-xs font-semibold text-brand-gray-700 uppercase tracking-wider border-r border-brand-gray-200">
@@ -348,10 +381,158 @@ const CrewView: React.FC<CrewViewProps> = ({
       </div>
 
       {conflicts.length > 0 && (
-        <div className="border-t border-brand-gray-200 bg-red-50 px-4 py-3">
+        <div className="hidden lg:block border-t border-brand-gray-200 bg-red-50 px-4 py-3">
           <p className="text-sm text-red-800">
             <span className="font-semibold">⚠️ Scheduling Conflicts Detected:</span> {conflicts.length} crew(s) have multiple assignments on the same date.
           </p>
+        </div>
+      )}
+    </div>
+
+      {/* Mobile: Horizontal scroll with all crews visible */}
+      <div className="lg:hidden">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              {/* Header row with dates */}
+              <div className="flex border-b border-brand-gray-200 bg-brand-gray-50 sticky top-0 z-10">
+                <div className="w-24 flex-shrink-0 px-2 py-3 border-r border-brand-gray-200">
+                  <p className="text-xs font-semibold text-brand-gray-700">Crew</p>
+                </div>
+                {weekDates.map((date, index) => {
+                  const isToday = date.toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
+                  return (
+                    <div
+                      key={index}
+                      className={`w-40 flex-shrink-0 px-2 py-3 text-center ${
+                        isToday ? 'bg-brand-cyan-50' : ''
+                      }`}
+                    >
+                      <div className="text-xs font-semibold text-brand-gray-600">{weekDays[index].slice(0, 3)}</div>
+                      <div className={`text-xs mt-1 ${isToday ? 'font-bold text-brand-cyan-600' : ''}`}>
+                        {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Crew rows */}
+              {crews.map((crew) => {
+                const crewColor = getCrewColor(crew.id);
+                
+                return (
+                  <div key={crew.id} className="flex border-b border-brand-gray-200 hover:bg-brand-gray-50">
+                    {/* Crew name cell */}
+                    <div className="w-24 flex-shrink-0 px-2 py-2 border-r border-brand-gray-200 flex items-center">
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: crewColor }}
+                          ></div>
+                          <p className="font-semibold text-brand-gray-900 text-xs truncate">{crew.name}</p>
+                        </div>
+                        {crew.memberCount !== undefined && (
+                          <p className="text-xs text-brand-gray-500">{crew.memberCount}m</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Date cells */}
+                    {weekDates.map((date, dateIndex) => {
+                      const dateAssignments = getAssignmentsForCrewAndDate(crew.id, date);
+                      const hasConflictOnDate = hasConflict(crew.id, date);
+                      const isToday = date.toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
+
+                      return (
+                        <div
+                          key={dateIndex}
+                          className={`w-40 flex-shrink-0 px-1 py-2 ${isToday ? 'bg-brand-cyan-50' : ''}`}
+                        >
+                          <div className="space-y-1">
+                            {dateAssignments.map((assignment) => {
+                              const job = getJobForAssignment(assignment);
+                              if (!job) return null;
+
+                              return (
+                                <div
+                                  key={assignment.id}
+                                  onClick={() => handleJobTap(job)}
+                                  className={`text-xs p-1.5 rounded cursor-pointer hover:shadow-md transition-all ${
+                                    hasConflictOnDate 
+                                      ? 'border border-red-500 bg-red-50' 
+                                      : 'border'
+                                  }`}
+                                  style={{
+                                    backgroundColor: hasConflictOnDate ? undefined : `${crewColor}15`,
+                                    borderColor: hasConflictOnDate ? undefined : crewColor
+                                  }}
+                                >
+                                  <p className="font-semibold text-brand-gray-900 truncate text-xs">{job.id}</p>
+                                  <p className="text-brand-gray-600 truncate text-xs">{job.customerName}</p>
+                                  {hasConflictOnDate && (
+                                    <span className="text-red-600 text-xs" title="Multiple assignments">⚠️</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Conflicts warning */}
+        {conflicts.length > 0 && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm text-red-800">
+              <span className="font-semibold">⚠️ Scheduling Conflicts:</span> {conflicts.length} crew(s) have multiple assignments on the same date.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Reschedule Modal */}
+      {showRescheduleModal && selectedJob && (
+        <div className="fixed inset-0 bg-black/50 z-50 lg:hidden" onClick={() => setShowRescheduleModal(false)}>
+          <div className="fixed bottom-0 inset-x-0 bg-white rounded-t-xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-brand-gray-900 mb-4">Reschedule Job</h3>
+            <div className="mb-4 space-y-2">
+              <p className="text-sm text-brand-gray-700"><span className="font-semibold">Job:</span> {selectedJob.id}</p>
+              <p className="text-sm text-brand-gray-700"><span className="font-semibold">Customer:</span> {selectedJob.customerName}</p>
+              <p className="text-sm text-brand-gray-700"><span className="font-semibold">Current date:</span> {selectedJob.scheduledDate || 'Not scheduled'}</p>
+            </div>
+            <label htmlFor="reschedule-date-crew" className="block text-sm font-medium text-brand-gray-700 mb-2">
+              New Date
+            </label>
+            <input
+              id="reschedule-date-crew"
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              className="w-full mb-4 p-3 border border-brand-gray-300 rounded-lg text-base min-h-[48px]"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleReschedule}
+                className="flex-1 bg-brand-cyan-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-cyan-700 active:bg-brand-cyan-800 min-h-[48px]"
+              >
+                Reschedule
+              </button>
+              <button
+                onClick={() => setShowRescheduleModal(false)}
+                className="flex-1 border border-brand-gray-300 py-3 rounded-lg font-semibold hover:bg-brand-gray-50 active:bg-brand-gray-100 min-h-[48px]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
