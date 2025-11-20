@@ -187,8 +187,8 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
     }
   };
 
-  const calculateTotals = () => {
-    const subtotal = lineItems.reduce((sum, item) => sum + (item.price || 0), 0);
+  const calculateTotals = (items: LineItem[] = lineItems) => {
+    const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
     const discountAmount = (subtotal * parseFloat(formData.discountPercentage || '0')) / 100;
     const afterDiscount = subtotal - discountAmount;
     const taxAmount = (afterDiscount * parseFloat(formData.taxRate || '0')) / 100;
@@ -340,7 +340,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
       }
 
       const validLineItems = lineItems.filter(item => item.description.trim());
-      const totals = calculateTotals();
+      const totals = calculateTotals(validLineItems);
 
       let customerName = '';
       if (customerMode === 'new') {
