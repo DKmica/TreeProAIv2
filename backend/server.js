@@ -5159,7 +5159,10 @@ apiRouter.delete('/entities/:entityType/:entityId/custom-fields/:fieldDefinition
 // Helper: Calculate quote totals (subtotal → discount → tax → grand total)
 const calculateQuoteTotals = (lineItems, discountPercentage = 0, discountAmount = 0, taxRate = 0) => {
   const subtotal = lineItems.reduce((sum, item) => {
-    const itemTotal = (item.quantity || 0) * (item.unitPrice || 0);
+    // Support both old format (quantity * unitPrice) and new format (price)
+    const itemTotal = item.price !== undefined 
+      ? (item.price || 0) 
+      : ((item.quantity || 0) * (item.unitPrice || 0));
     return sum + itemTotal;
   }, 0);
   
