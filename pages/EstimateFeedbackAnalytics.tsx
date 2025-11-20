@@ -190,46 +190,80 @@ const EstimateFeedbackAnalytics: React.FC = () => {
 
             <div className="mt-6 bg-white p-6 rounded-lg shadow">
                 <h2 className="text-lg font-semibold text-brand-gray-900 mb-4">Feedback by Tree Size</h2>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-brand-gray-200">
-                        <thead>
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
-                                    Tree Size
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
-                                    Feedback Count
-                                </th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
-                                    Avg Difference
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-brand-gray-200">
-                            {treeSizeCategories.map((category) => (
-                                <tr key={category.key} className="hover:bg-brand-gray-50">
-                                    <td className="px-4 py-3 text-sm font-medium text-brand-gray-900">
-                                        {category.label}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-brand-gray-700">
-                                        {category.data.count}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-brand-gray-700">
-                                        {category.data.count > 0 ? (
-                                            <span className={category.data.avgDifference > 0 ? 'text-orange-600' : category.data.avgDifference < 0 ? 'text-yellow-600' : 'text-green-600'}>
-                                                ${Math.abs(category.data.avgDifference).toFixed(0)}
-                                                {category.data.avgDifference > 0 && ' (AI too low)'}
-                                                {category.data.avgDifference < 0 && ' (AI too high)'}
-                                                {category.data.avgDifference === 0 && ' (Accurate)'}
-                                            </span>
-                                        ) : (
-                                            <span className="text-brand-gray-400">N/A</span>
-                                        )}
-                                    </td>
+                
+                <div className="hidden md:block">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-brand-gray-200">
+                            <thead>
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
+                                        Tree Size
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
+                                        Feedback Count
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
+                                        Avg Difference
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-brand-gray-200">
+                                {treeSizeCategories.map((category) => (
+                                    <tr key={category.key} className="hover:bg-brand-gray-50">
+                                        <td className="px-4 py-3 text-sm font-medium text-brand-gray-900">
+                                            {category.label}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-brand-gray-700">
+                                            {category.data.count}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-brand-gray-700">
+                                            {category.data.count > 0 ? (
+                                                <span className={category.data.avgDifference > 0 ? 'text-orange-600' : category.data.avgDifference < 0 ? 'text-yellow-600' : 'text-green-600'}>
+                                                    ${Math.abs(category.data.avgDifference).toFixed(0)}
+                                                    {category.data.avgDifference > 0 && ' (AI too low)'}
+                                                    {category.data.avgDifference < 0 && ' (AI too high)'}
+                                                    {category.data.avgDifference === 0 && ' (Accurate)'}
+                                                </span>
+                                            ) : (
+                                                <span className="text-brand-gray-400">N/A</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className="md:hidden space-y-3">
+                    {treeSizeCategories.map((category) => (
+                        <div key={category.key} className="bg-brand-gray-50 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-semibold text-brand-gray-900">{category.label}</h4>
+                                <span className="text-sm text-brand-gray-500">{category.data.count} entries</span>
+                            </div>
+                            
+                            {category.data.count > 0 ? (
+                                <div className="text-sm">
+                                    <span className="text-brand-gray-600">Avg Difference: </span>
+                                    <span className={
+                                        category.data.avgDifference > 0 
+                                            ? 'text-orange-600 font-semibold' 
+                                            : category.data.avgDifference < 0 
+                                            ? 'text-yellow-600 font-semibold' 
+                                            : 'text-green-600 font-semibold'
+                                    }>
+                                        ${Math.abs(category.data.avgDifference).toFixed(0)}
+                                        {category.data.avgDifference > 0 && ' (AI too low)'}
+                                        {category.data.avgDifference < 0 && ' (AI too high)'}
+                                        {category.data.avgDifference === 0 && ' (Accurate)'}
+                                    </span>
+                                </div>
+                            ) : (
+                                <span className="text-sm text-brand-gray-400">N/A</span>
+                            )}
+                        </div>
+                    ))}
                 </div>
             </div>
 

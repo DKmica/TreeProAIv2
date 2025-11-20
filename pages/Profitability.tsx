@@ -64,7 +64,7 @@ const Profitability: React.FC<ProfitabilityProps> = ({ jobs, quotes }) => {
                 ))}
             </div>
 
-            <div className="mt-8 flex flex-col">
+            <div className="hidden lg:block mt-8 flex flex-col">
                 <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
                         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -101,6 +101,43 @@ const Profitability: React.FC<ProfitabilityProps> = ({ jobs, quotes }) => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="lg:hidden mt-8 space-y-4">
+                {profitabilityData.length > 0 ? profitabilityData.map((item) => (
+                    <div key={item.jobId} className="bg-white rounded-lg shadow p-4 border border-brand-gray-200">
+                        <div className="flex items-start justify-between mb-3">
+                            <div>
+                                <h3 className="text-sm font-medium text-brand-gray-900">Job #{item.jobId}</h3>
+                                <p className="text-sm text-brand-gray-500">{item.customerName}</p>
+                            </div>
+                            <span className={`text-lg font-bold ${getProfitColor(item.profitMargin)}`}>
+                                {item.profitMargin.toFixed(1)}%
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span className="text-brand-gray-500">Quoted:</span>
+                                <p className="font-semibold text-brand-gray-900">${item.quoteAmount.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <span className="text-brand-gray-500">Cost:</span>
+                                <p className="font-semibold text-brand-gray-900">${item.totalCost.toFixed(2)}</p>
+                            </div>
+                            <div className="col-span-2">
+                                <span className="text-brand-gray-500">Profit:</span>
+                                <p className={`text-lg font-bold ${getProfitColor(item.profit)}`}>
+                                    ${item.profit.toFixed(2)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )) : (
+                    <div className="text-center py-10 bg-white rounded-lg shadow">
+                        <p className="text-brand-gray-500">No completed jobs with cost data to analyze.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
