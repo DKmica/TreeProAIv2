@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "install:all": "pnpm install && cd backend && pnpm install && cd ..",
-    "build:production": "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && cp -r dist/* backend/public/",
+    "build:production": "pnpm install && cd backend && pnpm install && cd .. && pnpm run build && mkdir -p backend/public && cp -r dist/* backend/public/",
     "db:push": "npm run db:push --prefix backend",
     "test": "vitest",
     "test:unit": "vitest run tests/unit",

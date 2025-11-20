@@ -47,6 +47,7 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Testing Infrastructure**: Comprehensive testing setup with Vitest, Testing Library, Playwright, and Supertest for unit, integration, and E2E tests, with automated backend server management for tests.
 - **Payment Processing**: Stripe integration with webhook-driven invoice status updates, secure credential caching, signature verification, idempotency checks, and transaction-safe payment processing. Uses Replit connector for environment-aware credential management (development sandbox vs production).
 - **Invoice Automation**: Auto-generated invoices on job completion with sequential numbering system (INV-YYYY-####). Invoices created in Draft status for review before sending, ensuring billing accuracy and reducing manual workflow steps.
+- **Production Deployment**: Backend serves static frontend files from `backend/public/` directory. Build script compiles frontend with Vite, copies dist files to `backend/public/`, and Express serves them with SPA fallback routing. Deployment target is `autoscale` with build command `pnpm run build:production` and run command `node backend/server.js`.
 
 ## External Dependencies
 
