@@ -806,6 +806,10 @@ const transformRow = (row, tableName) => {
       transformed.updatedAt = row.updated_at;
       delete transformed.updated_at;
     }
+    if (row.created_at !== undefined) {
+      transformed.createdAt = row.created_at;
+      delete transformed.created_at;
+    }
   }
   
   // Transform estimate_feedback fields

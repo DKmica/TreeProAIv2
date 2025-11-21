@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import QuickBooksIcon from '../components/icons/QuickBooksIcon';
 import StripeIcon from '../components/icons/StripeIcon';
@@ -8,9 +8,47 @@ import { mockCustomFields, mockDocumentTemplates } from '../data/mockData';
 import PuzzlePieceIcon from '../components/icons/PuzzlePieceIcon';
 import DocumentTextIcon from '../components/icons/DocumentTextIcon';
 
+interface CompanyProfile {
+  id?: string;
+  companyName: string;
+  tagline: string;
+  email: string;
+  phoneNumber: string;
+  website: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  businessHours: string;
+  logoUrl: string;
+  taxEin: string;
+  licenseNumber: string;
+  insurancePolicyNumber: string;
+}
+
 const Settings: React.FC = () => {
   const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>(mockCustomFields);
   const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>(mockDocumentTemplates);
+
+  // State for company profile
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile>({
+    companyName: '',
+    tagline: '',
+    email: '',
+    phoneNumber: '',
+    website: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    businessHours: '',
+    logoUrl: '',
+    taxEin: '',
+    licenseNumber: '',
+    insurancePolicyNumber: ''
+  });
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // State for the custom field form
   const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entityType']>('client');
@@ -21,6 +59,40 @@ const Settings: React.FC = () => {
   // State for template editing
   const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
   const [templateContent, setTemplateContent] = useState('');
+
+  // Fetch company profile on mount
+  useEffect(() => {
+    const fetchCompanyProfile = async () => {
+      try {
+        const response = await fetch('/api/company-profile');
+        if (response.ok) {
+          const data = await response.json();
+          setCompanyProfile({
+            companyName: data.companyName || '',
+            tagline: data.tagline || '',
+            email: data.email || '',
+            phoneNumber: data.phoneNumber || '',
+            website: data.website || '',
+            address: data.address || '',
+            city: data.city || '',
+            state: data.state || '',
+            zipCode: data.zipCode || '',
+            businessHours: data.businessHours || '',
+            logoUrl: data.logoUrl || '',
+            taxEin: data.taxEin || '',
+            licenseNumber: data.licenseNumber || '',
+            insurancePolicyNumber: data.insurancePolicyNumber || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching company profile:', error);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchCompanyProfile();
+  }, []);
 
   const filteredFields = useMemo(() => {
     return customFields.filter(field => field.entityType === selectedEntity);
@@ -96,6 +168,52 @@ const Settings: React.FC = () => {
     setTemplateContent('');
   };
 
+  const handleCompanyProfileChange = (field: keyof CompanyProfile, value: string) => {
+    setCompanyProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveCompanyProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    try {
+      const response = await fetch('/api/company-profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(companyProfile),
+      });
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        setCompanyProfile({
+          companyName: updatedData.companyName || '',
+          tagline: updatedData.tagline || '',
+          email: updatedData.email || '',
+          phoneNumber: updatedData.phoneNumber || '',
+          website: updatedData.website || '',
+          address: updatedData.address || '',
+          city: updatedData.city || '',
+          state: updatedData.state || '',
+          zipCode: updatedData.zipCode || '',
+          businessHours: updatedData.businessHours || '',
+          logoUrl: updatedData.logoUrl || '',
+          taxEin: updatedData.taxEin || '',
+          licenseNumber: updatedData.licenseNumber || '',
+          insurancePolicyNumber: updatedData.insurancePolicyNumber || ''
+        });
+        alert('Company information saved successfully!');
+      } else {
+        alert('Failed to save company information. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving company profile:', error);
+      alert('An error occurred while saving. Please try again.');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
 
   return (
     <div>
@@ -149,29 +267,206 @@ const Settings: React.FC = () => {
             <p className="mt-1 text-sm leading-6 text-brand-gray-600">This information will be displayed on quotes and invoices.</p>
           </div>
 
-          <form className="md:col-span-2">
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                <div className="sm:col-span-4">
-                    <label htmlFor="company-name" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Name</label>
-                    <input type="text" name="company-name" id="company-name" defaultValue="TreePro AI Services" className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
-                </div>
-                <div className="col-span-full">
-                    <label htmlFor="company-address" className="block text-sm font-medium leading-6 text-brand-gray-900">Address</label>
-                    <input type="text" name="company-address" id="company-address" defaultValue="123 Arborist Ave, Suite 100, Greendale, USA" className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
-                </div>
-                 <div className="col-span-full">
-                    <label htmlFor="photo" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Logo</label>
-                    <div className="mt-2 flex items-center gap-x-3">
-                      <svg className="h-12 w-12 text-brand-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" clipRule="evenodd" />
-                      </svg>
-                      <button type="button" className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50">Change</button>
+          <form className="md:col-span-2" onSubmit={handleSaveCompanyProfile}>
+            {isLoadingProfile ? (
+              <div className="text-center py-8 text-brand-gray-500">Loading company information...</div>
+            ) : (
+              <div className="space-y-8">
+                {/* Basic Contact Information */}
+                <div>
+                  <h3 className="text-sm font-semibold text-brand-gray-800 mb-4">Basic Contact Information</h3>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                    <div className="sm:col-span-3">
+                      <label htmlFor="company-name" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Name</label>
+                      <input 
+                        type="text" 
+                        id="company-name" 
+                        value={companyProfile.companyName}
+                        onChange={(e) => handleCompanyProfileChange('companyName', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
                     </div>
+                    
+                    <div className="sm:col-span-3">
+                      <label htmlFor="tagline" className="block text-sm font-medium leading-6 text-brand-gray-900">Tagline</label>
+                      <input 
+                        type="text" 
+                        id="tagline" 
+                        value={companyProfile.tagline}
+                        onChange={(e) => handleCompanyProfileChange('tagline', e.target.value)}
+                        placeholder="e.g., Professional Tree Services"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-3">
+                      <label htmlFor="email" className="block text-sm font-medium leading-6 text-brand-gray-900">Email</label>
+                      <input 
+                        type="email" 
+                        id="email" 
+                        value={companyProfile.email}
+                        onChange={(e) => handleCompanyProfileChange('email', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-3">
+                      <label htmlFor="phone-number" className="block text-sm font-medium leading-6 text-brand-gray-900">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        id="phone-number" 
+                        value={companyProfile.phoneNumber}
+                        onChange={(e) => handleCompanyProfileChange('phoneNumber', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-6">
+                      <label htmlFor="website" className="block text-sm font-medium leading-6 text-brand-gray-900">Website</label>
+                      <input 
+                        type="url" 
+                        id="website" 
+                        value={companyProfile.website}
+                        onChange={(e) => handleCompanyProfileChange('website', e.target.value)}
+                        placeholder="https://www.example.com"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                  </div>
                 </div>
-            </div>
-             <div className="mt-6 flex items-center justify-end gap-x-6">
-                <button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500">Save Company Info</button>
-            </div>
+
+                {/* Business Address */}
+                <div className="pt-6 border-t border-brand-gray-200">
+                  <h3 className="text-sm font-semibold text-brand-gray-800 mb-4">Business Address</h3>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                    <div className="col-span-full">
+                      <label htmlFor="address" className="block text-sm font-medium leading-6 text-brand-gray-900">Street Address</label>
+                      <input 
+                        type="text" 
+                        id="address" 
+                        value={companyProfile.address}
+                        onChange={(e) => handleCompanyProfileChange('address', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <label htmlFor="city" className="block text-sm font-medium leading-6 text-brand-gray-900">City</label>
+                      <input 
+                        type="text" 
+                        id="city" 
+                        value={companyProfile.city}
+                        onChange={(e) => handleCompanyProfileChange('city', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <label htmlFor="state" className="block text-sm font-medium leading-6 text-brand-gray-900">State</label>
+                      <input 
+                        type="text" 
+                        id="state" 
+                        value={companyProfile.state}
+                        onChange={(e) => handleCompanyProfileChange('state', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-2">
+                      <label htmlFor="zip-code" className="block text-sm font-medium leading-6 text-brand-gray-900">ZIP Code</label>
+                      <input 
+                        type="text" 
+                        id="zip-code" 
+                        value={companyProfile.zipCode}
+                        onChange={(e) => handleCompanyProfileChange('zipCode', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Business Details */}
+                <div className="pt-6 border-t border-brand-gray-200">
+                  <h3 className="text-sm font-semibold text-brand-gray-800 mb-4">Business Details</h3>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                    <div className="col-span-full">
+                      <label htmlFor="business-hours" className="block text-sm font-medium leading-6 text-brand-gray-900">Business Hours</label>
+                      <input 
+                        type="text" 
+                        id="business-hours" 
+                        value={companyProfile.businessHours}
+                        onChange={(e) => handleCompanyProfileChange('businessHours', e.target.value)}
+                        placeholder="e.g., Mon-Fri: 8AM-5PM, Sat: 9AM-2PM"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="col-span-full">
+                      <label htmlFor="logo-url" className="block text-sm font-medium leading-6 text-brand-gray-900">Company Logo URL</label>
+                      <input 
+                        type="url" 
+                        id="logo-url" 
+                        value={companyProfile.logoUrl}
+                        onChange={(e) => handleCompanyProfileChange('logoUrl', e.target.value)}
+                        placeholder="https://example.com/logo.png"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                      <p className="mt-2 text-sm text-brand-gray-500">Enter the URL of your company logo</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Legal & Regulatory Information */}
+                <div className="pt-6 border-t border-brand-gray-200">
+                  <h3 className="text-sm font-semibold text-brand-gray-800 mb-4">Legal & Regulatory Information</h3>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
+                    <div className="sm:col-span-3">
+                      <label htmlFor="tax-ein" className="block text-sm font-medium leading-6 text-brand-gray-900">Tax ID / EIN</label>
+                      <input 
+                        type="text" 
+                        id="tax-ein" 
+                        value={companyProfile.taxEin}
+                        onChange={(e) => handleCompanyProfileChange('taxEin', e.target.value)}
+                        placeholder="XX-XXXXXXX"
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="sm:col-span-3">
+                      <label htmlFor="license-number" className="block text-sm font-medium leading-6 text-brand-gray-900">License Number</label>
+                      <input 
+                        type="text" 
+                        id="license-number" 
+                        value={companyProfile.licenseNumber}
+                        onChange={(e) => handleCompanyProfileChange('licenseNumber', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                    
+                    <div className="col-span-full">
+                      <label htmlFor="insurance-policy" className="block text-sm font-medium leading-6 text-brand-gray-900">Insurance Policy Number</label>
+                      <input 
+                        type="text" 
+                        id="insurance-policy" 
+                        value={companyProfile.insurancePolicyNumber}
+                        onChange={(e) => handleCompanyProfileChange('insurancePolicyNumber', e.target.value)}
+                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-end gap-x-6 pt-6 border-t border-brand-gray-200">
+                  <button 
+                    type="submit" 
+                    disabled={isSavingProfile}
+                    className="rounded-md bg-brand-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingProfile ? 'Saving...' : 'Save Company Info'}
+                  </button>
+                </div>
+              </div>
+            )}
           </form>
         </div>
 
