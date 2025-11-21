@@ -37,6 +37,7 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Job Templates**: Reusable configurations for standardizing services and accelerating job creation.
 - **Operations & Scheduling**: Includes crew management (creation, assignment, roles, capacity), time tracking (clock in/out, GPS, approvals), atomic job assignment with conflict detection, calendar integration (Gantt-style crew view with conflict warnings), and a dynamic job forms system (safety checklists, inspections, work orders).
 - **Invoice Management System**: Professional invoicing with comprehensive financial tracking including auto-generated invoice numbers (INV-YYYY-####), tax/discount calculations, payment recording, and a status workflow (Draft→Sent→Paid/Overdue→Void). Features Stripe payment processing for customer portal checkout, auto-invoice creation from completed jobs, and webhook-driven payment status updates. Supports "Create from Job" functionality.
+- **Company Settings**: Comprehensive business information management in Settings page with organized sections for Basic Contact Information (company name, tagline, email, phone, website), Business Address (street address, city, state, ZIP code), Business Details (business hours, logo URL), and Legal & Regulatory Information (Tax EIN, license number, insurance policy number). All information persists to database and displays on quotes/invoices.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
