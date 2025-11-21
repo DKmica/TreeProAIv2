@@ -26,6 +26,12 @@ interface CompanyProfile {
   insurancePolicyNumber: string;
 }
 
+interface IntegrationStatus {
+  stripe: boolean;
+  googleCalendar: boolean;
+  quickBooks: boolean;
+}
+
 const Settings: React.FC = () => {
   const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>(mockCustomFields);
   const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>(mockDocumentTemplates);
@@ -49,6 +55,14 @@ const Settings: React.FC = () => {
   });
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  
+  // State for integrations
+  const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus>({
+    stripe: false,
+    googleCalendar: false,
+    quickBooks: false
+  });
+  const [connectingIntegration, setConnectingIntegration] = useState<string | null>(null);
 
   // State for the custom field form
   const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entityType']>('client');
@@ -170,6 +184,42 @@ const Settings: React.FC = () => {
 
   const handleCompanyProfileChange = (field: keyof CompanyProfile, value: string) => {
     setCompanyProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleIntegrationConnect = async (integration: string) => {
+    setConnectingIntegration(integration);
+    try {
+      // Check if integration is already connected
+      const response = await fetch(`/api/integrations/${integration}/status`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.connected) {
+          alert(`${integration.charAt(0).toUpperCase() + integration.slice(1)} is already connected!`);
+          setConnectingIntegration(null);
+          return;
+        }
+      }
+
+      // Trigger setup based on integration type
+      switch (integration) {
+        case 'stripe':
+          window.location.href = '/settings?tab=stripe-setup';
+          break;
+        case 'googleCalendar':
+          window.location.href = '/settings?tab=google-calendar-setup';
+          break;
+        case 'quickBooks':
+          alert('QuickBooks integration is coming soon!');
+          break;
+        default:
+          alert(`Setting up ${integration}...`);
+      }
+    } catch (error) {
+      console.error(`Error connecting ${integration}:`, error);
+      alert(`Failed to connect ${integration}. Please try again.`);
+    } finally {
+      setConnectingIntegration(null);
+    }
   };
 
   const handleSaveCompanyProfile = async (e: React.FormEvent) => {
