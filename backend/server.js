@@ -18,6 +18,7 @@ const automationService = require('./services/automationService');
 const reminderService = require('./services/reminderService');
 const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
+const leadsRouter = require('./routes/leads');
 const { mountApiRoutes } = require('./routes');
 
 const app = express();
@@ -10081,6 +10082,9 @@ async function startServer() {
     res.status(200).send('TreePro AI Backend is running.');
   });
 
+  app.use('/api', leadsRouter);
+  app.use('/api', apiRouter);
+  
   mountApiRoutes(app, apiRouter);
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
