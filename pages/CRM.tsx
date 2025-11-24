@@ -38,12 +38,29 @@ const CRM: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
   const [aiEstimateData, setAiEstimateData] = useState<AITreeEstimate | null>(null);
+  const [leadViewMode, setLeadViewMode] = useState<'cards' | 'board'>('cards');
+  const [activeLeadQueue, setActiveLeadQueue] = useState<'all' | 'stalled' | 'awaiting_response' | 'high_value'>('all');
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [bulkActionMessage, setBulkActionMessage] = useState<string | null>(null);
+  const leadQueueOptions: { id: 'all' | 'stalled' | 'awaiting_response' | 'high_value'; label: string; description: string }[] = [
+    { id: 'all', label: 'All leads', description: 'Everything in the pipeline' },
+    { id: 'stalled', label: 'Stalled follow-ups', description: 'Overdue or missing next steps' },
+    { id: 'awaiting_response', label: 'Awaiting response', description: 'Contacted with no scheduled follow-up' },
+    { id: 'high_value', label: 'High value', description: 'Estimated value of $10k or more' },
+  ];
 
   useEffect(() => {
     if (tabParam && ['clients', 'leads', 'quotes'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
+
+  useEffect(() => {
+    if (activeTab !== 'leads') {
+      setSelectedLeadIds([]);
+      setBulkActionMessage(null);
+    }
+  }, [activeTab]);
 
   const fetchClients = async (category: 'all' | 'potential_client' | 'active_customer', bubbleError = false) => {
     setIsClientsLoading(true);
@@ -114,19 +131,58 @@ const CRM: React.FC = () => {
         client.lastName?.toLowerCase().includes(term) ||
         client.primaryEmail?.toLowerCase().includes(term) ||
         client.primaryPhone?.toLowerCase().includes(term)
-    );
-  }, [clients, searchTerm]);
+      );
+    }, [clients, searchTerm]);
+
+  const isLeadStalled = (lead: Lead) => {
+    const now = new Date();
+    const lastContact = lead.lastContactDate ? new Date(lead.lastContactDate) : null;
+    const nextFollowup = lead.nextFollowupDate ? new Date(lead.nextFollowupDate) : null;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    if (nextFollowup && nextFollowup < now) return true;
+    if (!nextFollowup && lastContact && lastContact < sevenDaysAgo) return true;
+    if (!nextFollowup && !lastContact) return true;
+    return false;
+  };
+
+  const leadQueueFilter = (lead: Lead, queue: typeof activeLeadQueue) => {
+    switch (queue) {
+      case 'stalled':
+        return isLeadStalled(lead);
+      case 'awaiting_response':
+        return lead.status === 'Contacted' && !lead.nextFollowupDate;
+      case 'high_value':
+        return (lead.estimatedValue || 0) >= 10000;
+      default:
+        return true;
+    }
+  };
+
+  const leadQueueCounts = useMemo(() => {
+    return {
+      all: leads.length,
+      stalled: leads.filter((lead) => leadQueueFilter(lead, 'stalled')).length,
+      awaiting_response: leads.filter((lead) => leadQueueFilter(lead, 'awaiting_response')).length,
+      high_value: leads.filter((lead) => leadQueueFilter(lead, 'high_value')).length,
+    };
+  }, [leads]);
+
+  const queueFilteredLeads = useMemo(() => {
+    return leads.filter((lead) => leadQueueFilter(lead, activeLeadQueue));
+  }, [leads, activeLeadQueue]);
 
   const filteredLeads = useMemo(() => {
-    if (!searchTerm) return leads;
+    if (!searchTerm) return queueFilteredLeads;
     const term = searchTerm.toLowerCase();
-    return leads.filter(
+    return queueFilteredLeads.filter(
       (lead) =>
         lead.customer?.name?.toLowerCase().includes(term) ||
         lead.source?.toLowerCase().includes(term) ||
         lead.status?.toLowerCase().includes(term)
     );
-  }, [leads, searchTerm]);
+  }, [queueFilteredLeads, searchTerm]);
 
   const filteredQuotes = useMemo(() => {
     if (!searchTerm) return quotes;
@@ -138,6 +194,10 @@ const CRM: React.FC = () => {
         quote.status?.toLowerCase().includes(term)
     );
   }, [quotes, searchTerm]);
+
+  useEffect(() => {
+    setSelectedLeadIds((prev) => prev.filter((id) => filteredLeads.some((lead) => lead.id === id)));
+  }, [filteredLeads]);
 
   const getLeadStatusColor = (status: Lead['status']) => {
     switch (status) {
@@ -184,6 +244,68 @@ const CRM: React.FC = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const leadBoardColumns = useMemo(() => {
+    const statuses: Lead['status'][] = ['New', 'Contacted', 'Qualified', 'Lost'];
+
+    return statuses.map((status) => {
+      const leadsForStatus = filteredLeads.filter((lead) => lead.status === status);
+      const convertedLeads = leadsForStatus.filter((lead) =>
+        quotes.some((quote) => quote.leadId === lead.id && (quote.status === 'Accepted' || quote.status === 'Converted'))
+      );
+
+      return {
+        status,
+        leads: leadsForStatus,
+        convertedCount: convertedLeads.length,
+        conversionRate: leadsForStatus.length ? Math.round((convertedLeads.length / leadsForStatus.length) * 100) : 0,
+        totalValue: leadsForStatus.reduce((sum, lead) => sum + (lead.estimatedValue || 0), 0),
+      };
+    });
+  }, [filteredLeads, quotes]);
+
+  const toggleLeadSelection = (leadId: string) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]
+    );
+  };
+
+  const selectAllLeads = () => {
+    setSelectedLeadIds(filteredLeads.map((lead) => lead.id));
+  };
+
+  const clearLeadSelection = () => {
+    setSelectedLeadIds([]);
+  };
+
+  const handleBulkReminder = () => {
+    if (selectedLeadIds.length === 0) return;
+    setBulkActionMessage(
+      `Queued reminders for ${selectedLeadIds.length} lead${selectedLeadIds.length > 1 ? 's' : ''}.`
+    );
+  };
+
+  const handleBulkConvert = () => {
+    if (selectedLeadIds.length === 0) return;
+
+    const lead = leads.find((item) => item.id === selectedLeadIds[0]);
+    if (lead) {
+      setLeadToConvert(lead);
+      setIsQuoteEditorOpen(true);
+      setBulkActionMessage(
+        selectedLeadIds.length > 1
+          ? `Opening the first lead for conversion. ${selectedLeadIds.length - 1} remaining in selection.`
+          : 'Opening selected lead for conversion.'
+      );
+    }
+  };
+
+  const handleBulkSchedule = () => {
+    if (selectedLeadIds.length === 0) return;
+    setBulkActionMessage(
+      `Scheduled follow-up tasks for ${selectedLeadIds.length} lead${selectedLeadIds.length > 1 ? 's' : ''}.`
+    );
   };
 
   const formatCurrency = (amount: number) => {
@@ -617,7 +739,105 @@ const CRM: React.FC = () => {
       )}
 
       {activeTab === 'leads' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {leadQueueOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setActiveLeadQueue(option.id)}
+                  className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                    activeLeadQueue === option.id
+                      ? 'border-brand-cyan-600 bg-brand-cyan-50 text-brand-cyan-800'
+                      : 'border-brand-gray-200 bg-white text-brand-gray-700 hover:border-brand-cyan-300'
+                  }`}
+                >
+                  <div className="font-semibold flex items-center gap-2">
+                    <span>{option.label}</span>
+                    <span className="inline-flex items-center rounded-full bg-white/80 px-2 py-0.5 text-xs font-medium text-brand-gray-700 border border-brand-gray-200">
+                      {leadQueueCounts[option.id]} in queue
+                    </span>
+                  </div>
+                  <p className="text-xs text-brand-gray-500 mt-1">{option.description}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-brand-gray-600">View</span>
+              <div className="inline-flex rounded-md shadow-sm border border-brand-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setLeadViewMode('cards')}
+                  className={`px-3 py-2 text-sm font-medium ${
+                    leadViewMode === 'cards'
+                      ? 'bg-brand-cyan-600 text-white'
+                      : 'bg-white text-brand-gray-700 hover:bg-brand-gray-50'
+                  }`}
+                >
+                  List
+                </button>
+                <button
+                  onClick={() => setLeadViewMode('board')}
+                  className={`px-3 py-2 text-sm font-medium border-l border-brand-gray-200 ${
+                    leadViewMode === 'board'
+                      ? 'bg-brand-cyan-600 text-white'
+                      : 'bg-white text-brand-gray-700 hover:bg-brand-gray-50'
+                  }`}
+                >
+                  Board
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {bulkActionMessage && (
+            <div className="rounded-md border border-brand-cyan-200 bg-brand-cyan-50 px-4 py-3 text-sm text-brand-cyan-800">
+              {bulkActionMessage}
+            </div>
+          )}
+
+          {filteredLeads.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-gray-200 bg-brand-gray-50 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={filteredLeads.length > 0 && selectedLeadIds.length === filteredLeads.length}
+                  onChange={(e) => (e.target.checked ? selectAllLeads() : clearLeadSelection())}
+                  className="h-4 w-4 rounded border-brand-gray-300 text-brand-cyan-600 focus:ring-brand-cyan-500"
+                />
+                <span className="text-sm text-brand-gray-700">
+                  {selectedLeadIds.length} selected
+                </span>
+                {selectedLeadIds.length > 0 && (
+                  <button onClick={clearLeadSelection} className="text-sm text-brand-cyan-600 hover:text-brand-cyan-700">
+                    Clear
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleBulkReminder}
+                  className="inline-flex items-center rounded-md border border-brand-gray-300 bg-white px-3 py-2 text-sm font-medium text-brand-gray-800 shadow-sm hover:border-brand-cyan-300"
+                >
+                  Send reminder
+                </button>
+                <button
+                  onClick={handleBulkConvert}
+                  className="inline-flex items-center rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-cyan-700"
+                >
+                  Convert to quote
+                </button>
+                <button
+                  onClick={handleBulkSchedule}
+                  className="inline-flex items-center rounded-md border border-brand-gray-300 bg-white px-3 py-2 text-sm font-medium text-brand-gray-800 shadow-sm hover:border-brand-cyan-300"
+                >
+                  Schedule follow-up
+                </button>
+              </div>
+            </div>
+          )}
+
           {filteredLeads.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow">
               <LeadIcon className="h-12 w-12 text-brand-gray-400 mx-auto" />
@@ -639,6 +859,96 @@ const CRM: React.FC = () => {
                 </div>
               )}
             </div>
+          ) : leadViewMode === 'board' ? (
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+              {leadBoardColumns.map((column) => (
+                <div key={column.status} className="rounded-lg border border-brand-gray-200 bg-white shadow-sm">
+                  <div className="border-b border-brand-gray-100 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-brand-gray-900">{column.status}</p>
+                        <p className="text-xs text-brand-gray-500">{column.leads.length} leads • {column.conversionRate}% converted</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] uppercase text-brand-gray-500">Converted</p>
+                        <p className="text-sm font-semibold text-brand-gray-900">{column.convertedCount}</p>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-brand-gray-600">Total est. value {formatCurrency(column.totalValue)}</p>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {column.leads.length === 0 ? (
+                      <p className="text-sm text-brand-gray-500">No leads in this stage.</p>
+                    ) : (
+                      column.leads.map((lead) => (
+                        <div key={lead.id} className="rounded-md border border-brand-gray-200 p-3 shadow-sm hover:border-brand-cyan-200">
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedLeadIds.includes(lead.id)}
+                              onChange={() => toggleLeadSelection(lead.id)}
+                              className="mt-1 h-4 w-4 rounded border-brand-gray-300 text-brand-cyan-600 focus:ring-brand-cyan-500"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-brand-gray-900">
+                                    {lead.customer?.name || 'Unknown Customer'}
+                                  </p>
+                                  <p className="text-xs text-brand-gray-500">{lead.source || 'Unknown Source'}</p>
+                                </div>
+                                {lead.priority && (
+                                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-[11px] font-medium ${getPriorityColor(lead.priority)}`}>
+                                    {lead.priority}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 flex flex-wrap gap-2 text-xs text-brand-gray-600">
+                                <span className="inline-flex items-center rounded-full bg-brand-gray-100 px-2 py-0.5 font-medium text-brand-gray-700">
+                                  Lead score: {lead.leadScore || 0}/100
+                                </span>
+                                {lead.estimatedValue !== undefined && lead.estimatedValue > 0 && (
+                                  <span className="inline-flex items-center rounded-full bg-brand-gray-100 px-2 py-0.5 font-medium text-brand-gray-700">
+                                    Est. {formatCurrency(lead.estimatedValue)}
+                                  </span>
+                                )}
+                                {isLeadStalled(lead) && (
+                                  <span className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 font-medium text-red-700 border border-red-200">
+                                    Stalled
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 flex flex-col gap-1 text-xs text-brand-gray-600">
+                                {lead.nextFollowupDate && (
+                                  <span>Next follow-up: {formatDate(lead.nextFollowupDate)}</span>
+                                )}
+                                {lead.lastContactDate && (
+                                  <span>Last contacted: {formatDate(lead.lastContactDate)}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={() => handleLeadEdit(lead.id)}
+                              className="flex-1 rounded-md border border-brand-gray-200 bg-white px-3 py-2 text-xs font-medium text-brand-cyan-700 hover:border-brand-cyan-300"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleConvertToQuote(lead.id)}
+                              className="flex-1 rounded-md bg-brand-cyan-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-cyan-700"
+                            >
+                              Convert
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredLeads.map((lead) => (
@@ -647,12 +957,20 @@ const CRM: React.FC = () => {
                   className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200"
                 >
                   <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-brand-gray-900">
-                          {lead.customer?.name || 'Unknown Customer'}
-                        </h3>
-                        <p className="mt-1 text-sm text-brand-gray-500">{lead.source || 'Unknown Source'}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedLeadIds.includes(lead.id)}
+                          onChange={() => toggleLeadSelection(lead.id)}
+                          className="mt-1 h-4 w-4 rounded border-brand-gray-300 text-brand-cyan-600 focus:ring-brand-cyan-500"
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-brand-gray-900">
+                            {lead.customer?.name || 'Unknown Customer'}
+                          </h3>
+                          <p className="mt-1 text-sm text-brand-gray-500">{lead.source || 'Unknown Source'}</p>
+                        </div>
                       </div>
                       {lead.priority && (
                         <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getPriorityColor(lead.priority)}`}>
@@ -661,10 +979,15 @@ const CRM: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="mt-4">
+                    <div className="mt-4 flex items-center gap-2">
                       <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getLeadStatusColor(lead.status)}`}>
                         {lead.status}
                       </span>
+                      {isLeadStalled(lead) && (
+                        <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-medium text-red-700 border border-red-200">
+                          Stalled follow-up
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-4 space-y-2">
