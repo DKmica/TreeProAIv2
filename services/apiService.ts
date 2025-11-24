@@ -97,6 +97,12 @@ export const quoteService = {
     const response = await apiFetch<{ success: boolean; data: Quote }>(`quotes/${id}`);
     return response.data;
   },
+  convertToJob: async (id: string): Promise<Job> => {
+    const response = await apiFetch<{ success: boolean; data: Job; message?: string }>(`quotes/${id}/convert-to-job`, {
+      method: 'POST',
+    });
+    return response.data;
+  },
   create: (data: Partial<Omit<Quote, 'id'>>): Promise<Quote> => apiFetch('quotes', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Quote>): Promise<Quote> => apiFetch(`quotes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id: string): Promise<void> => apiFetch<void>(`quotes/${id}`, { method: 'DELETE' }),
@@ -175,6 +181,27 @@ export const jobStateService = {
     apiFetch(`jobs/${jobId}/state-transitions`, { method: 'POST', body: JSON.stringify(data) }),
   getStateHistory: (jobId: string): Promise<{currentState: string; history: any[]}> =>
     apiFetch(`jobs/${jobId}/state-history`)
+};
+
+export const getApiErrorMessage = (error: any, fallback = 'An unknown error occurred') => {
+  if (!error) return fallback;
+
+  const message = error.message || fallback;
+
+  if (typeof message === 'string') {
+    const separatorIndex = message.indexOf(' - {');
+    if (separatorIndex !== -1) {
+      const possibleJson = message.slice(separatorIndex + 3);
+      try {
+        const parsed = JSON.parse(possibleJson);
+        if (parsed?.error) return parsed.error;
+      } catch {
+        // Ignore JSON parse errors and fall back to the original message
+      }
+    }
+  }
+
+  return typeof message === 'string' ? message : fallback;
 };
 
 export const jobTemplateService = {
