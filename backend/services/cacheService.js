@@ -110,7 +110,6 @@ async function setJson(key, value, ttlSeconds = 60) {
   if (client) {
     try {
       await client.set(key, JSON.stringify(value), { EX: ttl });
-      await client.set(key, JSON.stringify(value), { EX: ttlSeconds });
       return true;
     } catch (err) {
       console.error('⚠️ Redis set failed:', err.message);
@@ -120,7 +119,6 @@ async function setJson(key, value, ttlSeconds = 60) {
   memoryCache.set(key, {
     payload: value,
     expiresAt: Date.now() + ttl * 1000,
-    expiresAt: Date.now() + ttlSeconds * 1000,
   });
 
   return true;

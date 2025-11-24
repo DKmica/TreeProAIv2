@@ -493,6 +493,78 @@ const transformRow = (row, tableName) => {
     }
   }
   
+  // Transform properties fields
+  if (tableName === 'properties') {
+    if (row.zip_code !== undefined) {
+      transformed.zipCode = row.zip_code;
+      delete transformed.zip_code;
+    }
+    if (row.client_id !== undefined) {
+      transformed.clientId = row.client_id;
+      delete transformed.client_id;
+    }
+    if (row.property_name !== undefined) {
+      transformed.propertyName = row.property_name;
+      delete transformed.property_name;
+    }
+    if (row.address_line1 !== undefined) {
+      transformed.addressLine1 = row.address_line1;
+      delete transformed.address_line1;
+    }
+    if (row.address_line2 !== undefined) {
+      transformed.addressLine2 = row.address_line2;
+      delete transformed.address_line2;
+    }
+    if (row.property_type !== undefined) {
+      transformed.propertyType = row.property_type;
+      delete transformed.property_type;
+    }
+    if (row.square_footage !== undefined) {
+      transformed.squareFootage = (row.square_footage !== null && row.square_footage !== '') ? parseFloat(row.square_footage) : row.square_footage;
+      delete transformed.square_footage;
+    }
+    if (row.lot_size !== undefined) {
+      transformed.lotSize = (row.lot_size !== null && row.lot_size !== '') ? parseFloat(row.lot_size) : row.lot_size;
+      delete transformed.lot_size;
+    }
+    if (row.gate_code !== undefined) {
+      transformed.gateCode = row.gate_code;
+      delete transformed.gate_code;
+    }
+    if (row.access_instructions !== undefined) {
+      transformed.accessInstructions = row.access_instructions;
+      delete transformed.access_instructions;
+    }
+    if (row.parking_instructions !== undefined) {
+      transformed.parkingInstructions = row.parking_instructions;
+      delete transformed.parking_instructions;
+    }
+    if (row.trees_on_property !== undefined) {
+      transformed.treesOnProperty = row.trees_on_property;
+      delete transformed.trees_on_property;
+    }
+    if (row.property_features !== undefined) {
+      transformed.propertyFeatures = row.property_features;
+      delete transformed.property_features;
+    }
+    if (row.is_primary !== undefined) {
+      transformed.isPrimary = row.is_primary;
+      delete transformed.is_primary;
+    }
+    if (row.created_at !== undefined) {
+      transformed.createdAt = row.created_at;
+      delete transformed.created_at;
+    }
+    if (row.updated_at !== undefined) {
+      transformed.updatedAt = row.updated_at;
+      delete transformed.updated_at;
+    }
+    if (row.deleted_at !== undefined) {
+      transformed.deletedAt = row.deleted_at;
+      delete transformed.deleted_at;
+    }
+  }
+  
   // Transform estimate_feedback fields
   if (tableName === 'estimate_feedback') {
     if (row.quote_id !== undefined) {
