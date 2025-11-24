@@ -4,7 +4,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const express = require('express');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
-const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
+const { setupAuth } = require('./replitAuth');
 const { applyStandardMiddleware } = require('./config/express');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ragService = require('./services/ragService');
