@@ -16,7 +16,7 @@ interface FormData {
   addressLine2: string;
   city: string;
   state: string;
-  zip: string;
+  zipCode: string;
   country: string;
   lat: string;
   lon: string;
@@ -33,7 +33,7 @@ interface FormErrors {
   addressLine1?: string;
   city?: string;
   state?: string;
-  zip?: string;
+  zipCode?: string;
   lat?: string;
   lon?: string;
 }
@@ -45,7 +45,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
     addressLine2: '',
     city: '',
     state: '',
-    zip: '',
+    zipCode: '',
     country: 'USA',
     lat: '',
     lon: '',
@@ -69,7 +69,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
         addressLine2: property.addressLine2 || '',
         city: property.city || '',
         state: property.state || '',
-        zip: property.zip || '',
+        zipCode: property.zipCode || '',
         country: property.country || 'USA',
         lat: property.lat?.toString() || '',
         lon: property.lon?.toString() || '',
@@ -87,7 +87,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
         addressLine2: '',
         city: '',
         state: '',
-        zip: '',
+        zipCode: '',
         country: 'USA',
         lat: '',
         lon: '',
@@ -141,10 +141,10 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
       newErrors.state = 'State/Province is required';
     }
 
-    if (!formData.zip.trim()) {
-      newErrors.zip = 'Postal code is required';
-    } else if (!validatePostalCode(formData.zip)) {
-      newErrors.zip = 'Invalid postal code format';
+    if (!formData.zipCode.trim()) {
+      newErrors.zipCode = 'Postal code is required';
+    } else if (!validatePostalCode(formData.zipCode)) {
+      newErrors.zipCode = 'Invalid postal code format';
     }
 
     if (formData.lat && !validateCoordinate(formData.lat, 'lat')) {
@@ -192,7 +192,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
         addressLine2: formData.addressLine2 || undefined,
         city: formData.city,
         state: formData.state,
-        zip: formData.zip,
+        zipCode: formData.zipCode,
         country: formData.country,
         lat: formData.lat ? parseFloat(formData.lat) : undefined,
         lon: formData.lon ? parseFloat(formData.lon) : undefined,
@@ -247,8 +247,8 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
     if (!formData.addressLine1.trim()) return false;
     if (!formData.city.trim()) return false;
     if (!formData.state.trim()) return false;
-    if (!formData.zip.trim()) return false;
-    if (!validatePostalCode(formData.zip)) return false;
+    if (!formData.zipCode.trim()) return false;
+    if (!validatePostalCode(formData.zipCode)) return false;
     if (formData.lat && !validateCoordinate(formData.lat, 'lat')) return false;
     if (formData.lon && !validateCoordinate(formData.lon, 'lon')) return false;
     return true;
@@ -383,20 +383,20 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="zip" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-300 mb-1">
                       Postal Code <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
-                      id="zip"
-                      name="zip"
-                      value={formData.zip}
+                      id="zipCode"
+                      name="zipCode"
+                      value={formData.zipCode}
                       onChange={handleChange}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       placeholder="12345"
                     />
-                    {errors.zip && (
-                      <p className="mt-1 text-sm text-red-400">{errors.zip}</p>
+                    {errors.zipCode && (
+                      <p className="mt-1 text-sm text-red-400">{errors.zipCode}</p>
                     )}
                   </div>
 
