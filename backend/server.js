@@ -5,6 +5,7 @@ const express = require('express');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth } = require('./replitAuth');
+const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
 const { applyStandardMiddleware } = require('./config/express');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ragService = require('./services/ragService');
@@ -10064,23 +10065,9 @@ async function startServer() {
   
   await setupAuth(app);
   
-  apiRouter.get('/auth/user', isAuthenticated, async (req, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      res.json(user);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      res.status(500).json({ message: 'Failed to fetch user' });
-    }
-  });
-
-  apiRouter.get('/health', (req, res) => {
-    res.status(200).send('TreePro AI Backend is running.');
-  });
+  mountApiRoutes(app, apiRouter);
+  app.use('/api', notFoundHandler);
+  app.use(errorHandler);
 
   app.use('/api', leadsRouter);
   app.use('/api', apiRouter);
