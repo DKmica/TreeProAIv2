@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { buildCorsOptions } = require('../middleware/cors');
 
 /**
  * Apply the standard middleware stack for the API.
@@ -16,7 +17,7 @@ function applyStandardMiddleware(app, options = {}) {
   const { enableCors = true, corsOptions } = options;
 
   if (enableCors) {
-    app.use(cors(corsOptions));
+    app.use(cors(corsOptions || buildCorsOptions()));
   }
 
   app.use(express.json({ limit: '1mb' }));
