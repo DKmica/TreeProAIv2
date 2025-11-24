@@ -152,9 +152,16 @@ export interface Job {
   specialInstructions?: string;
   equipmentNeeded?: string[];
   estimatedHours?: number;
+  requiredCrewSize?: number | null;
+  jobTemplateId?: string | null;
   riskLevel?: 'Low' | 'Medium' | 'High' | 'Critical';
   jhaRequired?: boolean;
   customerDetails?: CustomerDetailsInput;
+  quoteVersion?: number;
+  quoteApprovalStatus?: 'pending' | 'approved' | 'rejected';
+  quoteApprovedBy?: string;
+  quoteApprovedAt?: string;
+  quoteNumber?: string;
   
   // NEW Phase 1 fields:
   clientId?: string;

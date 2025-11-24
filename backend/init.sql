@@ -561,7 +561,9 @@ CREATE TABLE IF NOT EXISTS jobs (
     -- Scheduling
     scheduled_date TEXT,
     assigned_crew JSONB DEFAULT '[]',
-    
+    required_crew_size INTEGER,
+    job_template_id VARCHAR(36) REFERENCES job_templates(id) ON DELETE SET NULL,
+
     -- Pricing
     stump_grinding_price NUMERIC DEFAULT 0,
     

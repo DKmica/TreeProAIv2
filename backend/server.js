@@ -562,6 +562,14 @@ const transformRow = (row, tableName) => {
       transformed.specialInstructions = row.special_instructions;
       delete transformed.special_instructions;
     }
+    if (row.required_crew_size !== undefined) {
+      transformed.requiredCrewSize = row.required_crew_size !== null ? Number(row.required_crew_size) : null;
+      delete transformed.required_crew_size;
+    }
+    if (row.job_template_id !== undefined) {
+      transformed.jobTemplateId = row.job_template_id;
+      delete transformed.job_template_id;
+    }
     if (row.equipment_needed !== undefined) {
       transformed.equipmentNeeded = row.equipment_needed;
       delete transformed.equipment_needed;
@@ -581,6 +589,26 @@ const transformRow = (row, tableName) => {
     if (row.jha_required !== undefined) {
       transformed.jhaRequired = row.jha_required;
       delete transformed.jha_required;
+    }
+    if (row.quote_version !== undefined) {
+      transformed.quoteVersion = row.quote_version;
+      delete transformed.quote_version;
+    }
+    if (row.quote_approval_status !== undefined) {
+      transformed.quoteApprovalStatus = row.quote_approval_status;
+      delete transformed.quote_approval_status;
+    }
+    if (row.quote_approved_by !== undefined) {
+      transformed.quoteApprovedBy = row.quote_approved_by;
+      delete transformed.quote_approved_by;
+    }
+    if (row.quote_approved_at !== undefined) {
+      transformed.quoteApprovedAt = row.quote_approved_at;
+      delete transformed.quote_approved_at;
+    }
+    if (row.quote_number !== undefined) {
+      transformed.quoteNumber = row.quote_number;
+      delete transformed.quote_number;
     }
   }
 
@@ -1391,6 +1419,14 @@ const transformToDb = (data, tableName) => {
       transformed.special_instructions = data.specialInstructions;
       delete transformed.specialInstructions;
     }
+    if (data.requiredCrewSize !== undefined) {
+      transformed.required_crew_size = data.requiredCrewSize;
+      delete transformed.requiredCrewSize;
+    }
+    if (data.jobTemplateId !== undefined) {
+      transformed.job_template_id = data.jobTemplateId;
+      delete transformed.jobTemplateId;
+    }
     if (data.equipmentNeeded !== undefined) {
       transformed.equipment_needed = data.equipmentNeeded;
       delete transformed.equipmentNeeded;
@@ -1751,6 +1787,9 @@ const transformToDb = (data, tableName) => {
     }
     if (transformed.completion_checklist !== undefined && typeof transformed.completion_checklist === 'object') {
       transformed.completion_checklist = JSON.stringify(transformed.completion_checklist);
+    }
+    if (transformed.equipment_needed !== undefined && typeof transformed.equipment_needed === 'object') {
+      transformed.equipment_needed = JSON.stringify(transformed.equipment_needed);
     }
     if (transformed.permit_details !== undefined && typeof transformed.permit_details === 'object') {
       transformed.permit_details = JSON.stringify(transformed.permit_details);
@@ -6037,20 +6076,33 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
           error: 'Cannot convert rejected quote to job'
         });
       }
-      
+
+      const templateMatch = await automationService.matchTemplateForQuote(quote, db);
+      const matchedTemplate = templateMatch?.template;
+
+      const equipmentNeeded = matchedTemplate?.default_equipment_ids
+        ? JSON.stringify(matchedTemplate.default_equipment_ids)
+        : null;
+      const completionChecklist = matchedTemplate?.completion_checklist
+        ? JSON.stringify(matchedTemplate.completion_checklist)
+        : null;
+
       const jobId = uuidv4();
       const jobNumber = await generateJobNumber();
-      
+
       const insertJobQuery = `
         INSERT INTO jobs (
           id, client_id, property_id, quote_id, job_number, status,
           customer_name, job_location, special_instructions,
-          price, line_items, created_at
+          price, line_items, created_at,
+          equipment_needed, estimated_hours, required_crew_size, job_template_id,
+          completion_checklist, jha_required
         ) VALUES (
-          $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, NOW()
+          $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, NOW(),
+          $11, $12, $13, $14, $15, $16
         ) RETURNING *
       `;
-      
+
       const { rows: jobRows } = await db.query(insertJobQuery, [
         jobId,
         quote.client_id,
@@ -6061,7 +6113,13 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
         quote.job_location || null,
         quote.special_instructions || null,
         quote.grand_total || quote.price || 0,
-        quote.line_items || '[]'
+        quote.line_items || '[]',
+        equipmentNeeded,
+        matchedTemplate?.default_duration_hours || null,
+        matchedTemplate?.default_crew_size || null,
+        matchedTemplate?.id || null,
+        completionChecklist,
+        matchedTemplate?.jha_required || false
       ]);
       
       await db.query(
@@ -6086,6 +6144,58 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
       throw err;
     }
     
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/jobs - List jobs with quote metadata for operational context
+apiRouter.get('/jobs', async (req, res) => {
+  try {
+    const jobQuery = `
+      SELECT
+        j.*,
+        q.quote_number,
+        q.version AS quote_version,
+        q.approval_status AS quote_approval_status,
+        q.approved_by AS quote_approved_by,
+        q.approved_at AS quote_approved_at
+      FROM jobs j
+      LEFT JOIN quotes q ON q.id = j.quote_id
+    `;
+
+    const { rows } = await db.query(jobQuery);
+    const jobs = rows.map(row => transformRow(row, 'jobs'));
+
+    res.json(jobs);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /api/jobs/:id - Get a single job with quote metadata
+apiRouter.get('/jobs/:id', async (req, res) => {
+  try {
+    const jobQuery = `
+      SELECT
+        j.*,
+        q.quote_number,
+        q.version AS quote_version,
+        q.approval_status AS quote_approval_status,
+        q.approved_by AS quote_approved_by,
+        q.approved_at AS quote_approved_at
+      FROM jobs j
+      LEFT JOIN quotes q ON q.id = j.quote_id
+      WHERE j.id = $1
+    `;
+
+    const { rows } = await db.query(jobQuery, [req.params.id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    res.json(transformRow(rows[0], 'jobs'));
   } catch (err) {
     handleError(res, err);
   }
