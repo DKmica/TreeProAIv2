@@ -1,6 +1,7 @@
 import React from 'react';
 import { Quote } from '../types';
 import { X, FileText, Calendar, DollarSign, CheckCircle2, XCircle, Clock, FileSignature } from 'lucide-react';
+import StatusBadge from './StatusBadge';
 
 interface QuoteViewerProps {
   isOpen: boolean;
@@ -19,14 +20,6 @@ export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote
   const discount = quote.discountAmount || 0;
   const tax = quote.taxAmount || 0;
   const total = quote.grandTotal || (subtotal - discount + tax);
-
-  const statusColors = {
-    Draft: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50',
-    Sent: 'bg-blue-500/20 text-blue-300 border-blue-500/50',
-    Accepted: 'bg-green-500/20 text-green-300 border-green-500/50',
-    Declined: 'bg-red-500/20 text-red-300 border-red-500/50',
-    Converted: 'bg-purple-500/20 text-purple-300 border-purple-500/50',
-  };
 
   const statusIcons = {
     Draft: Clock,
@@ -76,9 +69,9 @@ export const QuoteViewer: React.FC<QuoteViewerProps> = ({ isOpen, onClose, quote
 
               <div>
                 <label className="text-sm text-brand-gray-400 mb-1 block">Status</label>
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${statusColors[quote.status]}`}>
-                  <StatusIcon className="h-4 w-4" />
-                  {quote.status}
+                <div className="inline-flex items-center gap-2">
+                  <StatusIcon className="h-4 w-4 text-brand-gray-300" />
+                  <StatusBadge status={quote.status} size="sm" />
                 </div>
               </div>
             </div>

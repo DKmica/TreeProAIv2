@@ -8,6 +8,7 @@ import DollarIcon from '../components/icons/DollarIcon';
 import InvoiceEditor from '../components/InvoiceEditor';
 import PaymentRecorder from '../components/PaymentRecorder';
 import InvoiceTemplate from '../components/InvoiceTemplate';
+import StatusBadge from '../components/StatusBadge';
 
 type StatusFilter = 'All' | 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
 
@@ -87,16 +88,6 @@ const Invoices: React.FC<InvoicesProps> = () => {
 
     return filtered.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
   }, [invoices, statusFilter, searchTerm]);
-
-  const getStatusColor = (status: Invoice['status']) => {
-    switch (status) {
-      case 'Paid': return 'bg-green-100 text-green-800';
-      case 'Sent': return 'bg-blue-100 text-blue-800';
-      case 'Overdue': return 'bg-red-100 text-red-800';
-      case 'Void': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-yellow-100 text-yellow-800';
-    }
-  };
 
   const getAgingColor = (bucket: string) => {
     switch (bucket) {
@@ -446,9 +437,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                             </span>
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(displayStatus)}`}>
-                              {displayStatus}
-                            </span>
+                            <StatusBadge status={displayStatus} size="xs" />
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-700">
                             {formatDate(invoice.dueDate)}
@@ -578,9 +567,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     </h3>
                     <p className="text-sm text-brand-gray-600 mt-1">{invoice.customerName}</p>
                   </div>
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(displayStatus)}`}>
-                    {displayStatus}
-                  </span>
+                  <StatusBadge status={displayStatus} size="xs" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm">

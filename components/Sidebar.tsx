@@ -153,6 +153,30 @@ const Sidebar: React.FC<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) 
     </div>
   );
 
+  const AiQuickActions = () => (
+    <div className="mt-6 space-y-2 px-2">
+      <p className="text-xs font-semibold uppercase tracking-wider text-brand-gray-400">AI Quick Actions</p>
+      <div className="space-y-2">
+        <NavLink
+          to="/ai-tree-estimator"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-500 hover:to-emerald-500"
+        >
+          <SparklesIcon className="h-5 w-5" />
+          Run AI Estimator
+        </NavLink>
+        <NavLink
+          to="/ai-core"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center justify-center gap-2 rounded-lg border border-brand-cyan-500/40 bg-brand-gray-800 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-brand-gray-700 hover:border-brand-cyan-400"
+        >
+          <AICoreIcon className="h-5 w-5" />
+          Open AI Core
+        </NavLink>
+      </div>
+    </div>
+  );
+
   return (
     <>
       {/* Static sidebar for desktop */}
@@ -165,6 +189,7 @@ const Sidebar: React.FC<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) 
           <div className="flex flex-1 flex-col overflow-y-auto">
             <nav className="flex-1 space-y-1 px-2 py-4">
               <NavLinks />
+              <AiQuickActions />
             </nav>
           </div>
         </div>
@@ -191,6 +216,7 @@ const Sidebar: React.FC<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) 
           <div className="flex-1 overflow-y-auto">
             <nav className="space-y-1 px-2 py-4">
               <NavLinks />
+              <AiQuickActions />
             </nav>
           </div>
         </div>
