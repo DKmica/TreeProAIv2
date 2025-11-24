@@ -2,10 +2,11 @@ const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
 const express = require('express');
-const cors = require('cors');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
+const { applyStandardMiddleware } = require('./config/express');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ragService = require('./services/ragService');
 const vectorStore = require('./services/vectorStore');
 const jobStateService = require('./services/jobStateService');
@@ -17,7 +18,7 @@ const automationService = require('./services/automationService');
 const reminderService = require('./services/reminderService');
 const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
-const leadsRouter = require('./routes/leads');
+const { mountApiRoutes } = require('./routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -78,8 +79,6 @@ async function initStripe() {
     return false;
   }
 }
-
-app.use(cors());
 
 app.post(
   '/api/stripe/webhook',
@@ -235,7 +234,9 @@ app.post(
   }
 );
 
-app.use(express.json());
+// Apply shared middleware after the Stripe webhook so express.json() does not
+// interfere with express.raw() handling.
+applyStandardMiddleware(app);
 
 const apiRouter = express.Router();
 
@@ -10080,9 +10081,10 @@ async function startServer() {
     res.status(200).send('TreePro AI Backend is running.');
   });
 
-  app.use('/api', leadsRouter);
-  app.use('/api', apiRouter);
-  
+  mountApiRoutes(app, apiRouter);
+  app.use('/api', notFoundHandler);
+  app.use(errorHandler);
+
   // Serve static frontend files in production
   // In development, frontend is served separately by Vite on port 5000
   app.use(express.static(path.join(__dirname, 'public')));
