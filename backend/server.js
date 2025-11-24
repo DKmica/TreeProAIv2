@@ -6258,8 +6258,11 @@ apiRouter.post('/jobs', async (req, res) => {
       dbData.job_number = await generateJobNumber();
     }
 
+    // Ensure 'id' is not duplicated in the columns
+    delete dbData.id;
+
     const jobId = uuidv4();
-    const columns = Object.keys(dbData).filter(col => col !== 'id');
+    const columns = Object.keys(dbData);
     const values = columns.map((key) => dbData[key]);
     const placeholders = columns.map((_, index) => `$${index + 2}`).join(', ');
 
