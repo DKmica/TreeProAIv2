@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Quote, Client } from '../types';
-import { quoteService, clientService } from '../services/apiService';
+import { quoteService, clientService, jobService, invoiceService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
+import AssociationModal from '../components/AssociationModal';
 
 const QuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,9 @@ const QuoteDetail: React.FC = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAssociationModal, setShowAssociationModal] = useState(false);
+  const [pendingConversion, setPendingConversion] = useState<'job' | 'invoice' | null>(null);
+  const [linkageMessages, setLinkageMessages] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchQuoteData = async () => {
@@ -103,8 +107,73 @@ const QuoteDetail: React.FC = () => {
   };
 
   const handleConvertToJob = () => {
-    if (window.confirm('Convert this quote to a job?')) {
-      alert('Convert to job functionality will be implemented next');
+    setPendingConversion('job');
+    if (!quote?.clientId || !quote.propertyId) {
+      setShowAssociationModal(true);
+      return;
+    }
+    executeJobConversion(quote);
+  };
+
+  const executeJobConversion = async (quoteToConvert: Quote) => {
+    try {
+      const newJob = await jobService.create({
+        quoteId: quoteToConvert.id,
+        clientId: quoteToConvert.clientId,
+        propertyId: quoteToConvert.propertyId,
+        customerName: clientName,
+        status: 'Unscheduled',
+        assignedCrew: [],
+        jobNumber: quoteToConvert.quoteNumber ? `JOB-${quoteToConvert.quoteNumber}` : undefined,
+        jobLocation: propertyAddress,
+      });
+      setLinkageMessages([`Created job ${newJob.jobNumber || newJob.id} from this quote.`]);
+    } catch (err: any) {
+      alert(err.message || 'Failed to convert quote to job');
+    }
+  };
+
+  const handleConvertToInvoice = () => {
+    setPendingConversion('invoice');
+    if (!quote?.clientId || !quote.propertyId) {
+      setShowAssociationModal(true);
+      return;
+    }
+    executeInvoiceConversion(quote);
+  };
+
+  const executeInvoiceConversion = async (quoteToConvert: Quote) => {
+    try {
+      const lineItems = quoteToConvert.lineItems?.map(item => ({
+        description: item.description,
+        price: item.price,
+        selected: true,
+      })) || [];
+
+      const invoice = await invoiceService.create({
+        clientId: quoteToConvert.clientId,
+        propertyId: quoteToConvert.propertyId,
+        customerName: clientName,
+        jobId: undefined,
+        status: 'Draft',
+        lineItems,
+        subtotal: subtotal,
+        discountAmount: quoteToConvert.discountAmount || 0,
+        discountPercentage: quoteToConvert.discountPercentage || 0,
+        taxRate: quoteToConvert.taxRate || 0,
+        taxAmount: quoteToConvert.taxAmount || 0,
+        totalAmount: grandTotal,
+        grandTotal: grandTotal,
+        amountPaid: 0,
+        amountDue: grandTotal,
+        invoiceNumber: quoteToConvert.quoteNumber ? `INV-${quoteToConvert.quoteNumber}` : '',
+        issueDate: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        paymentTerms: quoteToConvert.paymentTerms,
+      });
+      setLinkageMessages([`Created draft invoice ${invoice.invoiceNumber || invoice.id} from this quote.`]);
+    } catch (err: any) {
+      alert(err.message || 'Failed to create invoice');
     }
   };
 
@@ -129,6 +198,12 @@ const QuoteDetail: React.FC = () => {
     );
   }
 
+  useEffect(() => {
+    if (quote && quote.status === 'Accepted' && quote.clientId && !quote.propertyId) {
+      setLinkageMessages(['Property missing — add a property before scheduling work.']);
+    }
+  }, [quote]);
+
   if (error || !quote) {
     return (
       <div className="rounded-lg bg-red-50 p-4 border border-red-200">
@@ -143,9 +218,9 @@ const QuoteDetail: React.FC = () => {
     );
   }
 
-  const clientName = client?.companyName || 
-    (client ? `${client.firstName || ''} ${client.lastName || ''}`.trim() : '') || 
-    quote.customerName || 
+  const clientName = client?.companyName ||
+    (client ? `${client.firstName || ''} ${client.lastName || ''}`.trim() : '') ||
+    quote.customerName ||
     'Unknown Client';
 
   const propertyAddress = quote.property 
@@ -161,6 +236,18 @@ const QuoteDetail: React.FC = () => {
   const discountAmount = parseFloat(quote.discountAmount as any) || 0;
   const taxAmount = parseFloat(quote.taxAmount as any) || 0;
   const grandTotal = parseFloat(quote.grandTotal as any) || (subtotal - discountAmount + taxAmount);
+
+  const handleAssociationsCreated = ({ clientId, propertyId }: { clientId: string; propertyId: string }) => {
+    setQuote(prev => prev ? { ...prev, clientId, propertyId } : prev);
+    setLinkageMessages([]);
+    if (!quote) return;
+    if (pendingConversion === 'job') {
+      executeJobConversion({ ...quote, clientId, propertyId });
+    } else if (pendingConversion === 'invoice') {
+      executeInvoiceConversion({ ...quote, clientId, propertyId });
+    }
+    setPendingConversion(null);
+  };
 
   return (
     <div>
@@ -180,9 +267,24 @@ const QuoteDetail: React.FC = () => {
         <span className="text-brand-gray-900 font-medium">Quote {quote.quoteNumber || quote.id}</span>
       </nav>
 
+      {linkageMessages.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {linkageMessages.map((message, idx) => (
+            <div key={idx} className="flex items-center justify-between bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded-md">
+              <div className="flex items-center gap-2">
+                <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 9v2m0 4h.01M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-medium">{message}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-sm border border-brand-gray-200 p-6 mb-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-4">
             <button
               onClick={handleBack}
               className="flex-shrink-0 p-2 hover:bg-brand-gray-100 rounded-md transition-colors"
@@ -209,10 +311,40 @@ const QuoteDetail: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   Created {formatDate(quote.createdAt)}
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-4 bg-brand-gray-50 rounded-md border border-brand-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-brand-gray-900">Convert to Job</p>
+                  <p className="text-xs text-brand-gray-600">Use existing IDs for scheduling.</p>
                 </div>
+                <button
+                  onClick={handleConvertToJob}
+                  className="px-3 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 text-sm font-medium"
+                >
+                  One-click job
+                </button>
+              </div>
+            </div>
+            <div className="p-4 bg-brand-gray-50 rounded-md border border-brand-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-brand-gray-900">Generate Invoice</p>
+                  <p className="text-xs text-brand-gray-600">Draft billing from this quote.</p>
+                </div>
+                <button
+                  onClick={handleConvertToInvoice}
+                  className="px-3 py-2 bg-brand-green-600 text-white rounded-md hover:bg-brand-green-700 text-sm font-medium"
+                >
+                  Build invoice
+                </button>
               </div>
             </div>
           </div>
+        </div>
+      </div>
           <div className="flex gap-2">
             {quote.status === 'Sent' && (
               <>
@@ -458,6 +590,15 @@ const QuoteDetail: React.FC = () => {
           </div>
         </div>
       </div>
+      <AssociationModal
+        isOpen={showAssociationModal}
+        onClose={() => {
+          setShowAssociationModal(false);
+          setPendingConversion(null);
+        }}
+        defaultName={clientName}
+        onCreated={handleAssociationsCreated}
+      />
     </div>
   );
 };

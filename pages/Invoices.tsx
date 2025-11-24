@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Invoice, Quote } from '../types';
-import { invoiceService } from '../services/apiService';
+import { invoiceService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import PlusCircleIcon from '../components/icons/PlusCircleIcon';
 import DocumentTextIcon from '../components/icons/DocumentTextIcon';
@@ -173,6 +173,28 @@ const Invoices: React.FC<InvoicesProps> = () => {
         console.error('Error voiding invoice:', error);
         alert('Failed to void invoice: ' + error.message);
       }
+    }
+  };
+
+  const handleCreateJobFromInvoice = async (invoice: Invoice) => {
+    if (!invoice.clientId || !invoice.propertyId) {
+      alert('Client and property are required before creating a job.');
+      return;
+    }
+
+    try {
+      const newJob = await jobService.create({
+        clientId: invoice.clientId,
+        propertyId: invoice.propertyId,
+        customerName: invoice.customerName,
+        quoteId: undefined,
+        status: 'Unscheduled',
+        assignedCrew: [],
+        jobNumber: invoice.invoiceNumber ? `JOB-${invoice.invoiceNumber}` : undefined,
+      });
+      alert(`Job ${newJob.jobNumber || newJob.id} created from invoice.`);
+    } catch (error: any) {
+      alert(error.message || 'Failed to create job from invoice');
     }
   };
 
@@ -380,6 +402,16 @@ const Invoices: React.FC<InvoicesProps> = () => {
                                 </button>
                               )}
 
+                              {!invoice.jobId && (
+                                <button
+                                  onClick={() => handleCreateJobFromInvoice(invoice)}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-brand-cyan-600 text-white rounded hover:bg-brand-cyan-700 transition-colors"
+                                  title="Create job from invoice"
+                                >
+                                  Create Job
+                                </button>
+                              )}
+
                               <button
                                 onClick={() => handleDeleteInvoice(invoice)}
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
@@ -482,6 +514,14 @@ const Invoices: React.FC<InvoicesProps> = () => {
                       className="flex-1 min-w-[100px] px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm font-medium"
                     >
                       Void
+                    </button>
+                  )}
+                  {!invoice.jobId && (
+                    <button
+                      onClick={() => handleCreateJobFromInvoice(invoice)}
+                      className="flex-1 min-w-[100px] px-3 py-2 bg-brand-cyan-600 text-white rounded hover:bg-brand-cyan-700 text-sm font-medium"
+                    >
+                      Create Job
                     </button>
                   )}
                   <button

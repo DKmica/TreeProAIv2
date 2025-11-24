@@ -13,6 +13,7 @@ import JobForms from '../components/JobForms';
 import InvoiceEditor from '../components/InvoiceEditor';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
+import AssociationModal from '../components/AssociationModal';
 import RecurringJobsPanel from '../components/RecurringJobsPanel';
 import { formatPhone, formatZip, formatState, parseEquipment, lookupZipCode } from '../utils/formatters';
 
@@ -647,6 +648,9 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
   const [invoicePrefilledData, setInvoicePrefilledData] = useState<{ customerName?: string; jobId?: string; lineItems?: LineItem[] } | undefined>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [linkageWarnings, setLinkageWarnings] = useState<string[]>([]);
+  const [associationJob, setAssociationJob] = useState<Job | null>(null);
+  const [showAssociationModal, setShowAssociationModal] = useState(false);
 
   useEffect(() => {
     if (location.state?.openCreateForm) {
@@ -655,6 +659,13 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
         window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    const warnings = jobs
+      .filter(job => job.status === 'Completed' && !invoices.some(inv => inv.jobId === job.id))
+      .map(job => `Job ${job.jobNumber || job.id.slice(0, 8)} is completed with no invoice.`);
+    setLinkageWarnings(warnings);
+  }, [jobs, invoices]);
 
 
   const handleCancel = () => {
@@ -880,6 +891,19 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     }
   };
 
+  const handleAssociationsCreated = async ({ clientId, propertyId }: { clientId: string; propertyId: string }) => {
+    if (!associationJob) return;
+    try {
+      const updated = await api.jobService.update(associationJob.id, { clientId, propertyId });
+      setJobs(prev => prev.map(job => job.id === updated.id ? updated : job));
+      setViewingJobDetail(prev => (prev && prev.id === updated.id ? updated : prev));
+      setAssociationJob(null);
+      setShowAssociationModal(false);
+    } catch (err: any) {
+      alert(err.message || 'Failed to attach associations');
+    }
+  };
+
   const filteredJobs = useMemo(() => jobs.filter(job =>
     Object.values(job).some(value => value.toString().toLowerCase().includes(searchTerm.toLowerCase()))
   ), [jobs, searchTerm]);
@@ -906,6 +930,17 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
       <div className="mt-6">
         <input type="text" placeholder="Search jobs..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" aria-label="Search jobs" />
       </div>
+
+      {linkageWarnings.length > 0 && (
+        <div className="mt-4 space-y-2">
+          {linkageWarnings.map((msg, idx) => (
+            <div key={idx} className="flex items-center justify-between rounded-md border border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800">
+              <span>{msg}</span>
+              <span className="text-xs font-medium">Add invoice to resolve</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Desktop Table View */}
       <div className="mt-4 hidden lg:flex lg:flex-col">
@@ -1241,11 +1276,26 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4">Change Job State</h3>
-                    <StateTransitionControl
-                      jobId={viewingJobDetail.id}
-                      currentState={viewingJobDetail.status}
-                      onStateChanged={(newState) => handleStateChanged(viewingJobDetail.id, newState)}
-                    />
+                    {!viewingJobDetail.clientId || !viewingJobDetail.propertyId ? (
+                      <div className="rounded-md border border-yellow-500 bg-yellow-900/40 text-yellow-100 p-4">
+                        <p className="text-sm mb-3">Link a client and property before changing job states.</p>
+                        <button
+                          onClick={() => {
+                            setAssociationJob(viewingJobDetail);
+                            setShowAssociationModal(true);
+                          }}
+                          className="px-3 py-2 bg-yellow-500 text-yellow-900 rounded-md font-medium text-sm hover:bg-yellow-400"
+                        >
+                          Add associations
+                        </button>
+                      </div>
+                    ) : (
+                      <StateTransitionControl
+                        jobId={viewingJobDetail.id}
+                        currentState={viewingJobDetail.status}
+                        onStateChanged={(newState) => handleStateChanged(viewingJobDetail.id, newState)}
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -1271,6 +1321,15 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
         onClose={() => setIsInvoiceEditorOpen(false)}
         onSave={handleInvoiceSaved}
         prefilledData={invoicePrefilledData}
+      />
+      <AssociationModal
+        isOpen={showAssociationModal}
+        onClose={() => {
+          setShowAssociationModal(false);
+          setAssociationJob(null);
+        }}
+        defaultName={associationJob?.customerName}
+        onCreated={handleAssociationsCreated}
       />
     </div>
   );
