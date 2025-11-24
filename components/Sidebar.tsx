@@ -17,6 +17,7 @@ import DocumentTextIcon from './icons/DocumentTextIcon';
 import UsersIcon from './icons/UsersIcon';
 import ClockIcon from './icons/ClockIcon';
 import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
+import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
 
 type NavigationItem = { name: string; href: string; icon: React.ComponentType<{ className?: string }> };
 
@@ -71,7 +72,10 @@ const groupedNavigation: {
   },
   {
     title: 'Settings',
-    items: [{ name: 'Settings', href: '/settings', icon: CogIcon }],
+    items: [
+      { name: 'Settings', href: '/settings', icon: CogIcon },
+      { name: 'Exception Queue', href: '/exception-queue', icon: ExclamationTriangleIcon },
+    ],
   },
 ];
 
