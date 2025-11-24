@@ -14,7 +14,7 @@ import InvoiceEditor from '../components/InvoiceEditor';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 import RecurringJobsPanel from '../components/RecurringJobsPanel';
-import { formatPhone, formatZip, formatState } from '../utils/formatters';
+import { formatPhone, formatZip, formatState, parseEquipment, lookupZipCode } from '../utils/formatters';
 
 
 // Helper to calculate total
@@ -61,11 +61,11 @@ const JobForm: React.FC<{
         scheduledDate: initialData?.scheduledDate || '',
         status: initialData?.status || ('Unscheduled' as Job['status']),
         assignedCrew: initialData?.assignedCrew || [],
-        stumpGrindingPrice: initialData?.stumpGrindingPrice || 0,
+        stumpGrindingPrice: initialData?.stumpGrindingPrice ? initialData.stumpGrindingPrice.toString() : '',
         jobLocation: initialData?.jobLocation || '',
         specialInstructions: initialData?.specialInstructions || '',
         equipmentNeeded: initialData?.equipmentNeeded || [],
-        estimatedHours: initialData?.estimatedHours || 0,
+        estimatedHours: initialData?.estimatedHours ? initialData.estimatedHours.toString() : '',
     });
 
     const [jobLocationData, setJobLocationData] = useState<JobLocationData>({
@@ -501,7 +501,17 @@ const JobForm: React.FC<{
                                         id="zipCode"
                                         name="zipCode"
                                         value={newCustomerData.zipCode}
-                                        onChange={handleNewCustomerChange}
+                                        onChange={(e) => {
+                                            const zip = formatZip(e.target.value);
+                                            handleNewCustomerChange({ target: { name: 'zipCode', value: zip } } as any);
+                                            if (zip.length === 5) {
+                                                const lookup = lookupZipCode(zip);
+                                                if (lookup) {
+                                                    handleNewCustomerChange({ target: { name: 'city', value: lookup.city } } as any);
+                                                    handleNewCustomerChange({ target: { name: 'state', value: lookup.state } } as any);
+                                                }
+                                            }
+                                        }}
                                         maxLength={5}
                                         className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="12345"
@@ -543,7 +553,7 @@ const JobForm: React.FC<{
                     </div>
                      <div className="sm:col-span-3">
                         <label htmlFor="stumpGrindingPrice" className="block text-sm font-medium leading-6 text-gray-300">Stump Grinding Price</label>
-                        <input type="number" name="stumpGrindingPrice" id="stumpGrindingPrice" value={formData.stumpGrindingPrice} onChange={e => setFormData(prev => ({...prev, stumpGrindingPrice: parseFloat(e.target.value) || 0 }))} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="number" name="stumpGrindingPrice" id="stumpGrindingPrice" value={formData.stumpGrindingPrice} onChange={e => setFormData(prev => ({...prev, stumpGrindingPrice: e.target.value }))} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" placeholder=" " />
                     </div>
                     
                     <div className="col-span-full">
@@ -573,11 +583,11 @@ const JobForm: React.FC<{
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="estimatedHours" className="block text-sm font-medium leading-6 text-gray-300">Estimated Hours</label>
-                        <input type="number" name="estimatedHours" id="estimatedHours" value={formData.estimatedHours} onChange={e => setFormData(prev => ({...prev, estimatedHours: parseFloat(e.target.value) || 0 }))} min="0" step="0.5" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="number" name="estimatedHours" id="estimatedHours" value={formData.estimatedHours} onChange={e => setFormData(prev => ({...prev, estimatedHours: e.target.value }))} min="0" step="0.5" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" placeholder=" " />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="equipmentNeeded" className="block text-sm font-medium leading-6 text-gray-300">Equipment Needed</label>
-                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={formData.equipmentNeeded.join(', ')} onChange={e => setFormData(prev => ({...prev, equipmentNeeded: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} placeholder="e.g. Chainsaw, Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={formData.equipmentNeeded.join(', ')} onChange={e => setFormData(prev => ({...prev, equipmentNeeded: parseEquipment(e.target.value) }))} placeholder="e.g. Chainsaw Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="col-span-full">
                         <label htmlFor="specialInstructions" className="block text-sm font-medium leading-6 text-gray-300">Special Instructions / Notes</label>

@@ -39,3 +39,33 @@ export const formatState = (value: string): string => {
 export const parsePhone = (formatted: string): string => {
   return formatted.replace(/\D/g, '');
 };
+
+// Parse equipment input - split by comma and/or spaces
+export const parseEquipment = (input: string): string[] => {
+  return input
+    .split(/[,\s]+/)
+    .map(item => item.trim())
+    .filter(item => item.length > 0);
+};
+
+// Lookup city and state from zip code (basic US database)
+export const lookupZipCode = (zip: string): { city: string; state: string } | null => {
+  const cleaned = zip.replace(/\D/g, '').slice(0, 5);
+  if (cleaned.length !== 5) return null;
+
+  // Basic US zip code database - most common prefixes
+  const zipDatabase: { [key: string]: { city: string; state: string } } = {
+    '10001': { city: 'New York', state: 'NY' },
+    '10002': { city: 'New York', state: 'NY' },
+    '10003': { city: 'New York', state: 'NY' },
+    '90001': { city: 'Los Angeles', state: 'CA' },
+    '90002': { city: 'Los Angeles', state: 'CA' },
+    '60601': { city: 'Chicago', state: 'IL' },
+    '77001': { city: 'Houston', state: 'TX' },
+    '75201': { city: 'Dallas', state: 'TX' },
+    '85001': { city: 'Phoenix', state: 'AZ' },
+    '19101': { city: 'Philadelphia', state: 'PA' },
+  };
+
+  return zipDatabase[cleaned] || null;
+};

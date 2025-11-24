@@ -60,8 +60,8 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
     paymentTerms: 'Net 30',
     termsAndConditions: '',
     internalNotes: '',
-    taxRate: '0',
-    discountPercentage: '0',
+    taxRate: '',
+    discountPercentage: '',
     validUntil: '',
   });
 
@@ -106,8 +106,8 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
         paymentTerms: quote.paymentTerms || 'Net 30',
         termsAndConditions: quote.termsAndConditions || '',
         internalNotes: quote.internalNotes || '',
-        taxRate: quote.taxRate ? quote.taxRate.toString() : '0',
-        discountPercentage: quote.discountPercentage ? quote.discountPercentage.toString() : '0',
+        taxRate: quote.taxRate ? quote.taxRate.toString() : '',
+        discountPercentage: quote.discountPercentage ? quote.discountPercentage.toString() : '',
         validUntil: quote.validUntil || '',
       });
       setLineItems(quote.lineItems && quote.lineItems.length > 0 ? quote.lineItems : [{ description: '', price: 0, selected: true }]);
@@ -123,8 +123,8 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
         paymentTerms: 'Net 30',
         termsAndConditions: '',
         internalNotes: '',
-        taxRate: '0',
-        discountPercentage: '0',
+        taxRate: '',
+        discountPercentage: '',
         validUntil: '',
       });
       
