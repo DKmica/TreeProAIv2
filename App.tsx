@@ -1,254 +1,198 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import CRM from './pages/CRM';
-import ClientDetail from './pages/ClientDetail';
-import QuoteDetail from './pages/QuoteDetail';
-import Jobs from './pages/Jobs';
-import JobTemplates from './pages/JobTemplates';
-import FormTemplates from './pages/FormTemplates';
-import Invoices from './pages/Invoices';
-import Calendar from './pages/Calendar';
-import Crews from './pages/Crews';
-import TimeTracking from './pages/TimeTracking';
-import Employees from './pages/Employees';
-import Equipment from './pages/Equipment';
-import Marketing from './pages/Marketing';
-import AICore from './pages/AICore';
-import AITreeEstimator from './pages/AITreeEstimator';
-import EstimateFeedbackAnalytics from './pages/EstimateFeedbackAnalytics';
-import ChatPage from './pages/Chat';
-import CrewLayout from './components/CrewLayout';
-import CrewDashboard from './pages/crew/CrewDashboard';
-import CrewJobDetail from './pages/crew/CrewJobDetail';
-import CustomerPortalLayout from './components/CustomerPortalLayout';
-import QuotePortal from './pages/portal/QuotePortal';
-import InvoicePortal from './pages/portal/InvoicePortal';
-import { Customer, Client, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
-import Profitability from './pages/Profitability';
-import EquipmentDetail from './pages/EquipmentDetail';
-import JobStatusPortal from './pages/portal/JobStatusPortal';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
-import ProtectedRoute from './components/ProtectedRoute';
-import TemplateViewer from './pages/TemplateViewer';
-import Payroll from './pages/Payroll';
-import * as api from './services/apiService';
-import SpinnerIcon from './components/icons/SpinnerIcon';
-import { aiCore } from './services/gemini/aiCore';
+import { exceptionQueueService } from '../services/exceptionQueueService';
+import ExclamationTriangleIcon from '../components/icons/ExclamationTriangleIcon';
 
-const App: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [equipment, setEquipment] = useState<EquipmentType[]>([]);
+interface Exception {
+  id: string;
+  exception_type: string;
+  entity_id: string;
+  priority: string;
+  quote_number?: string;
+  job_number?: string;
+  invoice_number?: string;
+  customer_name: string;
+  status: string;
+  days_overdue?: number;
+  amount_due?: number;
+  created_at: string;
+}
+
+interface ExceptionQueueSummary {
+  totalExceptions: number;
+  criticalCount: number;
+  highCount: number;
+}
+
+const ExceptionQueue: React.FC = () => {
+  const [exceptions, setExceptions] = useState<Exception[]>([]);
+  const [summary, setSummary] = useState<ExceptionQueueSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAiCoreInitialized, setIsAiCoreInitialized] = useState(false);
-
+  const [filter, setFilter] = useState<'all' | 'pending_quotes' | 'overdue_invoices' | 'missing_forms' | 'follow_ups'>('all');
 
   useEffect(() => {
-    const fetchData = async () => {
-      console.log("🚀 Starting data fetch from backend...");
-      try {
-        const [
-          clientsData,
-          leadsData,
-          quotesData,
-          jobsData,
-          invoicesData,
-          employeesData,
-          equipmentData
-        ] = await Promise.all([
-          api.clientService.getAll().catch(() => []),
-          api.leadService.getAll().catch(() => []),
-          api.quoteService.getAll().catch(() => []),
-          api.jobService.getAll().catch(() => []),
-          api.invoiceService.getAll().catch(() => []),
-          api.employeeService.getAll().catch(() => []),
-          api.equipmentService.getAll().catch(() => []),
-        ]);
-
-        console.log("✅ Data fetched successfully");
-        setClients(clientsData);
-        setLeads(leadsData);
-        setQuotes(quotesData);
-        setJobs(jobsData);
-        setInvoices(invoicesData);
-        setEmployees(employeesData);
-        setEquipment(equipmentData);
-
-        try {
-          const [
-            payrollRecords,
-            timeEntries,
-            payPeriods,
-            companyProfile
-          ] = await Promise.all([
-            api.payrollRecordService.getAll(),
-            api.timeEntryService.getAll(),
-            api.payPeriodService.getAll(),
-            api.companyProfileService.get().catch(() => null)
-          ]);
-
-          await aiCore.initialize({
-            clients: clientsData,
-            leads: leadsData,
-            quotes: quotesData,
-            jobs: jobsData,
-            invoices: invoicesData,
-            employees: employeesData,
-            equipment: equipmentData,
-            payrollRecords,
-            timeEntries,
-            payPeriods,
-            companyProfile,
-            lastUpdated: new Date()
-          });
-          setIsAiCoreInitialized(true);
-        } catch (aiError) {
-          console.error("❌ Failed to initialize AI Core:", aiError);
-          setIsAiCoreInitialized(true);
-        }
-      } catch (e: any) {
-        console.error("❌ Failed to fetch initial data:", e);
-        setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the replit.md documentation. Error: ${e.message}`);
-      } finally {
-        console.log("⏹️ Fetch complete, setting isLoading to false");
-        setIsLoading(false);
-      }
-    };
-    fetchData();
+    fetchExceptions();
   }, []);
 
-  useEffect(() => {
-    if (!isAiCoreInitialized) {
-      return;
+  const fetchExceptions = async () => {
+    try {
+      setIsLoading(true);
+      const data = await exceptionQueueService.getAll();
+      
+      const allExceptions = [
+        ...data.pendingQuotes,
+        ...data.overdueInvoices,
+        ...data.missingForms,
+        ...data.followUps,
+      ];
+      
+      setExceptions(allExceptions);
+      setSummary(data.summary);
+    } catch (error) {
+      console.error('Failed to fetch exceptions:', error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const refreshAiContext = async () => {
-      console.log("🔄 AI Core context is stale, refreshing...");
-      try {
-        const [
-          payrollRecords,
-          timeEntries,
-          payPeriods,
-          companyProfile
-        ] = await Promise.all([
-          api.payrollRecordService.getAll(),
-          api.timeEntryService.getAll(),
-          api.payPeriodService.getAll(),
-          api.companyProfileService.get().catch(() => null)
-        ]);
-
-        await aiCore.refresh({
-          clients,
-          leads,
-          quotes,
-          jobs,
-          invoices,
-          employees,
-          equipment,
-          payrollRecords,
-          timeEntries,
-          payPeriods,
-          companyProfile,
-          lastUpdated: new Date()
-        });
-      } catch (err) {
-        console.error("❌ Failed to refresh AI Core context:", err);
+  const handleResolve = async (exceptionId: string) => {
+    try {
+      await exceptionQueueService.resolve(exceptionId);
+      setExceptions(exceptions.filter(e => e.id !== exceptionId));
+      if (summary) {
+        setSummary({ ...summary, totalExceptions: Math.max(0, summary.totalExceptions - 1) });
       }
-    };
+    } catch (error) {
+      console.error('Failed to resolve exception:', error);
+    }
+  };
 
-    refreshAiContext();
+  const filteredExceptions = exceptions.filter(e => {
+    if (filter === 'all') return true;
+    return e.exception_type.replace('_', ' ') === filter.replace('_', ' ');
+  });
 
-  }, [isAiCoreInitialized, clients, leads, quotes, jobs, invoices, employees, equipment]);
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'critical':
+        return 'bg-red-600/20 text-red-400 border-red-600/30';
+      case 'high':
+        return 'bg-orange-600/20 text-orange-400 border-orange-600/30';
+      case 'medium':
+        return 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30';
+      default:
+        return 'bg-blue-600/20 text-blue-400 border-blue-600/30';
+    }
+  };
 
-  const appData = { clients, leads, quotes, jobs, invoices, employees, equipment };
-  const appSetters = { setClients, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
-  const appState = { data: appData, setters: appSetters };
+  const getExceptionDescription = (exception: Exception) => {
+    switch (exception.exception_type) {
+      case 'quote_pending_approval':
+        return `Quote ${exception.quote_number} awaiting approval`;
+      case 'invoice_overdue':
+        return `Invoice ${exception.invoice_number} is ${exception.days_overdue} days overdue (${exception.amount_due ? `$${exception.amount_due}` : 'amount pending'})`;
+      case 'job_missing_forms':
+        return `Job ${exception.job_number} missing required forms`;
+      case 'quote_follow_up':
+        return `Follow-up due for quote ${exception.quote_number}`;
+      default:
+        return 'Exception';
+    }
+  };
 
-  if (isLoading || !isAiCoreInitialized) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-brand-gray-50">
-        <div className="text-center">
-            <SpinnerIcon className="h-12 w-12 text-brand-green-600 mx-auto" />
-            <h1 className="mt-4 text-xl font-semibold text-brand-gray-700">
-              {isLoading ? 'Loading TreePro AI...' : 'Initializing AI Core...'}
-            </h1>
-        </div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-brand-cyan-400">Loading exceptions...</div>
       </div>
     );
   }
-  
-  if (error) {
-     return (
-        <div className="flex items-center justify-center h-screen bg-red-50 p-8">
-            <div className="text-center max-w-2xl">
-                 <h1 className="text-2xl font-bold text-red-800">Connection Error</h1>
-                 <p className="mt-4 text-red-700 whitespace-pre-wrap">{error}</p>
-                 <p className="mt-4 text-sm text-brand-gray-600">Please make sure you have followed the instructions in the `replit.md` file to start both the frontend and backend servers.</p>
-            </div>
-        </div>
-     );
-  }
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
-      
-      {/* Main App Protected Routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<Layout appState={appState} isAiCoreInitialized={isAiCoreInitialized} />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={clients} leads={leads} quotes={quotes} />} />
-          <Route path="/crm" element={<CRM />} />
-          <Route path="/crm/clients/:id" element={<ClientDetail />} />
-          <Route path="/quotes/:id" element={<QuoteDetail />} />
-          <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
-          <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
-          <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
-          <Route path="/chat" element={<ChatPage isAiCoreInitialized={isAiCoreInitialized} />} />
-          <Route path="/leads" element={<Navigate to="/crm?tab=leads" replace />} />
-          <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
-          <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
-          <Route path="/job-templates" element={<JobTemplates />} />
-          <Route path="/forms" element={<FormTemplates />} />
-          <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
-          <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
-          <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={clients} />} />
-          <Route path="/crews" element={<Crews />} />
-          <Route path="/time-tracking" element={<TimeTracking />} />
-          <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
-          <Route path="/payroll" element={<Payroll />} />
-          <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
-          <Route path="/equipment/:equipmentId" element={<EquipmentDetail equipment={equipment} setEquipment={setEquipment} />} />
-          <Route path="/marketing" element={<Marketing />} />
-          <Route path="/profitability" element={<Profitability jobs={jobs} quotes={quotes} employees={employees} />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/template/:templateId" element={<TemplateViewer />} />
-        </Route>
-      </Route>
-      
-      {/* Crew App Layout */}
-      <Route path="/crew" element={<CrewLayout />}>
-          <Route index element={<CrewDashboard jobs={jobs} customers={clients} />} />
-          <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} />} />
-      </Route>
+    <div className="min-h-screen bg-brand-gray-950 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <ExclamationTriangleIcon className="w-8 h-8 text-orange-500" />
+            <h1 className="text-4xl font-bold text-white">Exception Queue</h1>
+          </div>
+          <p className="text-brand-gray-400">Manage pending approvals, overdue invoices, and follow-ups</p>
+        </div>
 
-      {/* Customer Portal Layout */}
-      <Route path="/portal" element={<CustomerPortalLayout />}>
-        <Route path="quote/:quoteId" element={<QuotePortal quotes={quotes} setQuotes={setQuotes} />} />
-        <Route path="invoice/:invoiceId" element={<InvoicePortal invoices={invoices} setInvoices={setInvoices} />} />
-        <Route path="job/:jobId" element={<JobStatusPortal jobs={jobs} quotes={quotes} employees={employees} setJobs={setJobs} />} />
-      </Route>
-    </Routes>
+        {/* Summary Cards */}
+        {summary && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-brand-gray-900 border border-brand-gray-800 rounded-lg p-6">
+              <p className="text-brand-gray-400 text-sm font-semibold uppercase">Total Exceptions</p>
+              <p className="text-3xl font-bold text-white mt-2">{summary.totalExceptions}</p>
+            </div>
+            <div className="bg-red-600/10 border border-red-600/30 rounded-lg p-6">
+              <p className="text-red-400 text-sm font-semibold uppercase">Critical</p>
+              <p className="text-3xl font-bold text-red-400 mt-2">{summary.criticalCount}</p>
+            </div>
+            <div className="bg-orange-600/10 border border-orange-600/30 rounded-lg p-6">
+              <p className="text-orange-400 text-sm font-semibold uppercase">High Priority</p>
+              <p className="text-3xl font-bold text-orange-400 mt-2">{summary.highCount}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Filter Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {['all', 'pending_quotes', 'overdue_invoices', 'missing_forms', 'follow_ups'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f as any)}
+              className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                filter === f
+                  ? 'bg-brand-cyan-600 text-white'
+                  : 'bg-brand-gray-800 text-brand-gray-400 hover:bg-brand-gray-700'
+              }`}
+            >
+              {f.replace(/_/g, ' ').toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        {/* Exception List */}
+        <div className="space-y-4">
+          {filteredExceptions.length === 0 ? (
+            <div className="bg-brand-gray-900 border border-brand-gray-800 rounded-lg p-8 text-center">
+              <p className="text-brand-gray-400">No exceptions in this category</p>
+            </div>
+          ) : (
+            filteredExceptions.map((exception) => (
+              <div
+                key={exception.id}
+                className="bg-brand-gray-900 border border-brand-gray-800 rounded-lg p-6 hover:border-brand-gray-700 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${getPriorityColor(exception.priority)}`}>
+                        {exception.priority.toUpperCase()}
+                      </span>
+                      <span className="text-sm text-brand-gray-400">
+                        {new Date(exception.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-white font-semibold">{getExceptionDescription(exception)}</p>
+                    <p className="text-brand-gray-400 text-sm mt-1">{exception.customer_name}</p>
+                  </div>
+                  <button
+                    onClick={() => handleResolve(exception.id)}
+                    className="ml-4 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Resolve
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default App;
+export default ExceptionQueue;
