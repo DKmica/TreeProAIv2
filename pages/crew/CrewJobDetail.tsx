@@ -3,15 +3,15 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Job, Quote, Customer, JobHazardAnalysis } from '../../types';
-import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
-import MapPinIcon from '../components/icons/MapPinIcon';
-import ClockIcon from '../components/icons/ClockIcon';
-import CameraIcon from '../components/icons/CameraIcon';
-import CheckCircleIcon from '../components/icons/CheckCircleIcon';
-import SpinnerIcon from '../components/icons/SpinnerIcon';
+import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
+import MapPinIcon from '../../components/icons/MapPinIcon';
+import ClockIcon from '../../components/icons/ClockIcon';
+import CameraIcon from '../../components/icons/CameraIcon';
+import CheckCircleIcon from '../../components/icons/CheckCircleIcon';
+import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import { generateJobHazardAnalysis } from '../../services/geminiService';
-import ExclamationTriangleIcon from '../components/icons/ExclamationTriangleIcon';
-import ShieldCheckIcon from '../components/icons/ShieldCheckIcon';
+import ExclamationTriangleIcon from '../../components/icons/ExclamationTriangleIcon';
+import ShieldCheckIcon from '../../components/icons/ShieldCheckIcon';
 
 interface CrewJobDetailProps {
   jobs: Job[];

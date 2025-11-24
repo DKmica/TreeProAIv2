@@ -2,8 +2,8 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Customer, Job } from '../../types';
-import JobIcon from '../components/icons/JobIcon';
-import SpinnerIcon from '../components/icons/SpinnerIcon';
+import JobIcon from '../../components/icons/JobIcon';
+import SpinnerIcon from '../../components/icons/SpinnerIcon';
 
 interface CrewDashboardProps {
   jobs: Job[];

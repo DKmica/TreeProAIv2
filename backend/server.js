@@ -2321,7 +2321,7 @@ const snakeToCamel = (obj) => {
     let camelKey;
     if (key === 'zip') {
       camelKey = 'zipCode';
-    } else if (key === 'billing_zip') {
+    } else if (key === 'billing_zip_code') {
       camelKey = 'billingZipCode';
     } else {
       camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -2344,7 +2344,7 @@ const camelToSnake = (obj) => {
     if (key === 'zipCode') {
       snakeKey = 'zip';
     } else if (key === 'billingZipCode') {
-      snakeKey = 'billing_zip';
+      snakeKey = 'billing_zip_code';
     } else if (key === 'email' || key === 'phone' || key === 'role') {
       // Skip email/phone/role for contacts - these should be in channels or mapped differently
       // 'role' should map to 'job_title' or 'contact_type' depending on context
@@ -2454,7 +2454,7 @@ const ensureClientAssociation = async ({ clientId, customerDetails = {}, default
     billing_address_line2: normalizeText(customerDetails.addressLine2),
     billing_city: normalizeText(customerDetails.city),
     billing_state: normalizeText(customerDetails.state),
-    billing_zip_code: normalizeText(customerDetails.zipCode),
+    billing_zip_code_code: normalizeText(customerDetails.zipCode),
     billing_country: normalizeText(customerDetails.country) || 'USA'
   };
 
@@ -2530,7 +2530,7 @@ const ensureClientAssociation = async ({ clientId, customerDetails = {}, default
     billing_address_line2: normalizedDetails.billing_address_line2,
     billing_city: normalizedDetails.billing_city,
     billing_state: normalizedDetails.billing_state,
-    billing_zip_code: normalizedDetails.billing_zip_code,
+    billing_zip_code_code: normalizedDetails.billing_zip_code_code,
     billing_country: normalizedDetails.billing_country,
     status: 'active',
     client_type: defaultClientType,
