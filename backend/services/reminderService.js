@@ -64,9 +64,45 @@ const cancelInvoiceReminders = (invoiceId) => {
   });
 };
 
+const runDunningCheck = async () => {
+  const { rows: invoices } = await db.query(`
+    SELECT id, customer_name, status, due_date, amount_due
+    FROM invoices
+    WHERE status NOT IN ('Paid', 'Void')
+      AND due_date IS NOT NULL
+  `);
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  for (const invoice of invoices) {
+    const dueDate = new Date(invoice.due_date);
+    if (Number.isNaN(dueDate.getTime())) continue;
+
+    const daysPastDue = Math.floor((today.getTime() - dueDate.getTime()) / ONE_DAY_MS);
+
+    if (daysPastDue > 0 && invoice.status !== 'Overdue') {
+      await db.query(
+        `UPDATE invoices SET status = 'Overdue', updated_at = NOW() WHERE id = $1`,
+        [invoice.id]
+      );
+      console.log(
+        `📣 [Dunning] Invoice ${invoice.id} for ${invoice.customer_name || 'client'} marked overdue (${daysPastDue} days past due)`
+      );
+    }
+
+    if (daysPastDue >= 14) {
+      console.log(
+        `⚠️ [Dunning] Invoice ${invoice.id} is ${daysPastDue} days overdue. Consider escalating collection efforts.`
+      );
+    }
+  }
+};
+
 module.exports = {
   scheduleInvoiceReminders,
   hydrateReminderSchedule,
   cancelInvoiceReminders,
+  runDunningCheck,
   ONE_DAY_MS,
 };

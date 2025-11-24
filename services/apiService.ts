@@ -113,6 +113,8 @@ export const invoiceService = {
   remove: (id: string): Promise<void> => apiFetch<void>(`invoices/${id}`, { method: 'DELETE' }),
   recordPayment: (invoiceId: string, paymentData: { amount: number; paymentDate: string; paymentMethod: string; referenceNumber?: string; notes?: string }): Promise<{ success: boolean; payment: any; invoice: Invoice }> =>
     apiFetch(`invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(paymentData) }),
+  generatePaymentLink: (invoiceId: string): Promise<{ success: boolean; paymentLink: string }> =>
+    apiFetch(`invoices/${invoiceId}/payment-link`, { method: 'POST' }),
 };
 export const employeeService = createApiService<Employee>('employees');
 export const equipmentService = createApiService<Equipment>('equipment');

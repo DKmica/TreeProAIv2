@@ -180,6 +180,16 @@ app.post(
             }
           }
         }
+      } else if (event.type === 'payment_intent.payment_failed') {
+        const intent = event.data.object;
+        const invoiceId = intent.metadata?.invoiceId;
+        if (invoiceId) {
+          await db.query(
+            `UPDATE invoices SET status = 'Sent', updated_at = NOW() WHERE id = $1 AND status != 'Paid'`,
+            [invoiceId]
+          );
+          console.log(`⚠️ Payment failed for invoice ${invoiceId}. Status reset to Sent.`);
+        }
       } else {
         // Log other event types for debugging (but don't error)
         console.log(`ℹ️ Stripe event ${event.type} received but no specific handler implemented`);
@@ -311,6 +321,7 @@ const scheduleFinancialReminders = () => {
   const run = async () => {
     try {
       await reminderService.hydrateReminderSchedule();
+      await reminderService.runDunningCheck();
 
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -9635,6 +9646,65 @@ apiRouter.post('/invoices/:id/create-checkout-session', async (req, res) => {
         url: session.url
       }
     });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/invoices/:id/payment-link - Generate a reusable payment link for the invoice
+apiRouter.post('/invoices/:id/payment-link', async (req, res) => {
+  try {
+    const { id: invoiceId } = req.params;
+
+    const baseUrl = process.env.PUBLIC_BASE_URL || process.env.VERCEL_URL || process.env.REPLIT_APP_URL || `${req.protocol}://${req.get('host')}`;
+    const successUrl = `${baseUrl}/invoice/${invoiceId}?status=paid`;
+    const cancelUrl = `${baseUrl}/invoice/${invoiceId}`;
+
+    const invoiceQuery = `
+      SELECT i.*, c.id as client_id, c.primary_email, c.stripe_customer_id
+      FROM invoices i
+      LEFT JOIN clients c ON i.client_id = c.id
+      WHERE i.id = $1
+    `;
+
+    const { rows: invoiceRows } = await db.query(invoiceQuery, [invoiceId]);
+
+    if (invoiceRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Invoice not found' });
+    }
+
+    const invoice = invoiceRows[0];
+
+    if (invoice.status === 'Paid') {
+      return res.status(400).json({ success: false, error: 'Invoice is already paid' });
+    }
+
+    const amountDue = parseFloat(invoice.amount_due || invoice.grand_total || invoice.amount || 0);
+
+    if (amountDue <= 0) {
+      return res.status(400).json({ success: false, error: 'No amount due on this invoice' });
+    }
+
+    if (!stripeInitialized) {
+      const fallbackLink = `${baseUrl}/invoice/${invoiceId}`;
+      return res.json({
+        success: true,
+        paymentLink: fallbackLink,
+        message: 'Stripe not configured; using portal link instead',
+      });
+    }
+
+    const { url: paymentLink } = await stripeService.createCheckoutSession(
+      invoice.stripe_customer_id,
+      invoiceId,
+      amountDue,
+      invoice.invoice_number || invoiceId,
+      invoice.customer_email || invoice.primary_email,
+      successUrl,
+      cancelUrl
+    );
+
+    res.json({ success: true, paymentLink });
   } catch (err) {
     handleError(res, err);
   }
