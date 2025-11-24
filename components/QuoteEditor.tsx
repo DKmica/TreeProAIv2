@@ -179,6 +179,11 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
     try {
       const propertiesData = await clientService.getProperties(clientId);
       setProperties(propertiesData);
+      setFormData(prev => {
+        if (prev.propertyId || propertiesData.length === 0) return prev;
+        const primaryProperty = propertiesData.find(property => property.isPrimary) || propertiesData[0];
+        return primaryProperty ? { ...prev, propertyId: primaryProperty.id } : prev;
+      });
     } catch (err) {
       console.error('Error fetching properties:', err);
       setProperties([]);

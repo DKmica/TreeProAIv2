@@ -6,6 +6,7 @@ import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
 import AssociationModal from '../components/AssociationModal';
+import StatusBadge from '../components/StatusBadge';
 
 const QuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,23 +49,6 @@ const QuoteDetail: React.FC = () => {
 
     fetchQuoteData();
   }, [id]);
-
-  const getQuoteStatusColor = (status: Quote['status']) => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-      case 'Sent':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'Accepted':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'Declined':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'Converted':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -295,9 +279,7 @@ const QuoteDetail: React.FC = () => {
               <div className="flex items-center gap-3">
                 <QuoteIcon className="h-8 w-8 text-brand-cyan-600" />
                 <h1 className="text-3xl font-bold text-brand-gray-900">Quote {quote.quoteNumber || `#${quote.id.slice(0, 8)}`}</h1>
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${getQuoteStatusColor(quote.status)}`}>
-                  {quote.status}
-                </span>
+                <StatusBadge status={quote.status} size="sm" />
               </div>
               <div className="mt-2 flex items-center gap-4 text-sm text-brand-gray-600">
                 <div className="flex items-center">

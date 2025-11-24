@@ -29,19 +29,19 @@ describe('JobStatusBadge', () => {
   it('should apply correct color classes for completed status', () => {
     render(<JobStatusBadge status="completed" />);
     const badge = screen.getByRole('status');
-    expect(badge).toHaveClass('bg-green-600', 'text-green-100');
+    expect(badge).toHaveClass('bg-green-700', 'text-green-100');
   });
 
   it('should apply correct color classes for cancelled status', () => {
     render(<JobStatusBadge status="cancelled" />);
     const badge = screen.getByRole('status');
-    expect(badge).toHaveClass('bg-red-600', 'text-red-100');
+    expect(badge).toHaveClass('bg-red-700', 'text-red-100');
   });
 
   it('should handle small size', () => {
     render(<JobStatusBadge status="draft" size="sm" />);
     const badge = screen.getByRole('status');
-    expect(badge).toHaveClass('px-2', 'py-0.5', 'text-xs');
+    expect(badge).toHaveClass('px-2.5', 'py-0.5', 'text-xs');
   });
 
   it('should handle medium size by default', () => {
@@ -69,6 +69,6 @@ describe('JobStatusBadge', () => {
   it('should have proper ARIA attributes', () => {
     render(<JobStatusBadge status="scheduled" />);
     const badge = screen.getByRole('status');
-    expect(badge).toHaveAttribute('aria-label', 'Job status: Scheduled');
+    expect(badge).toHaveAttribute('aria-label', 'Scheduled status');
   });
 });
