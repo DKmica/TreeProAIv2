@@ -1,0 +1,58 @@
+const snakeToCamel = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(snakeToCamel);
+  if (typeof obj !== 'object') return obj;
+
+  const camelObj = {};
+  for (const [key, value] of Object.entries(obj)) {
+    let camelKey;
+    if (key === 'zip') {
+      camelKey = 'zipCode';
+    } else if (key === 'billing_zip') {
+      camelKey = 'billingZipCode';
+    } else {
+      camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    }
+    camelObj[camelKey] = (value && typeof value === 'object') ? snakeToCamel(value) : value;
+  }
+  return camelObj;
+};
+
+const camelToSnake = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(camelToSnake);
+  if (typeof obj !== 'object') return obj;
+
+  const snakeObj = {};
+  for (const [key, value] of Object.entries(obj)) {
+    let snakeKey;
+    if (key === 'zipCode') {
+      snakeKey = 'zip';
+    } else if (key === 'billingZipCode') {
+      snakeKey = 'billing_zip';
+    } else if (key === 'email' || key === 'phone' || key === 'role') {
+      continue;
+    } else {
+      snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    }
+    snakeObj[snakeKey] = (value && typeof value === 'object') ? camelToSnake(value) : value;
+  }
+  return snakeObj;
+};
+
+const sanitizeUUID = (value) => {
+  if (!value || value === 'undefined' || value === 'null' || value === '') {
+    return null;
+  }
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(value)) {
+    return null;
+  }
+  return value;
+};
+
+module.exports = {
+  camelToSnake,
+  snakeToCamel,
+  sanitizeUUID,
+};
