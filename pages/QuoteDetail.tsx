@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Quote, Client } from '../types';
-import { quoteService, clientService, jobService, invoiceService } from '../services/apiService';
+import { quoteService, clientService, invoiceService, getApiErrorMessage } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
@@ -101,19 +101,26 @@ const QuoteDetail: React.FC = () => {
 
   const executeJobConversion = async (quoteToConvert: Quote) => {
     try {
-      const newJob = await jobService.create({
-        quoteId: quoteToConvert.id,
-        clientId: quoteToConvert.clientId,
-        propertyId: quoteToConvert.propertyId,
-        customerName: clientName,
-        status: 'Unscheduled',
-        assignedCrew: [],
-        jobNumber: quoteToConvert.quoteNumber ? `JOB-${quoteToConvert.quoteNumber}` : undefined,
-        jobLocation: propertyAddress,
-      });
+      const newJob = await quoteService.convertToJob(quoteToConvert.id);
+      const updatedQuote = await quoteService.getById(quoteToConvert.id);
+      setQuote(updatedQuote);
+
+      if (updatedQuote.clientId) {
+        try {
+          const updatedClient = await clientService.getById(updatedQuote.clientId);
+          setClient(updatedClient);
+        } catch (clientErr) {
+          console.error('Error refreshing client data after conversion:', clientErr);
+        }
+      }
+
       setLinkageMessages([`Created job ${newJob.jobNumber || newJob.id} from this quote.`]);
     } catch (err: any) {
-      alert(err.message || 'Failed to convert quote to job');
+      const message = getApiErrorMessage(err, 'Failed to convert quote to job');
+      setLinkageMessages([`Conversion failed: ${message}`]);
+      alert(message);
+    } finally {
+      setPendingConversion(null);
     }
   };
 
