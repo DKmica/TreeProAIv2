@@ -49,7 +49,7 @@ router.get('/leads', async (req, res) => {
     const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
     const baseQuery = `
       FROM leads l
-      LEFT JOIN clients c ON l.client_id = c.id
+      LEFT JOIN clients c ON l.client_id_new = c.id
       ${whereClause}
     `;
 
@@ -185,7 +185,7 @@ router.get('/leads/:id', async (req, res) => {
              c.primary_phone as customer_phone,
              c.billing_address_line1 as customer_address
       FROM leads l
-      LEFT JOIN clients c ON l.client_id = c.id
+      LEFT JOIN clients c ON l.client_id_new = c.id
       WHERE l.id = $1
     `, [req.params.id]);
 

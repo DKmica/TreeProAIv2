@@ -450,7 +450,7 @@ const AUTOMATED_TRIGGERS = {
         if (job.client_id) {
           const { rows: clients } = await db.query(
             `SELECT primary_email, primary_phone, billing_address_line1, billing_address_line2, 
-                    billing_city, billing_state, billing_zip 
+                    billing_city, billing_state, billing_zip_code 
              FROM clients WHERE id = $1`,
             [job.client_id]
           );
@@ -466,7 +466,7 @@ const AUTOMATED_TRIGGERS = {
               client.billing_address_line2,
               client.billing_city,
               client.billing_state,
-              client.billing_zip
+              client.billing_zip_code
             ].filter(Boolean);
             clientAddress = addressParts.join(', ');
             

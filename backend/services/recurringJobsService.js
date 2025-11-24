@@ -331,10 +331,10 @@ const convertInstanceToJob = async (seriesId, instanceId) => {
 
   let jobLocation = null;
   if (series.property_id) {
-    const propertyResult = await db.query('SELECT address_line1, city, state, zip FROM properties WHERE id = $1', [series.property_id]);
+    const propertyResult = await db.query('SELECT address_line1, city, state, zip_code FROM properties WHERE id = $1', [series.property_id]);
     if (propertyResult.rows.length) {
       const property = propertyResult.rows[0];
-      jobLocation = `${property.address_line1}, ${property.city}, ${property.state} ${property.zip}`;
+      jobLocation = `${property.address_line1}, ${property.city}, ${property.state} ${property.zip_code}`;
     }
   }
   if (!jobLocation && clientRow?.billing_address_line1) {

@@ -106,7 +106,7 @@ function seedData() {
       billing_address_line1: '123 Oak St',
       billing_city: 'Los Angeles',
       billing_state: 'CA',
-      billing_zip: '90001',
+      billing_zip_code: '90001',
       billing_country: 'USA',
       notes: 'Prefers morning appointments',
       internal_notes: 'High upsell potential',
@@ -133,7 +133,7 @@ function seedData() {
       billing_address_line1: '456 Pine Ave',
       billing_city: 'Pasadena',
       billing_state: 'CA',
-      billing_zip: '91101',
+      billing_zip_code: '91101',
       billing_country: 'USA',
       notes: 'Requires certificate of insurance on file',
       internal_notes: 'Handles AP through centralized office',
@@ -158,7 +158,7 @@ function seedData() {
       billing_address_line1: '789 Maple Dr',
       billing_city: 'Burbank',
       billing_state: 'CA',
-      billing_zip: '91501',
+      billing_zip_code: '91501',
       billing_country: 'USA',
       notes: 'Quarterly walkthroughs scheduled with facilities director',
       internal_notes: 'Prefers consolidated monthly invoicing',
@@ -179,7 +179,7 @@ function seedData() {
       address_line1: '123 Oak St',
       city: 'Los Angeles',
       state: 'CA',
-      zip: '90001',
+      zip_code: '90001',
       country: 'USA',
       lat: 34.0522,
       lon: -118.2437,
@@ -1086,7 +1086,7 @@ class InMemoryDatabase {
       };
     }
 
-    if (lower === 'select address_line1, city, state, zip from properties where id = $1') {
+    if (lower === 'select address_line1, city, state, zip_code from properties where id = $1') {
       const [id] = params;
       const row = this.selectById('properties', id);
       if (!row) {
@@ -1098,7 +1098,7 @@ class InMemoryDatabase {
             address_line1: row.address_line1 || null,
             city: row.city || null,
             state: row.state || null,
-            zip: row.zip || null,
+            zip_code: row.zip_code || null,
           },
         ],
         rowCount: 1,

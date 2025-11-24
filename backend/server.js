@@ -272,7 +272,7 @@ const reindexDocument = async (tableName, row) => {
                    c.billing_address_line1 as address, 
                    c.primary_phone as phone, 
                    c.primary_email as email
-            FROM leads l LEFT JOIN clients c ON l.client_id = c.id
+            FROM leads l LEFT JOIN clients c ON l.client_id_new = c.id
             WHERE l.id = $1
           `, [row.id]);
           if (leads.length) {

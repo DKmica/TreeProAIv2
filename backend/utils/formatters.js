@@ -6,9 +6,9 @@ const snakeToCamel = (obj) => {
   const camelObj = {};
   for (const [key, value] of Object.entries(obj)) {
     let camelKey;
-    if (key === 'zip') {
+    if (key === 'zip_code') {
       camelKey = 'zipCode';
-    } else if (key === 'billing_zip') {
+    } else if (key === 'billing_zip_code') {
       camelKey = 'billingZipCode';
     } else {
       camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -27,9 +27,9 @@ const camelToSnake = (obj) => {
   for (const [key, value] of Object.entries(obj)) {
     let snakeKey;
     if (key === 'zipCode') {
-      snakeKey = 'zip';
+      snakeKey = 'zip_code';
     } else if (key === 'billingZipCode') {
-      snakeKey = 'billing_zip';
+      snakeKey = 'billing_zip_code';
     } else if (key === 'email' || key === 'phone' || key === 'role') {
       continue;
     } else {
