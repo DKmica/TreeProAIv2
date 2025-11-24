@@ -1202,6 +1202,35 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                     </div>
                   </div>
 
+                  {(viewingJobDetail.quoteVersion || viewingJobDetail.quoteApprovalStatus || viewingJobDetail.quoteNumber) && (
+                    <div className="grid grid-cols-2 gap-6">
+                      {viewingJobDetail.quoteNumber && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Quote Number</label>
+                          <p className="text-white">{viewingJobDetail.quoteNumber}</p>
+                        </div>
+                      )}
+                      {viewingJobDetail.quoteVersion && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Quote Version</label>
+                          <p className="text-white">v{viewingJobDetail.quoteVersion}</p>
+                        </div>
+                      )}
+                      {viewingJobDetail.quoteApprovalStatus && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Approval Status</label>
+                          <p className="text-white capitalize">{viewingJobDetail.quoteApprovalStatus}</p>
+                        </div>
+                      )}
+                      {viewingJobDetail.quoteApprovedAt && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-1">Approved At</label>
+                          <p className="text-white">{new Date(viewingJobDetail.quoteApprovedAt).toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {viewingJobDetail.jobLocation && (
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>

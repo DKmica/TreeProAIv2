@@ -2,6 +2,83 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { generateJobNumber } = require('./numberService');
 
+const normalizeText = (value) => {
+  if (!value) return '';
+  return value.toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+};
+
+const calculateTemplateScore = (template, lineItems) => {
+  const normalizedTemplateName = normalizeText(template.name);
+  const normalizedCategory = normalizeText(template.category);
+  const templateLines = Array.isArray(template.line_items) ? template.line_items : [];
+
+  let score = 0;
+
+  if (normalizedTemplateName && lineItems.some(item => item.includes(normalizedTemplateName))) {
+    score += 3;
+  }
+
+  if (normalizedCategory && lineItems.some(item => item.includes(normalizedCategory))) {
+    score += 1;
+  }
+
+  templateLines.forEach(item => {
+    const description = normalizeText(item.description || item.item || '');
+    if (!description) return;
+    const match = lineItems.some(line => line.includes(description) || description.includes(line));
+    if (match) {
+      score += 2;
+    }
+  });
+
+  return score;
+};
+
+const matchTemplateForQuote = async (quote, client = db) => {
+  let rawLineItems = quote.line_items || [];
+
+  if (typeof rawLineItems === 'string') {
+    try {
+      rawLineItems = JSON.parse(rawLineItems);
+    } catch (error) {
+      rawLineItems = [];
+    }
+  }
+
+  const selectedLines = (rawLineItems || [])
+    .filter(item => item && item.selected !== false)
+    .map(item => normalizeText(item.description || item.tree || ''))
+    .filter(Boolean);
+
+  if (selectedLines.length === 0) {
+    return null;
+  }
+
+  const { rows: templates } = await client.query(
+    `SELECT id, name, category, default_duration_hours, default_crew_size, default_equipment_ids,
+            completion_checklist, jha_required, line_items
+     FROM job_templates
+     WHERE deleted_at IS NULL`
+  );
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  templates.forEach(template => {
+    const score = calculateTemplateScore(template, selectedLines);
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = template;
+    }
+  });
+
+  if (!bestMatch || bestScore === 0) {
+    return null;
+  }
+
+  return { template: bestMatch, score: bestScore };
+};
+
 const sanitizeUUID = (value) => {
   if (!value || typeof value !== 'string') return null;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -52,6 +129,16 @@ const createJobFromApprovedQuote = async (quoteId) => {
       };
     }
 
+    const templateMatch = await matchTemplateForQuote(quote, client);
+    const matchedTemplate = templateMatch?.template;
+
+    const equipmentNeeded = matchedTemplate?.default_equipment_ids
+      ? JSON.stringify(matchedTemplate.default_equipment_ids)
+      : null;
+    const completionChecklist = matchedTemplate?.completion_checklist
+      ? JSON.stringify(matchedTemplate.completion_checklist)
+      : null;
+
     const jobId = uuidv4();
     const jobNumber = await generateJobNumber();
 
@@ -59,9 +146,12 @@ const createJobFromApprovedQuote = async (quoteId) => {
       INSERT INTO jobs (
         id, client_id, property_id, quote_id, job_number, status,
         customer_name, job_location, special_instructions,
-        price, line_items, created_at
+        price, line_items, created_at,
+        equipment_needed, estimated_hours, required_crew_size, job_template_id,
+        completion_checklist, jha_required
       ) VALUES (
-        $1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, NOW()
+        $1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, NOW(),
+        $11, $12, $13, $14, $15, $16
       ) RETURNING *
     `;
 
@@ -75,7 +165,13 @@ const createJobFromApprovedQuote = async (quoteId) => {
       quote.job_location || null,
       quote.special_instructions || null,
       quote.grand_total || quote.price || 0,
-      quote.line_items || '[]'
+      quote.line_items || '[]',
+      equipmentNeeded,
+      matchedTemplate?.default_duration_hours || null,
+      matchedTemplate?.default_crew_size || null,
+      matchedTemplate?.id || null,
+      completionChecklist,
+      matchedTemplate?.jha_required || false
     ]);
 
     await client.query(
@@ -100,5 +196,6 @@ const createJobFromApprovedQuote = async (quoteId) => {
 };
 
 module.exports = {
-  createJobFromApprovedQuote
+  createJobFromApprovedQuote,
+  matchTemplateForQuote
 };

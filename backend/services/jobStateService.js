@@ -102,22 +102,43 @@ const VALIDATION_RULES = {
    */
   in_progress: async (job, db) => {
     const errors = [];
-    
+
     // JHA must be acknowledged if required
-    if (job.jha_required && !job.jha_acknowledged_at) {
-      errors.push('Job Hazard Analysis must be acknowledged before starting work');
+    if (job.jha_required) {
+      const hasJhaData = job.jha && Object.keys(job.jha || {}).length > 0;
+      if (!hasJhaData) {
+        errors.push('Job Hazard Analysis must be completed before starting work');
+      }
+      if (!job.jha_acknowledged_at) {
+        errors.push('Job Hazard Analysis must be acknowledged before starting work');
+      }
     }
-    
+
     // Job must be scheduled first
     if (!job.scheduled_date) {
       errors.push('Job must be scheduled before starting work');
     }
-    
+
     // Crew must be assigned
     if (!job.assigned_crew || job.assigned_crew.length === 0) {
       errors.push('Crew must be assigned before starting work');
     }
-    
+
+    // All attached job forms must be completed
+    const { rows: jobForms } = await db.query(
+      'SELECT status FROM job_forms WHERE job_id = $1',
+      [job.id]
+    );
+
+    if (jobForms.length > 0) {
+      const incompleteForms = jobForms.filter(form => form.status !== 'completed');
+      if (incompleteForms.length > 0) {
+        errors.push(
+          `All job forms must be completed before starting work (${incompleteForms.length} pending)`
+        );
+      }
+    }
+
     return { valid: errors.length === 0, errors };
   },
 

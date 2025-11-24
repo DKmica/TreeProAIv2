@@ -442,7 +442,9 @@ const useTemplate = async (templateId, jobData = {}) => {
       special_instructions: jobData.specialInstructions || jobData.special_instructions || template.special_instructions,
       quote_id: jobData.quoteId || jobData.quote_id || null,
       scheduled_date: jobData.scheduledDate || jobData.scheduled_date || null,
-      estimated_hours: template.default_duration_hours || null
+      estimated_hours: template.default_duration_hours || null,
+      required_crew_size: jobData.requiredCrewSize || jobData.required_crew_size || template.default_crew_size || null,
+      job_template_id: template.id
     };
     
     // Insert job
@@ -452,8 +454,9 @@ const useTemplate = async (templateId, jobData = {}) => {
         assigned_crew, equipment_needed,
         permit_required, deposit_required,
         completion_checklist, special_instructions,
-        quote_id, scheduled_date, estimated_hours
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        quote_id, scheduled_date, estimated_hours,
+        required_crew_size, job_template_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *`,
       [
         job.id,
@@ -468,7 +471,9 @@ const useTemplate = async (templateId, jobData = {}) => {
         job.special_instructions,
         job.quote_id,
         job.scheduled_date,
-        job.estimated_hours
+        job.estimated_hours,
+        job.required_crew_size,
+        job.job_template_id
       ]
     );
     
