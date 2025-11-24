@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Invoice, Quote } from '../types';
+import { Invoice, PaymentRecord, Quote } from '../types';
 import { invoiceService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import PlusCircleIcon from '../components/icons/PlusCircleIcon';
@@ -26,6 +26,8 @@ const Invoices: React.FC<InvoicesProps> = () => {
   const [isPaymentRecorderOpen, setIsPaymentRecorderOpen] = useState(false);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
+  const [paymentPreset, setPaymentPreset] = useState<number | undefined>();
+  const [isGeneratingLink, setIsGeneratingLink] = useState<string | null>(null);
 
   const fetchInvoices = async () => {
     try {
@@ -96,6 +98,21 @@ const Invoices: React.FC<InvoicesProps> = () => {
     }
   };
 
+  const getAgingColor = (bucket: string) => {
+    switch (bucket) {
+      case 'Current':
+        return 'bg-emerald-100 text-emerald-800';
+      case '1-30':
+        return 'bg-amber-100 text-amber-800';
+      case '31-60':
+        return 'bg-orange-100 text-orange-800';
+      case '61-90':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-rose-100 text-rose-800';
+    }
+  };
+
   const getStatusCounts = () => {
     return {
       All: invoices.length,
@@ -119,8 +136,9 @@ const Invoices: React.FC<InvoicesProps> = () => {
     setIsEditorOpen(true);
   };
 
-  const handleRecordPayment = (invoice: Invoice) => {
+  const handleRecordPayment = (invoice: Invoice, presetAmount?: number) => {
     setSelectedInvoice(invoice);
+    setPaymentPreset(presetAmount);
     setIsPaymentRecorderOpen(true);
   };
 
@@ -209,8 +227,68 @@ const Invoices: React.FC<InvoicesProps> = () => {
     });
   };
 
-  const handlePaymentRecorded = (updatedInvoice: Invoice) => {
-    setInvoices(prev => prev.map(inv => inv.id === updatedInvoice.id ? updatedInvoice : inv));
+  const handlePaymentRecorded = (updatedInvoice: Invoice, payment?: PaymentRecord) => {
+    setInvoices(prev => prev.map(inv => inv.id === updatedInvoice.id ? {
+      ...updatedInvoice,
+      payments: payment ? [payment, ...(inv.payments || [])] : updatedInvoice.payments || inv.payments,
+    } : inv));
+    setSelectedInvoice(prev => prev && prev.id === updatedInvoice.id ? {
+      ...updatedInvoice,
+      payments: payment ? [payment, ...(prev.payments || [])] : updatedInvoice.payments || prev.payments,
+    } : prev);
+  };
+
+  const getAgingBucket = (invoice: Invoice) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(invoice.dueDate);
+    if (Number.isNaN(dueDate.getTime())) return 'Current';
+
+    const diffDays = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return 'Current';
+    if (diffDays <= 30) return '1-30';
+    if (diffDays <= 60) return '31-60';
+    if (diffDays <= 90) return '61-90';
+    return '90+';
+  };
+
+  const agingSummary = useMemo(() => {
+    const summary = {
+      totalOutstanding: 0,
+      buckets: {
+        Current: 0,
+        '1-30': 0,
+        '31-60': 0,
+        '61-90': 0,
+        '90+': 0,
+      } as Record<string, number>,
+    };
+
+    invoices.forEach((invoice) => {
+      const due = Math.max(invoice.amountDue, 0);
+      summary.totalOutstanding += due;
+      const bucket = getAgingBucket(invoice);
+      summary.buckets[bucket] = (summary.buckets[bucket] || 0) + due;
+    });
+
+    return summary;
+  }, [invoices]);
+
+  const handleGeneratePaymentLink = async (invoice: Invoice) => {
+    try {
+      setIsGeneratingLink(invoice.id);
+      const response = await invoiceService.generatePaymentLink(invoice.id);
+      if (!response.paymentLink) {
+        throw new Error('No payment link returned');
+      }
+      await navigator.clipboard.writeText(response.paymentLink);
+      alert('Payment link copied to clipboard');
+    } catch (error: any) {
+      console.error('Error generating payment link:', error);
+      alert(error.message || 'Failed to generate payment link');
+    } finally {
+      setIsGeneratingLink(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -247,6 +325,25 @@ const Invoices: React.FC<InvoicesProps> = () => {
             Create Invoice
           </button>
         </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-gray-500">Total outstanding</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">${agingSummary.totalOutstanding.toFixed(2)}</p>
+          <p className="text-xs text-gray-500 mt-1">Across {invoices.length} invoices</p>
+        </div>
+        {(['Current', '1-30', '31-60', '61-90', '90+'] as const).map((bucket) => (
+          <div key={bucket} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">{bucket} days</p>
+              <p className="text-xl font-semibold text-gray-900">${agingSummary.buckets[bucket].toFixed(2)}</p>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getAgingColor(bucket)}`}>
+              {bucket}
+            </span>
+          </div>
+        ))}
       </div>
 
       <div className="mt-6">
@@ -313,6 +410,9 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
                       Due Date
                     </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brand-gray-900">
+                      Aging
+                    </th>
                     <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                       <span className="sr-only">Actions</span>
                     </th>
@@ -328,6 +428,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   ) : (
                     filteredInvoices.map((invoice) => {
                       const displayStatus = calculateStatus(invoice);
+                      const agingBucket = getAgingBucket(invoice);
                       return (
                         <tr key={invoice.id} className="hover:bg-gray-50">
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
@@ -351,6 +452,11 @@ const Invoices: React.FC<InvoicesProps> = () => {
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-700">
                             {formatDate(invoice.dueDate)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-sm">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getAgingColor(agingBucket)}`}>
+                              {agingBucket}
+                            </span>
                           </td>
                           <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                             <div className="flex items-center justify-end gap-2">
@@ -379,6 +485,16 @@ const Invoices: React.FC<InvoicesProps> = () => {
                                 >
                                   <DollarIcon className="h-4 w-4" />
                                   Pay
+                                </button>
+                              )}
+
+                              {displayStatus !== 'Paid' && displayStatus !== 'Void' && invoice.amountDue > 0 && (
+                                <button
+                                  onClick={() => handleRecordPayment(invoice, Math.max(invoice.amountDue / 2, 0.01))}
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors"
+                                  title="Record partial payment"
+                                >
+                                  Partial
                                 </button>
                               )}
 
@@ -413,6 +529,15 @@ const Invoices: React.FC<InvoicesProps> = () => {
                               )}
 
                               <button
+                                onClick={() => handleGeneratePaymentLink(invoice)}
+                                disabled={isGeneratingLink === invoice.id}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-60"
+                                title="Copy payment link"
+                              >
+                                {isGeneratingLink === invoice.id ? 'Copying…' : 'Pay Link'}
+                              </button>
+
+                              <button
                                 onClick={() => handleDeleteInvoice(invoice)}
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                                 title="Delete Invoice"
@@ -443,6 +568,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
         ) : (
           filteredInvoices.map((invoice) => {
             const displayStatus = calculateStatus(invoice);
+            const agingBucket = getAgingBucket(invoice);
             return (
               <div key={invoice.id} className="bg-white rounded-lg shadow p-4 space-y-3">
                 <div className="flex justify-between items-start gap-2">
@@ -466,6 +592,12 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     <span className="text-brand-gray-600">Amount Due:</span>
                     <p className={`font-semibold ${invoice.amountDue > 0 ? 'text-red-600' : 'text-green-600'}`}>
                       ${invoice.amountDue.toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-brand-gray-600">Aging:</span>
+                    <p className={`font-semibold`}>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getAgingColor(agingBucket)}`}>{agingBucket}</span>
                     </p>
                   </div>
                   <div className="col-span-2">
@@ -500,6 +632,14 @@ const Invoices: React.FC<InvoicesProps> = () => {
                       Pay
                     </button>
                   )}
+                  {displayStatus !== 'Paid' && displayStatus !== 'Void' && invoice.amountDue > 0 && (
+                    <button
+                      onClick={() => handleRecordPayment(invoice, Math.max(invoice.amountDue / 2, 0.01))}
+                      className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm font-medium"
+                    >
+                      Partial
+                    </button>
+                  )}
                   {invoice.status === 'Draft' && (
                     <button
                       onClick={() => handleSendInvoice(invoice)}
@@ -525,6 +665,13 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     </button>
                   )}
                   <button
+                    onClick={() => handleGeneratePaymentLink(invoice)}
+                    disabled={isGeneratingLink === invoice.id}
+                    className="flex-1 min-w-[100px] px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium disabled:opacity-60"
+                  >
+                    {isGeneratingLink === invoice.id ? 'Copying…' : 'Pay Link'}
+                  </button>
+                  <button
                     onClick={() => handleDeleteInvoice(invoice)}
                     className="flex-1 min-w-[100px] px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium"
                   >
@@ -548,9 +695,10 @@ const Invoices: React.FC<InvoicesProps> = () => {
         <>
           <PaymentRecorder
             isOpen={isPaymentRecorderOpen}
-            onClose={() => setIsPaymentRecorderOpen(false)}
+            onClose={() => { setIsPaymentRecorderOpen(false); setPaymentPreset(undefined); }}
             onPaymentRecorded={handlePaymentRecorded}
             invoice={selectedInvoice}
+            defaultAmount={paymentPreset}
           />
 
           <InvoiceTemplate

@@ -7,8 +7,9 @@ import DollarIcon from './icons/DollarIcon';
 interface PaymentRecorderProps {
   isOpen: boolean;
   onClose: () => void;
-  onPaymentRecorded: (invoice: Invoice) => void;
+  onPaymentRecorded: (invoice: Invoice, payment?: PaymentRecord) => void;
   invoice: Invoice;
+  defaultAmount?: number;
 }
 
 interface FormData {
@@ -24,7 +25,7 @@ interface FormErrors {
   paymentDate?: string;
 }
 
-const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPaymentRecorded, invoice }) => {
+const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPaymentRecorded, invoice, defaultAmount }) => {
   const [formData, setFormData] = useState<FormData>({
     amount: 0,
     paymentDate: new Date().toISOString().split('T')[0],
@@ -40,8 +41,9 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
   useEffect(() => {
     if (isOpen && invoice) {
       const remainingAmount = invoice.amountDue;
+      const presetAmount = defaultAmount ?? remainingAmount;
       setFormData({
-        amount: remainingAmount > 0 ? remainingAmount : 0,
+        amount: presetAmount > 0 ? presetAmount : 0,
         paymentDate: new Date().toISOString().split('T')[0],
         paymentMethod: 'Cash',
         referenceNumber: '',
@@ -50,7 +52,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
       setErrors({});
       setApiError(null);
     }
-  }, [isOpen, invoice]);
+  }, [defaultAmount, invoice, isOpen]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -103,8 +105,8 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
       };
 
       const response = await invoiceService.recordPayment(invoice.id, paymentData);
-      
-      onPaymentRecorded(response.invoice);
+
+      onPaymentRecorded({ ...response.invoice, payments: [response.payment, ...(invoice.payments || [])] }, response.payment);
       onClose();
     } catch (err: any) {
       console.error('Error recording payment:', err);
@@ -181,6 +183,27 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                 <span className="text-cyan-400 font-bold text-lg">${invoice.amountDue.toFixed(2)}</span>
               </div>
             </div>
+
+            {invoice.payments && invoice.payments.length > 0 && (
+              <div className="bg-gray-900 border border-gray-700 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-white">Payment history</h3>
+                  <span className="text-xs text-gray-400">{invoice.payments.length} record{invoice.payments.length === 1 ? '' : 's'}</span>
+                </div>
+                <div className="divide-y divide-gray-800 max-h-40 overflow-y-auto pr-1">
+                  {invoice.payments.map((payment) => (
+                    <div key={payment.id} className="py-2 text-sm flex justify-between">
+                      <div className="space-y-0.5">
+                        <p className="text-white">${payment.amount.toFixed(2)}</p>
+                        <p className="text-gray-400 text-xs">{payment.paymentMethod} • {new Date(payment.paymentDate).toLocaleDateString()}</p>
+                        {payment.referenceNumber && <p className="text-gray-500 text-xs">Ref: {payment.referenceNumber}</p>}
+                      </div>
+                      <span className="text-gray-400 text-xs text-right whitespace-nowrap">Recorded {new Date(payment.createdAt || payment.paymentDate).toLocaleDateString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-1">
