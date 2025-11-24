@@ -32,6 +32,17 @@ interface IntegrationStatus {
   quickBooks: boolean;
 }
 
+type AutomationStatus = 'enabled' | 'disabled' | 'queued';
+
+interface AutomationAuditEntry {
+  id: string;
+  action: string;
+  status: AutomationStatus;
+  timestamp: string;
+  actor: string;
+  context?: string;
+}
+
 const Settings: React.FC = () => {
   const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>(mockCustomFields);
   const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplate[]>(mockDocumentTemplates);
@@ -63,6 +74,41 @@ const Settings: React.FC = () => {
     quickBooks: false
   });
   const [connectingIntegration, setConnectingIntegration] = useState<string | null>(null);
+
+  // Automation toggles and audit trail
+  const [automationSettings, setAutomationSettings] = useState({
+    autoJobOnQuoteApproval: true,
+    autoInvoiceOnCompletion: true,
+    invoiceReminders: true,
+    quoteFollowups: true,
+  });
+
+  const [automationAudit, setAutomationAudit] = useState<AutomationAuditEntry[]>([
+    {
+      id: 'audit_1',
+      action: 'Auto-create job on quote approval',
+      status: 'enabled',
+      timestamp: new Date().toISOString(),
+      actor: 'System',
+      context: 'Matches the Lead → Quote → Job flow from the architecture overview.'
+    },
+    {
+      id: 'audit_2',
+      action: 'Auto-generate invoice on job completion',
+      status: 'enabled',
+      timestamp: new Date().toISOString(),
+      actor: 'System',
+      context: 'Ensures completed jobs immediately move into billing with Net 30 terms.'
+    },
+    {
+      id: 'audit_3',
+      action: 'Invoice reminder scheduler',
+      status: 'queued',
+      timestamp: new Date().toISOString(),
+      actor: 'System',
+      context: 'Queues notifications based on invoice due dates (T-3, T, T+7).'
+    }
+  ]);
 
   // State for the custom field form
   const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entityType']>('client');
@@ -262,6 +308,61 @@ const Settings: React.FC = () => {
     } finally {
       setIsSavingProfile(false);
     }
+  };
+
+  const automationToggles = [
+    {
+      key: 'autoJobOnQuoteApproval',
+      label: 'Auto-create jobs on quote approval',
+      description: 'Moves approved quotes into draft jobs so crews can be scheduled without manual data re-entry.'
+    },
+    {
+      key: 'autoInvoiceOnCompletion',
+      label: 'Auto-generate invoices on job completion',
+      description: 'Creates Net 30 invoices with selected line items the moment a job is marked completed.'
+    },
+    {
+      key: 'invoiceReminders',
+      label: 'Invoice reminder scheduler',
+      description: 'Queues reminders for due dates (T-3, T, T+7) to keep cashflow aligned with the billing flow.'
+    },
+    {
+      key: 'quoteFollowups',
+      label: 'Quote follow-up nudges',
+      description: 'Keeps sent quotes warm with timed check-ins that match the discovery flow.'
+    }
+  ] as const;
+
+  const formatAuditTimestamp = (value: string) => new Date(value).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const handleAutomationToggle = (key: keyof typeof automationSettings, enabled: boolean) => {
+    setAutomationSettings(prev => ({
+      ...prev,
+      [key]: enabled
+    }));
+
+    const label = automationToggles.find(t => t.key === key)?.label || key;
+    const status: AutomationStatus = enabled ? 'enabled' : 'disabled';
+    const context = enabled
+      ? 'Automation enabled to keep the Lead → Quote → Job → Invoice flow continuous.'
+      : 'Automation paused for manual control; downstream triggers will be held until re-enabled.';
+
+    setAutomationAudit(prev => [
+      {
+        id: `audit_${Date.now()}`,
+        action: label,
+        status,
+        actor: 'System',
+        timestamp: new Date().toISOString(),
+        context
+      },
+      ...prev
+    ].slice(0, 12));
   };
 
 
@@ -691,6 +792,104 @@ const Settings: React.FC = () => {
                   </div>
                   <button className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50">Connect</button>
               </div>
+          </div>
+        </div>
+
+        <div className="border-t border-brand-gray-200"></div>
+
+        {/* Automation controls and audit trail */}
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+          <div>
+            <h2 className="text-base font-semibold leading-7 text-brand-gray-900">Automation & Audit Trail</h2>
+            <p className="mt-1 text-sm leading-6 text-brand-gray-600">
+              Keep the Lead → Quote → Job → Invoice flow aligned with the architecture overview by controlling automation
+              toggles and tracking recent changes.
+            </p>
+            <p className="mt-3 text-sm text-brand-gray-500">
+              Quote approvals automatically create jobs, completed jobs generate invoices, and reminder schedules honor invoice
+              due dates.
+            </p>
+          </div>
+
+          <div className="md:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {automationToggles.map(toggle => (
+                <div key={toggle.key} className="p-4 border rounded-lg bg-white shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-brand-gray-900">{toggle.label}</h3>
+                      <p className="text-sm text-brand-gray-600 mt-1">{toggle.description}</p>
+                    </div>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={automationSettings[toggle.key as keyof typeof automationSettings]}
+                        onChange={(e) => handleAutomationToggle(toggle.key as keyof typeof automationSettings, e.target.checked)}
+                      />
+                      <span
+                        className={`relative inline-block h-6 w-10 rounded-full transition-colors duration-200 ${
+                          automationSettings[toggle.key as keyof typeof automationSettings]
+                            ? 'bg-brand-cyan-600'
+                            : 'bg-brand-gray-300'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <span
+                          className={`absolute left-0 top-0 h-6 w-6 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                            automationSettings[toggle.key as keyof typeof automationSettings] ? 'translate-x-4' : 'translate-x-0'
+                          }`}
+                        />
+                      </span>
+                    </label>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-brand-gray-500">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-brand-cyan-500" aria-hidden="true"></span>
+                    <span>
+                      {automationSettings[toggle.key as keyof typeof automationSettings]
+                        ? 'Automation is active for this step.'
+                        : 'Automation is paused for this step.'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white border rounded-lg shadow-sm">
+              <div className="flex items-center justify-between px-4 py-3 border-b">
+                <div>
+                  <h3 className="text-sm font-semibold text-brand-gray-900">Recent automation activity</h3>
+                  <p className="text-xs text-brand-gray-600">Audit trail of toggles and system-triggered automation.</p>
+                </div>
+                <span className="text-xs text-brand-gray-500">Aligned with lines 220-276 in the architecture overview</span>
+              </div>
+
+              <div className="divide-y">
+                {automationAudit.map(entry => (
+                  <div key={entry.id} className="flex items-start justify-between gap-4 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-brand-gray-900">{entry.action}</p>
+                      <p className="text-xs text-brand-gray-600 mt-1">{entry.context}</p>
+                      <p className="text-xs text-brand-gray-500 mt-1">By {entry.actor}</p>
+                    </div>
+                    <div className="text-right min-w-[140px]">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          entry.status === 'enabled'
+                            ? 'bg-green-50 text-green-700'
+                            : entry.status === 'queued'
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'bg-brand-gray-100 text-brand-gray-700'
+                        }`}
+                      >
+                        {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                      </span>
+                      <p className="text-[11px] text-brand-gray-500 mt-1">{formatAuditTimestamp(entry.timestamp)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

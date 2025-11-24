@@ -20,6 +20,7 @@
 
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
+const reminderService = require('./reminderService');
 
 // ============================================================================
 // STATE TRANSITION MATRIX
@@ -585,11 +586,18 @@ const AUTOMATED_TRIGGERS = {
           'UPDATE jobs SET invoice_id = $1 WHERE id = $2',
           [invoiceId, job.id]
         );
-        
+
         console.log(`   ✅ Complete invoice ${invoiceNumber} created successfully`);
         console.log(`      Invoice ID: ${invoiceId}`);
         console.log(`      Status: ${status} (ready for review)`);
         console.log(`      Amount: $${totals.grandTotal}`);
+
+        reminderService.scheduleInvoiceReminders({
+          id: invoiceId,
+          due_date: dueDateStr,
+          status,
+          customer_name: job.customer_name
+        });
       } catch (error) {
         console.error(`   ❌ Failed to auto-generate invoice:`, error.message);
         console.error(`      Error details:`, error);

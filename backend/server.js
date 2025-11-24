@@ -13,6 +13,9 @@ const jobTemplateService = require('./services/jobTemplateService');
 const operationsService = require('./services/operationsService');
 const recurringJobsService = require('./services/recurringJobsService');
 const stripeService = require('./services/stripeService');
+const automationService = require('./services/automationService');
+const reminderService = require('./services/reminderService');
+const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
 
 const app = express();
@@ -299,8 +302,6 @@ const removeFromVectorStore = async (tableName, id) => {
 };
 
 const scheduleFinancialReminders = () => {
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-
   const parseDate = (value) => {
     if (!value) return null;
     const parsed = new Date(value);
@@ -309,21 +310,10 @@ const scheduleFinancialReminders = () => {
 
   const run = async () => {
     try {
+      await reminderService.hydrateReminderSchedule();
+
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      const { rows: invoices } = await db.query('SELECT * FROM invoices');
-      invoices.forEach(invoice => {
-        const dueDate = parseDate(invoice.due_date);
-        if (!dueDate) return;
-
-        const diffDays = Math.floor((dueDate.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0 || diffDays === 3 || diffDays === -7) {
-          const statusLabel = diffDays === 0 ? 'due today' : diffDays === 3 ? 'due in 3 days' : '7 days overdue';
-          console.log(`📬 [Invoice Reminder] Invoice ${invoice.id} for ${invoice.customer_name} is ${statusLabel}. Amount: $${invoice.amount}.`);
-        }
-      });
 
       const { rows: quotes } = await db.query("SELECT * FROM quotes WHERE status = 'Sent'");
       quotes.forEach(quote => {
@@ -342,7 +332,7 @@ const scheduleFinancialReminders = () => {
   };
 
   run();
-  reminderInterval = setInterval(run, ONE_DAY);
+  reminderInterval = setInterval(run, reminderService.ONE_DAY_MS);
 };
 
 // Helper function to transform database row to API format
@@ -5206,30 +5196,7 @@ const generateQuoteNumber = async () => {
     const lastNumber = parseInt(rows[0].quote_number.split('-')[2]);
     nextNumber = lastNumber + 1;
   }
-  
-  return `${prefix}-${String(nextNumber).padStart(4, '0')}`;
-};
 
-// Helper: Generate job number (JOB-YYYYMM-####)
-const generateJobNumber = async () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const prefix = `JOB-${year}${month}`;
-  
-  const { rows } = await db.query(
-    `SELECT job_number FROM jobs 
-     WHERE job_number LIKE $1 
-     ORDER BY job_number DESC LIMIT 1`,
-    [`${prefix}-%`]
-  );
-  
-  let nextNumber = 1;
-  if (rows.length > 0 && rows[0].job_number) {
-    const lastNumber = parseInt(rows[0].job_number.split('-')[2]);
-    nextNumber = lastNumber + 1;
-  }
-  
   return `${prefix}-${String(nextNumber).padStart(4, '0')}`;
 };
 
@@ -5683,8 +5650,21 @@ apiRouter.put('/quotes/:id', async (req, res) => {
     
     const { rows: updatedRows } = await db.query(updateQuery, values);
     const quote = snakeToCamel(updatedRows[0]);
-    
-    res.json({ success: true, data: quote });
+
+    let automation = null;
+    try {
+      automation = await automationService.createJobFromApprovedQuote(sanitizedId);
+
+      if (automation?.job) {
+        reindexDocument('jobs', automation.job);
+        automation.job = transformRow(automation.job, 'jobs');
+      }
+    } catch (automationError) {
+      console.error('⚠️ Failed to auto-create job from approved quote:', automationError.message);
+      automation = { status: 'error', error: automationError.message };
+    }
+
+    res.json({ success: true, data: quote, automation });
     
     reindexDocument('quotes', updatedRows[0]);
     
@@ -6198,6 +6178,7 @@ apiRouter.put('/jobs/:id', async (req, res) => {
     }
 
     const existingJob = existingRows[0];
+    const previousStatus = existingJob.status;
     const incomingClientId = sanitizeUUID(jobData.clientId) || existingJob.client_id;
     let associatedClientId = incomingClientId;
     let clientRecord = null;
@@ -6245,6 +6226,23 @@ apiRouter.put('/jobs/:id', async (req, res) => {
     }
 
     const response = transformRow(updatedJob, 'jobs');
+
+    // Auto-generate invoice when jobs are marked completed via direct updates
+    if (
+      previousStatus !== updatedJob.status &&
+      String(updatedJob.status || '').toLowerCase() === 'completed'
+    ) {
+      try {
+        await jobStateService.AUTOMATED_TRIGGERS.completed(
+          updatedJob,
+          { fromState: previousStatus, toState: 'completed' },
+          db
+        );
+      } catch (automationError) {
+        console.error('⚠️ Failed to auto-invoice completed job:', automationError.message);
+      }
+    }
+
     res.json(response);
 
     reindexDocument('jobs', updatedJob);
@@ -9020,7 +9018,9 @@ apiRouter.post('/invoices', async (req, res) => {
     
     const { rows } = await db.query(query, values);
     const result = transformRow(rows[0], 'invoices');
-    
+
+    reminderService.scheduleInvoiceReminders(rows[0]);
+
     res.status(201).json({
       success: true,
       data: result,
@@ -9224,9 +9224,15 @@ apiRouter.put('/invoices/:id', async (req, res) => {
     
     const query = `UPDATE invoices SET ${setString} WHERE id = $1 RETURNING *`;
     const { rows } = await db.query(query, [id, ...values]);
-    
+
     const result = transformRow(rows[0], 'invoices');
-    
+
+    if (result.status === 'Paid' || result.status === 'Void') {
+      reminderService.cancelInvoiceReminders(id);
+    } else {
+      reminderService.scheduleInvoiceReminders(rows[0]);
+    }
+
     res.json({
       success: true,
       data: result,
