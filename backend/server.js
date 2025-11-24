@@ -5,6 +5,7 @@ const express = require('express');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth } = require('./replitAuth');
+const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
 const { applyStandardMiddleware } = require('./config/express');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ragService = require('./services/ragService');
@@ -10063,6 +10064,10 @@ async function startServer() {
   
   await setupAuth(app);
   
+  mountApiRoutes(app, apiRouter);
+  app.use('/api', notFoundHandler);
+  app.use(errorHandler);
+
   mountApiRoutes(app, apiRouter);
   app.use('/api', notFoundHandler);
   app.use(errorHandler);
