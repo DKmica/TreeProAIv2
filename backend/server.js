@@ -5,6 +5,7 @@ const express = require('express');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
 const { setupAuth } = require('./replitAuth');
+const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
 const { applyStandardMiddleware } = require('./config/express');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ragService = require('./services/ragService');
@@ -18,6 +19,7 @@ const automationService = require('./services/automationService');
 const reminderService = require('./services/reminderService');
 const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
+const leadsRouter = require('./routes/leads');
 const { mountApiRoutes } = require('./routes');
 
 const app = express();
@@ -10062,6 +10064,13 @@ async function startServer() {
   await initStripe();
   
   await setupAuth(app);
+  
+  mountApiRoutes(app, apiRouter);
+  app.use('/api', notFoundHandler);
+  app.use(errorHandler);
+
+  app.use('/api', leadsRouter);
+  app.use('/api', apiRouter);
   
   mountApiRoutes(app, apiRouter);
   app.use('/api', notFoundHandler);
