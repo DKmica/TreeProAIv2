@@ -6,30 +6,86 @@ const { handleError } = require('../utils/errors');
 const { transformRow } = require('../utils/transformers');
 const { ensureClientAssociation } = require('../services/clientService');
 const { reindexDocument, removeFromVectorStore } = require('../utils/vectorStore');
+const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
+const { getJson, setJson } = require('../services/cacheService');
+
+const { LEADS_CACHE_TTL_SECONDS } = process.env;
+const LEADS_CACHE_TTL = Number.isFinite(Number(LEADS_CACHE_TTL_SECONDS))
+  ? Number(LEADS_CACHE_TTL_SECONDS)
+  : 60;
 
 const router = express.Router();
 
 router.get('/leads', async (req, res) => {
   try {
-    const { rows } = await db.query(`
+    const { status, search } = req.query;
+    const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);
+
+    const shouldBypassCache =
+      String(req.query.cache || '').toLowerCase() === 'false' ||
+      String(req.query.cache || '').toLowerCase() === '0' ||
+      String(req.headers['cache-control'] || '').toLowerCase().includes('no-cache');
+
+    const filters = [];
+    const params = [];
+
+    if (status) {
+      params.push(status);
+      filters.push(`l.status = $${params.length}`);
+    }
+
+    if (search) {
+      const likeValue = `%${String(search)}%`;
+      params.push(likeValue, likeValue, likeValue, likeValue);
+      const startIndex = params.length - 3;
+      filters.push(`(
+        l.description ILIKE $${startIndex}
+        OR l.source ILIKE $${startIndex + 1}
+        OR CONCAT_WS(' ', c.first_name, c.last_name) ILIKE $${startIndex + 2}
+        OR c.primary_email ILIKE $${startIndex + 3}
+      )`);
+    }
+
+    const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+    const baseQuery = `
+      FROM leads l
+      LEFT JOIN clients c ON l.client_id_new = c.id
+      ${whereClause}
+    `;
+
+    const cacheKey = usePagination
+      ? `leads:list:v1:page:${page}:size:${pageSize}:status:${status || 'all'}:q:${search || ''}`
+      : `leads:list:v1:all:status:${status || 'all'}:q:${search || ''}`;
+
+    if (usePagination && page === 1 && !shouldBypassCache) {
+      const cached = await getJson(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+    }
+
+    const selectQuery = `
       SELECT l.*, 
              c.id as customer_id,
              CONCAT(c.first_name, ' ', c.last_name) as customer_name,
              c.primary_email as customer_email,
              c.primary_phone as customer_phone,
              c.billing_address_line1 as customer_address
-      FROM leads l
-      LEFT JOIN clients c ON l.client_id_new = c.id
-    `);
+      ${baseQuery}
+      ${usePagination ? 'ORDER BY l.created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2) : ''}
+    `;
 
-    const transformed = rows.map(row => {
+    const queryParams = usePagination ? [...params, limit, offset] : params;
+    const { rows } = await db.query(selectQuery, queryParams);
+
+    const transformed = rows.map((row) => {
       const lead = transformRow(row, 'leads');
       lead.customer = {
         id: row.customer_id,
         name: row.customer_name,
         email: row.customer_email,
         phone: row.customer_phone,
-        address: row.customer_address
+        address: row.customer_address,
       };
       delete lead.customer_id;
       delete lead.customer_name;
@@ -39,7 +95,23 @@ router.get('/leads', async (req, res) => {
       return lead;
     });
 
-    res.json(transformed);
+    if (!usePagination) {
+      return res.json(transformed);
+    }
+
+    const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
+    const { rows: countRows } = await db.query(countQuery, params);
+    const total = Number.parseInt(countRows[0]?.total, 10) || 0;
+    const payload = {
+      data: transformed,
+      pagination: buildPaginationMeta(total, page, pageSize),
+    };
+
+    if (page === 1 && !shouldBypassCache) {
+      await setJson(cacheKey, payload, LEADS_CACHE_TTL);
+    }
+
+    res.json(payload);
   } catch (err) {
     handleError(res, err);
   }
