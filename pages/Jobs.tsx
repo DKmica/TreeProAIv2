@@ -149,12 +149,15 @@ const JobForm: React.FC<{
                 customerName: selectedQuote ? selectedQuote.customerName : '',
                 stumpGrindingPrice: selectedQuote ? selectedQuote.stumpGrindingPrice : 0,
             }));
-            // Extract address from quote's client if available
-            if (selectedQuote?.clientId) {
-                // For now, set from jobLocation if it exists
-                if (selectedQuote.jobLocation) {
-                    setFormData(prev => ({ ...prev, jobLocation: selectedQuote.jobLocation }));
-                }
+            // Extract address from quote's property if available
+            if (selectedQuote?.property) {
+                setJobLocationData({
+                    addressLine1: selectedQuote.property.addressLine1 || '',
+                    addressLine2: selectedQuote.property.addressLine2 || '',
+                    city: selectedQuote.property.city || '',
+                    state: selectedQuote.property.state || '',
+                    zipCode: selectedQuote.property.zipCode || '',
+                });
             }
         } else {
             setFormData(prev => ({ ...prev, [name]: value as any }));
