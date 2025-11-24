@@ -16,23 +16,18 @@ function buildApiRouter() {
 function mountApiRoutes(app, legacyRouter) {
   const modularRouter = buildApiRouter();
 
-  // Default to mounting modular routes alongside the legacy router so health/auth
-  // endpoints remain available while we migrate incrementally. When
-  // USE_MODULAR_ROUTES is true we only mount the modular stack to exercise the
-  // new routing surface without legacy handlers.
-  if (useModularRoutes || !legacyRouter) {
+  // When USE_MODULAR_ROUTES is true, only mount the modular stack
   if (useModularRoutes) {
-    const modularRouter = buildApiRouter();
-
     if (legacyRouter) {
       modularRouter.use(legacyRouter);
     }
+    app.use('/api', modularRouter);
+    return;
+  }
 
-  // Default to mounting modular routes alongside the legacy router so health/auth
-  // endpoints remain available while we migrate incrementally. When
-  // USE_MODULAR_ROUTES is true we only mount the modular stack to exercise the
-  // new routing surface without legacy handlers.
-  if (useModularRoutes || !legacyRouter) {
+  // Default: mount modular routes alongside the legacy router
+  // so health/auth endpoints remain available during migration
+  if (!legacyRouter) {
     app.use('/api', modularRouter);
     return;
   }
@@ -41,12 +36,6 @@ function mountApiRoutes(app, legacyRouter) {
   combinedRouter.use(modularRouter);
   combinedRouter.use(legacyRouter);
   app.use('/api', combinedRouter);
-  // Default to the legacy mounting approach to avoid surprise behavior changes
-  // while we migrate endpoints out of server.js.
-  if (legacyRouter) {
-    app.use('/api', legacyRouter);
-  }
-  app.use('/api', leadsRouter);
 }
 
 module.exports = { buildApiRouter, mountApiRoutes };

@@ -665,7 +665,7 @@ const ClientDetail: React.FC = () => {
                             property.addressLine1,
                             property.city,
                             property.state,
-                            property.zip,
+                            property.zipCode,
                           ].filter(Boolean).join(', ')}
                         </span>
                       </div>

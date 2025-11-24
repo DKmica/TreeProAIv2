@@ -37,10 +37,6 @@ function pruneMemoryCache() {
   }
 }
 
-const { REDIS_URL } = process.env;
-
-let redisClientPromise = null;
-
 async function getRedisClient() {
   if (!REDIS_URL) {
     return null;

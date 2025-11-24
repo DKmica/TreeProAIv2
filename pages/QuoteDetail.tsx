@@ -212,7 +212,7 @@ const QuoteDetail: React.FC = () => {
         quote.property?.addressLine1,
         quote.property?.addressLine2,
         [quote.property?.city, quote.property?.state].filter(Boolean).join(', '),
-        quote.property?.zip,
+        quote.property?.zipCode,
       ].filter(Boolean).join(', ')
     : quote.jobLocation || 'N/A';
 

@@ -440,7 +440,7 @@ export interface Property {
   addressLine2?: string;
   city: string;
   state: string;
-  zip: string;
+  zipCode: string;
   country: string;
   
   // Location

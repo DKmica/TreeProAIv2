@@ -192,7 +192,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
         addressLine2: formData.addressLine2 || undefined,
         city: formData.city,
         state: formData.state,
-        zip: formData.zipCode,
+        zipCode: formData.zipCode,
         country: formData.country,
         lat: formData.lat ? parseFloat(formData.lat) : undefined,
         lon: formData.lon ? parseFloat(formData.lon) : undefined,
