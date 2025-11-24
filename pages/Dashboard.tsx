@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MapView from '../components/MapView';
 import { Job, Employee, Customer, Lead, Quote, PayrollRecord, TimeEntry, PayPeriod, Equipment, AICoreInsights } from '../types';
 import { payrollRecordService, timeEntryService, payPeriodService, equipmentService } from '../services/apiService';
@@ -14,6 +15,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads, quotes }) => {
+    const navigate = useNavigate();
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'jobs' | 'map'>('jobs');
     const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
@@ -154,24 +156,24 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads
       <h1 className="text-2xl font-bold text-brand-gray-900">Dashboard</h1>
       <p className="mt-2 text-brand-gray-600">Welcome to TreePro AI. Analytics and overview will be displayed here.</p>
        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+          <button onClick={() => navigate('/crm')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
             <dt className="truncate text-sm font-medium text-brand-gray-500">New Leads</dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{newLeadsCount}</dd>
-          </div>
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+          </button>
+          <button onClick={() => navigate('/quotes')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
             <dt className="truncate text-sm font-medium text-brand-gray-500">Quotes Sent</dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{quotesSentCount}</dd>
-          </div>
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+          </button>
+          <button onClick={() => navigate('/jobs')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
             <dt className="truncate text-sm font-medium text-brand-gray-500">Active Jobs</dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{activeJobsCount}</dd>
-          </div>
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+          </button>
+          <button onClick={() => navigate('/invoices')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
             <dt className="truncate text-sm font-medium text-brand-gray-500">Revenue (Month)</dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">
               ${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </dd>
-          </div>
+          </button>
         </div>
 
         {/* AI Insights Section */}
