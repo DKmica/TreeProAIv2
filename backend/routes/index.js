@@ -28,6 +28,11 @@ function mountApiRoutes(app, legacyRouter) {
       modularRouter.use(legacyRouter);
     }
 
+  // Default to mounting modular routes alongside the legacy router so health/auth
+  // endpoints remain available while we migrate incrementally. When
+  // USE_MODULAR_ROUTES is true we only mount the modular stack to exercise the
+  // new routing surface without legacy handlers.
+  if (useModularRoutes || !legacyRouter) {
     app.use('/api', modularRouter);
     return;
   }
