@@ -2626,7 +2626,7 @@ const ensureClientAssociation = async ({ clientId, customerDetails = {}, default
     billing_address_line2: normalizeText(customerDetails.addressLine2),
     billing_city: normalizeText(customerDetails.city),
     billing_state: normalizeText(customerDetails.state),
-    billing_zip: normalizeText(customerDetails.zipCode),
+    billing_zip_code: normalizeText(customerDetails.zipCode),
     billing_country: normalizeText(customerDetails.country) || 'USA'
   };
 
@@ -2702,7 +2702,7 @@ const ensureClientAssociation = async ({ clientId, customerDetails = {}, default
     billing_address_line2: normalizedDetails.billing_address_line2,
     billing_city: normalizedDetails.billing_city,
     billing_state: normalizedDetails.billing_state,
-    billing_zip: normalizedDetails.billing_zip,
+    billing_zip_code: normalizedDetails.billing_zip_code,
     billing_country: normalizedDetails.billing_country,
     status: 'active',
     client_type: defaultClientType,
