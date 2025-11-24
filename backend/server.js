@@ -1918,6 +1918,7 @@ const setupCrudEndpoints = (router, tableName) => {
       handleError(res, err);
     }
   });
+};
 
 apiRouter.post('/pay_periods/:id/process', async (req, res) => {
   try {

@@ -43,14 +43,6 @@ router.get('/leads', async (req, res) => {
         OR l.source ILIKE $${startIndex + 1}
         OR CONCAT_WS(' ', c.first_name, c.last_name) ILIKE $${startIndex + 2}
         OR c.primary_email ILIKE $${startIndex + 3}
-      const likeValue = `%${String(search).toLowerCase()}%`;
-      params.push(likeValue, likeValue, likeValue, likeValue);
-      const startIndex = params.length - 3;
-      filters.push(`(
-        LOWER(l.description) LIKE $${startIndex}
-        OR LOWER(l.source) LIKE $${startIndex + 1}
-        OR LOWER(CONCAT(c.first_name, ' ', c.last_name)) LIKE $${startIndex + 2}
-        OR LOWER(c.primary_email) LIKE $${startIndex + 3}
       )`);
     }
 
@@ -66,7 +58,6 @@ router.get('/leads', async (req, res) => {
       : `leads:list:v1:all:status:${status || 'all'}:q:${search || ''}`;
 
     if (usePagination && page === 1 && !shouldBypassCache) {
-    if (usePagination && page === 1) {
       const cached = await getJson(cacheKey);
       if (cached) {
         return res.json(cached);
@@ -118,8 +109,6 @@ router.get('/leads', async (req, res) => {
 
     if (page === 1 && !shouldBypassCache) {
       await setJson(cacheKey, payload, LEADS_CACHE_TTL);
-    if (page === 1) {
-      await setJson(cacheKey, payload, 60);
     }
 
     res.json(payload);
