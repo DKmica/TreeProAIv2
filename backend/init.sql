@@ -339,6 +339,8 @@ CREATE INDEX IF NOT EXISTS idx_leads_customer_id ON leads(customer_id);
 CREATE INDEX IF NOT EXISTS idx_leads_client_id_new ON leads(client_id_new) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_leads_property_id ON leads(property_id);
 CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+CREATE INDEX IF NOT EXISTS idx_leads_status_created_at ON leads(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_leads_assigned_to_created_at ON leads(assigned_to, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_next_followup ON leads(next_followup_date) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_leads_deleted ON leads(deleted_at) WHERE deleted_at IS NULL;
 
