@@ -295,7 +295,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[0].id,
-      client_id_new: clients[0].id,
+      client_id: clients[0].id,
       source: 'Website',
       status: 'New',
       description: 'Request for trimming a large maple tree.',
@@ -304,7 +304,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[1].id,
-      client_id_new: clients[1].id,
+      client_id: clients[1].id,
       source: 'Referral',
       status: 'Qualified',
       description: 'Oak tree removal near house.',
@@ -313,7 +313,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[2].id,
-      client_id_new: clients[2].id,
+      client_id: clients[2].id,
       source: 'Emergency Call',
       status: 'Contacted',
       description: 'Storm damage cleanup for multiple trees.',
@@ -322,7 +322,7 @@ function seedData() {
     {
       id: uuidv4(),
       customer_id: customers[3].id,
-      client_id_new: clients[0].id,
+      client_id: clients[0].id,
       source: 'Google Ads',
       status: 'New',
       description: 'Palm tree maintenance and fertilization.',

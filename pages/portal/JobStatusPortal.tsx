@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Job, Quote, Employee, PortalMessage } from '../../types';
-import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
-import CheckCircleIcon from '../../components/icons/CheckCircleIcon';
-import ClockIcon from '../../components/icons/ClockIcon';
-import QuoteIcon from '../../components/icons/QuoteIcon';
-import CalendarDaysIcon from '../../components/icons/CalendarDaysIcon';
+import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
+import CheckCircleIcon from '../components/icons/CheckCircleIcon';
+import ClockIcon from '../components/icons/ClockIcon';
+import QuoteIcon from '../components/icons/QuoteIcon';
+import CalendarDaysIcon from '../components/icons/CalendarDaysIcon';
 import PortalMessaging from '../../components/PortalMessaging';
 
 

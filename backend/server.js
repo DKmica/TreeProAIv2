@@ -272,7 +272,7 @@ const reindexDocument = async (tableName, row) => {
                    c.billing_address_line1 as address, 
                    c.primary_phone as phone, 
                    c.primary_email as email
-            FROM leads l LEFT JOIN clients c ON l.client_id_new = c.id
+            FROM leads l LEFT JOIN clients c ON l.client_id = c.id
             WHERE l.id = $1
           `, [row.id]);
           if (leads.length) {
@@ -2131,7 +2131,7 @@ apiRouter.post('/webhooks/angi', async (req, res) => {
       : `Angi Lead ID: ${leadId || 'N/A'}`;
 
     const { rows: newLeadRows } = await db.query(
-      `INSERT INTO leads (id, client_id_new, source, status, description, created_at) 
+      `INSERT INTO leads (id, client_id, source, status, description, created_at) 
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
       [newLeadId, clientId, 'Angi Ads', 'New', leadDescriptionWithAngiId, new Date().toISOString()]
     );

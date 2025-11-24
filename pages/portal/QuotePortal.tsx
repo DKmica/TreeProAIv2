@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Quote, LineItem, PortalMessage, CustomerUpload } from '../../types';
 import SignaturePad from '../../components/SignaturePad';
-import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
-import SpinnerIcon from '../../components/icons/SpinnerIcon';
+import CheckBadgeIcon from '../components/icons/CheckBadgeIcon';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
 import PortalMessaging from '../../components/PortalMessaging';
 import * as api from '../../services/apiService';
 

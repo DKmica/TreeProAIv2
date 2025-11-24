@@ -49,7 +49,7 @@ router.get('/leads', async (req, res) => {
     const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
     const baseQuery = `
       FROM leads l
-      LEFT JOIN clients c ON l.client_id_new = c.id
+      LEFT JOIN clients c ON l.client_id = c.id
       ${whereClause}
     `;
 
@@ -143,7 +143,7 @@ router.post('/leads', async (req, res) => {
 
     const insertQuery = `
       INSERT INTO leads (
-        id, client_id_new, property_id, source, status, priority,
+        id, client_id, property_id, source, status, priority,
         lead_score, assigned_to, estimated_value, expected_close_date,
         next_followup_date, description, created_at, updated_at
       ) VALUES (
@@ -185,7 +185,7 @@ router.get('/leads/:id', async (req, res) => {
              c.primary_phone as customer_phone,
              c.billing_address_line1 as customer_address
       FROM leads l
-      LEFT JOIN clients c ON l.client_id_new = c.id
+      LEFT JOIN clients c ON l.client_id = c.id
       WHERE l.id = $1
     `, [req.params.id]);
 
@@ -232,7 +232,7 @@ router.put('/leads/:id', async (req, res) => {
 
     const updateQuery = `
       UPDATE leads SET
-        client_id_new = COALESCE($1, client_id_new),
+        client_id = COALESCE($1, client_id),
         property_id = COALESCE($2, property_id),
         source = COALESCE($3, source),
         status = COALESCE($4, status),

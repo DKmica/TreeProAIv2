@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Invoice } from '../../types';
-import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
-import SpinnerIcon from '../../components/icons/SpinnerIcon';
+import CheckBadgeIcon from '../components/icons/CheckBadgeIcon';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
 
 interface InvoicePortalProps {
   invoices: Invoice[];
