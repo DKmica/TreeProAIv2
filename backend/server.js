@@ -1067,6 +1067,10 @@ const transformRow = (row, tableName) => {
       transformed.jobId = row.job_id;
       delete transformed.job_id;
     }
+    if (row.quote_id !== undefined) {
+      transformed.quoteId = row.quote_id;
+      delete transformed.quote_id;
+    }
     if (row.client_id !== undefined) {
       transformed.clientId = row.client_id;
       delete transformed.client_id;
@@ -1664,6 +1668,10 @@ const transformToDb = (data, tableName) => {
     if (data.jobId !== undefined) {
       transformed.job_id = data.jobId;
       delete transformed.jobId;
+    }
+    if (data.quoteId !== undefined) {
+      transformed.quote_id = data.quoteId;
+      delete transformed.quoteId;
     }
     if (data.clientId !== undefined) {
       transformed.client_id = data.clientId;
@@ -8773,6 +8781,157 @@ const calculateInvoiceTotals = (lineItems, discountAmount = 0, discountPercentag
   };
 };
 
+// POST /api/quotes/:id/convert-to-invoice - Generate invoice from a quote
+apiRouter.post('/quotes/:id/convert-to-invoice', async (req, res) => {
+  const { id } = req.params;
+  const sanitizedId = sanitizeUUID(id);
+
+  if (!sanitizedId) {
+    return res.status(400).json({ success: false, error: 'Invalid quote ID' });
+  }
+
+  await db.query('BEGIN');
+
+  try {
+    const { rows: quoteRows } = await db.query(
+      'SELECT * FROM quotes WHERE id = $1 AND deleted_at IS NULL',
+      [sanitizedId]
+    );
+
+    if (quoteRows.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Quote not found' });
+    }
+
+    const { rows: existingInvoices } = await db.query(
+      'SELECT id, invoice_number FROM invoices WHERE quote_id = $1 LIMIT 1',
+      [sanitizedId]
+    );
+
+    if (existingInvoices.length > 0) {
+      await db.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: `Quote already converted to invoice ${existingInvoices[0].invoice_number || existingInvoices[0].id}`
+      });
+    }
+
+    const quote = quoteRows[0];
+    const allowedStatuses = ['Sent', 'Accepted'];
+
+    if (!allowedStatuses.includes(quote.status)) {
+      await db.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: `Cannot convert quote with status '${quote.status}' to invoice. Quote must be 'Sent' or 'Accepted'.`
+      });
+    }
+
+    const selectedLineItems = Array.isArray(quote.line_items)
+      ? quote.line_items.filter(item => item.selected !== false)
+      : [];
+
+    if (selectedLineItems.length === 0) {
+      await db.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: 'Quote has no selected line items to invoice'
+      });
+    }
+
+    const totals = calculateInvoiceTotals(
+      selectedLineItems,
+      quote.discount_amount || 0,
+      quote.discount_percentage || 0,
+      quote.tax_rate || 0
+    );
+
+    const invoiceId = uuidv4();
+    const invoiceNumber = await generateInvoiceNumber();
+    const issueDate = new Date().toISOString().split('T')[0];
+    const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const paymentTerms = quote.payment_terms || 'Net 30';
+
+    const insertInvoiceQuery = `
+      INSERT INTO invoices (
+        id, quote_id, job_id, client_id, property_id, customer_name, status,
+        invoice_number, issue_date, due_date,
+        line_items, subtotal, discount_amount, discount_percentage,
+        tax_rate, tax_amount, total_amount, grand_total,
+        amount_paid, amount_due, payment_terms,
+        customer_email, customer_phone, customer_address,
+        notes, customer_notes, amount
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10,
+        $11, $12, $13, $14,
+        $15, $16, $17, $18,
+        $19, $20, $21,
+        $22, $23, $24,
+        $25, $26, $27
+      )
+      RETURNING *
+    `;
+
+    const insertValues = [
+      invoiceId,
+      sanitizedId,
+      quote.job_id || null,
+      quote.client_id || null,
+      quote.property_id || null,
+      quote.customer_name,
+      'Draft',
+      invoiceNumber,
+      issueDate,
+      dueDate,
+      JSON.stringify(selectedLineItems),
+      totals.subtotal,
+      totals.discountAmount,
+      totals.discountPercentage,
+      totals.taxRate,
+      totals.taxAmount,
+      totals.totalAmount,
+      totals.grandTotal,
+      0,
+      totals.grandTotal,
+      paymentTerms,
+      quote.customer_email || null,
+      quote.customer_phone || null,
+      quote.job_location || null,
+      quote.terms_and_conditions || null,
+      quote.special_instructions || null,
+      totals.grandTotal
+    ];
+
+    const { rows: invoiceRows } = await db.query(insertInvoiceQuery, insertValues);
+
+    const updateQuoteQuery = `
+      UPDATE quotes
+      SET status = 'Invoiced', updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const { rows: updatedQuoteRows } = await db.query(updateQuoteQuery, [sanitizedId]);
+
+    await db.query('COMMIT');
+
+    const invoice = transformRow(invoiceRows[0], 'invoices');
+    const updatedQuote = snakeToCamel(updatedQuoteRows[0]);
+
+    reminderService.scheduleInvoiceReminders(invoiceRows[0]);
+
+    return res.status(201).json({
+      success: true,
+      data: { invoice, quote: updatedQuote },
+      message: `Invoice ${invoiceNumber} created from quote`
+    });
+  } catch (err) {
+    await db.query('ROLLBACK');
+    handleError(res, err);
+  }
+});
+
 // POST /api/invoices - Create new invoice with auto-generated invoice_number
 apiRouter.post('/invoices', async (req, res) => {
   try {
@@ -8820,27 +8979,28 @@ apiRouter.post('/invoices', async (req, res) => {
     
     const query = `
       INSERT INTO invoices (
-        id, job_id, client_id, property_id, customer_name, status,
-        invoice_number, issue_date, due_date, 
+        id, quote_id, job_id, client_id, property_id, customer_name, status,
+        invoice_number, issue_date, due_date,
         line_items, subtotal, discount_amount, discount_percentage,
         tax_rate, tax_amount, total_amount, grand_total,
         amount_paid, amount_due, payment_terms,
         customer_email, customer_phone, customer_address,
         notes, customer_notes, amount
       ) VALUES (
-        $1, $2, $3, $4, $5, $6,
-        $7, $8, $9,
-        $10, $11, $12, $13,
-        $14, $15, $16, $17,
-        $18, $19, $20,
-        $21, $22, $23,
-        $24, $25, $26
+        $1, $2, $3, $4, $5, $6, $7,
+        $8, $9, $10,
+        $11, $12, $13, $14,
+        $15, $16, $17, $18,
+        $19, $20, $21,
+        $22, $23, $24,
+        $25, $26, $27
       )
       RETURNING *
     `;
-    
+
     const values = [
       id,
+      invoiceData.quoteId || null,
       invoiceData.jobId || null,
       invoiceData.clientId || null,
       invoiceData.propertyId || null,

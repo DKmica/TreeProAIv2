@@ -1068,6 +1068,7 @@ COMMENT ON TABLE recurring_job_instances IS 'Generated instances of recurring jo
 -- Invoices Table
 CREATE TABLE IF NOT EXISTS invoices (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
     job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
     client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
     property_id UUID REFERENCES properties(id) ON DELETE SET NULL,
@@ -1112,6 +1113,9 @@ CREATE TABLE IF NOT EXISTS invoices (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Index to quickly find invoices generated from quotes
+CREATE INDEX IF NOT EXISTS idx_invoices_quote_id ON invoices(quote_id);
 
 -- Add constraints for invoice_number
 DO $$ 

@@ -260,6 +260,7 @@ export interface DispatchResult {
 
 export interface Invoice {
   id: string;
+  quoteId?: string;
   jobId?: string;
   clientId?: string;
   propertyId?: string;
