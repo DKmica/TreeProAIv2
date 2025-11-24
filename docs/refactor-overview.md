@@ -60,3 +60,9 @@ This document consolidates the multi-phase refactor and feature rollout for Tree
 - **Ops:** Dockerized app served on port 8080, GitHub Actions CI/CD, PM2 runtime option, health checks, and observability hooks (Sentry/APM/logging).
 
 This summary serves as a quick guide to the refactor outcomes and the current capabilities of TreePro AI.
+
+## Getting Started for New Contributors
+- Begin with **Phase 1** by wiring the modular Express routers and enabling TypeScript strict mode in the frontend; verify the `USE_MODULAR_ROUTES` flag path before removing monolithic endpoints.
+- Prefer React Query and RHF/Yup from the outset to avoid rework, and mirror backend `express-validator` rules using shared types to keep validation consistent.
+- Run services locally via `docker-compose` (PostgreSQL and Redis) but ensure graceful fallbacks and clear logging if dependencies are temporarily unavailable.
+- Add tests alongside each change—middleware unit tests, router integration coverage, and React component/state tests—to keep refactors safe.
