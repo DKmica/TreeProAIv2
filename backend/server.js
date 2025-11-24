@@ -18,6 +18,7 @@ const automationService = require('./services/automationService');
 const reminderService = require('./services/reminderService');
 const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
+const leadsRouter = require('./routes/leads');
 const { mountApiRoutes } = require('./routes');
 
 const app = express();
@@ -10062,6 +10063,27 @@ async function startServer() {
   await initStripe();
   
   await setupAuth(app);
+  
+  apiRouter.get('/auth/user', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Failed to fetch user' });
+    }
+  });
+
+  apiRouter.get('/health', (req, res) => {
+    res.status(200).send('TreePro AI Backend is running.');
+  });
+
+  app.use('/api', leadsRouter);
+  app.use('/api', apiRouter);
   
   mountApiRoutes(app, apiRouter);
   app.use('/api', notFoundHandler);
