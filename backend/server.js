@@ -6158,7 +6158,7 @@ apiRouter.post('/jobs', async (req, res) => {
     }
 
     const jobId = uuidv4();
-    const columns = Object.keys(dbData);
+    const columns = Object.keys(dbData).filter(col => col !== 'id');
     const values = columns.map((key) => dbData[key]);
     const placeholders = columns.map((_, index) => `$${index + 2}`).join(', ');
 
