@@ -731,13 +731,28 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                   jhaRequired: riskAssessment.jha_required
               };
 
-              const newJob = await api.jobService.create(newJobPayload);
-              setJobs(prev => [newJob, ...prev]);
+              let createdJob: Job;
+
+              if (jobData.quoteId) {
+                  const convertedJob = await api.quoteService.convertToJob(jobData.quoteId);
+                  const updatePayload = {
+                      ...newJobPayload,
+                      clientId: convertedJob.clientId,
+                      propertyId: convertedJob.propertyId,
+                      quoteId: convertedJob.quoteId,
+                  } as Partial<Job>;
+
+                  createdJob = await api.jobService.update(convertedJob.id, updatePayload);
+              } else {
+                  createdJob = await api.jobService.create(newJobPayload);
+              }
+
+              setJobs(prev => [createdJob, ...prev]);
           }
           handleCancel();
       } catch (error: any) {
           console.error('Failed to save job', error);
-          alert(`Failed to save job: ${error.message || 'Unknown error'}`);
+          alert(`Failed to save job: ${api.getApiErrorMessage(error, 'Unknown error')}`);
       }
   };
 
