@@ -1,0 +1,408 @@
+Copy and paste this into Replit AI:
+
+Plaintext
+
+I need to perform a major UI and Workflow refactor to professionalize the application structure and the "Lead-to-Cash" pipeline. Please create or update the following files with the exact code provided below.
+
+Step 1: Create a barrel file for icons to fix import issues.
+Create file: src/components/icons/index.ts
+```typescript
+export { default as AICoreIcon } from './AICoreIcon';
+export { default as ArrowLeftIcon } from './ArrowLeftIcon';
+export { default as BroadcastIcon } from './BroadcastIcon';
+export { default as CalendarDaysIcon } from './CalendarDaysIcon';
+export { default as CalendarIcon } from './CalendarIcon';
+export { default as CameraIcon } from './CameraIcon';
+export { default as ChatBubbleLeftRightIcon } from './ChatBubbleLeftRightIcon';
+export { default as ChatIcon } from './ChatIcon';
+export { default as CheckBadgeIcon } from './CheckBadgeIcon';
+export { default as CheckCircleIcon } from './CheckCircleIcon';
+export { default as ClipboardDocumentListIcon } from './ClipboardDocumentListIcon';
+export { default as ClipboardSignatureIcon } from './ClipboardSignatureIcon';
+export { default as ClockIcon } from './ClockIcon';
+export { default as CogIcon } from './CogIcon';
+export { default as CreditCardIcon } from './CreditCardIcon';
+export { default as CustomerIcon } from './CustomerIcon';
+export { default as DashboardIcon } from './DashboardIcon';
+export { default as DocumentTextIcon } from './DocumentTextIcon';
+export { default as DollarIcon } from './DollarIcon';
+export { default as EmployeeIcon } from './EmployeeIcon';
+export { default as EquipmentIcon } from './EquipmentIcon';
+export { default as ExclamationTriangleIcon } from './ExclamationTriangleIcon';
+export { default as FunctionCallIcon } from './FunctionCallIcon';
+export { default as GoogleCalendarIcon } from './GoogleCalendarIcon';
+export { default as InvoiceIcon } from './InvoiceIcon';
+export { default as JobIcon } from './JobIcon';
+export { default as LeadIcon } from './LeadIcon';
+export { default as MapPinIcon } from './MapPinIcon';
+export { default as MarketingIcon } from './MarketingIcon';
+export { default as MicrophoneIcon } from './MicrophoneIcon';
+export { default as PlusCircleIcon } from './PlusCircleIcon';
+export { default as PuzzlePieceIcon } from './PuzzlePieceIcon';
+export { default as QuickBooksIcon } from './QuickBooksIcon';
+export { default as QuoteIcon } from './QuoteIcon';
+export { default as ShieldCheckIcon } from './ShieldCheckIcon';
+export { default as SparklesIcon } from './SparklesIcon';
+export { default as SpinnerIcon } from './SpinnerIcon';
+export { default as StripeIcon } from './StripeIcon';
+export { default as ToolIcon } from './ToolIcon';
+export { default as TreeIcon } from './TreeIcon';
+export { default as UsersIcon } from './UsersIcon';
+export { default as WrenchScrewdriverIcon } from './WrenchScrewdriverIcon';
+export { default as XIcon } from './XIcon';
+Step 2: Centralize navigation configuration. Create file: src/utils/navigationConfig.ts
+
+TypeScript
+
+import {
+  DashboardIcon,
+  UsersIcon,
+  LeadIcon,
+  QuoteIcon,
+  JobIcon,
+  CalendarIcon,
+  InvoiceIcon,
+  MapPinIcon,
+  ToolIcon,
+  ClockIcon,
+  DollarIcon,
+  MarketingIcon,
+  AICoreIcon,
+  CogIcon,
+  DocumentTextIcon,
+  ClipboardDocumentListIcon
+} from '../components/icons';
+
+export const navigationConfig = [
+  {
+    group: 'Overview',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
+      { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
+      { name: 'Map View', href: '/calendar?view=map', icon: MapPinIcon },
+    ]
+  },
+  {
+    group: 'Sales & CRM',
+    items: [
+      { name: 'Leads', href: '/leads', icon: LeadIcon },
+      { name: 'Quotes', href: '/quotes', icon: QuoteIcon },
+      { name: 'Clients', href: '/customers', icon: UsersIcon },
+    ]
+  },
+  {
+    group: 'Operations',
+    items: [
+      { name: 'Jobs', href: '/jobs', icon: JobIcon },
+      { name: 'Crews', href: '/crews', icon: UsersIcon },
+      { name: 'Equipment', href: '/equipment', icon: ToolIcon },
+      { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },
+    ]
+  },
+  {
+    group: 'Finance',
+    items: [
+      { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
+      { name: 'Payroll', href: '/payroll', icon: DollarIcon },
+      { name: 'Profitability', href: '/profitability', icon: DollarIcon },
+    ]
+  },
+  {
+    group: 'Intelligence & Tools',
+    items: [
+      { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
+      { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
+      { name: 'Job Templates', href: '/job-templates', icon: ClipboardDocumentListIcon },
+      { name: 'Form Templates', href: '/forms', icon: DocumentTextIcon },
+      { name: 'Settings', href: '/settings', icon: CogIcon },
+    ]
+  }
+];
+Step 3: Create the Workflow Stepper component. Create file: src/components/WorkflowStepper.tsx
+
+TypeScript
+
+import React from 'react';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
+
+export type WorkflowStage = 'lead' | 'quote' | 'job' | 'invoice' | 'paid';
+
+interface WorkflowStepperProps {
+  currentStage: WorkflowStage;
+  status?: string;
+}
+
+const stages: { id: WorkflowStage; label: string }[] = [
+  { id: 'lead', label: 'Lead' },
+  { id: 'quote', label: 'Quote' },
+  { id: 'job', label: 'Job' },
+  { id: 'invoice', label: 'Invoice' },
+  { id: 'paid', label: 'Paid' },
+];
+
+const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStage, status }) => {
+  const currentIndex = stages.findIndex(s => s.id === currentStage);
+
+  return (
+    <div className="w-full py-6 px-4 bg-white border-b border-gray-200 mb-6">
+      <nav aria-label="Progress">
+        <ol role="list" className="flex items-center w-full">
+          {stages.map((stage, index) => {
+            const isCompleted = index < currentIndex;
+            const isCurrent = index === currentIndex;
+
+            return (
+              <li key={stage.label} className={`relative ${index !== stages.length - 1 ? 'flex-1' : ''}`}>
+                {index !== stages.length - 1 && (
+                  <div className="absolute top-4 left-0 right-0 flex items-center" aria-hidden="true">
+                    <div className={`h-0.5 w-full ${isCompleted ? 'bg-green-600' : 'bg-gray-200'}`} />
+                  </div>
+                )}
+                
+                <div className="relative flex flex-col items-center group">
+                  <span className="flex items-center h-9" aria-hidden="true">
+                    {isCompleted ? (
+                      <span className="relative z-10 w-8 h-8 flex items-center justify-center bg-green-600 rounded-full">
+                        <CheckCircleIcon className="w-5 h-5 text-white" />
+                      </span>
+                    ) : isCurrent ? (
+                      <span className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-green-600 rounded-full">
+                        <span className="h-2.5 w-2.5 bg-green-600 rounded-full animate-pulse" />
+                      </span>
+                    ) : (
+                      <span className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 rounded-full">
+                        <span className="h-2.5 w-2.5 bg-transparent rounded-full" />
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-2 text-xs font-medium text-center">
+                    <span className={isCurrent ? 'text-green-600 font-bold uppercase' : isCompleted ? 'text-gray-900' : 'text-gray-500'}>
+                      {stage.label}
+                    </span>
+                    {isCurrent && status && (
+                      <span className="block text-[10px] text-gray-400 mt-0.5">
+                        {status}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+    </div>
+  );
+};
+
+export default WorkflowStepper;
+Step 4: Update the Sidebar component. Update file: src/components/Sidebar.tsx
+
+TypeScript
+
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { navigationConfig } from '../utils/navigationConfig';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+
+const isGroupActive = (groupItems: any[], currentPath: string) => {
+  return groupItems.some(item => currentPath.startsWith(item.href));
+};
+
+const Sidebar: React.FC = () => {
+  const location = useLocation();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    navigationConfig.forEach(group => {
+      if (isGroupActive(group.items, location.pathname)) {
+        initialState[group.group] = true;
+      }
+    });
+    return initialState;
+  });
+
+  const toggleGroup = (groupName: string) => {
+    setOpenGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
+
+  return (
+    <div className="flex flex-col w-64 bg-slate-900 text-white h-full border-r border-slate-800 overflow-y-auto">
+      <div className="flex items-center justify-center h-16 border-b border-slate-800 bg-slate-950">
+        <div className="flex items-center space-x-2">
+           <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">T</div>
+           <span className="text-xl font-bold">TreePro AI</span>
+        </div>
+      </div>
+
+      <nav className="flex-1 px-3 py-4 space-y-2">
+        {navigationConfig.map((group) => {
+          const isOpen = openGroups[group.group] || false;
+          const hasActiveChild = isGroupActive(group.items, location.pathname);
+
+          return (
+            <div key={group.group} className="mb-2">
+              <button
+                onClick={() => toggleGroup(group.group)}
+                className={`flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md transition-colors 
+                  ${hasActiveChild ? 'text-white bg-slate-800/50' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              >
+                <span className="font-semibold tracking-wide text-xs uppercase text-slate-500">{group.group}</span>
+                {isOpen ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />}
+              </button>
+
+              <div className={`mt-1 space-y-1 overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
+                {group.items.map((item) => {
+                  const isActive = location.pathname.startsWith(item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-md relative
+                        ${isActive ? 'bg-green-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'}`}
+                    >
+                      <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'}`} />
+                      <span className="truncate">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </nav>
+    </div>
+  );
+};
+
+export default Sidebar;
+Step 5: Update the Quote Detail page with the new workflow logic. Update file: src/pages/QuoteDetail.tsx
+
+TypeScript
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import * as api from '../services/apiService';
+import { Quote } from '../types';
+import WorkflowStepper from '../components/WorkflowStepper';
+import QuoteViewer from '../components/QuoteViewer';
+import QuoteEditor from '../components/QuoteEditor';
+import SpinnerIcon from '../components/icons/SpinnerIcon';
+import { CheckCircleIcon, ArrowRightIcon, BriefcaseIcon } from '@heroicons/react/24/solid';
+
+const QuoteDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [converting, setConverting] = useState(false);
+
+  useEffect(() => {
+    if (id) fetchQuote(id);
+  }, [id]);
+
+  const fetchQuote = async (quoteId: string) => {
+    setIsLoading(true);
+    try {
+      const data = await api.quoteService.getById(quoteId);
+      setQuote(data);
+    } catch (error) {
+      console.error('Failed to load quote:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async (updatedQuote: Partial<Quote>) => {
+    if (!quote) return;
+    try {
+      await api.quoteService.update(quote.id, updatedQuote);
+      setIsEditing(false);
+      fetchQuote(quote.id);
+    } catch (error) {
+      console.error('Failed to update quote:', error);
+    }
+  };
+
+  const handleConvertToJob = async () => {
+    if (!quote) return;
+    setConverting(true);
+    try {
+      const job = await api.quoteService.convertToJob(quote.id);
+      navigate(`/jobs?id=${job.id}&action=schedule`); 
+    } catch (error) {
+      console.error('Failed to convert to job:', error);
+      alert('Failed to convert quote to job. Please try again.');
+    } finally {
+      setConverting(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!quote) return;
+    await handleSave({ status: newStatus as any });
+  };
+
+  if (isLoading) return <div className="flex justify-center p-12"><SpinnerIcon className="w-10 h-10 text-green-600" /></div>;
+  if (!quote) return <div className="p-8 text-center text-gray-500">Quote not found</div>;
+
+  return (
+    <div className="bg-gray-50 min-h-screen pb-12">
+      <WorkflowStepper currentStage="quote" status={quote.status} />
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Quote #{quote.quoteNumber}</h1>
+            <p className="text-sm text-gray-500 mt-1">For {quote.customerName}</p>
+          </div>
+
+          <div className="flex space-x-3">
+            {isEditing ? (
+              <button onClick={() => setIsEditing(false)} className="px-4 py-2 border border-gray-300 rounded-md bg-white">Cancel</button>
+            ) : (
+              <>
+                <button onClick={() => setIsEditing(true)} className="px-4 py-2 border border-gray-300 rounded-md bg-white">Edit Quote</button>
+                {(quote.status === 'Accepted' || quote.status === 'Sent') ? (
+                  <button onClick={handleConvertToJob} disabled={converting} className="inline-flex items-center px-5 py-2 border border-transparent rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                    {converting ? <SpinnerIcon className="w-4 h-4 mr-2 animate-spin" /> : <BriefcaseIcon className="w-4 h-4 mr-2" />}
+                    Convert to Job
+                  </button>
+                ) : quote.status === 'Draft' ? (
+                  <button onClick={() => handleStatusChange('Sent')} className="inline-flex items-center px-5 py-2 text-white bg-blue-600 rounded-md">
+                    <ArrowRightIcon className="w-4 h-4 mr-2" /> Mark as Sent
+                  </button>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+
+        {quote.status === 'Accepted' && (
+          <div className="rounded-md bg-green-50 p-4 mb-6 border border-green-200 flex">
+            <CheckCircleIcon className="h-5 w-5 text-green-400 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-green-800">Quote Accepted!</h3>
+              <p className="text-sm text-green-700 mt-1">The customer has accepted this quote. Please convert it to a job.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          {isEditing ? <QuoteEditor initialData={quote} onSave={handleSave} onCancel={() => setIsEditing(false)} /> : <QuoteViewer quote={quote} />}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default QuoteDetail;
+Step 6: Update API Service to include convertToJob. Modify services/apiService.ts by adding the following method inside the quoteService object:
+
+TypeScript
+
+  convertToJob: async (id: string) => {
+    const response = await apiClient.post(`/quotes/${id}/convert-to-job`);
+    return response.data;
+  },
