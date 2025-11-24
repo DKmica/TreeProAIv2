@@ -1,4 +1,42 @@
 const memoryCache = new Map();
+const { REDIS_URL, MEMORY_CACHE_MAX_ITEMS, CACHE_DEFAULT_TTL_SECONDS } = process.env;
+
+const MAX_ITEMS = Number.isFinite(Number(MEMORY_CACHE_MAX_ITEMS))
+  ? Number(MEMORY_CACHE_MAX_ITEMS)
+  : 500;
+const DEFAULT_TTL_SECONDS = Number.isFinite(Number(CACHE_DEFAULT_TTL_SECONDS))
+  ? Number(CACHE_DEFAULT_TTL_SECONDS)
+  : 60;
+
+let redisClientPromise = null;
+
+function pruneMemoryCache() {
+  const now = Date.now();
+
+  for (const [key, value] of memoryCache.entries()) {
+    if (value.expiresAt < now) {
+      memoryCache.delete(key);
+    }
+  }
+
+  if (memoryCache.size <= MAX_ITEMS) {
+    return;
+  }
+
+  const itemsToRemove = memoryCache.size - MAX_ITEMS;
+  let removed = 0;
+
+  // Remove the oldest entries first (Map preserves insertion order)
+  for (const key of memoryCache.keys()) {
+    memoryCache.delete(key);
+    removed += 1;
+
+    if (removed >= itemsToRemove) {
+      break;
+    }
+  }
+}
+
 const { REDIS_URL } = process.env;
 
 let redisClientPromise = null;
@@ -40,6 +78,8 @@ async function getRedisClient() {
 }
 
 async function getJson(key) {
+  pruneMemoryCache();
+
   const client = await getRedisClient();
 
   if (client) {
@@ -65,10 +105,15 @@ async function getJson(key) {
 }
 
 async function setJson(key, value, ttlSeconds = 60) {
+  pruneMemoryCache();
+
+  const ttl = Number.isFinite(ttlSeconds) && ttlSeconds > 0 ? ttlSeconds : DEFAULT_TTL_SECONDS;
+
   const client = await getRedisClient();
 
   if (client) {
     try {
+      await client.set(key, JSON.stringify(value), { EX: ttl });
       await client.set(key, JSON.stringify(value), { EX: ttlSeconds });
       return true;
     } catch (err) {
@@ -78,6 +123,7 @@ async function setJson(key, value, ttlSeconds = 60) {
 
   memoryCache.set(key, {
     payload: value,
+    expiresAt: Date.now() + ttl * 1000,
     expiresAt: Date.now() + ttlSeconds * 1000,
   });
 
@@ -88,4 +134,5 @@ module.exports = {
   getRedisClient,
   getJson,
   setJson,
+  pruneMemoryCache,
 };

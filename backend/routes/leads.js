@@ -9,12 +9,22 @@ const { reindexDocument, removeFromVectorStore } = require('../utils/vectorStore
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
 const { getJson, setJson } = require('../services/cacheService');
 
+const { LEADS_CACHE_TTL_SECONDS } = process.env;
+const LEADS_CACHE_TTL = Number.isFinite(Number(LEADS_CACHE_TTL_SECONDS))
+  ? Number(LEADS_CACHE_TTL_SECONDS)
+  : 60;
+
 const router = express.Router();
 
 router.get('/leads', async (req, res) => {
   try {
     const { status, search } = req.query;
     const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);
+
+    const shouldBypassCache =
+      String(req.query.cache || '').toLowerCase() === 'false' ||
+      String(req.query.cache || '').toLowerCase() === '0' ||
+      String(req.headers['cache-control'] || '').toLowerCase().includes('no-cache');
 
     const filters = [];
     const params = [];
@@ -25,6 +35,14 @@ router.get('/leads', async (req, res) => {
     }
 
     if (search) {
+      const likeValue = `%${String(search)}%`;
+      params.push(likeValue, likeValue, likeValue, likeValue);
+      const startIndex = params.length - 3;
+      filters.push(`(
+        l.description ILIKE $${startIndex}
+        OR l.source ILIKE $${startIndex + 1}
+        OR CONCAT_WS(' ', c.first_name, c.last_name) ILIKE $${startIndex + 2}
+        OR c.primary_email ILIKE $${startIndex + 3}
       const likeValue = `%${String(search).toLowerCase()}%`;
       params.push(likeValue, likeValue, likeValue, likeValue);
       const startIndex = params.length - 3;
@@ -47,6 +65,7 @@ router.get('/leads', async (req, res) => {
       ? `leads:list:v1:page:${page}:size:${pageSize}:status:${status || 'all'}:q:${search || ''}`
       : `leads:list:v1:all:status:${status || 'all'}:q:${search || ''}`;
 
+    if (usePagination && page === 1 && !shouldBypassCache) {
     if (usePagination && page === 1) {
       const cached = await getJson(cacheKey);
       if (cached) {
@@ -97,6 +116,8 @@ router.get('/leads', async (req, res) => {
       pagination: buildPaginationMeta(total, page, pageSize),
     };
 
+    if (page === 1 && !shouldBypassCache) {
+      await setJson(cacheKey, payload, LEADS_CACHE_TTL);
     if (page === 1) {
       await setJson(cacheKey, payload, 60);
     }
