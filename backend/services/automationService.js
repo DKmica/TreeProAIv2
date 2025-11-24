@@ -146,12 +146,12 @@ const createJobFromApprovedQuote = async (quoteId) => {
       INSERT INTO jobs (
         id, client_id, property_id, quote_id, job_number, status,
         customer_name, job_location, special_instructions,
-        price, line_items, created_at,
+        line_items, created_at,
         equipment_needed, estimated_hours, required_crew_size, job_template_id,
         completion_checklist, jha_required
       ) VALUES (
-        $1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, NOW(),
-        $11, $12, $13, $14, $15, $16
+        $1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, NOW(),
+        $10, $11, $12, $13, $14, $15
       ) RETURNING *
     `;
 
@@ -164,7 +164,6 @@ const createJobFromApprovedQuote = async (quoteId) => {
       quote.customer_name || 'Unknown',
       quote.job_location || null,
       quote.special_instructions || null,
-      quote.grand_total || quote.price || 0,
       quote.line_items || '[]',
       equipmentNeeded,
       matchedTemplate?.default_duration_hours || null,
