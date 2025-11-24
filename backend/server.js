@@ -20,6 +20,7 @@ const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
 const leadsRouter = require('./routes/leads');
 const { mountApiRoutes } = require('./routes');
+const { camelToSnake, snakeToCamel, sanitizeUUID } = require('./utils/formatters');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -2308,67 +2309,6 @@ apiRouter.get('/estimate_feedback/stats', async (req, res) => {
 // ============================================================================
 // CLIENT CRUD API ENDPOINTS
 // ============================================================================
-
-// Helper function: Convert snake_case object keys to camelCase recursively
-const snakeToCamel = (obj) => {
-  if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(snakeToCamel);
-  if (typeof obj !== 'object') return obj;
-  
-  const camelObj = {};
-  for (const [key, value] of Object.entries(obj)) {
-    // Special case mappings for database columns that don't follow standard pattern
-    let camelKey;
-    if (key === 'zip') {
-      camelKey = 'zipCode';
-    } else if (key === 'billing_zip_code') {
-      camelKey = 'billingZipCode';
-    } else {
-      camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-    }
-    camelObj[camelKey] = (value && typeof value === 'object') ? snakeToCamel(value) : value;
-  }
-  return camelObj;
-};
-
-// Helper function: Convert camelCase object keys to snake_case recursively
-const camelToSnake = (obj) => {
-  if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(camelToSnake);
-  if (typeof obj !== 'object') return obj;
-  
-  const snakeObj = {};
-  for (const [key, value] of Object.entries(obj)) {
-    // Special case mappings for database columns that don't follow standard pattern
-    let snakeKey;
-    if (key === 'zipCode') {
-      snakeKey = 'zip';
-    } else if (key === 'billingZipCode') {
-      snakeKey = 'billing_zip_code';
-    } else if (key === 'email' || key === 'phone' || key === 'role') {
-      // Skip email/phone/role for contacts - these should be in channels or mapped differently
-      // 'role' should map to 'job_title' or 'contact_type' depending on context
-      continue;
-    } else {
-      snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    }
-    snakeObj[snakeKey] = (value && typeof value === 'object') ? camelToSnake(value) : value;
-  }
-  return snakeObj;
-};
-
-// Helper function: Sanitize UUID values - convert "undefined", "", or invalid values to null
-const sanitizeUUID = (value) => {
-  if (!value || value === 'undefined' || value === 'null' || value === '') {
-    return null;
-  }
-  // Basic UUID validation - check if it looks like a UUID
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(value)) {
-    return null;
-  }
-  return value;
-};
 
 const CLIENT_CATEGORIES = {
   POTENTIAL: 'potential_client',
