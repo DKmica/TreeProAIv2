@@ -176,9 +176,29 @@ const ClientDetail: React.FC = () => {
     }
   };
 
-  const handleDeleteClient = () => {
-    if (window.confirm('Are you sure you want to delete this client?')) {
-      alert('Delete client functionality will be implemented next');
+  const handleDeleteClient = async () => {
+    if (!id || !client) return;
+    
+    const fullName = client.firstName && client.lastName 
+      ? `${client.firstName} ${client.lastName}` 
+      : client.companyName || 'Unknown';
+    
+    if (!window.confirm(`Are you sure you want to delete ${fullName}? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await clientService.remove(id);
+      // Successfully deleted - navigate back to CRM
+      navigate('/crm?tab=clients', { replace: true });
+    } catch (err: any) {
+      const errorMsg = err.message || 'Failed to delete client';
+      if (errorMsg.includes('existing jobs')) {
+        alert(`Cannot delete this client because they have active jobs. Please archive or reassign their jobs first.`);
+      } else {
+        alert(`Error deleting client: ${errorMsg}`);
+      }
+      console.error('Error deleting client:', err);
     }
   };
 
