@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Quote, Client } from '../types';
-import { quoteService, clientService, invoiceService, getApiErrorMessage } from '../services/apiService';
+import { Quote, Client, Invoice } from '../types';
+import { quoteService, clientService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
@@ -14,6 +14,7 @@ const QuoteDetail: React.FC = () => {
   
   const [quote, setQuote] = useState<Quote | null>(null);
   const [client, setClient] = useState<Client | null>(null);
+  const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAssociationModal, setShowAssociationModal] = useState(false);
@@ -135,34 +136,13 @@ const QuoteDetail: React.FC = () => {
 
   const executeInvoiceConversion = async (quoteToConvert: Quote) => {
     try {
-      const lineItems = quoteToConvert.lineItems?.map(item => ({
-        description: item.description,
-        price: item.price,
-        selected: true,
-      })) || [];
-
-      const invoice = await invoiceService.create({
-        clientId: quoteToConvert.clientId,
-        propertyId: quoteToConvert.propertyId,
-        customerName: clientName,
-        jobId: undefined,
-        status: 'Draft',
-        lineItems,
-        subtotal: subtotal,
-        discountAmount: quoteToConvert.discountAmount || 0,
-        discountPercentage: quoteToConvert.discountPercentage || 0,
-        taxRate: quoteToConvert.taxRate || 0,
-        taxAmount: quoteToConvert.taxAmount || 0,
-        totalAmount: grandTotal,
-        grandTotal: grandTotal,
-        amountPaid: 0,
-        amountDue: grandTotal,
-        invoiceNumber: quoteToConvert.quoteNumber ? `INV-${quoteToConvert.quoteNumber}` : '',
-        issueDate: new Date().toISOString(),
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        paymentTerms: quoteToConvert.paymentTerms,
-      });
-      setLinkageMessages([`Created draft invoice ${invoice.invoiceNumber || invoice.id} from this quote.`]);
+      const { invoice, quote: updatedQuote } = await quoteService.convertToInvoice(quoteToConvert.id);
+      setQuote(updatedQuote);
+      setCreatedInvoice(invoice);
+      setLinkageMessages([
+        `Created invoice ${invoice.invoiceNumber || invoice.id} from this quote.`,
+        `Quote status updated to ${updatedQuote.status}.`
+      ]);
     } catch (err: any) {
       alert(err.message || 'Failed to create invoice');
     }
@@ -270,6 +250,25 @@ const QuoteDetail: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {createdInvoice && (
+        <div className="mb-4 bg-white border border-brand-gray-200 rounded-lg shadow-sm p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-brand-gray-600">Invoice Created</p>
+              <p className="text-lg font-semibold text-brand-gray-900">{createdInvoice.invoiceNumber || createdInvoice.id}</p>
+              <p className="text-sm text-brand-gray-600">Due {formatDate(createdInvoice.dueDate)}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <StatusBadge status={createdInvoice.status} size="sm" />
+              <div className="text-right">
+                <p className="text-xs text-brand-gray-500">Balance Due</p>
+                <p className="text-base font-semibold text-brand-gray-900">{formatCurrency(createdInvoice.amountDue || createdInvoice.grandTotal)}</p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -106,6 +106,13 @@ export const quoteService = {
   create: (data: Partial<Omit<Quote, 'id'>>): Promise<Quote> => apiFetch('quotes', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Quote>): Promise<Quote> => apiFetch(`quotes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id: string): Promise<void> => apiFetch<void>(`quotes/${id}`, { method: 'DELETE' }),
+  convertToInvoice: async (id: string): Promise<{ invoice: Invoice; quote: Quote }> => {
+    const response = await apiFetch<{ success: boolean; data: { invoice: Invoice; quote: Quote } }>(
+      `quotes/${id}/convert-to-invoice`,
+      { method: 'POST' }
+    );
+    return response.data;
+  }
 };
 export const jobService = createApiService<Job>('jobs');
 export const invoiceService = {
