@@ -719,6 +719,23 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     )}
                   </div>
                 </div>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      billingAddressLine1: newCustomerData.addressLine1,
+                      billingAddressLine2: newCustomerData.addressLine2,
+                      billingCity: newCustomerData.city,
+                      billingState: newCustomerData.state,
+                      billingZipCode: newCustomerData.zipCode,
+                    } as any));
+                  }}
+                  className="mt-3 w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
+                >
+                  Use as Billing Address
+                </button>
               </div>
             )}
 

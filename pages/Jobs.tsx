@@ -509,6 +509,22 @@ const JobForm: React.FC<{
                                     {errors.zipCode && <p className="mt-1 text-sm text-red-400">{errors.zipCode}</p>}
                                 </div>
                             </div>
+                            
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setJobLocationData({
+                                        addressLine1: newCustomerData.addressLine1,
+                                        addressLine2: newCustomerData.addressLine2,
+                                        city: newCustomerData.city,
+                                        state: newCustomerData.state,
+                                        zipCode: newCustomerData.zipCode,
+                                    });
+                                }}
+                                className="mt-3 w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
+                            >
+                                Use as Job Location
+                            </button>
                         </div>
                     )}
                     <div className="sm:col-span-3">
