@@ -495,6 +495,11 @@ const transformRow = (row, tableName) => {
   
   // Transform properties fields
   if (tableName === 'properties') {
+    if (row.lat !== undefined && row.lon !== undefined) {
+      transformed.coordinates = { lat: row.lat, lng: row.lon };
+      delete transformed.lat;
+      delete transformed.lon;
+    }
     if (row.zip_code !== undefined) {
       transformed.zipCode = row.zip_code;
       delete transformed.zip_code;
@@ -540,7 +545,7 @@ const transformRow = (row, tableName) => {
       delete transformed.parking_instructions;
     }
     if (row.trees_on_property !== undefined) {
-      transformed.treesOnProperty = row.trees_on_property;
+      transformed.treesOnProperty = row.trees_on_property !== null ? Number(row.trees_on_property) : null;
       delete transformed.trees_on_property;
     }
     if (row.property_features !== undefined) {
@@ -548,7 +553,7 @@ const transformRow = (row, tableName) => {
       delete transformed.property_features;
     }
     if (row.is_primary !== undefined) {
-      transformed.isPrimary = row.is_primary;
+      transformed.isPrimary = Boolean(row.is_primary);
       delete transformed.is_primary;
     }
     if (row.created_at !== undefined) {
@@ -932,7 +937,7 @@ const transformToDb = (data, tableName) => {
   const transformed = { ...data };
   
   // Handle coordinate fields
-  if ((tableName === 'clients' || tableName === 'employees') && data.coordinates) {
+  if ((tableName === 'clients' || tableName === 'employees' || tableName === 'properties') && data.coordinates) {
     transformed.lat = data.coordinates.lat;
     transformed.lon = data.coordinates.lng;
     delete transformed.coordinates;
