@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Zap, 
-  Plus, 
-  Search, 
-  Play, 
+import {
+  Zap,
+  Plus,
+  Search,
+  Play,
   Pause, 
   Trash2, 
   Edit, 
@@ -14,10 +14,13 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
-import { workflowService, Workflow, TRIGGER_TYPES, ACTION_TYPES } from '../services/workflowService';
+import { automationLogService, workflowService, Workflow, TRIGGER_TYPES, ACTION_TYPES, AutomationLog } from '../services/workflowService';
 import WorkflowEditor from '../components/WorkflowEditor';
+import { useToast } from '../components/ui/Toast';
+import AutomationLogDrawer from '../components/AutomationLogDrawer';
 
 const Workflows: React.FC = () => {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
@@ -31,11 +34,31 @@ const Workflows: React.FC = () => {
   const [editingWorkflowId, setEditingWorkflowId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [recentLogs, setRecentLogs] = useState<Record<string, AutomationLog[]>>({});
+  const [isPrefetchingLogs, setIsPrefetchingLogs] = useState(false);
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const hasHydratedLogs = useRef(false);
+  const seenExecutionIds = useRef<Set<string>>(new Set());
+  const toast = useToast();
 
   useEffect(() => {
     loadWorkflows();
     loadTemplates();
   }, []);
+
+  useEffect(() => {
+    loadWorkflows();
+  }, [statusFilter]);
+
+  useEffect(() => {
+    if (!workflows.length) return;
+
+    const interval = setInterval(() => {
+      prefetchRecentLogs(workflows, true);
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, [workflows]);
 
   const loadWorkflows = async () => {
     try {
@@ -45,11 +68,57 @@ const Workflows: React.FC = () => {
       });
       setWorkflows(response.data);
       setError(null);
+      await prefetchRecentLogs(response.data, false);
+      hasHydratedLogs.current = true;
     } catch (err: any) {
       setError(err.message || 'Failed to load workflows');
+      toast.error('Unable to load workflows', err.message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const prefetchRecentLogs = async (items: Workflow[], shouldNotify = false) => {
+    if (!items.length) return;
+    setIsPrefetchingLogs(true);
+
+    const entries = await Promise.all(
+      items.map(async (workflow) => {
+        try {
+          const response = await automationLogService.getLogs({
+            workflow_id: workflow.id,
+            page: 1,
+            pageSize: 3
+          });
+          return [workflow.id, response.data] as [string, AutomationLog[]];
+        } catch (err) {
+          console.error('Failed to load recent logs for workflow', workflow.id, err);
+          return [workflow.id, []] as [string, AutomationLog[]];
+        }
+      })
+    );
+
+    const logsByWorkflow = Object.fromEntries(entries);
+
+    Object.values(logsByWorkflow).forEach((logs) => {
+      logs.forEach((log) => {
+        if (!seenExecutionIds.current.has(log.execution_id)) {
+          seenExecutionIds.current.add(log.execution_id);
+
+          if (shouldNotify && hasHydratedLogs.current) {
+            const summary = `${getTriggerLabel(log.trigger_type || 'manual')} ${log.action_type ? `→ ${getActionLabel(log.action_type)}` : ''}`.trim();
+            if (log.status === 'failed') {
+              toast.error('Automation run failed', summary || 'A workflow execution reported a failure.');
+            } else if (log.status === 'completed') {
+              toast.success('Automation run completed', summary || 'Workflow finished successfully.');
+            }
+          }
+        }
+      });
+    });
+
+    setRecentLogs(logsByWorkflow);
+    setIsPrefetchingLogs(false);
   };
 
   const loadTemplates = async () => {
@@ -65,11 +134,18 @@ const Workflows: React.FC = () => {
     try {
       setTogglingId(id);
       const result = await workflowService.toggleWorkflow(id);
-      setWorkflows(prev => prev.map(w => 
+      setWorkflows(prev => prev.map(w =>
         w.id === id ? { ...w, is_active: result.is_active } : w
       ));
+      toast.success(
+        result.is_active ? 'Workflow activated' : 'Workflow paused',
+        result.is_active
+          ? 'This automation is now live and will react to new triggers.'
+          : 'Runs are paused until you reactivate the workflow.'
+      );
+      refreshWorkflowLogs(id);
     } catch (err: any) {
-      alert(err.message || 'Failed to toggle workflow');
+      toast.error('Failed to update workflow', err.message);
     } finally {
       setTogglingId(null);
     }
@@ -84,8 +160,9 @@ const Workflows: React.FC = () => {
       setDeletingId(id);
       await workflowService.deleteWorkflow(id);
       setWorkflows(prev => prev.filter(w => w.id !== id));
+      toast.success('Workflow deleted', 'The automation and its runs have been removed.');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete workflow');
+      toast.error('Failed to delete workflow', err.message);
     } finally {
       setDeletingId(null);
     }
@@ -97,8 +174,34 @@ const Workflows: React.FC = () => {
       await workflowService.createFromTemplate(templateId, template?.name);
       setShowTemplateDropdown(false);
       loadWorkflows();
+      toast.success('Workflow created from template', 'Review the steps and enable when ready.');
     } catch (err: any) {
-      alert(err.message || 'Failed to create workflow from template');
+      toast.error('Could not create workflow', err.message);
+    }
+  };
+
+  const refreshWorkflowLogs = async (workflowId: string) => {
+    try {
+      const response = await automationLogService.getLogs({
+        workflow_id: workflowId,
+        page: 1,
+        pageSize: 3
+      });
+      setRecentLogs(prev => ({ ...prev, [workflowId]: response.data }));
+
+      response.data.forEach((log) => {
+        if (!seenExecutionIds.current.has(log.execution_id)) {
+          seenExecutionIds.current.add(log.execution_id);
+          if (hasHydratedLogs.current && (log.status === 'completed' || log.status === 'failed')) {
+            const summary = `${getTriggerLabel(log.trigger_type || 'manual')} ${log.action_type ? `→ ${getActionLabel(log.action_type)}` : ''}`.trim();
+            log.status === 'completed'
+              ? toast.success('Automation run completed', summary || 'Workflow finished successfully.')
+              : toast.error('Automation run failed', summary || 'A workflow execution reported a failure.');
+          }
+        }
+      });
+    } catch (err) {
+      console.error('Failed to refresh logs for workflow', workflowId, err);
     }
   };
 
@@ -135,12 +238,72 @@ const Workflows: React.FC = () => {
     return ACTION_TYPES.find(a => a.value === actionType)?.label || actionType;
   };
 
+  const getStatusPill = (status: string) => {
+    const styles: Record<string, string> = {
+      completed: 'bg-green-100 text-green-700',
+      failed: 'bg-red-100 text-red-700',
+      running: 'bg-blue-100 text-blue-700',
+      skipped: 'bg-amber-100 text-amber-700',
+    };
+
+    const icons: Record<string, JSX.Element> = {
+      completed: <CheckCircle className="w-3.5 h-3.5" />,
+      failed: <XCircle className="w-3.5 h-3.5" />,
+      running: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
+      skipped: <Pause className="w-3.5 h-3.5" />,
+    };
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] || 'bg-brand-gray-100 text-brand-gray-600'}`}>
+        {icons[status] || <Clock className="w-3.5 h-3.5" />}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const formatDate = (value?: string) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-brand-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-brand-gray-400 text-sm">Loading workflows...</p>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2 w-1/3">
+            <div className="h-6 bg-brand-gray-800/70 rounded-md animate-pulse" />
+            <div className="h-4 bg-brand-gray-800/70 rounded-md animate-pulse w-2/3" />
+          </div>
+          <div className="flex gap-3">
+            <div className="h-10 w-32 bg-brand-gray-800/70 rounded-lg animate-pulse" />
+            <div className="h-10 w-36 bg-brand-gray-800/70 rounded-lg animate-pulse" />
+            <div className="h-10 w-28 bg-brand-gray-800/70 rounded-lg animate-pulse" />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="p-4 border border-brand-gray-800 rounded-xl bg-brand-gray-900/60">
+              <div className="h-5 w-1/2 bg-brand-gray-800/70 rounded-md animate-pulse" />
+              <div className="mt-3 space-y-2">
+                <div className="h-4 bg-brand-gray-800/70 rounded-md animate-pulse" />
+                <div className="h-4 bg-brand-gray-800/70 rounded-md animate-pulse w-4/5" />
+              </div>
+              <div className="mt-4 flex justify-between items-center">
+                <div className="h-6 w-24 bg-brand-gray-800/70 rounded-full animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-8 w-10 bg-brand-gray-800/70 rounded-lg animate-pulse" />
+                  <div className="h-8 w-10 bg-brand-gray-800/70 rounded-lg animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -281,6 +444,9 @@ const Workflows: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
                   Executions (24h)
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
+                  Recent Activity
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-brand-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -330,6 +496,37 @@ const Workflows: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Activity className="w-4 h-4 text-brand-gray-400" />
                       <span className="text-sm text-brand-gray-600">{workflow.executions_24h || 0}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-2">
+                      {(recentLogs[workflow.id] || []).length === 0 ? (
+                        <p className="text-sm text-brand-gray-500">No recent runs</p>
+                      ) : (
+                        (recentLogs[workflow.id] || []).map((log) => (
+                          <div key={log.id} className="flex items-center justify-between gap-3">
+                            <div className="flex flex-col">
+                              <div className="text-sm font-medium text-brand-gray-900 flex items-center gap-2">
+                                {getStatusPill(log.status)}
+                                <span className="text-xs text-brand-gray-500">{formatDate(log.started_at || log.created_at)}</span>
+                              </div>
+                              <p className="text-xs text-brand-gray-600">
+                                {log.trigger_type ? getTriggerLabel(log.trigger_type) : 'Manual trigger'}
+                                {log.action_type && ` • ${getActionLabel(log.action_type)}`}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => setSelectedExecutionId(log.execution_id)}
+                              className="text-xs font-medium text-brand-cyan-600 hover:text-brand-cyan-700"
+                            >
+                              View log
+                            </button>
+                          </div>
+                        ))
+                      )}
+                      {isPrefetchingLogs && (recentLogs[workflow.id] || []).length === 0 && (
+                        <p className="text-xs text-brand-gray-400">Loading activity…</p>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -382,6 +579,11 @@ const Workflows: React.FC = () => {
         workflowId={editingWorkflowId}
         onClose={handleEditorClose}
         onSave={handleEditorSave}
+      />
+
+      <AutomationLogDrawer
+        executionId={selectedExecutionId}
+        onClose={() => setSelectedExecutionId(null)}
       />
 
       {showTemplateDropdown && (

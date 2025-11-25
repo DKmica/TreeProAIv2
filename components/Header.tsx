@@ -5,9 +5,10 @@ import GlobalSearch from './GlobalSearch';
 interface HeaderProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  onOpenCommandPalette: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
+const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen, onOpenCommandPalette }) => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const { logout } = useAuth();
@@ -49,10 +50,10 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
         </button>
 
         <div className="flex-1 flex items-center justify-center lg:justify-start lg:ml-0 px-4">
-          <div className="hidden lg:block w-full max-w-lg">
+          <div className="hidden lg:block w-full max-w-xl">
             <GlobalSearch />
           </div>
-          
+
           <button
             onClick={() => setMobileSearchOpen(true)}
             className="lg:hidden p-2 text-brand-gray-400 hover:text-white hover:bg-brand-gray-800 rounded-lg transition-colors"
@@ -65,7 +66,18 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <button 
+          <button
+            onClick={onOpenCommandPalette}
+            className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-brand-gray-200 bg-brand-gray-800 hover:bg-brand-gray-700 border border-brand-gray-700 rounded-lg transition-colors"
+            aria-label="Open command palette"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" />
+            </svg>
+            ⌘K
+          </button>
+
+          <button
             className="relative p-2 text-brand-gray-400 hover:text-white hover:bg-brand-gray-800 rounded-lg transition-colors"
             aria-label="Notifications"
           >
