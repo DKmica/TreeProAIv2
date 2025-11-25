@@ -5,7 +5,12 @@ const router = express.Router();
 
 router.get('/auth/user', isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user.claims.sub;
+    const userId = req.user.claims?.sub || req.user.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
     const user = await getUser(userId);
 
     if (!user) {
