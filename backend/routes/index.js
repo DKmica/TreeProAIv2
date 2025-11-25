@@ -10,6 +10,7 @@ const jobsRouter = require('./jobs');
 const invoicesRouter = require('./invoices');
 const employeesRouter = require('./employees');
 const equipmentRouter = require('./equipment');
+const dashboardRouter = require('./dashboard');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -17,6 +18,7 @@ function buildApiRouter() {
   const router = express.Router();
   router.use(healthRouter);
   router.use(authRouter);
+  router.use(dashboardRouter);
   router.use(leadsRouter);
   router.use(clientsRouter);
   router.use(propertiesRouter);

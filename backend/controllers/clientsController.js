@@ -71,6 +71,11 @@ const createClient = async (req, res) => {
     try {
       const dbData = camelToSnake(clientData);
       
+      if (dbData.billing_zip !== undefined) {
+        dbData.billing_zip_code = dbData.billing_zip;
+        delete dbData.billing_zip;
+      }
+      
       const properties = clientData.properties || [];
       const contacts = clientData.contacts || [];
       const tags = clientData.tags || [];
@@ -449,6 +454,12 @@ const updateClient = async (req, res) => {
     }
     
     const dbData = camelToSnake(clientData);
+    
+    if (dbData.billing_zip !== undefined) {
+      dbData.billing_zip_code = dbData.billing_zip;
+      delete dbData.billing_zip;
+    }
+    
     delete dbData.properties;
     delete dbData.contacts;
     delete dbData.tags;

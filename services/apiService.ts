@@ -479,3 +479,43 @@ export const jobSeriesService = {
     return response.data;
   }
 };
+
+export interface DashboardSummaryCounts {
+  clients: number;
+  leads: number;
+  activeLeads: number;
+  quotes: number;
+  pendingQuotes: number;
+  jobs: number;
+  scheduledJobs: number;
+  completedJobs: number;
+  invoices: number;
+  unpaidInvoices: number;
+  employees: number;
+  equipment: number;
+}
+
+export interface DashboardRecentActivity {
+  recentLeads: number;
+  recentJobs: number;
+  overdueInvoices: number;
+}
+
+export interface DashboardRevenue {
+  totalInvoiced: number;
+  totalPaid: number;
+  outstanding: number;
+}
+
+export interface DashboardSummary {
+  counts: DashboardSummaryCounts;
+  recentActivity: DashboardRecentActivity;
+  revenue: DashboardRevenue;
+}
+
+export const dashboardService = {
+  getSummary: async (): Promise<DashboardSummary> => {
+    const response = await apiFetch<{ success: boolean; data: DashboardSummary }>('dashboard/summary');
+    return response.data;
+  }
+};
