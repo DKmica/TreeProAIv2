@@ -1,8 +1,10 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Client, CustomerUpload, Job } from '../../types';
 import { useClientsQuery, useQuotesQuery, useJobsQuery, useInvoicesQuery } from '../../hooks/useDataQueries';
 import { leadService } from '../../services/apiService';
+import { quoteService } from '../../services/apiService';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import CheckCircleIcon from '../../components/icons/CheckCircleIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
@@ -13,6 +15,7 @@ import CalendarDaysIcon from '../../components/icons/CalendarDaysIcon';
 import ChatBubbleLeftRightIcon from '../../components/icons/ChatBubbleLeftRightIcon';
 import CameraIcon from '../../components/icons/CameraIcon';
 import PlusCircleIcon from '../../components/icons/PlusCircleIcon';
+import SignatureCapture from '../../components/SignatureCapture';
 
 interface UploadPreview extends CustomerUpload {
   localId: string;
@@ -68,6 +71,11 @@ const ClientHub: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [signatureSaving, setSignatureSaving] = useState(false);
+  const [guestCode, setGuestCode] = useState('');
+  const [isGuestValidated, setIsGuestValidated] = useState(false);
+  const [etaMinutes, setEtaMinutes] = useState<number | undefined>(undefined);
 
   const client = useMemo(() => clients.find(c => c.id === clientId), [clients, clientId]);
   const customerDisplayName = getClientDisplayName(client);
@@ -92,6 +100,15 @@ const ClientHub: React.FC = () => {
   }, [clientJobs]);
 
   const isLoading = clientsLoading || quotesLoading || jobsLoading || invoicesLoading;
+
+  useEffect(() => {
+    if (!upcomingJob?.arrivalEtaMinutes) return;
+    setEtaMinutes(upcomingJob.arrivalEtaMinutes);
+    const interval = setInterval(() => {
+      setEtaMinutes(prev => (prev && prev > 1 ? prev - 1 : prev));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [upcomingJob?.arrivalEtaMinutes]);
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -168,10 +185,73 @@ const ClientHub: React.FC = () => {
     }
   };
 
+  const handleSignatureSubmit = async () => {
+    if (!signatureData || !pendingQuotes[0]) return;
+    setSignatureSaving(true);
+    setSubmitError(null);
+    try {
+      await quoteService.recordSignature?.(pendingQuotes[0].id, {
+        signerName: customerDisplayName || 'Customer',
+        signatureData,
+        signedAt: new Date().toISOString(),
+      });
+      setSubmitMessage('Signature captured! We have notified the team to schedule your work.');
+      setSignatureData(null);
+    } catch (error: any) {
+      console.error('Failed to save signature', error);
+      setSubmitError(error.message || 'Could not save signature. Please try again.');
+    } finally {
+      setSignatureSaving(false);
+    }
+  };
+
+  const handlePdfDownload = () => {
+    window.print();
+  };
+
+  const handleGuestUnlock = () => {
+    if (!client) return;
+    const acceptedCode = client.portalCode || clientId?.slice(0, 6) || 'guest';
+    if (guestCode.trim().toLowerCase() === acceptedCode.toLowerCase()) {
+      setIsGuestValidated(true);
+    } else {
+      setSubmitError('Invalid access code. Please check your invite email.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
+      </div>
+    );
+  }
+
+  if (!isGuestValidated) {
+    return (
+      <div className="max-w-lg mx-auto bg-white rounded-xl shadow p-6 border border-brand-gray-100 space-y-4">
+        <div>
+          <p className="text-sm text-brand-gray-500">Secure access</p>
+          <h1 className="text-xl font-bold text-brand-gray-900">Enter your portal access code</h1>
+          <p className="text-sm text-brand-gray-600 mt-2">
+            We sent a one-time code in your welcome email. If you cannot find it, reach out and we will resend a link.
+          </p>
+        </div>
+        <input
+          type="text"
+          value={guestCode}
+          onChange={e => setGuestCode(e.target.value)}
+          className="w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+          placeholder="Enter access code"
+        />
+        <button
+          type="button"
+          onClick={handleGuestUnlock}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-brand-green-600 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-brand-green-700"
+        >
+          Unlock portal
+        </button>
+        {submitError && <p className="text-sm text-red-600">{submitError}</p>}
       </div>
     );
   }
@@ -262,6 +342,16 @@ const ClientHub: React.FC = () => {
       <div id="quotes" className="bg-white rounded-xl shadow border border-brand-gray-100">
         <div className="px-6 py-4 border-b border-brand-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-brand-gray-900">Quotes</h2>
+          <div className="flex items-center gap-3 text-xs text-brand-gray-500">
+            <p>Review, approve, or chat with us about any proposal.</p>
+            <button
+              type="button"
+              onClick={handlePdfDownload}
+              className="inline-flex items-center gap-1 rounded-md border border-brand-gray-200 px-3 py-1 font-semibold text-brand-gray-800 hover:border-brand-green-400"
+            >
+              Download PDF
+            </button>
+          </div>
           <p className="text-xs text-brand-gray-500">Review, approve, or chat with us about any proposal.</p>
         </div>
         <div className="divide-y divide-brand-gray-50">
@@ -290,6 +380,30 @@ const ClientHub: React.FC = () => {
             <div className="px-6 py-6 text-center text-sm text-brand-gray-500">No quotes available yet.</div>
           )}
         </div>
+        {pendingQuotes[0] && (
+          <div className="border-t border-brand-gray-100 px-6 py-5 bg-brand-gray-50">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-900">Ready to approve?</p>
+                <p className="text-sm text-brand-gray-600">Sign and lock in Quote #{pendingQuotes[0].quoteNumber || pendingQuotes[0].id}.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={handleSignatureSubmit}
+                  disabled={signatureSaving || !signatureData}
+                  className="inline-flex items-center gap-2 rounded-md bg-brand-green-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-brand-green-700 disabled:opacity-60"
+                >
+                  {signatureSaving && <SpinnerIcon className="w-4 h-4 animate-spin" />}
+                  Submit signature
+                </button>
+              </div>
+            </div>
+            <div className="mt-4">
+              <SignatureCapture label="Customer signature" onSave={setSignatureData} disabled={signatureSaving} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div id="invoices" className="bg-white rounded-xl shadow border border-brand-gray-100">
@@ -353,6 +467,9 @@ const ClientHub: React.FC = () => {
                 <div className="bg-brand-gray-50 rounded-md border border-brand-gray-200 p-4">
                   <p className="text-sm font-semibold text-brand-gray-800">What to expect</p>
                   <p className="text-sm text-brand-gray-600 mt-1">{etaCopy}</p>
+                  {etaMinutes && (
+                    <p className="text-xs text-brand-green-700 mt-2">Live ETA: {etaMinutes} minutes out (auto-refreshing)</p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <Link

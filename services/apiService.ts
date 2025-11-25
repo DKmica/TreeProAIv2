@@ -257,6 +257,16 @@ export const quoteService = {
     });
     return response.data;
   },
+  recordSignature: async (
+    quoteId: string,
+    payload: { signerName: string; signerEmail?: string; signerPhone?: string; signatureData: string; signedAt?: string }
+  ) => {
+    const response = await apiFetch<{ success: boolean; data: any }>(`quotes/${quoteId}/signature`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return response.data;
+  },
   requestSignature: async (quoteId: string, payload: { signerName: string; signerEmail?: string; signerPhone?: string }): Promise<any> => {
     const response = await apiFetch<{ success: boolean; data: any }>(`quotes/${quoteId}/request-signature`, {
       method: 'POST',

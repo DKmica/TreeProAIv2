@@ -31,19 +31,23 @@ This document records current progress against the phased enhancement plan and c
    - Quote detail now renders polished proposal previews with cover pages, disclaimers, and template-driven sections.
    - Good/Better/Best pricing cards support selection and recommendation with inline signals.
    - Version timeline snapshots and AI accuracy feedback capture keep the proposal loop measured and improvable.
+   - Portal now supports signature capture plus print/PDF export, and quote-to-job conversion summaries surface in-line.
 
 6. **CRM + Marketing Automation (Phase 5)**
    - CRM adds geo/service/tag filters, saved segments with previews, and a customer timeline per client.
    - Marketing module now supports segment-aware sends, nurture sequences, and embeddable web-to-lead scripts to keep the funnel fed.
+   - Engagement analytics, segment health, and SMS fallbacks provide visibility and multichannel coverage for campaigns.
 
 7. **Crew App Offline Kit (Phase 6 kickoff)**
    - Crew layout now wraps an offline sync provider with connectivity badges and manual sync controls.
    - Crew dashboard surfaces offline state, pending sync counts, and reassurance that route, clock, and note data persists on-device.
+   - Job detail adds offline-capable notes, safety checklist logging, queued job updates (clock events, photos, JHA acknowledgements), richer photo markup, offline forms, and GPS breadcrumbs.
    - Job detail adds offline-capable notes, safety checklist logging, and queued job updates (clock events, photos, JHA acknowledgements) that sync when online.
 
 8. **Customer Portal Hub (Phase 7 – Client Experience)**
    - New client hub aggregates quotes, invoices, and job status with quick CTAs to review, pay, or track work.
    - Request-new-work form collects preferred dates, contact details, and photo/video uploads to seed AI quoting and lead intake.
+   - Schedule & ETA panel summarizes the next visit with status-aware messaging, live ETA countdowns, guest access hardening, and direct links into the live job tracker with PDF-ready downloads.
    - Schedule & ETA panel summarizes the next visit with status-aware messaging and direct links into the live job tracker.
 9. **Integrations (Phase 8 kickoff)**
    - Settings now surfaces connection status, sync, test, and disconnect flows for Stripe, QuickBooks, Gusto, Twilio, Zapier/Open API, and Google Calendar.
@@ -53,6 +57,13 @@ This document records current progress against the phased enhancement plan and c
    - Quotes gain AI proposal copilot recommendations spanning pricing, upsells, and risk flags.
    - Crew app pulls AI risk assessments for job photos/notes, while automation settings add AI Mode toggles and recommendations.
    
+11. **Polish & Observability (Phase 10)**
+   - Added global error boundaries and client-side telemetry so crashes are captured with helpful diagnostics and recovery affordances.
+   - Performance monitoring now records Web Vitals to feed profiling dashboards and highlight slow surfaces across the shell.
+   - Introduced a backend `/api/telemetry` ingestion endpoint with persistence, validation, and a recent-events console for operators.
+
+## Deployment & Migration Notes
+- Database update: apply `backend/migrations/017_observability_telemetry.sql` (and refresh from `backend/init.sql`) to provision the new telemetry_events table and indexes.
 11. **Polish & Observability (Phase 10 kickoff)**
    - Added global error boundaries and client-side telemetry so crashes are captured with helpful diagnostics and recovery affordances.
    - Performance monitoring now records Web Vitals to feed profiling dashboards and highlight slow surfaces across the shell.
@@ -63,6 +74,7 @@ This document records current progress against the phased enhancement plan and c
 - Safe to roll out independently—changes are limited to frontend UX.
 
 ## Next Steps
+- Remaining polish is limited to QA and enablement: finalize PWA install prompts for the crew app and roll out PDF theming for branded exports.
 - **Phase 4 – Proposal polish**: Wire signature capture to the portal view, add PDF export/print-ready layouts, and surface quote-to-job conversion summaries per customer.
 - **Phase 5 – CRM/Marketing**: Deepen analytics for engagement, add SMS fallbacks, and expose segment health dashboards.
 - **Phase 6 – Crew app**: Add offline-ready job forms, richer photo markup, GPS breadcrumbs, and finalized PWA install prompts for field crews.

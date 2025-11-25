@@ -554,6 +554,13 @@ const QuoteDetail: React.FC = () => {
               Accept
             </button>
             <button
+            <button
+              onClick={handleAccept}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+            >
+              Accept
+            </button>
+            <button
               onClick={handleDecline}
               className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 font-medium text-sm"
             >

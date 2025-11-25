@@ -647,6 +647,7 @@ export interface Client {
   // Contact
   primaryEmail?: string;
   primaryPhone?: string;
+  portalCode?: string;
   
   // Classification
   clientType: 'residential' | 'commercial' | 'property_manager';

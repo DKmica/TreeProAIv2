@@ -502,6 +502,52 @@ const Workflows: React.FC = () => {
           </div>
         </div>
 
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-900">AI Mode for automations</p>
+                <p className="text-sm text-brand-gray-600">Auto-run recommended workflows when new signals arrive.</p>
+              </div>
+              <button
+                onClick={handleToggleAiMode}
+                disabled={isSavingAiMode}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${
+                  aiModeEnabled ? 'bg-brand-cyan-600 text-white' : 'bg-brand-gray-200 text-brand-gray-800'
+                } disabled:opacity-60`}
+              >
+                {isSavingAiMode ? 'Saving…' : aiModeEnabled ? 'On' : 'Off'}
+              </button>
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-xs text-brand-gray-600">
+              <Clock className="w-4 h-4" />
+              <span>AI will execute safe defaults and log runs for review.</span>
+            </div>
+          </div>
+
+          <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-brand-gray-900">Recommended workflows</p>
+              <span className="rounded-full bg-brand-gray-50 px-2 py-1 text-[11px] font-medium text-brand-gray-700">AI</span>
+            </div>
+            {isLoadingAiRecommendations && (
+              <p className="mt-2 text-sm text-brand-gray-600">Analyzing patterns…</p>
+            )}
+            {aiRecommendationError && (
+              <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800">{aiRecommendationError}</div>
+            )}
+            <div className="mt-3">
+              <AiInsightsPanel
+                title="Suggested automations"
+                subtitle="Curated from recent signals"
+                items={aiRecommendationItems}
+                icon="sparkles"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="mt-6 bg-white shadow-sm rounded-lg border border-brand-gray-200 overflow-hidden">
           {filteredWorkflows.length === 0 ? (
             <div className="p-12 text-center">
