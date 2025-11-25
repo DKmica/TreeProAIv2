@@ -2,6 +2,10 @@ const express = require('express');
 const authRouter = require('./auth');
 const healthRouter = require('./health');
 const leadsRouter = require('./leads');
+const clientsRouter = require('./clients');
+const propertiesRouter = require('./properties');
+const contactsRouter = require('./contacts');
+const tagsRouter = require('./tags');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -10,6 +14,10 @@ function buildApiRouter() {
   router.use(healthRouter);
   router.use(authRouter);
   router.use(leadsRouter);
+  router.use(clientsRouter);
+  router.use(propertiesRouter);
+  router.use(contactsRouter);
+  router.use(tagsRouter);
   return router;
 }
 

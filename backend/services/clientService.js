@@ -1,30 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { sanitizeUUID } = require('../utils/formatters');
-
-const CLIENT_CATEGORIES = {
-  POTENTIAL: 'potential_client',
-  ACTIVE: 'active_customer'
-};
-
-const normalizeText = (value) => {
-  if (!value || typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const normalizeEmail = (value) => {
-  const trimmed = normalizeText(value);
-  return trimmed ? trimmed.toLowerCase() : null;
-};
-
-const normalizePhone = (value) => {
-  if (!value) return null;
-  const digits = value.toString().replace(/[^0-9]/g, '');
-  return digits.length > 0 ? digits : null;
-};
+const { normalizeText, normalizeEmail, normalizePhone } = require('../utils/helpers');
+const { CLIENT_CATEGORIES } = require('../utils/constants');
 
 const setClientCategory = async (clientId, category) => {
   if (!clientId || !category) {
