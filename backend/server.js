@@ -16,6 +16,7 @@ const recurringJobsService = require('./services/recurringJobsService');
 const stripeService = require('./services/stripeService');
 const automationService = require('./services/automationService');
 const reminderService = require('./services/reminderService');
+const { initializeAutomationEngine, shutdownAutomationEngine } = require('./services/automation');
 const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
 const leadsRouter = require('./routes/leads');
@@ -9723,6 +9724,14 @@ async function startServer() {
     }
 
     scheduleFinancialReminders();
+
+    try {
+      initializeAutomationEngine();
+      console.log('⚙️ Automation Engine initialized');
+    } catch (error) {
+      console.error('⚠️ Automation Engine initialization failed:', error);
+      console.log('💡 Workflows may not run automatically until this is resolved');
+    }
   });
 
   server.on('error', (err) => {
@@ -9739,6 +9748,13 @@ async function startServer() {
 
 async function shutdown(exitCode = 0) {
   console.log('\n🔄 Initiating graceful shutdown...');
+  
+  try {
+    shutdownAutomationEngine();
+    console.log('✅ Automation Engine shut down');
+  } catch (error) {
+    console.error('⚠️ Error shutting down Automation Engine:', error.message);
+  }
   
   if (reminderInterval) {
     clearInterval(reminderInterval);

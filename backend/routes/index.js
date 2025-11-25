@@ -13,6 +13,9 @@ const equipmentRouter = require('./equipment');
 const dashboardRouter = require('./dashboard');
 const searchRouter = require('./search');
 const badgeCountsRouter = require('./badge-counts');
+const workflowsRouter = require('./workflows');
+const automationLogsRouter = require('./automation-logs');
+const templatesRouter = require('./templates');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -32,6 +35,9 @@ function buildApiRouter() {
   router.use(equipmentRouter);
   router.use('/search', searchRouter);
   router.use(badgeCountsRouter);
+  router.use(workflowsRouter);
+  router.use(automationLogsRouter);
+  router.use(templatesRouter);
   return router;
 }
 
