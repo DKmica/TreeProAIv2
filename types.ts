@@ -230,6 +230,36 @@ export interface WebLeadFormConfig {
   createdAt?: string;
 }
 
+// ============================================================================
+// PHASE 8 INTEGRATIONS TYPES
+// ============================================================================
+
+export type IntegrationProvider = 'stripe' | 'quickbooks' | 'gusto' | 'zapier' | 'twilio' | 'googleCalendar';
+
+export type IntegrationStatusState = 'disconnected' | 'connected' | 'needs_attention';
+
+export interface IntegrationConnection {
+  provider: IntegrationProvider;
+  status: IntegrationStatusState;
+  accountName?: string;
+  environment?: 'sandbox' | 'production';
+  lastSyncedAt?: string;
+  createdAt?: string;
+  webhookStatus?: 'healthy' | 'degraded' | 'pending';
+  recentError?: string | null;
+  connectedBy?: string;
+  capabilities?: string[];
+  scopes?: string[];
+}
+
+export interface IntegrationTestResult {
+  provider: IntegrationProvider;
+  success: boolean;
+  message: string;
+  testedAt: string;
+  latencyMs?: number;
+}
+
 export interface QuotePricingOption {
   id: string;
   quoteId: string;
@@ -365,6 +395,9 @@ export interface Job {
   customerName: string;
   status: 'Unscheduled' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
   scheduledDate?: string;
+  arrivalEtaMinutes?: number;
+  etaWindowStart?: string;
+  etaWindowEnd?: string;
   assignedCrew: string[];
   stumpGrindingPrice?: number;
   workStartedAt?: string;

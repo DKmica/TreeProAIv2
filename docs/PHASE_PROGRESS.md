@@ -7,6 +7,7 @@ This document records current progress against the phased enhancement plan and c
 - **Automation engine**: Workflow builder, templates, and automation logs are present; additional UX polish is underway.
 - **Quoting & proposals**: Proposal templates, version history, G/B/B pricing, and AI accuracy feedback are now surfaced in the quote workspace.
 - **CRM/Marketing**: Segmentation filters, saved audiences, nurture sequences, and web-to-lead embeds connect CRM data to outbound channels.
+- **Integrations**: Stripe, QuickBooks, Gusto export, Twilio SMS, Zapier/Open API, and Google Calendar connectors are wired with status, testing, and sync controls.
 
 ## Today’s Deliverables
 1. **Command Palette (Phase 1 – UX Modernization)**
@@ -40,6 +41,14 @@ This document records current progress against the phased enhancement plan and c
    - Crew dashboard surfaces offline state, pending sync counts, and reassurance that route, clock, and note data persists on-device.
    - Job detail adds offline-capable notes, safety checklist logging, and queued job updates (clock events, photos, JHA acknowledgements) that sync when online.
 
+8. **Customer Portal Hub (Phase 7 – Client Experience)**
+   - New client hub aggregates quotes, invoices, and job status with quick CTAs to review, pay, or track work.
+   - Request-new-work form collects preferred dates, contact details, and photo/video uploads to seed AI quoting and lead intake.
+   - Schedule & ETA panel summarizes the next visit with status-aware messaging and direct links into the live job tracker.
+9. **Integrations (Phase 8 kickoff)**
+   - Settings now surfaces connection status, sync, test, and disconnect flows for Stripe, QuickBooks, Gusto, Twilio, Zapier/Open API, and Google Calendar.
+   - Open API + Zapier token copy helpers make it easy to wire custom workflows without code changes.
+
 ## Deployment & Migration Notes
 - No database migrations required.
 - No API surface changes; the command palette reuses the existing `/api/search` endpoint.
@@ -49,3 +58,4 @@ This document records current progress against the phased enhancement plan and c
 - **Phase 4 – Proposal polish**: Wire signature capture to the portal view, add PDF export/print-ready layouts, and surface quote-to-job conversion summaries per customer.
 - **Phase 5 – CRM/Marketing**: Deepen analytics for engagement, add SMS fallbacks, and expose segment health dashboards.
 - **Phase 6 – Crew app**: Add offline-ready job forms, richer photo markup, GPS breadcrumbs, and finalized PWA install prompts for field crews.
+- **Phase 7 – Customer portal**: Add guest authentication hardening, PDF downloads for invoices/quotes, and real-time ETA pings as crews drive.

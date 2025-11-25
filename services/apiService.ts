@@ -1,3 +1,4 @@
+import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult } from '../types';
 import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
@@ -160,6 +161,40 @@ export const marketingService = {
   },
   previewEmbed: async (formId: string): Promise<{ embedToken: string; scriptUrl: string }> => {
     const response = await apiFetch<{ success: boolean; data: { embedToken: string; scriptUrl: string } }>(`marketing/web-lead-forms/${formId}/embed`);
+    return response.data;
+  }
+};
+
+export const integrationService = {
+  getConnections: async (): Promise<IntegrationConnection[]> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection[] }>('integrations');
+    return response.data ?? [];
+  },
+  connect: async (
+    provider: IntegrationProvider,
+    payload?: { environment?: 'sandbox' | 'production'; scopes?: string[] }
+  ): Promise<IntegrationConnection> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection }>(`integrations/${provider}/connect`, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {})
+    });
+    return response.data;
+  },
+  disconnect: async (provider: IntegrationProvider): Promise<void> => {
+    await apiFetch<void>(`integrations/${provider}`, { method: 'DELETE' });
+  },
+  refreshStatus: async (provider: IntegrationProvider): Promise<IntegrationConnection> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection }>(`integrations/${provider}`);
+    return response.data;
+  },
+  triggerSync: async (provider: IntegrationProvider): Promise<IntegrationConnection> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection }>(`integrations/${provider}/sync`, { method: 'POST' });
+    return response.data;
+  },
+  sendTest: async (provider: IntegrationProvider): Promise<IntegrationTestResult> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationTestResult }>(`integrations/${provider}/test`, {
+      method: 'POST'
+    });
     return response.data;
   }
 };
