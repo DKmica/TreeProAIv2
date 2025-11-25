@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, MapPin, Clock, AlertTriangle, MoveUp, MoveDown, Send, RefreshCcw, Users } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { X, MapPin, Clock, AlertTriangle, MoveUp, MoveDown, Send, RefreshCcw, Users, MessageCircle } from 'lucide-react';
 import { RouteOptimizationResult, RouteStop } from '../types';
 
 interface RoutePlanDrawerProps {
@@ -9,6 +9,8 @@ interface RoutePlanDrawerProps {
   onReorder: (jobId: string, direction: 'up' | 'down') => void;
   onNotify: (jobId: string, etaMinutes?: number) => void;
   onReoptimize?: () => void;
+  onReorderList?: (stops: { jobId: string; order: number }[]) => void;
+  onOpenChat?: (prefill: string) => void;
 }
 
 const RoutePlanDrawer: React.FC<RoutePlanDrawerProps> = ({
@@ -17,9 +19,45 @@ const RoutePlanDrawer: React.FC<RoutePlanDrawerProps> = ({
   onClose,
   onReorder,
   onNotify,
-  onReoptimize
+  onReoptimize,
+  onReorderList,
+  onOpenChat
 }) => {
   if (!isOpen || !routePlan) return null;
+
+  const [localStops, setLocalStops] = useState<RouteStop[]>(routePlan.stops);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLocalStops(routePlan.stops);
+  }, [routePlan]);
+
+  const orderedStops = useMemo(() => {
+    return [...localStops].sort((a, b) => a.order - b.order);
+  }, [localStops]);
+
+  const handleDragMove = (jobId: string, targetJobId: string) => {
+    if (jobId === targetJobId) return orderedStops;
+    let snapshot: RouteStop[] | null = null;
+    setLocalStops(prev => {
+      const next = [...prev];
+      const fromIndex = next.findIndex(stop => stop.jobId === jobId);
+      const toIndex = next.findIndex(stop => stop.jobId === targetJobId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      snapshot = next.map((stop, idx) => ({ ...stop, order: idx + 1 }));
+      return snapshot;
+    });
+    return snapshot ?? orderedStops;
+  };
+
+  const handleDragEnd = (stopsSnapshot?: RouteStop[]) => {
+    setDraggingId(null);
+    if (!onReorderList) return;
+    const stopsToPersist = stopsSnapshot ?? orderedStops;
+    onReorderList(stopsToPersist.map(stop => ({ jobId: stop.jobId, order: stop.order })));
+  };
 
   const getStopBadge = (stop: RouteStop) => {
     if (stop.status === 'In Progress') return 'bg-blue-100 text-blue-800';
@@ -90,8 +128,23 @@ const RoutePlanDrawer: React.FC<RoutePlanDrawerProps> = ({
           )}
 
           <div className="space-y-3">
-            {routePlan.stops.map((stop, index) => (
-              <div key={stop.jobId} className="p-4 rounded-lg border border-brand-gray-200 bg-white shadow-sm">
+            {orderedStops.map((stop, index) => (
+              <div
+                key={stop.jobId}
+                className={`p-4 rounded-lg border border-brand-gray-200 bg-white shadow-sm transition ring-1 ring-transparent ${draggingId === stop.jobId ? 'shadow-lg ring-brand-cyan-200 bg-brand-cyan-50' : ''}`}
+                draggable
+                onDragStart={() => setDraggingId(stop.jobId)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (draggingId) handleDragMove(draggingId, stop.jobId);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const snapshot = draggingId ? handleDragMove(draggingId, stop.jobId) : orderedStops;
+                  handleDragEnd(snapshot);
+                }}
+                onDragEnd={() => handleDragEnd()}
+              >
                 <div className="flex items-start gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-cyan-50 text-brand-cyan-700 font-semibold">
                     #{stop.order}
@@ -121,6 +174,14 @@ const RoutePlanDrawer: React.FC<RoutePlanDrawerProps> = ({
                         <Send className="w-4 h-4" />
                         Notify "On my way"
                       </button>
+                      <button
+                        onClick={() => onOpenChat?.(`Coordinate with ${routePlan.crewName || 'crew'} about job ${stop.jobId} for ${stop.customerName} on ${routePlan.date}.`)}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-brand-cyan-900 bg-brand-cyan-100 rounded-md hover:bg-brand-cyan-200"
+                        type="button"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Chat for stop
+                      </button>
                       <div className="inline-flex items-center gap-1">
                         <button
                           onClick={() => onReorder(stop.jobId, 'up')}
@@ -132,7 +193,7 @@ const RoutePlanDrawer: React.FC<RoutePlanDrawerProps> = ({
                         </button>
                         <button
                           onClick={() => onReorder(stop.jobId, 'down')}
-                          disabled={index === routePlan.stops.length - 1}
+                          disabled={index === orderedStops.length - 1}
                           className="p-2 rounded-md border border-brand-gray-200 text-brand-gray-600 hover:bg-brand-gray-50 disabled:opacity-40"
                           aria-label="Move stop later"
                         >

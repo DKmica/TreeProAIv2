@@ -110,6 +110,109 @@ export interface Quote {
   tags?: Tag[];
 }
 
+export interface QuoteSignature {
+  id: string;
+  quoteId: string;
+  signerName: string;
+  signerEmail?: string;
+  signerPhone?: string;
+  signatureData?: string;
+  signatureType?: string;
+  signedAt?: string;
+  termsAccepted?: boolean;
+  termsVersion?: string;
+}
+
+export interface QuotePricingOption {
+  id: string;
+  quoteId: string;
+  optionTier: 'Good' | 'Better' | 'Best' | string;
+  optionName: string;
+  description?: string;
+  lineItems: LineItem[];
+  subtotal: number;
+  discountAmount: number;
+  discountPercentage?: number;
+  taxAmount: number;
+  total: number;
+  isRecommended: boolean;
+  isSelected: boolean;
+  displayOrder: number;
+  features?: string[];
+  exclusions?: string[];
+  warrantyInfo?: string;
+  estimatedDuration?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProposalTemplateMeta {
+  name?: string;
+  cover_page_enabled?: boolean;
+  cover_page_title?: string;
+  cover_page_subtitle?: string;
+  cover_page_image_url?: string;
+  company_logo_url?: string;
+  header_html?: string;
+  footer_html?: string;
+  custom_disclaimers?: { label: string; text: string }[];
+  sections_config?: ProposalSectionConfig[];
+  styling?: Record<string, any>;
+}
+
+export interface ProposalSectionConfig {
+  id?: string;
+  title: string;
+  description?: string;
+  bullets?: string[];
+  mediaUrl?: string;
+  mediaCaption?: string;
+}
+
+export interface ProposalSection {
+  id: string;
+  name: string;
+  section_type: string;
+  title?: string;
+  content?: string;
+  is_system?: boolean;
+  display_order?: number;
+}
+
+export interface QuoteProposalData {
+  quote: {
+    id: string;
+    quote_number?: string;
+    status?: string;
+    total_price?: number;
+    line_items?: LineItem[];
+    valid_until?: string;
+    notes?: string;
+    cover_letter?: string;
+    custom_terms?: string;
+    created_at?: string;
+    version_number?: number;
+  };
+  client: {
+    name?: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+  };
+  property: {
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    full_address?: string;
+  };
+  template?: ProposalTemplateMeta;
+  pricingOptions?: QuotePricingOption[];
+  signature?: QuoteSignature | null;
+  sections?: ProposalSection[];
+  generated_at?: string;
+}
+
 export interface CustomerUpload {
   url: string;
   name: string;
@@ -202,6 +305,8 @@ export interface RouteOptimizationResult {
   crewName?: string;
   routePlanId?: string;
   startLocation?: string;
+  /** Optional decoded path for map rendering */
+  routePath?: { lat: number; lng: number }[];
   totalDistanceMiles: number;
   totalDriveMinutes: number;
   totalEstimatedHours: number;
@@ -747,6 +852,25 @@ export interface EstimateFeedbackStats {
         large: { count: number; avgDifference: number };
         extraLarge: { count: number; avgDifference: number };
     };
+}
+
+export interface AiAccuracyStats {
+  period: string;
+  period_start: string;
+  period_end: string;
+  summary: {
+    total_estimates: number;
+    estimates_with_feedback: number;
+    feedback_rate: number;
+    avg_accuracy_score: number;
+    avg_variance_percentage: number;
+    breakdown: {
+      accurate: number;
+      underestimate: number;
+      overestimate: number;
+    };
+  };
+  trend: { week: string; estimates: number; avg_score: number }[];
 }
 
 export interface UpsellSuggestion {

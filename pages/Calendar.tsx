@@ -217,6 +217,35 @@ const Calendar: React.FC = () => {
         }
     };
 
+    const handleReorderStopsList = async (orderedStops: { jobId: string; order: number }[]) => {
+        if (!routePlan) return;
+
+        const stopLookup = new Map(routePlan.stops.map(stop => [stop.jobId, stop]));
+        const nextStops = orderedStops
+            .map(item => {
+                const existing = stopLookup.get(item.jobId);
+                if (!existing) return null;
+                return { ...existing, order: item.order } as RouteStop;
+            })
+            .filter(Boolean) as RouteStop[];
+
+        const previousPlan = routePlan;
+        setRoutePlan({ ...routePlan, stops: nextStops });
+
+        try {
+            if (routePlan.routePlanId) {
+                await api.operationsService.reorderRoutePlan(routePlan.routePlanId, orderedStops);
+                toast.success('Route updated', 'Stop order saved for dispatch.');
+            } else {
+                toast.info('Route reordered locally', 'Re-run optimization to persist the new sequence.');
+            }
+        } catch (error: any) {
+            console.error('Failed to reorder route plan', error);
+            toast.error('Unable to reorder route', error?.message || 'Please try again.');
+            setRoutePlan(previousPlan);
+        }
+    };
+
     const handleOnMyWay = async (jobId: string, etaMinutes?: number) => {
         try {
             const response = await api.operationsService.sendOnMyWay({
@@ -230,6 +259,11 @@ const Calendar: React.FC = () => {
             console.error('Failed to notify customer', error);
             toast.error('Could not send notification', error?.message || 'Check contact info and try again.');
         }
+    };
+
+    const handleOpenDispatcherChat = (prefill: string) => {
+        const url = `/chat?prefill=${encodeURIComponent(prefill)}`;
+        window.location.href = url;
     };
 
     const weatherToDisplay = useMemo(() => {
@@ -820,7 +854,15 @@ const Calendar: React.FC = () => {
                     {activeView === 'day' && <DayView {...viewProps} />}
                     {activeView === '3-day' && <ThreeDayView {...viewProps} />}
                     {activeView === 'list' && <ListView {...viewProps} />}
-                    {activeView === 'map' && <MapViewWrapper {...viewProps} customers={customers} />}
+                    {activeView === 'map' && (
+                        <MapViewWrapper
+                            {...viewProps}
+                            customers={customers}
+                            routePlan={routePlan}
+                            onOpenRoutePlan={() => setIsRouteDrawerOpen(true)}
+                            onOpenChat={handleOpenDispatcherChat}
+                        />
+                    )}
                     {activeView === 'crew' && <CrewView jobs={jobs} currentDate={currentDate} refetchJobs={refetchJobs} onJobDrop={viewProps.onJobDrop} handleDragStart={handleDragStart} handleDragEnd={handleDragEnd} draggedJobId={draggedJobId} />}
                 </div>
             </div>
@@ -838,6 +880,8 @@ const Calendar: React.FC = () => {
                 onReorder={handleReorderStop}
                 onNotify={handleOnMyWay}
                 onReoptimize={handleOptimizeRoute}
+                onReorderList={handleReorderStopsList}
+                onOpenChat={handleOpenDispatcherChat}
             />
         </div>
     );
