@@ -17,6 +17,7 @@ const workflowsRouter = require('./workflows');
 const automationLogsRouter = require('./automation-logs');
 const templatesRouter = require('./templates');
 const schedulingRouter = require('./scheduling');
+const quotingRouter = require('./quoting');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -40,6 +41,7 @@ function buildApiRouter() {
   router.use(automationLogsRouter);
   router.use(templatesRouter);
   router.use(schedulingRouter);
+  router.use(quotingRouter);
   return router;
 }
 
