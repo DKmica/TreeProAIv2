@@ -10,6 +10,39 @@ I prefer that the AI assistant prioritizes clear and concise explanations. When 
 
 ## Recent Changes
 
+### Phase 2 Automation Engine (November 2025)
+Built a comprehensive rule-based automation engine with workflow builder UI:
+
+**Database Tables** (Migration 014):
+- `automation_workflows`: Core workflow definitions with throttling (max executions per day, cooldown minutes)
+- `automation_triggers`: Event-based and CRON triggers with conditions
+- `automation_actions`: Email, SMS, tasks, reminders, status updates, webhooks
+- `automation_logs`: Execution history with detailed logging
+- `automation_scheduled_jobs`: Scheduled CRON job queue
+- `email_templates` and `sms_templates`: Reusable message templates
+
+**Backend Services** (`backend/services/automation/`):
+- **eventEmitter.js**: Real-time event system supporting 15+ event types (quote_sent, job_completed, invoice_overdue, lead_created, etc.)
+- **cronScheduler.js**: Time-based trigger scheduler with 60-second polling interval
+- **workflowEngine.js**: Core executor with condition evaluation (15+ operators), template rendering, and action chaining
+- **emailService.js**: SendGrid integration for automated emails
+- **smsService.js**: Twilio integration for SMS notifications
+
+**API Routes**:
+- `/api/workflows` - Full CRUD with workflow templates, trigger/action management
+- `/api/automation-logs` - Execution history with filtering, statistics, and analytics
+- `/api/templates/email` and `/api/templates/sms` - Template management
+
+**Frontend Pages**:
+- **Workflows** (`/workflows`): List view with status filtering, template gallery, quick actions
+- **Automation Logs** (`/automation-logs`): Console-style log viewer with statistics dashboard
+- **WorkflowEditor**: Modal-based builder for triggers, conditions, and actions
+
+**Seeded Templates** (12 pre-built workflows):
+- Quote Follow-up (3-day reminder), Payment Confirmation
+- Job Completion Follow-up, Invoice Overdue Reminder
+- Lead Welcome, Crew Assignment, and more
+
 ### Phase 1 UX/UI Modernization (November 2025)
 Implemented comprehensive UI/UX enhancements for improved user experience:
 
@@ -83,6 +116,7 @@ The application features a modern, dark theme with bright cyan (#00c2ff) accents
 - **Operations & Scheduling**: Includes crew management (creation, assignment, roles, capacity), time tracking (clock in/out, GPS, approvals), atomic job assignment with conflict detection, calendar integration (Gantt-style crew view with conflict warnings), and a dynamic job forms system (safety checklists, inspections, work orders).
 - **Invoice Management System**: Professional invoicing with comprehensive financial tracking including auto-generated invoice numbers (INV-YYYY-####), tax/discount calculations, payment recording, and a status workflow (Draft→Sent→Paid/Overdue→Void). Features Stripe payment processing for customer portal checkout, auto-invoice creation from completed jobs, and webhook-driven payment status updates. Supports "Create from Job" functionality.
 - **Company Settings**: Comprehensive business information management in Settings page with organized sections for Basic Contact Information (company name, tagline, email, phone, website), Business Address (street address, city, state, ZIP code), Business Details (business hours, logo URL), and Legal & Regulatory Information (Tax EIN, license number, insurance policy number). All information persists to database and displays on quotes/invoices.
+- **Automation Engine**: Rule-based workflow automation with event-driven triggers (15+ event types), CRON scheduling, condition evaluation, and actions (send email/SMS, create tasks, update statuses, webhooks). Includes 12 pre-built workflow templates and comprehensive execution logging.
 
 ### System Design Choices
 - **Microservice-like Structure**: AI functionalities are modularized into distinct services.
