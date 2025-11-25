@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Job, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RouteStop, AiJobDurationPrediction, AiSchedulingSuggestion } from '../types';
+import { Job, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RouteStop } from '../types';
 import { CalendarView } from './Calendar/types';
 import JobIcon from '../components/icons/JobIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';

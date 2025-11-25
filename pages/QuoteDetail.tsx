@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, AiQuoteRecommendation } from '../types';
 import { quoteService, clientService, jobService, aiService } from '../services/apiService';
+import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats } from '../types';
+import { quoteService, clientService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
@@ -115,6 +117,18 @@ const QuoteDetail: React.FC = () => {
           if (quoteData.clientId) {
             try {
               const clientData = await clientService.getById(quoteData.clientId);
+      try {
+        const quoteData = await quoteService.getById(id);
+        setQuote(quoteData);
+
+        loadProposalData(id);
+        loadPricingOptions(id);
+        loadVersionHistory(id);
+        loadAiAccuracy();
+
+        if (quoteData.clientId) {
+          try {
+            const clientData = await clientService.getById(quoteData.clientId);
             setClient(clientData);
           } catch (err) {
             console.error('Error fetching client data:', err);
@@ -526,6 +540,13 @@ const QuoteDetail: React.FC = () => {
       <div className="flex gap-2">
         {quote.status === 'Sent' && (
           <>
+            <button
+              onClick={handleAccept}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+            >
+              Accept
+            </button>
+            <button
             <button
               onClick={handleAccept}
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"

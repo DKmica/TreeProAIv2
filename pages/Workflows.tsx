@@ -24,6 +24,9 @@ import WorkflowEditor from '../components/WorkflowEditor';
 import { useToast } from '../components/ui/Toast';
 import AutomationLogDrawer from '../components/AutomationLogDrawer';
 import AiInsightsPanel from '../components/AiInsightsPanel';
+import WorkflowEditor from '../components/WorkflowEditor';
+import { useToast } from '../components/ui/Toast';
+import AutomationLogDrawer from '../components/AutomationLogDrawer';
 
 const Workflows: React.FC = () => {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
