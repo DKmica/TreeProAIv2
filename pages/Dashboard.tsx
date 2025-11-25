@@ -61,60 +61,44 @@ const Dashboard: React.FC = () => {
             .reduce((sum, job) => sum + (job.costs?.total || 0), 0);
     }, [jobs]);
 
-    useEffect(() => {
-        const fetchPayrollData = async () => {
-            try {
-                const [payrollData, timeData, payPeriodData, equipmentData] = await Promise.all([
-                    payrollRecordService.getAll(),
-                    timeEntryService.getAll(),
-                    payPeriodService.getAll(),
-                    equipmentService.getAll()
-                ]);
-                
-                setPayrollRecords(payrollData);
-                setTimeEntries(timeData);
-                setPayPeriods(payPeriodData);
-                setEquipment(equipmentData);
-            } catch (error: any) {
-                console.error('Error fetching payroll data:', error);
-            }
-        };
+    const fetchAiInsights = async () => {
+        if (isLoading) return;
         
-        fetchPayrollData();
-    }, []);
-
-    useEffect(() => {
-        const fetchAiInsights = async () => {
-            if (isLoading) return;
-            
-            setLoadingInsights(true);
-            setInsightsError(null);
-            
-            try {
-                const insights = await getAiCoreInsights(
-                    leads,
-                    jobs,
-                    quotes,
-                    employees,
-                    equipment,
-                    payrollRecords,
-                    timeEntries,
-                    payPeriods
-                );
-                
-                setAiInsights(insights);
-            } catch (error: any) {
-                console.error('Error fetching AI insights:', error);
-                setInsightsError(error.message || 'Failed to load AI insights');
-            } finally {
-                setLoadingInsights(false);
-            }
-        };
+        setLoadingInsights(true);
+        setInsightsError(null);
         
-        if (!isLoading && (leads.length > 0 || jobs.length > 0 || employees.length > 0)) {
-            fetchAiInsights();
+        try {
+            const [payrollData, timeData, payPeriodData, equipmentData] = await Promise.all([
+                payrollRecordService.getAll().catch(() => []),
+                timeEntryService.getAll().catch(() => []),
+                payPeriodService.getAll().catch(() => []),
+                equipmentService.getAll().catch(() => [])
+            ]);
+            
+            setPayrollRecords(payrollData);
+            setTimeEntries(timeData);
+            setPayPeriods(payPeriodData);
+            setEquipment(equipmentData);
+            
+            const insights = await getAiCoreInsights(
+                leads,
+                jobs,
+                quotes,
+                employees,
+                equipmentData,
+                payrollData,
+                timeData,
+                payPeriodData
+            );
+            
+            setAiInsights(insights);
+        } catch (error: any) {
+            console.error('Error fetching AI insights:', error);
+            setInsightsError(error.message || 'Failed to load AI insights');
+        } finally {
+            setLoadingInsights(false);
         }
-    }, [isLoading, leads, jobs, quotes, employees, equipment, payrollRecords, timeEntries, payPeriods]);
+    };
 
     const getStatusColor = (status: Job['status']) => {
         switch (status) {
@@ -197,6 +181,34 @@ const Dashboard: React.FC = () => {
         ) : insightsError ? (
           <div className="mt-8 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">Error loading AI insights: {insightsError}</p>
+            <button 
+              onClick={fetchAiInsights}
+              className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+            >
+              Try again
+            </button>
+          </div>
+        ) : !aiInsights ? (
+          <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow p-6 border border-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-purple-900 flex items-center">
+                  <span className="mr-2">🤖</span> AI Insights
+                </h3>
+                <p className="text-sm text-purple-700 mt-1">Get AI-powered business intelligence, lead scoring, and recommendations</p>
+              </div>
+              <button
+                onClick={fetchAiInsights}
+                disabled={isLoading}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
+                </svg>
+                Load Insights
+              </button>
+            </div>
           </div>
         ) : aiInsights ? (
           <div className="mt-8">
