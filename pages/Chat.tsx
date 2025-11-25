@@ -30,6 +30,14 @@ const ChatPage: React.FC = () => {
         }
     }, [voice.transcript, setInputValue]);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const prefill = params.get('prefill');
+        if (prefill) {
+            setInputValue(prefill);
+        }
+    }, [setInputValue]);
+
     const handleMicClick = () => {
         if (voice.isListening) {
             voice.stopListening();
