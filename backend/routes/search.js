@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { query } = require('../db');
+const db = require('../db');
 
 function escapeLikePattern(str) {
   return str.replace(/[!%_]/g, (match) => '!' + match);
@@ -8,13 +8,13 @@ function escapeLikePattern(str) {
 
 router.get('/', async (req, res) => {
   try {
-    const { q: query } = req.query;
+    const { q: searchQuery } = req.query;
     
-    if (!query || query.length < 2) {
+    if (!searchQuery || searchQuery.length < 2) {
       return res.json({ results: [] });
     }
 
-    const escapedQuery = escapeLikePattern(query.toLowerCase());
+    const escapedQuery = escapeLikePattern(searchQuery.toLowerCase());
     const searchTerm = `%${escapedQuery}%`;
     const results = [];
 
@@ -143,13 +143,13 @@ router.get('/', async (req, res) => {
       employeesResult,
       equipmentResult
     ] = await Promise.all([
-      query(clientsQuery, [searchTerm]).catch(() => ({ rows: [] })),
-      query(leadsQuery, [searchTerm]).catch(() => ({ rows: [] })),
-      query(quotesQuery, [searchTerm]).catch(() => ({ rows: [] })),
-      query(jobsQuery, [searchTerm]).catch(() => ({ rows: [] })),
-      query(invoicesQuery, [searchTerm]).catch(() => ({ rows: [] })),
-      query(employeesQuery, [searchTerm]).catch(() => ({ rows: [] })),
-      query(equipmentQuery, [searchTerm]).catch(() => ({ rows: [] }))
+      db.query(clientsQuery, [searchTerm]).catch(() => ({ rows: [] })),
+      db.query(leadsQuery, [searchTerm]).catch(() => ({ rows: [] })),
+      db.query(quotesQuery, [searchTerm]).catch(() => ({ rows: [] })),
+      db.query(jobsQuery, [searchTerm]).catch(() => ({ rows: [] })),
+      db.query(invoicesQuery, [searchTerm]).catch(() => ({ rows: [] })),
+      db.query(employeesQuery, [searchTerm]).catch(() => ({ rows: [] })),
+      db.query(equipmentQuery, [searchTerm]).catch(() => ({ rows: [] }))
     ]);
 
     results.push(...clientsResult.rows);
@@ -161,8 +161,8 @@ router.get('/', async (req, res) => {
     results.push(...equipmentResult.rows);
 
     const sortedResults = results.sort((a, b) => {
-      const aMatch = a.name?.toLowerCase().startsWith(query.toLowerCase()) ? 0 : 1;
-      const bMatch = b.name?.toLowerCase().startsWith(query.toLowerCase()) ? 0 : 1;
+      const aMatch = a.name?.toLowerCase().startsWith(searchQuery.toLowerCase()) ? 0 : 1;
+      const bMatch = b.name?.toLowerCase().startsWith(searchQuery.toLowerCase()) ? 0 : 1;
       return aMatch - bMatch;
     }).slice(0, 20);
 

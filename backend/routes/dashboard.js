@@ -25,7 +25,13 @@ router.get('/dashboard/summary', async (req, res) => {
         -- Recent activity (last 7 days)
         (SELECT COUNT(*) FROM leads WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days') AS recent_leads_count,
         (SELECT COUNT(*) FROM jobs WHERE created_at >= NOW() - INTERVAL '7 days') AS recent_jobs_count,
-        (SELECT COUNT(*) FROM invoices WHERE status NOT IN ('Paid', 'Void', 'Draft') AND due_date IS NOT NULL AND due_date::timestamp < NOW()) AS overdue_invoices_count,
+        (SELECT COUNT(*) FROM invoices WHERE status NOT IN ('Paid', 'Void', 'Draft') AND due_date IS NOT NULL AND 
+          CASE 
+            WHEN due_date ~ '^\d+$' THEN to_timestamp(due_date::bigint / 1000) < NOW()
+            WHEN due_date ~ '^\d{4}-\d{2}-\d{2}' THEN due_date::date < CURRENT_DATE
+            ELSE false 
+          END
+        ) AS overdue_invoices_count,
         
         -- Revenue metrics
         (SELECT COALESCE(SUM(total_amount), 0) FROM invoices) AS total_invoiced,
