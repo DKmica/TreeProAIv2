@@ -1,3 +1,4 @@
+import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation } from '../types';
 import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult } from '../types';
 import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
@@ -577,6 +578,43 @@ export const operationsService = {
       body: JSON.stringify(payload)
     });
     return { message: response.message || 'Customer notified' };
+  }
+};
+
+export const aiService = {
+  getJobDurationPrediction: async (jobId: string): Promise<AiJobDurationPrediction> => {
+    const response = await apiFetch<{ success: boolean; data: AiJobDurationPrediction }>(`ai/jobs/${jobId}/duration`);
+    return response.data;
+  },
+  getScheduleSuggestions: async (params: { date: string; crewId?: string }): Promise<{
+    suggestions: AiSchedulingSuggestion[];
+    predictions: AiJobDurationPrediction[];
+  }> => {
+    const query = new URLSearchParams({ date: params.date });
+    if (params.crewId) query.append('crew_id', params.crewId);
+    const response = await apiFetch<{ success: boolean; data: { suggestions: AiSchedulingSuggestion[]; predictions: AiJobDurationPrediction[] } }>(
+      `ai/schedule-suggestions?${query.toString()}`
+    );
+    return response.data;
+  },
+  assessJobRisk: async (jobId: string): Promise<AiRiskAssessment> => {
+    const response = await apiFetch<{ success: boolean; data: AiRiskAssessment }>(`ai/jobs/${jobId}/risk`);
+    return response.data;
+  },
+  getQuoteRecommendations: async (quoteId: string): Promise<AiQuoteRecommendation> => {
+    const response = await apiFetch<{ success: boolean; data: AiQuoteRecommendation }>(`ai/quotes/${quoteId}/recommendations`);
+    return response.data;
+  },
+  getWorkflowRecommendations: async (): Promise<AiWorkflowRecommendation[]> => {
+    const response = await apiFetch<{ success: boolean; data: AiWorkflowRecommendation[] }>('ai/workflows/recommendations');
+    return response.data ?? [];
+  },
+  setAutomationAiMode: async (enabled: boolean): Promise<{ enabled: boolean; message?: string }> => {
+    const response = await apiFetch<{ success: boolean; data: { enabled: boolean; message?: string } }>('ai/workflows/ai-mode', {
+      method: 'POST',
+      body: JSON.stringify({ enabled })
+    });
+    return response.data;
   }
 };
 

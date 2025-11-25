@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, AiQuoteRecommendation } from '../types';
+import { quoteService, clientService, jobService, aiService } from '../services/apiService';
 import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats } from '../types';
 import { quoteService, clientService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
@@ -11,6 +13,7 @@ import ProposalPreview from '../components/ProposalPreview';
 import PricingOptionsGrid from '../components/PricingOptionsGrid';
 import QuoteVersionTimeline from '../components/QuoteVersionTimeline';
 import { useToast } from '../components/ui/Toast';
+import AiInsightsPanel from '../components/AiInsightsPanel';
 
 const QuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +35,9 @@ const QuoteDetail: React.FC = () => {
   const [aiStats, setAiStats] = useState<AiAccuracyStats | null>(null);
   const [accuracyForm, setAccuracyForm] = useState({ actualPrice: '', notes: '', aiSuggestionsFollowed: false });
   const [isOptionLoading, setIsOptionLoading] = useState(false);
+  const [aiRecommendation, setAiRecommendation] = useState<AiQuoteRecommendation | null>(null);
+  const [isAiRecommendationLoading, setIsAiRecommendationLoading] = useState(false);
+  const [aiRecommendationError, setAiRecommendationError] = useState<string | null>(null);
   const toast = useToast();
 
   const loadProposalData = async (quoteId: string) => {
@@ -77,6 +83,20 @@ const QuoteDetail: React.FC = () => {
     }
   };
 
+  const loadAiRecommendation = async (quoteId: string) => {
+    setIsAiRecommendationLoading(true);
+    setAiRecommendationError(null);
+    try {
+      const recommendation = await aiService.getQuoteRecommendations(quoteId);
+      setAiRecommendation(recommendation);
+    } catch (err: any) {
+      console.error('Error loading AI quote recommendations', err);
+      setAiRecommendationError(err?.message || 'AI quote enhancements are unavailable.');
+    } finally {
+      setIsAiRecommendationLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchQuoteData = async () => {
       if (!id) return;
@@ -84,6 +104,19 @@ const QuoteDetail: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
+        try {
+          const quoteData = await quoteService.getById(id);
+          setQuote(quoteData);
+
+          loadProposalData(id);
+          loadPricingOptions(id);
+          loadVersionHistory(id);
+          loadAiAccuracy();
+          loadAiRecommendation(id);
+
+          if (quoteData.clientId) {
+            try {
+              const clientData = await clientService.getById(quoteData.clientId);
       try {
         const quoteData = await quoteService.getById(id);
         setQuote(quoteData);
@@ -131,6 +164,50 @@ const QuoteDetail: React.FC = () => {
       year: 'numeric',
     });
   };
+
+  const aiQuoteItems = React.useMemo(() => {
+    if (!aiRecommendation) return [];
+    const items: { id: string; title: string; description: string; tag?: string; confidence?: number; meta?: string }[] = [];
+
+    items.push({
+      id: 'summary',
+      title: 'Win-rate boost',
+      description: aiRecommendation.summary,
+      tag: 'Recommendation',
+      confidence: aiRecommendation.expectedWinRateLift ? aiRecommendation.expectedWinRateLift / 100 : undefined,
+      meta: aiRecommendation.nextBestAction,
+    });
+
+    aiRecommendation.upsellIdeas?.forEach((idea, idx) => {
+      items.push({
+        id: `upsell-${idx}`,
+        title: 'Upsell idea',
+        description: idea,
+        tag: 'Upsell',
+      });
+    });
+
+    aiRecommendation.pricingSuggestions?.forEach((suggestion, idx) => {
+      items.push({
+        id: `price-${idx}`,
+        title: `${suggestion.optionLabel} pricing`,
+        description: `Suggested ${formatCurrency(suggestion.suggestedPrice)}`,
+        tag: 'Pricing',
+        meta: suggestion.rationale,
+      });
+    });
+
+    aiRecommendation.riskFlags?.forEach((flag, idx) => {
+      items.push({
+        id: `risk-${idx}`,
+        title: 'Risk flag',
+        description: flag,
+        tag: 'Risk',
+      });
+    });
+
+    return items;
+  }, [aiRecommendation]);
 
   const handleRecommendOption = async (optionId: string) => {
     if (!id) return;
@@ -470,6 +547,13 @@ const QuoteDetail: React.FC = () => {
               Accept
             </button>
             <button
+            <button
+              onClick={handleAccept}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+            >
+              Accept
+            </button>
+            <button
               onClick={handleDecline}
               className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 font-medium text-sm"
             >
@@ -731,8 +815,38 @@ const QuoteDetail: React.FC = () => {
             )}
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-6 sticky top-4">
+          <div className="lg:col-span-1 space-y-4">
+            <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-6 sticky top-4 space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-brand-gray-900 flex items-center gap-2">
+                    <QuoteIcon className="w-5 h-5 text-brand-cyan-600" />
+                    AI quote enhancements
+                  </h2>
+                  <span className="rounded-full bg-brand-gray-100 px-2 py-1 text-[11px] font-medium text-brand-gray-700">AI</span>
+                </div>
+
+                {isAiRecommendationLoading && (
+                  <div className="rounded-md border border-brand-gray-200 bg-brand-gray-50 p-3 text-sm text-brand-gray-700">
+                    Calibrating recommendations…
+                  </div>
+                )}
+
+                {aiRecommendationError && (
+                  <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                    {aiRecommendationError}
+                  </div>
+                )}
+
+                <AiInsightsPanel
+                  title="Proposal copilot"
+                  subtitle="Pricing, risk, and upsell ideas tailored to this quote"
+                  items={aiQuoteItems}
+                  icon="sparkles"
+                />
+              </div>
+
+              <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-6">
               <h2 className="text-xl font-semibold text-brand-gray-900 mb-4">Pricing Summary</h2>
               <div className="space-y-3">
                 <div className="flex justify-between items-center pb-3 border-b border-brand-gray-200">
@@ -779,19 +893,20 @@ const QuoteDetail: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
-
-            {quote.signature && (
-              <div className="mt-6 bg-white rounded-lg shadow border border-brand-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-brand-gray-900 mb-3">Customer Signature</h2>
-                <div className="border border-brand-gray-200 rounded-md p-3 bg-brand-gray-50">
-                  <img src={quote.signature} alt="Customer signature" className="w-full h-24 object-contain" />
-                </div>
-                {quote.acceptedAt && (
-                  <p className="mt-2 text-xs text-brand-gray-500">Signed on {formatDate(quote.acceptedAt)}</p>
-                )}
               </div>
-            )}
+
+              {quote.signature && (
+                <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-brand-gray-900 mb-3">Customer Signature</h2>
+                  <div className="border border-brand-gray-200 rounded-md p-3 bg-brand-gray-50">
+                    <img src={quote.signature} alt="Customer signature" className="w-full h-24 object-contain" />
+                  </div>
+                  {quote.acceptedAt && (
+                    <p className="mt-2 text-xs text-brand-gray-500">Signed on {formatDate(quote.acceptedAt)}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -48,6 +48,14 @@ This document records current progress against the phased enhancement plan and c
 9. **Integrations (Phase 8 kickoff)**
    - Settings now surfaces connection status, sync, test, and disconnect flows for Stripe, QuickBooks, Gusto, Twilio, Zapier/Open API, and Google Calendar.
    - Open API + Zapier token copy helpers make it easy to wire custom workflows without code changes.
+10. **Advanced AI Upgrades (Phase 9 kickoff)**
+   - Calendar now surfaces AI scheduling assistant suggestions, per-job duration predictions, and insight cards for dispatchers.
+   - Quotes gain AI proposal copilot recommendations spanning pricing, upsells, and risk flags.
+   - Crew app pulls AI risk assessments for job photos/notes, while automation settings add AI Mode toggles and recommendations.
+   
+11. **Polish & Observability (Phase 10 kickoff)**
+   - Added global error boundaries and client-side telemetry so crashes are captured with helpful diagnostics and recovery affordances.
+   - Performance monitoring now records Web Vitals to feed profiling dashboards and highlight slow surfaces across the shell.
 
 ## Deployment & Migration Notes
 - No database migrations required.

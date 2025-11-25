@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist, AiRiskAssessment } from '../../types';
 import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
@@ -42,6 +43,9 @@ const CrewJobDetail: React.FC = () => {
   const [jhaError, setJhaError] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [checklistDraft, setChecklistDraft] = useState<SafetyChecklist>(defaultChecklist);
+  const [riskAssessment, setRiskAssessment] = useState<AiRiskAssessment | null>(null);
+  const [isLoadingRisk, setIsLoadingRisk] = useState(false);
+  const [riskError, setRiskError] = useState<string | null>(null);
 
   const job = useMemo(() => jobs.find(j => j.id === jobId), [jobs, jobId]);
   const mergedJob = useMemo(() => {
@@ -67,6 +71,25 @@ const CrewJobDetail: React.FC = () => {
       setChecklistDraft(defaultChecklist);
     }
   }, [mergedJob?.safetyChecklist]);
+
+  useEffect(() => {
+    if (!mergedJob?.id) return;
+    const loadRiskAssessment = async () => {
+      setIsLoadingRisk(true);
+      setRiskError(null);
+      try {
+        const assessment = await api.aiService.assessJobRisk(mergedJob.id);
+        setRiskAssessment(assessment);
+      } catch (error: any) {
+        console.error('Failed to load risk assessment', error);
+        setRiskError(error?.message || 'AI risk assessment unavailable');
+      } finally {
+        setIsLoadingRisk(false);
+      }
+    };
+
+    loadRiskAssessment();
+  }, [mergedJob?.id]);
 
   const isLoading = jobsLoading || quotesLoading || customersLoading;
 
@@ -344,6 +367,81 @@ const CrewJobDetail: React.FC = () => {
           </div>
         </div>
       )}
+
+      <div className="mt-4 bg-white rounded-lg shadow border border-brand-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-brand-gray-900 flex items-center gap-2">
+            <ShieldCheckIcon className="w-5 h-5 text-brand-green-600" />
+            AI risk assessment
+          </h2>
+          <span className="rounded-full bg-brand-gray-100 px-2 py-1 text-[11px] font-medium text-brand-gray-700">Live</span>
+        </div>
+
+        {isLoadingRisk && (
+          <p className="mt-2 text-sm text-brand-gray-600">Scanning latest photos and notes…</p>
+        )}
+
+        {riskError && (
+          <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">{riskError}</div>
+        )}
+
+        {riskAssessment && (
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-brand-gray-700">Severity</p>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                  riskAssessment.severity === 'high'
+                    ? 'bg-red-100 text-red-700'
+                    : riskAssessment.severity === 'medium'
+                    ? 'bg-yellow-100 text-yellow-700'
+                    : 'bg-green-100 text-green-700'
+                }`}
+              >
+                {riskAssessment.severity.toUpperCase()}
+              </span>
+            </div>
+
+            {riskAssessment.factors && riskAssessment.factors.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-800">Drivers</p>
+                <ul className="mt-1 list-disc list-inside text-sm text-brand-gray-700 space-y-1">
+                  {riskAssessment.factors.map((factor, idx) => (
+                    <li key={idx}>{factor}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {riskAssessment.recommendedActions && riskAssessment.recommendedActions.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-800">Recommended mitigations</p>
+                <ul className="mt-1 list-disc list-inside text-sm text-brand-gray-700 space-y-1">
+                  {riskAssessment.recommendedActions.map((action, idx) => (
+                    <li key={idx}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {riskAssessment.attachments && riskAssessment.attachments.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {riskAssessment.attachments.map((attachment, idx) => (
+                  <a
+                    key={idx}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center rounded-md border border-brand-gray-200 px-3 py-1.5 text-xs font-semibold text-brand-cyan-700 hover:bg-brand-gray-50"
+                  >
+                    {attachment.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-gray-800 mb-3">Safety & Compliance Co-pilot</h2>

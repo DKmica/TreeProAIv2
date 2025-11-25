@@ -18,6 +18,12 @@ import {
   Loader2
 } from 'lucide-react';
 import { automationLogService, workflowService, Workflow, TRIGGER_TYPES, ACTION_TYPES, AutomationLog } from '../services/workflowService';
+import { aiService } from '../services/apiService';
+import { AiWorkflowRecommendation } from '../types';
+import WorkflowEditor from '../components/WorkflowEditor';
+import { useToast } from '../components/ui/Toast';
+import AutomationLogDrawer from '../components/AutomationLogDrawer';
+import AiInsightsPanel from '../components/AiInsightsPanel';
 import WorkflowEditor from '../components/WorkflowEditor';
 import { useToast } from '../components/ui/Toast';
 import AutomationLogDrawer from '../components/AutomationLogDrawer';
@@ -37,6 +43,11 @@ const Workflows: React.FC = () => {
   const [recentLogs, setRecentLogs] = useState<Record<string, AutomationLog[]>>({});
   const [isPrefetchingLogs, setIsPrefetchingLogs] = useState(false);
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const [aiModeEnabled, setAiModeEnabled] = useState(false);
+  const [isSavingAiMode, setIsSavingAiMode] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<AiWorkflowRecommendation[]>([]);
+  const [isLoadingAiRecommendations, setIsLoadingAiRecommendations] = useState(false);
+  const [aiRecommendationError, setAiRecommendationError] = useState<string | null>(null);
   const hasHydratedLogs = useRef(false);
   const seenExecutionIds = useRef<Set<string>>(new Set());
   const toast = useToast();
@@ -44,6 +55,7 @@ const Workflows: React.FC = () => {
   useEffect(() => {
     loadWorkflows();
     loadTemplates();
+    loadAiRecommendations();
   }, []);
 
   useEffect(() => {
@@ -127,6 +139,38 @@ const Workflows: React.FC = () => {
       setTemplates(data);
     } catch (err: any) {
       console.error('Failed to load templates:', err);
+    }
+  };
+
+  const loadAiRecommendations = async () => {
+    setIsLoadingAiRecommendations(true);
+    setAiRecommendationError(null);
+    try {
+      const recs = await aiService.getWorkflowRecommendations();
+      setAiRecommendations(recs);
+    } catch (err: any) {
+      console.error('Failed to load AI workflow recommendations', err);
+      setAiRecommendationError(err?.message || 'Unable to fetch AI workflow suggestions.');
+    } finally {
+      setIsLoadingAiRecommendations(false);
+    }
+  };
+
+  const handleToggleAiMode = async () => {
+    setIsSavingAiMode(true);
+    try {
+      const response = await aiService.setAutomationAiMode(!aiModeEnabled);
+      setAiModeEnabled(response.enabled);
+      if (response.enabled) {
+        toast.success('AI Mode on', response.message || 'Recommended workflows will auto-run when applicable.');
+      } else {
+        toast.info('AI Mode paused', response.message || 'Auto-run suggestions disabled until re-enabled.');
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle AI mode', err);
+      toast.error('Unable to update AI mode', err?.message || 'Please try again.');
+    } finally {
+      setIsSavingAiMode(false);
     }
   };
 
@@ -218,17 +262,28 @@ const Workflows: React.FC = () => {
 
   const filteredWorkflows = useMemo(() => {
     return workflows.filter(workflow => {
-      const matchesSearch = !searchTerm || 
+      const matchesSearch = !searchTerm ||
         workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         workflow.description?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || 
         (statusFilter === 'active' && workflow.is_active) ||
         (statusFilter === 'inactive' && !workflow.is_active);
-      
-      return matchesSearch && matchesStatus;
-    });
+
+    return matchesSearch && matchesStatus;
+  });
   }, [workflows, searchTerm, statusFilter]);
+
+  const aiRecommendationItems = useMemo(() => {
+    return aiRecommendations.map((rec) => ({
+      id: rec.id,
+      title: rec.title,
+      description: rec.description,
+      tag: rec.trigger,
+      confidence: rec.confidence,
+      meta: rec.suggestedActions?.join(' → '),
+    }));
+  }, [aiRecommendations]);
 
   const getTriggerLabel = (triggerType: string) => {
     return TRIGGER_TYPES.find(t => t.value === triggerType)?.label || triggerType;
@@ -380,11 +435,11 @@ const Workflows: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-6 flex gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-gray-400" />
-          <input
-            type="text"
+        <div className="mt-6 flex gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-gray-400" />
+            <input
+              type="text"
             placeholder="Search workflows..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -398,14 +453,59 @@ const Workflows: React.FC = () => {
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      </div>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
 
-      <div className="mt-6 bg-white shadow-sm rounded-lg border border-brand-gray-200 overflow-hidden">
-        {filteredWorkflows.length === 0 ? (
-          <div className="p-12 text-center">
-            <Zap className="w-12 h-12 text-brand-gray-300 mx-auto mb-4" />
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-900">AI Mode for automations</p>
+                <p className="text-sm text-brand-gray-600">Auto-run recommended workflows when new signals arrive.</p>
+              </div>
+              <button
+                onClick={handleToggleAiMode}
+                disabled={isSavingAiMode}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold shadow-sm ${
+                  aiModeEnabled ? 'bg-brand-cyan-600 text-white' : 'bg-brand-gray-200 text-brand-gray-800'
+                } disabled:opacity-60`}
+              >
+                {isSavingAiMode ? 'Saving…' : aiModeEnabled ? 'On' : 'Off'}
+              </button>
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-xs text-brand-gray-600">
+              <Clock className="w-4 h-4" />
+              <span>AI will execute safe defaults and log runs for review.</span>
+            </div>
+          </div>
+
+          <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-brand-gray-900">Recommended workflows</p>
+              <span className="rounded-full bg-brand-gray-50 px-2 py-1 text-[11px] font-medium text-brand-gray-700">AI</span>
+            </div>
+            {isLoadingAiRecommendations && (
+              <p className="mt-2 text-sm text-brand-gray-600">Analyzing patterns…</p>
+            )}
+            {aiRecommendationError && (
+              <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800">{aiRecommendationError}</div>
+            )}
+            <div className="mt-3">
+              <AiInsightsPanel
+                title="Suggested automations"
+                subtitle="Curated from recent signals"
+                items={aiRecommendationItems}
+                icon="sparkles"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 bg-white shadow-sm rounded-lg border border-brand-gray-200 overflow-hidden">
+          {filteredWorkflows.length === 0 ? (
+            <div className="p-12 text-center">
+              <Zap className="w-12 h-12 text-brand-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-brand-gray-900 mb-1">No workflows found</h3>
             <p className="text-brand-gray-500 mb-4">
               {searchTerm || statusFilter !== 'all' 

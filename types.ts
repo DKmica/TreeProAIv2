@@ -1351,3 +1351,59 @@ export interface CrewPendingAction {
   payload: Partial<Job>;
   createdAt: string;
 }
+
+// AI Insights (Phase 9)
+export interface AiJobDurationPrediction {
+  jobId: string;
+  predictedMinutes: number;
+  confidence: number;
+  drivers?: string[];
+  comparableJobs?: {
+    id: string;
+    label?: string;
+    durationMinutes: number;
+    similarityScore: number;
+  }[];
+}
+
+export interface AiSchedulingSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  crewId?: string;
+  jobIds?: string[];
+  impact: 'time_saved' | 'fuel_saved' | 'conflict_avoidance' | 'customer_experience';
+  confidence: number;
+  etaDeltaMinutes?: number;
+  rationale?: string;
+}
+
+export interface AiRiskAssessment {
+  jobId: string;
+  severity: 'low' | 'medium' | 'high';
+  factors: string[];
+  recommendedActions: string[];
+  attachments?: { label: string; url: string }[];
+  lastAnalyzedAt?: string;
+}
+
+export interface AiQuoteRecommendation {
+  quoteId: string;
+  summary: string;
+  upsellIdeas: string[];
+  riskFlags?: string[];
+  pricingSuggestions?: { optionLabel: string; suggestedPrice: number; rationale?: string }[];
+  expectedWinRateLift?: number;
+  nextBestAction?: string;
+}
+
+export interface AiWorkflowRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  trigger: string;
+  suggestedActions: string[];
+  autoEnabled?: boolean;
+  confidence?: number;
+}
