@@ -397,6 +397,18 @@ export const operationsService = {
     });
     return response.data;
   },
+  getRoutePlan: async (params: { date: string; crewId: string }): Promise<RouteOptimizationResult | null> => {
+    const query = new URLSearchParams({ date: params.date, crew_id: params.crewId }).toString();
+    const response = await apiFetch<{ success: boolean; data: RouteOptimizationResult | null }>(`operations/route-plan?${query}`);
+    return response.data ?? null;
+  },
+  reorderRoutePlan: async (routePlanId: string, stops: { jobId: string; order: number }[]): Promise<{ message: string }> => {
+    const response = await apiFetch<{ success: boolean; message: string }>('operations/route-plan/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ routePlanId, stops })
+    });
+    return { message: response.message || 'Route reordered' };
+  },
   getAvailability: async (params: { startDate: string; endDate: string; crewId?: string }): Promise<CrewAvailabilitySummary[]> => {
     const queryParams = new URLSearchParams({
       start_date: params.startDate,
@@ -425,6 +437,13 @@ export const operationsService = {
       body: JSON.stringify(payload)
     });
     return response.data;
+  },
+  sendOnMyWay: async (payload: { jobId: string; crewId?: string; etaMinutes?: number; channel?: 'sms' | 'push' | 'email' }): Promise<{ message: string }> => {
+    const response = await apiFetch<{ success: boolean; message: string }>('operations/on-my-way', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return { message: response.message || 'Customer notified' };
   }
 };
 

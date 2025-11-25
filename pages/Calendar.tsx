@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Job, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult } from '../types';
+import { Job, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RouteStop } from '../types';
 import { CalendarView } from './Calendar/types';
 import JobIcon from '../components/icons/JobIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
@@ -8,6 +8,8 @@ import TemplateSelector from '../components/TemplateSelector';
 import { syncJobsToGoogleCalendar } from '../services/googleCalendarService';
 import * as api from '../services/apiService';
 import { useJobsQuery, useEmployeesQuery, useClientsQuery } from '../hooks/useDataQueries';
+import RoutePlanDrawer from '../components/RoutePlanDrawer';
+import { useToast } from '../components/ui/Toast';
 
 import MonthView from './Calendar/views/MonthView';
 import WeekView from './Calendar/views/WeekView';
@@ -38,6 +40,8 @@ const Calendar: React.FC = () => {
     const [opsLoading, setOpsLoading] = useState(false);
     const [opsError, setOpsError] = useState<string | null>(null);
     const [dispatchLoading, setDispatchLoading] = useState(false);
+    const [isRouteDrawerOpen, setIsRouteDrawerOpen] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         let isMounted = true;
@@ -113,6 +117,29 @@ const Calendar: React.FC = () => {
 
     const currentDateString = useMemo(() => currentDate.toISOString().split('T')[0], [currentDate]);
 
+    useEffect(() => {
+        const loadRoutePlan = async () => {
+            if (!selectedCrewId) {
+                setRoutePlan(null);
+                return;
+            }
+
+            try {
+                const existingPlan = await api.operationsService.getRoutePlan({
+                    date: currentDateString,
+                    crewId: selectedCrewId
+                });
+                setRoutePlan(existingPlan);
+            } catch (error) {
+                console.error('Failed to load route plan', error);
+            } finally {
+                setIsRouteDrawerOpen(false);
+            }
+        };
+
+        loadRoutePlan();
+    }, [currentDateString, selectedCrewId]);
+
     const handleOptimizeRoute = async () => {
         setRouteLoading(true);
         setRoutePlan(null);
@@ -124,6 +151,7 @@ const Calendar: React.FC = () => {
                 includeInProgress: true
             });
             setRoutePlan(plan);
+            setIsRouteDrawerOpen(true);
         } catch (error: any) {
             console.error('Failed to optimize crew route:', error);
             setOpsError(error?.message || 'Unable to optimize route for the selected day');
@@ -146,6 +174,61 @@ const Calendar: React.FC = () => {
             setOpsError(error?.message || 'Unable to prepare crew dispatch digest');
         } finally {
             setDispatchLoading(false);
+        }
+    };
+
+    const reorderStops = (stops: RouteStop[], jobId: string, direction: 'up' | 'down') => {
+        const index = stops.findIndex(stop => stop.jobId === jobId);
+        if (index === -1) return stops;
+
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= stops.length) return stops;
+
+        const newStops = [...stops];
+        const [moved] = newStops.splice(index, 1);
+        newStops.splice(targetIndex, 0, moved);
+
+        return newStops.map((stop, idx) => ({ ...stop, order: idx + 1 }));
+    };
+
+    const handleReorderStop = async (jobId: string, direction: 'up' | 'down') => {
+        if (!routePlan) return;
+
+        const updatedStops = reorderStops(routePlan.stops, jobId, direction);
+        if (updatedStops === routePlan.stops) return;
+
+        const previousPlan = routePlan;
+        setRoutePlan({ ...routePlan, stops: updatedStops });
+
+        try {
+            if (routePlan.routePlanId) {
+                await api.operationsService.reorderRoutePlan(routePlan.routePlanId, updatedStops.map(stop => ({
+                    jobId: stop.jobId,
+                    order: stop.order
+                })));
+                toast.success('Route updated', 'Stop order saved for dispatch.');
+            } else {
+                toast.info('Route reordered locally', 'Re-run optimization to persist the new sequence.');
+            }
+        } catch (error: any) {
+            console.error('Failed to reorder route plan', error);
+            toast.error('Unable to reorder route', error?.message || 'Please try again.');
+            setRoutePlan(previousPlan);
+        }
+    };
+
+    const handleOnMyWay = async (jobId: string, etaMinutes?: number) => {
+        try {
+            const response = await api.operationsService.sendOnMyWay({
+                jobId,
+                crewId: selectedCrewId || undefined,
+                etaMinutes: etaMinutes || 15,
+                channel: 'sms'
+            });
+            toast.success('On my way sent', response.message);
+        } catch (error: any) {
+            console.error('Failed to notify customer', error);
+            toast.error('Could not send notification', error?.message || 'Check contact info and try again.');
         }
     };
 
@@ -639,6 +722,20 @@ const Calendar: React.FC = () => {
                                                 ))}
                                             </ul>
                                         )}
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <button
+                                                onClick={() => setIsRouteDrawerOpen(true)}
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-brand-cyan-600 rounded-md hover:bg-brand-cyan-700"
+                                            >
+                                                View optimized route
+                                            </button>
+                                            <button
+                                                onClick={handleOptimizeRoute}
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-brand-gray-700 bg-white border border-brand-gray-300 rounded-md hover:bg-brand-gray-100"
+                                            >
+                                                Re-run optimizer
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : routeLoading ? (
                                     <p className="mt-2 text-sm text-brand-gray-600">Optimizing route…</p>
@@ -732,6 +829,15 @@ const Calendar: React.FC = () => {
                 isOpen={showTemplateSelector}
                 onClose={() => setShowTemplateSelector(false)}
                 onSelect={handleUseTemplate}
+            />
+
+            <RoutePlanDrawer
+                isOpen={isRouteDrawerOpen}
+                routePlan={routePlan}
+                onClose={() => setIsRouteDrawerOpen(false)}
+                onReorder={handleReorderStop}
+                onNotify={handleOnMyWay}
+                onReoptimize={handleOptimizeRoute}
             />
         </div>
     );
