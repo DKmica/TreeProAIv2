@@ -26,20 +26,24 @@ export function useBadgeCounts() {
   const fetchCounts = useCallback(async () => {
     try {
       const response = await fetch('/api/badge-counts');
-      if (response.ok) {
-        const data = await response.json();
-        setCounts({
-          pendingLeads: data.pendingLeads || 0,
-          pendingQuotes: data.pendingQuotes || 0,
-          unpaidInvoices: data.unpaidInvoices || 0,
-          todayJobs: data.todayJobs || 0,
-          exceptions: data.exceptions || 0,
-          unreadMessages: data.unreadMessages || 0,
-        });
-        setError(null);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.warn('Badge counts API error:', data.error);
       }
+      
+      setCounts({
+        pendingLeads: data.pendingLeads || 0,
+        pendingQuotes: data.pendingQuotes || 0,
+        unpaidInvoices: data.unpaidInvoices || 0,
+        todayJobs: data.todayJobs || 0,
+        exceptions: data.exceptions || 0,
+        unreadMessages: data.unreadMessages || 0,
+      });
+      setError(response.ok ? null : data.error || 'API error');
     } catch (err) {
-      setError('Failed to fetch badge counts');
+      console.error('Failed to fetch badge counts:', err);
+      setError('Network error');
     } finally {
       setIsLoading(false);
     }

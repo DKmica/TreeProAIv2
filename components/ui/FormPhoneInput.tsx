@@ -135,8 +135,24 @@ const FormPhoneInput: React.FC<FormPhoneInputProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
-    const numbers = parsePhoneNumber(rawValue);
-    const formatted = formatPhoneNumber(rawValue);
+    const numbers = parsePhoneNumber(rawValue).slice(0, 10);
+    const formatted = formatPhoneNumber(numbers);
+    
+    const newPhone: PhoneNumber = {
+      ...phone,
+      number: numbers,
+      formatted,
+    };
+    
+    setPhone(newPhone);
+    onChange?.(newPhone);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const numbers = parsePhoneNumber(pastedText).slice(0, 10);
+    const formatted = formatPhoneNumber(numbers);
     
     const newPhone: PhoneNumber = {
       ...phone,
@@ -239,9 +255,11 @@ const FormPhoneInput: React.FC<FormPhoneInputProps> = ({
             name={name}
             value={phone.formatted || ''}
             onChange={handleChange}
+            onPaste={handlePaste}
             placeholder={placeholder}
             disabled={disabled}
             required={required}
+            maxLength={14}
             aria-invalid={!!error || !isValid}
             aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
             className={`

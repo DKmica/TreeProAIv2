@@ -50,7 +50,8 @@ router.get('/badge-counts', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching badge counts:', error);
-    res.json({
+    res.status(500).json({
+      error: 'Failed to fetch badge counts',
       pendingLeads: 0,
       pendingQuotes: 0,
       unpaidInvoices: 0,

@@ -211,6 +211,10 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
             aria-expanded={isOpen}
             aria-controls={`${inputId}-listbox`}
             aria-autocomplete="list"
+            aria-activedescendant={highlightedIndex >= 0 ? `${inputId}-option-${highlightedIndex}` : undefined}
+            aria-haspopup="listbox"
+            aria-invalid={!!error}
+            aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
           />
         ) : (
           <div className="flex-1 px-3 py-2.5 text-sm">
@@ -260,50 +264,54 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
           role="listbox"
           className="absolute z-50 w-full mt-1 py-1 bg-brand-gray-900 border border-brand-gray-700 rounded-lg shadow-xl max-h-60 overflow-auto"
         >
-          {Object.entries(groupedOptions).map(([group, groupOptions]: [string, ComboboxOption[]]) => (
-            <React.Fragment key={group || 'default'}>
-              {group && groupBy && (
-                <li className="px-3 py-1.5 text-xs font-semibold text-brand-gray-400 uppercase tracking-wider">
-                  {group}
-                </li>
-              )}
-              {groupOptions.map((option, idx) => {
-                const globalIndex = flatOptions.indexOf(option);
-                const isHighlighted = globalIndex === highlightedIndex;
-                const isSelected = option.value === value;
+          {(() => {
+            let optionIndex = 0;
+            return (Object.entries(groupedOptions) as [string, ComboboxOption[]][]).map(([group, groupOptions]) => (
+              <React.Fragment key={group || 'default'}>
+                {group && groupBy && (
+                  <li className="px-3 py-1.5 text-xs font-semibold text-brand-gray-400 uppercase tracking-wider" role="presentation">
+                    {group}
+                  </li>
+                )}
+                {groupOptions.map((option) => {
+                  const currentIndex = optionIndex++;
+                  const isHighlighted = currentIndex === highlightedIndex;
+                  const isSelected = option.value === value;
 
-                return (
-                  <li
-                    key={option.value}
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => handleSelect(option)}
-                    className={`
-                      px-3 py-2 cursor-pointer transition-colors
-                      ${option.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                      ${isHighlighted ? 'bg-brand-gray-800' : ''}
-                      ${isSelected ? 'bg-brand-cyan-500/20 text-brand-cyan-300' : 'text-white hover:bg-brand-gray-800'}
-                    `}
-                  >
-                    <div className="flex items-center gap-2">
-                      {option.icon && <span className="flex-shrink-0">{option.icon}</span>}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{option.label}</div>
-                        {option.description && (
-                          <div className="text-xs text-brand-gray-400 truncate">{option.description}</div>
+                  return (
+                    <li
+                      key={option.value}
+                      id={`${inputId}-option-${currentIndex}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => handleSelect(option)}
+                      className={`
+                        px-3 py-2 cursor-pointer transition-colors
+                        ${option.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                        ${isHighlighted ? 'bg-brand-gray-800' : ''}
+                        ${isSelected ? 'bg-brand-cyan-500/20 text-brand-cyan-300' : 'text-white hover:bg-brand-gray-800'}
+                      `}
+                    >
+                      <div className="flex items-center gap-2">
+                        {option.icon && <span className="flex-shrink-0">{option.icon}</span>}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{option.label}</div>
+                          {option.description && (
+                            <div className="text-xs text-brand-gray-400 truncate">{option.description}</div>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-brand-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                         )}
                       </div>
-                      {isSelected && (
-                        <svg className="w-4 h-4 text-brand-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </React.Fragment>
-          ))}
+                    </li>
+                  );
+                })}
+              </React.Fragment>
+            ));
+          })()}
 
           {flatOptions.length === 0 && (
             <li className="px-3 py-6 text-center">

@@ -79,7 +79,26 @@ function DataTable<T extends Record<string, unknown>>({
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
 
-      const comparison = String(aValue).localeCompare(String(bValue), undefined, { numeric: true });
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        const comparison = aValue - bValue;
+        return sort.direction === 'asc' ? comparison : -comparison;
+      }
+
+      if (aValue instanceof Date && bValue instanceof Date) {
+        const comparison = aValue.getTime() - bValue.getTime();
+        return sort.direction === 'asc' ? comparison : -comparison;
+      }
+
+      const aStr = String(aValue);
+      const bStr = String(bValue);
+      const aDate = Date.parse(aStr);
+      const bDate = Date.parse(bStr);
+      if (!isNaN(aDate) && !isNaN(bDate)) {
+        const comparison = aDate - bDate;
+        return sort.direction === 'asc' ? comparison : -comparison;
+      }
+
+      const comparison = aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
       return sort.direction === 'asc' ? comparison : -comparison;
     });
   }, [data, sort, columns]);

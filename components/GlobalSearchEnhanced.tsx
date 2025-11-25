@@ -165,12 +165,17 @@ const GlobalSearchEnhanced: React.FC<GlobalSearchEnhancedProps> = ({
   }, [filteredResults]);
 
   useEffect(() => {
+    const abortController = new AbortController();
+    
     const searchTimeout = setTimeout(async () => {
       if (query.length >= 2) {
         setIsLoading(true);
         try {
           const typeParam = activeFilter !== 'all' ? `&type=${activeFilter}` : '';
-          const response = await fetch(`/api/search?q=${encodeURIComponent(query)}${typeParam}`);
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(query)}${typeParam}`,
+            { signal: abortController.signal }
+          );
           if (response.ok) {
             const data = await response.json();
             setResults(data.results || []);
@@ -178,10 +183,14 @@ const GlobalSearchEnhanced: React.FC<GlobalSearchEnhancedProps> = ({
             setResults([]);
           }
         } catch (error) {
-          console.error('Search failed:', error);
-          setResults([]);
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error('Search failed:', error);
+            setResults([]);
+          }
         } finally {
-          setIsLoading(false);
+          if (!abortController.signal.aborted) {
+            setIsLoading(false);
+          }
         }
         setIsOpen(true);
       } else {
@@ -189,7 +198,10 @@ const GlobalSearchEnhanced: React.FC<GlobalSearchEnhancedProps> = ({
       }
     }, 300);
 
-    return () => clearTimeout(searchTimeout);
+    return () => {
+      clearTimeout(searchTimeout);
+      abortController.abort();
+    };
   }, [query, activeFilter]);
 
   useEffect(() => {
