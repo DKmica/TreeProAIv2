@@ -117,11 +117,11 @@ async function setupAuth(app) {
     });
 
     app.get('/api/login', (_req, res) => {
-      res.json({ success: true, mode: 'offline' });
+      res.redirect('/');
     });
 
     app.get('/api/logout', (_req, res) => {
-      res.json({ success: true, mode: 'offline' });
+      res.redirect('/');
     });
 
     return;
