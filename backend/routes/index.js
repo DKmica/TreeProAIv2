@@ -18,6 +18,7 @@ const automationLogsRouter = require('./automation-logs');
 const templatesRouter = require('./templates');
 const schedulingRouter = require('./scheduling');
 const quotingRouter = require('./quoting');
+const telemetryRouter = require('./telemetry');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -42,6 +43,7 @@ function buildApiRouter() {
   router.use(templatesRouter);
   router.use(schedulingRouter);
   router.use(quotingRouter);
+  router.use(telemetryRouter);
   return router;
 }
 

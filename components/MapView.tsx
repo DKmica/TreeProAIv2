@@ -1,6 +1,6 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Job, Employee, Customer } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Job, Employee, Customer, RouteOptimizationResult } from '../types';
 import { loadGoogleMapsScript } from '../services/mapsLoader';
 import SpinnerIcon from './icons/SpinnerIcon';
 
@@ -18,6 +18,16 @@ declare global {
                 setCenter(latLng: LatLng | any): void;
                 addListener(eventName: string, handler: (...args: any[]) => void): void;
                 [key: string]: any;
+            }
+            class Polyline {
+                constructor(options?: any);
+                setOptions(options: any): void;
+                setMap(map: Map | null): void;
+                [key: string]: any;
+            }
+            class LatLngBounds {
+                constructor(sw?: any, ne?: any);
+                extend(latLng: any): void;
             }
             class InfoWindow {
                 constructor(opts?: any);
@@ -51,15 +61,29 @@ interface MapViewProps {
     customers: Customer[];
     selectedJobId: string | null;
     onJobSelect: (jobId: string | null) => void;
+    routePlan?: RouteOptimizationResult | null;
 }
 
-const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJobId, onJobSelect }) => {
+const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJobId, onJobSelect, routePlan }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<google.maps.Map | null>(null);
     const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+    const routeLineRef = useRef<google.maps.Polyline | null>(null);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
     const [mapLoaded, setMapLoaded] = useState(false);
     const [mapError, setMapError] = useState<string | null>(null);
+
+    const orderedRouteStops = useMemo(() => {
+        if (!routePlan?.stops) return [];
+        return [...routePlan.stops]
+            .filter(stop => stop.location?.lat !== undefined && stop.location?.lng !== undefined)
+            .sort((a, b) => a.order - b.order);
+    }, [routePlan]);
+
+    const routePath = useMemo(() => {
+        if (routePlan?.routePath?.length) return routePlan.routePath;
+        return orderedRouteStops.map(stop => stop.location);
+    }, [orderedRouteStops, routePlan]);
 
     useEffect(() => {
         loadGoogleMapsScript()
@@ -112,14 +136,20 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
         activeJobs.forEach(job => {
             const customer = customers.find(c => c.name === job.customerName);
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
-            
+
             const isSelected = job.id === selectedJobId;
+            const routeStop = orderedRouteStops.find(stop => stop.jobId === job.id);
 
             const jobPin = new google.maps.marker.PinElement({
-                background: isSelected ? '#ca8a04' : (job.status === 'In Progress' ? '#1d4ed8' : '#16a34a'), // Gold for selected, Blue for 'In Progress', Green for 'Scheduled'
+                background: isSelected
+                    ? '#ca8a04'
+                    : routeStop
+                        ? '#0ea5e9'
+                        : (job.status === 'In Progress' ? '#1d4ed8' : '#16a34a'), // Gold for selected, Cyan for routed, Blue for 'In Progress', Green for 'Scheduled'
                 borderColor: '#fff',
                 glyphColor: '#fff',
-                scale: isSelected ? 1.4 : 1.0,
+                glyph: routeStop ? `${routeStop.order}` : undefined,
+                scale: isSelected ? 1.4 : routeStop ? 1.2 : 1.0,
             });
 
             const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -211,7 +241,40 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
             }
         }
 
-    }, [jobs, employees, customers, mapLoaded, selectedJobId, onJobSelect]);
+        // Draw route polyline
+        if (routeLineRef.current) {
+            routeLineRef.current.setMap(null);
+            routeLineRef.current = null;
+        }
+
+        if (routePath.length >= 2) {
+            const line = new google.maps.Polyline({
+                path: routePath,
+                map,
+                strokeColor: '#0ea5e9',
+                strokeOpacity: 0.85,
+                strokeWeight: 4,
+                icons: [
+                    {
+                        icon: {
+                            path: 'M 0,-1 0,1',
+                            strokeOpacity: 1,
+                            scale: 2
+                        },
+                        offset: '0',
+                        repeat: '30px'
+                    }
+                ]
+            });
+
+            // Fit bounds to route if present
+            const bounds = new google.maps.LatLngBounds();
+            routePath.forEach(point => bounds.extend(point));
+            map.fitBounds(bounds);
+            routeLineRef.current = line;
+        }
+
+    }, [jobs, employees, customers, mapLoaded, selectedJobId, onJobSelect, orderedRouteStops, routePath]);
 
     if (mapError) {
         return (

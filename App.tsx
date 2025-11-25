@@ -39,6 +39,7 @@ const CrewJobDetail = lazy(() => import('./pages/crew/CrewJobDetail'));
 const QuotePortal = lazy(() => import('./pages/portal/QuotePortal'));
 const InvoicePortal = lazy(() => import('./pages/portal/InvoicePortal'));
 const JobStatusPortal = lazy(() => import('./pages/portal/JobStatusPortal'));
+const ClientHub = lazy(() => import('./pages/portal/ClientHub'));
 
 const PageLoader: React.FC = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -101,6 +102,7 @@ const App: React.FC = () => {
           </Route>
 
           <Route path="/portal" element={<CustomerPortalLayout />}>
+            <Route path="client/:clientId" element={<Suspense fallback={<PageLoader />}><ClientHub /></Suspense>} />
             <Route path="quote/:quoteId" element={<Suspense fallback={<PageLoader />}><QuotePortal /></Suspense>} />
             <Route path="invoice/:invoiceId" element={<Suspense fallback={<PageLoader />}><InvoicePortal /></Suspense>} />
             <Route path="job/:jobId" element={<Suspense fallback={<PageLoader />}><JobStatusPortal /></Suspense>} />

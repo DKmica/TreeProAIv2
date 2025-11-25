@@ -7,6 +7,7 @@ import { MobileBottomNav } from './ui';
 import { useAICore } from '../hooks/useAICore';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useAiCoreStatus } from '../contexts/AppDataContext';
+import CommandPalette from './CommandPalette';
 
 const getPageContext = (pathname: string): string => {
   if (pathname.startsWith('/dashboard')) return "The user is on the Dashboard, viewing business KPIs and a live map.";
@@ -30,6 +31,7 @@ const getPageContext = (pathname: string): string => {
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isBotOpen, setIsBotOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const location = useLocation();
   const pageContext = getPageContext(location.pathname);
   const isAiCoreInitialized = useAiCoreStatus();
@@ -50,13 +52,30 @@ const Layout: React.FC = () => {
     }
   }, [voice.isAwaitingCommand, isBotOpen]);
 
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const isCmdK = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+      if (isCmdK) {
+        event.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   return (
     <div className="min-h-screen bg-brand-gray-950">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      
+
       <div className="flex flex-1 flex-col lg:pl-64 transition-all duration-300">
-        <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        
+        <Header
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        />
+
         <main className="flex-1 pb-20 lg:pb-0">
           <div className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -67,12 +86,17 @@ const Layout: React.FC = () => {
       </div>
       
       <MobileBottomNav />
-      
+
       <HelpBot
         isOpen={isBotOpen}
         setIsOpen={setIsBotOpen}
         chat={chat}
         voice={voice}
+      />
+
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
       />
     </div>
   );
