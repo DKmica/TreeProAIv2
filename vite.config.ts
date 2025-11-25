@@ -14,8 +14,12 @@ export default defineConfig(({ mode }) => {
         proxy: {
           '/api': {
             target: 'http://localhost:3001',
-            changeOrigin: true,
+            changeOrigin: false,
             secure: false,
+            headers: {
+              'X-Forwarded-Host': process.env.REPLIT_DEV_DOMAIN || '',
+              'X-Forwarded-Proto': 'https'
+            }
           }
         }
       },
