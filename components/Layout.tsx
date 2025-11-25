@@ -3,6 +3,7 @@ import { useLocation, Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import HelpBot from './HelpBot';
+import { MobileBottomNav } from './ui';
 import { useAICore } from '../hooks/useAICore';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import { useAiCoreStatus } from '../contexts/AppDataContext';
@@ -56,7 +57,7 @@ const Layout: React.FC = () => {
       <div className="flex flex-1 flex-col lg:pl-64 transition-all duration-300">
         <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         
-        <main className="flex-1">
+        <main className="flex-1 pb-20 lg:pb-0">
           <div className="py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <Outlet />
@@ -64,6 +65,8 @@ const Layout: React.FC = () => {
           </div>
         </main>
       </div>
+      
+      <MobileBottomNav />
       
       <HelpBot
         isOpen={isBotOpen}

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import DashboardIcon from './icons/DashboardIcon';
 import JobIcon from './icons/JobIcon';
@@ -18,6 +18,7 @@ import UsersIcon from './icons/UsersIcon';
 import ClockIcon from './icons/ClockIcon';
 import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
 import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
+import { useBadgeCounts } from '../hooks/useBadgeCounts';
 
 type NavigationItem = { 
   name: string; 
@@ -93,6 +94,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
+  const { counts } = useBadgeCounts();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     groupedNavigation.forEach(group => {
@@ -101,6 +103,30 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
     return initial;
   });
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const navigationWithBadges = useMemo(() => {
+    const badgeMap: Record<string, number | string | undefined> = {
+      '/crm': counts.pendingLeads > 0 ? counts.pendingLeads : undefined,
+      '/jobs': counts.todayJobs > 0 ? counts.todayJobs : undefined,
+      '/invoices': counts.unpaidInvoices > 0 ? counts.unpaidInvoices : undefined,
+      '/exception-queue': counts.exceptions > 0 ? counts.exceptions : undefined,
+      '/chat': counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
+    };
+
+    const applyBadges = (items: NavigationItem[]): NavigationItem[] => 
+      items.map(item => ({
+        ...item,
+        badge: badgeMap[item.href],
+      }));
+
+    return {
+      pinned: applyBadges(pinnedNavigation),
+      grouped: groupedNavigation.map(group => ({
+        ...group,
+        items: applyBadges(group.items),
+      })),
+    };
+  }, [counts]);
 
   const toggleGroup = useCallback((title: string) => {
     setExpandedGroups((prev) => ({
@@ -111,10 +137,10 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
   const sectionedNavigation = useMemo(
     () => [
-      { title: 'Quick Access', items: pinnedNavigation, defaultExpanded: true },
-      ...groupedNavigation,
+      { title: 'Quick Access', items: navigationWithBadges.pinned, defaultExpanded: true },
+      ...navigationWithBadges.grouped,
     ],
-    [],
+    [navigationWithBadges],
   );
 
   const isActiveRoute = useCallback((href: string) => {
