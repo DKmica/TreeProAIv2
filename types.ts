@@ -200,6 +200,7 @@ export interface RouteOptimizationResult {
   date: string;
   crewId?: string;
   crewName?: string;
+  routePlanId?: string;
   startLocation?: string;
   totalDistanceMiles: number;
   totalDriveMinutes: number;
@@ -207,6 +208,7 @@ export interface RouteOptimizationResult {
   stops: RouteStop[];
   warnings?: string[];
   generatedAt: string;
+  status?: 'draft' | 'finalized';
 }
 
 export interface CrewAvailabilitySummary {

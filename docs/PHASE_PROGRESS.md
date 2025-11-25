@@ -19,11 +19,15 @@ This document records current progress against the phased enhancement plan and c
 3. **Loading & Feedback Polish**
    - Replaced the Workflow list spinner with skeleton placeholders to keep the page feeling responsive while data loads.
 
+4. **Scheduling 2.0 Preview (Phase 3)**
+   - Added a route plan drawer with stop-level reorder controls, “on my way” notifications, and optimizer re-run shortcuts.
+   - Calendar now auto-loads saved route plans for the selected crew/day and exposes quick access to the optimized route summary.
+
 ## Deployment & Migration Notes
 - No database migrations required.
 - No API surface changes; the command palette reuses the existing `/api/search` endpoint.
 - Safe to roll out independently—changes are limited to frontend UX.
 
 ## Next Steps
-- **Phase 2 – Automation UX**: Add per-run status toasts when executions succeed or fail and inline debug traces in the log drawer.
-- **Phase 3 – Scheduling 2.0**: wire the command palette to scheduling quick actions (e.g., “assign crew”, “optimize route”).
+- **Phase 2 – Automation UX**: Expand analytics to correlate trigger volume with success rates and surface AI remediation tips.
+- **Phase 3 – Scheduling 2.0**: Overlay the optimized route on the map view, add drag-and-drop stop ordering, and expose dispatcher/crew chat hooks.
