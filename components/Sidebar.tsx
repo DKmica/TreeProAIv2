@@ -18,6 +18,8 @@ import UsersIcon from './icons/UsersIcon';
 import ClockIcon from './icons/ClockIcon';
 import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
 import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
+import AutomationIcon from './icons/AutomationIcon';
+import LogsIcon from './icons/LogsIcon';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
 
 type NavigationItem = { 
@@ -75,6 +77,14 @@ const groupedNavigation: {
     items: [
       { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
       { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
+    ],
+  },
+  {
+    title: 'Automation',
+    defaultExpanded: false,
+    items: [
+      { name: 'Workflows', href: '/workflows', icon: AutomationIcon },
+      { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon },
     ],
   },
   {
