@@ -32,6 +32,8 @@ const ExceptionQueue = lazy(() => import('./pages/ExceptionQueue'));
 const Settings = lazy(() => import('./pages/Settings'));
 const TemplateViewer = lazy(() => import('./pages/TemplateViewer'));
 const Payroll = lazy(() => import('./pages/Payroll'));
+const Workflows = lazy(() => import('./pages/Workflows'));
+const AutomationLogs = lazy(() => import('./pages/AutomationLogs'));
 const CrewDashboard = lazy(() => import('./pages/crew/CrewDashboard'));
 const CrewJobDetail = lazy(() => import('./pages/crew/CrewJobDetail'));
 const QuotePortal = lazy(() => import('./pages/portal/QuotePortal'));
@@ -88,6 +90,8 @@ const App: React.FC = () => {
               <Route path="/exception-queue" element={<Suspense fallback={<PageLoader />}><ExceptionQueue /></Suspense>} />
               <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
               <Route path="/settings/template/:templateId" element={<Suspense fallback={<PageLoader />}><TemplateViewer /></Suspense>} />
+              <Route path="/workflows" element={<Suspense fallback={<PageLoader />}><Workflows /></Suspense>} />
+              <Route path="/automation-logs" element={<Suspense fallback={<PageLoader />}><AutomationLogs /></Suspense>} />
             </Route>
           </Route>
 
