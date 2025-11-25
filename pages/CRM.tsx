@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { Client, Lead, Quote, AITreeEstimate } from '../types';
-import { clientService, leadService, quoteService } from '../services/apiService';
+import { Client, Lead, Quote, AITreeEstimate, CustomerSegment } from '../types';
+import { clientService, leadService, quoteService, segmentService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import CustomerIcon from '../components/icons/CustomerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
@@ -42,12 +42,53 @@ const CRM: React.FC = () => {
   const [activeLeadQueue, setActiveLeadQueue] = useState<'all' | 'stalled' | 'awaiting_response' | 'high_value'>('all');
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [bulkActionMessage, setBulkActionMessage] = useState<string | null>(null);
+  const [zipFilter, setZipFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState<'any' | 'removal' | 'pruning' | 'plant_health'>('any');
+  const [tagFilters, setTagFilters] = useState<string[]>([]);
+  const [speciesFilter, setSpeciesFilter] = useState('');
+  const [segments, setSegments] = useState<CustomerSegment[]>([]);
+  const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
+  const [segmentPreview, setSegmentPreview] = useState<{ audienceCount: number; sampleTags?: string[] }>({ audienceCount: 0 });
+  const [isSegmentsLoading, setIsSegmentsLoading] = useState(false);
   const leadQueueOptions: { id: 'all' | 'stalled' | 'awaiting_response' | 'high_value'; label: string; description: string }[] = [
     { id: 'all', label: 'All leads', description: 'Everything in the pipeline' },
     { id: 'stalled', label: 'Stalled follow-ups', description: 'Overdue or missing next steps' },
     { id: 'awaiting_response', label: 'Awaiting response', description: 'Contacted with no scheduled follow-up' },
     { id: 'high_value', label: 'High value', description: 'Estimated value of $10k or more' },
   ];
+
+  useEffect(() => {
+    const loadSegments = async () => {
+      setIsSegmentsLoading(true);
+      try {
+        const data = await segmentService.getAll();
+        setSegments(data);
+        if (data.length && !activeSegmentId) {
+          setActiveSegmentId(data[0].id);
+        }
+      } catch (err) {
+        console.error('Error loading segments', err);
+      } finally {
+        setIsSegmentsLoading(false);
+      }
+    };
+
+    loadSegments();
+  }, []);
+
+  useEffect(() => {
+    const preview = async () => {
+      if (!activeSegmentId) return;
+      try {
+        const data = await segmentService.preview(activeSegmentId);
+        setSegmentPreview(data);
+      } catch (err) {
+        console.error('Error previewing segment', err);
+      }
+    };
+
+    preview();
+  }, [activeSegmentId]);
 
   useEffect(() => {
     if (tabParam && ['clients', 'leads', 'quotes'].includes(tabParam)) {
@@ -122,9 +163,22 @@ const CRM: React.FC = () => {
   }, [clientCategoryFilter, isLoading]);
 
   const filteredClients = useMemo(() => {
-    if (!searchTerm) return clients;
+    const base = clients.filter((client) => matchesAdvancedFilters({
+      zip: client.billingZip,
+      city: client.billingCity,
+      state: client.billingState,
+      tags: (client as any)?.tags?.map((t: any) => t.name) ?? [],
+      services: client.notes ? [client.notes] : [],
+      species: [],
+      status: client.status,
+      clientType: client.clientType,
+      lifetimeValue: client.lifetimeValue,
+      lastInteraction: client.updatedAt,
+    }));
+
+    if (!searchTerm) return base;
     const term = searchTerm.toLowerCase();
-    return clients.filter(
+    return base.filter(
       (client) =>
         client.companyName?.toLowerCase().includes(term) ||
         client.firstName?.toLowerCase().includes(term) ||
@@ -132,7 +186,7 @@ const CRM: React.FC = () => {
         client.primaryEmail?.toLowerCase().includes(term) ||
         client.primaryPhone?.toLowerCase().includes(term)
       );
-    }, [clients, searchTerm]);
+    }, [clients, searchTerm, zipFilter, serviceFilter, tagFilters, speciesFilter, activeSegment]);
 
   const isLeadStalled = (lead: Lead) => {
     const now = new Date();
@@ -173,27 +227,129 @@ const CRM: React.FC = () => {
     return leads.filter((lead) => leadQueueFilter(lead, activeLeadQueue));
   }, [leads, activeLeadQueue]);
 
+  const activeSegment = useMemo(() => segments.find((s) => s.id === activeSegmentId) || null, [segments, activeSegmentId]);
+
+  const toggleTagFilter = (tagName: string) => {
+    setTagFilters((prev) => prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]);
+  };
+
+  const evaluateSegmentCriteria = (segment: CustomerSegment | null, context: { zip?: string; city?: string; state?: string; tags?: string[]; services?: string[]; species?: string[]; status?: string; clientType?: string; lifetimeValue?: number; lastInteraction?: string; }) => {
+    if (!segment) return true;
+    return segment.criteria.every((criterion) => {
+      const value = criterion.value;
+      switch (criterion.field) {
+        case 'zip':
+          return context.zip?.startsWith(String(value)) ?? false;
+        case 'city':
+          return context.city?.toLowerCase().includes(String(value).toLowerCase()) ?? false;
+        case 'state':
+          return context.state?.toLowerCase() === String(value).toLowerCase();
+        case 'tag':
+          return (context.tags || []).some((tag) => Array.isArray(value) ? value.includes(tag) : tag === value);
+        case 'service':
+          return (context.services || []).some((service) => Array.isArray(value) ? value.includes(service) : service === value);
+        case 'species':
+          return (context.species || []).some((species) => Array.isArray(value) ? value.includes(species) : species === value);
+        case 'status':
+          return context.status ? context.status.toLowerCase() === String(value).toLowerCase() : false;
+        case 'clientType':
+          return context.clientType ? context.clientType === value : false;
+        case 'lifetimeValue':
+          if (typeof value === 'object' && value !== null) {
+            const min = (value as { min?: number }).min ?? -Infinity;
+            const max = (value as { max?: number }).max ?? Infinity;
+            return (context.lifetimeValue ?? 0) >= min && (context.lifetimeValue ?? 0) <= max;
+          }
+          return (context.lifetimeValue ?? 0) >= Number(value);
+        case 'lastInteraction':
+          if (!context.lastInteraction) return false;
+          const cutoff = new Date(String(value)).getTime();
+          return new Date(context.lastInteraction).getTime() >= cutoff;
+        default:
+          return true;
+      }
+    });
+  };
+
+  const matchesAdvancedFilters = (context: { zip?: string; city?: string; state?: string; tags?: string[]; services?: string[]; species?: string[]; status?: string; clientType?: string; lifetimeValue?: number; lastInteraction?: string; }) => {
+    const tagNames = context.tags || [];
+    const services = context.services || [];
+    const species = context.species || [];
+
+    if (zipFilter) {
+      const zipMatches = (context.zip && context.zip.startsWith(zipFilter)) || (context.city && context.city.toLowerCase().includes(zipFilter.toLowerCase())) || (context.state && context.state.toLowerCase().includes(zipFilter.toLowerCase()));
+      if (!zipMatches) return false;
+    }
+
+    if (speciesFilter) {
+      const speciesMatches = species.some((s) => s.toLowerCase().includes(speciesFilter.toLowerCase()));
+      if (!speciesMatches) return false;
+    }
+
+    if (serviceFilter !== 'any') {
+      const serviceMatches = services.some((s) => s.toLowerCase().includes(serviceFilter.replace('_', ' ')));
+      if (!serviceMatches) return false;
+    }
+
+    if (tagFilters.length > 0) {
+      const tagMatches = tagNames.some((tag) => tagFilters.includes(tag));
+      if (!tagMatches) return false;
+    }
+
+    if (!evaluateSegmentCriteria(activeSegment, context)) {
+      return false;
+    }
+
+    return true;
+  };
+
   const filteredLeads = useMemo(() => {
-    if (!searchTerm) return queueFilteredLeads;
+    const base = queueFilteredLeads.filter((lead) => matchesAdvancedFilters({
+      zip: lead.customerDetails?.zipCode,
+      city: lead.customerDetails?.city,
+      state: lead.customerDetails?.state,
+      tags: lead.tags?.map((t) => t.name) ?? [],
+      services: lead.description ? [lead.description] : [],
+      species: lead.description ? [lead.description] : [],
+      status: lead.status,
+      clientType: lead.client?.clientType,
+      lifetimeValue: lead.estimatedValue,
+      lastInteraction: lead.updatedAt,
+    }));
+
+    if (!searchTerm) return base;
     const term = searchTerm.toLowerCase();
-    return queueFilteredLeads.filter(
+    return base.filter(
       (lead) =>
         lead.customer?.name?.toLowerCase().includes(term) ||
         lead.source?.toLowerCase().includes(term) ||
         lead.status?.toLowerCase().includes(term)
     );
-  }, [queueFilteredLeads, searchTerm]);
+  }, [queueFilteredLeads, searchTerm, zipFilter, serviceFilter, tagFilters, speciesFilter, activeSegment]);
 
   const filteredQuotes = useMemo(() => {
-    if (!searchTerm) return quotes;
+    const base = quotes.filter((quote) => matchesAdvancedFilters({
+      zip: quote.customerDetails?.zipCode,
+      city: quote.customerDetails?.city,
+      state: quote.customerDetails?.state,
+      tags: quote.tags?.map((t) => t.name) ?? [],
+      services: quote.lineItems?.map((li) => li.description) ?? [],
+      species: quote.customerDetails?.addressLine1 ? [quote.customerDetails.addressLine1] : [],
+      status: quote.status,
+      clientType: quote.client?.clientType,
+      lifetimeValue: quote.totalAmount,
+      lastInteraction: quote.updatedAt,
+    }));
+
+    if (!searchTerm) return base;
     const term = searchTerm.toLowerCase();
-    return quotes.filter(
+    return base.filter(
       (quote) =>
         quote.quoteNumber?.toLowerCase().includes(term) ||
         quote.customerName?.toLowerCase().includes(term) ||
         quote.status?.toLowerCase().includes(term)
     );
-  }, [quotes, searchTerm]);
+  }, [quotes, searchTerm, zipFilter, serviceFilter, tagFilters, speciesFilter, activeSegment]);
 
   useEffect(() => {
     setSelectedLeadIds((prev) => prev.filter((id) => filteredLeads.some((lead) => lead.id === id)));
@@ -590,6 +746,137 @@ const CRM: React.FC = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="block w-full max-w-md rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 sm:text-sm"
         />
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-brand-gray-900">Segmentation Filters</h3>
+              <p className="text-xs text-brand-gray-600">Layer geographic, service, and tag criteria.</p>
+            </div>
+            {isSegmentsLoading && <SpinnerIcon className="h-5 w-5 text-brand-cyan-600" />}
+          </div>
+          <div className="mt-3 space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-brand-gray-700">Zip / City / State</label>
+              <input
+                type="text"
+                value={zipFilter}
+                onChange={(e) => setZipFilter(e.target.value)}
+                placeholder="e.g., 94110 or Seattle"
+                className="mt-1 w-full rounded-md border-brand-gray-300 text-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-medium text-brand-gray-700">Service history</label>
+                <select
+                  value={serviceFilter}
+                  onChange={(e) => setServiceFilter(e.target.value as any)}
+                  className="mt-1 w-full rounded-md border-brand-gray-300 text-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500"
+                >
+                  <option value="any">Any</option>
+                  <option value="removal">Removals</option>
+                  <option value="pruning">Pruning</option>
+                  <option value="plant_health">Plant health</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-brand-gray-700">Tree species</label>
+                <input
+                  type="text"
+                  value={speciesFilter}
+                  onChange={(e) => setSpeciesFilter(e.target.value)}
+                  placeholder="e.g., oak"
+                  className="mt-1 w-full rounded-md border-brand-gray-300 text-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500"
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-brand-gray-700 mb-2">Tags</p>
+              <div className="flex flex-wrap gap-2">
+                {['VIP', 'HOA', 'Commercial', 'High Value', 'Plant Health'].map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTagFilter(tag)}
+                    className={`px-3 py-1 text-xs rounded-full border ${tagFilters.includes(tag)
+                      ? 'bg-brand-cyan-50 border-brand-cyan-500 text-brand-cyan-700'
+                      : 'border-brand-gray-200 text-brand-gray-700 hover:border-brand-gray-300'
+                      }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-brand-gray-900">Saved Segments</h3>
+              <p className="text-xs text-brand-gray-600">Apply consistent audiences across CRM + marketing.</p>
+            </div>
+            <span className="text-xs text-brand-gray-500">{segments.length} total</span>
+          </div>
+          <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
+            {segments.map((segment) => (
+              <button
+                key={segment.id}
+                onClick={() => setActiveSegmentId(segment.id)}
+                className={`w-full text-left rounded-md border px-3 py-2 transition ${activeSegmentId === segment.id
+                  ? 'border-brand-cyan-500 bg-brand-cyan-50'
+                  : 'border-brand-gray-200 hover:border-brand-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between text-sm font-medium text-brand-gray-900">
+                  <span>{segment.name}</span>
+                  <span className="text-xs text-brand-gray-600">{segment.audienceCount} ppl</span>
+                </div>
+                {segment.description && <p className="text-xs text-brand-gray-600 mt-1 line-clamp-2">{segment.description}</p>}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {segment.criteria.slice(0, 3).map((criterion) => (
+                    <span key={criterion.id} className="text-[11px] bg-brand-gray-100 text-brand-gray-700 px-2 py-0.5 rounded-full">
+                      {criterion.label || `${criterion.field}: ${String(criterion.value)}`}
+                    </span>
+                  ))}
+                  {segment.criteria.length > 3 && (
+                    <span className="text-[11px] text-brand-gray-600">+{segment.criteria.length - 3} more</span>
+                  )}
+                </div>
+              </button>
+            ))}
+            {segments.length === 0 && (
+              <p className="text-xs text-brand-gray-600">No saved segments yet.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-brand-gray-200 rounded-lg p-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-brand-gray-900">Segment Snapshot</h3>
+          <p className="text-xs text-brand-gray-600">Preview who will be targeted before launching workflows.</p>
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-brand-gray-700">Audience size</span>
+              <span className="text-lg font-semibold text-brand-gray-900">{segmentPreview.audienceCount || '—'}</span>
+            </div>
+            <div>
+              <p className="text-xs text-brand-gray-700">Common tags</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(segmentPreview.sampleTags || ['High value', 'Pruning', 'Recurring']).map((tag) => (
+                  <span key={tag} className="text-[11px] bg-brand-gray-100 text-brand-gray-700 px-2 py-1 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-md bg-brand-gray-50 border border-brand-gray-200 p-3 text-xs text-brand-gray-700">
+              Keep filters lean: zip + tag + status yields high-signal audiences for automation and marketing.
+            </div>
+          </div>
+        </div>
       </div>
 
       {activeTab === 'clients' && (

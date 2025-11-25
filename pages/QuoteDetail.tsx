@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Quote, Client, Invoice } from '../types';
+import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats } from '../types';
 import { quoteService, clientService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
 import AssociationModal from '../components/AssociationModal';
 import StatusBadge from '../components/StatusBadge';
+import ProposalPreview from '../components/ProposalPreview';
+import PricingOptionsGrid from '../components/PricingOptionsGrid';
+import QuoteVersionTimeline from '../components/QuoteVersionTimeline';
+import { useToast } from '../components/ui/Toast';
 
 const QuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +24,58 @@ const QuoteDetail: React.FC = () => {
   const [showAssociationModal, setShowAssociationModal] = useState(false);
   const [pendingConversion, setPendingConversion] = useState<'job' | 'invoice' | null>(null);
   const [linkageMessages, setLinkageMessages] = useState<string[]>([]);
+  const [proposal, setProposal] = useState<QuoteProposalData | null>(null);
+  const [pricingOptions, setPricingOptions] = useState<QuotePricingOption[]>([]);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(undefined);
+  const [versions, setVersions] = useState<QuoteVersion[]>([]);
+  const [savingVersion, setSavingVersion] = useState(false);
+  const [aiStats, setAiStats] = useState<AiAccuracyStats | null>(null);
+  const [accuracyForm, setAccuracyForm] = useState({ actualPrice: '', notes: '', aiSuggestionsFollowed: false });
+  const [isOptionLoading, setIsOptionLoading] = useState(false);
+  const toast = useToast();
+
+  const loadProposalData = async (quoteId: string) => {
+    try {
+      const proposalData = await quoteService.getProposal(quoteId);
+      setProposal(proposalData);
+      if (proposalData.pricingOptions && proposalData.pricingOptions.length > 0) {
+        setSelectedOptionId(proposalData.pricingOptions.find((opt) => opt.isSelected)?.id);
+      }
+    } catch (err: any) {
+      console.error('Error loading proposal data', err);
+      toast?.error?.(err.message || 'Could not load proposal preview');
+    }
+  };
+
+  const loadPricingOptions = async (quoteId: string) => {
+    try {
+      const options = await quoteService.getPricingOptions(quoteId);
+      setPricingOptions(options);
+      setSelectedOptionId(options.find((opt) => opt.isSelected)?.id);
+    } catch (err: any) {
+      console.error('Error loading pricing options', err);
+      toast?.error?.(err.message || 'Could not load pricing options');
+    }
+  };
+
+  const loadVersionHistory = async (quoteId: string) => {
+    try {
+      const history = await quoteService.getVersionHistory(quoteId);
+      setVersions(history);
+    } catch (err: any) {
+      console.error('Error loading version history', err);
+      toast?.error?.(err.message || 'Could not load version history');
+    }
+  };
+
+  const loadAiAccuracy = async () => {
+    try {
+      const stats = await quoteService.getAiAccuracyStats('month');
+      setAiStats(stats);
+    } catch (err: any) {
+      console.error('Error loading accuracy stats', err);
+    }
+  };
 
   useEffect(() => {
     const fetchQuoteData = async () => {
@@ -31,7 +87,12 @@ const QuoteDetail: React.FC = () => {
       try {
         const quoteData = await quoteService.getById(id);
         setQuote(quoteData);
-        
+
+        loadProposalData(id);
+        loadPricingOptions(id);
+        loadVersionHistory(id);
+        loadAiAccuracy();
+
         if (quoteData.clientId) {
           try {
             const clientData = await clientService.getById(quoteData.clientId);
@@ -69,6 +130,72 @@ const QuoteDetail: React.FC = () => {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const handleRecommendOption = async (optionId: string) => {
+    if (!id) return;
+    setIsOptionLoading(true);
+    try {
+      const updated = await quoteService.recommendPricingOption(optionId);
+      setPricingOptions((prev) => prev.map((opt) => ({ ...opt, isRecommended: opt.id === updated.id })));
+      toast?.success?.('Option marked as featured');
+    } catch (err: any) {
+      console.error(err);
+      toast?.error?.(err.message || 'Could not update recommendation');
+    } finally {
+      setIsOptionLoading(false);
+    }
+  };
+
+  const handleSelectOption = async (optionId: string) => {
+    if (!id) return;
+    setIsOptionLoading(true);
+    try {
+      const result = await quoteService.selectPricingOption(id, optionId);
+      setPricingOptions(result.options);
+      setSelectedOptionId(result.selected.id);
+      toast?.success?.('Customer-ready option highlighted');
+    } catch (err: any) {
+      console.error(err);
+      toast?.error?.(err.message || 'Unable to select option');
+    } finally {
+      setIsOptionLoading(false);
+    }
+  };
+
+  const handleSaveVersion = async () => {
+    if (!id) return;
+    setSavingVersion(true);
+    try {
+      const version = await quoteService.createVersion(id, 'UI snapshot');
+      setVersions((prev) => [version, ...prev]);
+      toast?.success?.('Version snapshot saved');
+    } catch (err: any) {
+      console.error(err);
+      toast?.error?.(err.message || 'Unable to save version');
+    } finally {
+      setSavingVersion(false);
+    }
+  };
+
+  const handleSubmitAccuracy = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!id || !accuracyForm.actualPrice) {
+      toast?.error?.('Provide the final price used');
+      return;
+    }
+    try {
+      await quoteService.recordAccuracy(id, parseFloat(accuracyForm.actualPrice), {
+        notes: accuracyForm.notes,
+        ai_suggestions_followed: accuracyForm.aiSuggestionsFollowed,
+      });
+      toast?.success?.('Accuracy feedback captured');
+      loadAiAccuracy();
+      setAccuracyForm({ actualPrice: '', notes: '', aiSuggestionsFollowed: false });
+    } catch (err: any) {
+      console.error(err);
+      toast?.error?.(err.message || 'Unable to submit feedback');
+    }
   };
 
   const handleBack = () => {
@@ -333,45 +460,135 @@ const QuoteDetail: React.FC = () => {
           </div>
         </div>
       </div>
-          <div className="flex gap-2">
-            {quote.status === 'Sent' && (
-              <>
-                <button
-                  onClick={handleAccept}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={handleDecline}
-                  className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 font-medium text-sm"
-                >
-                  Decline
-                </button>
-              </>
-            )}
-            {quote.status === 'Accepted' && (
-              <button
-                onClick={handleConvertToJob}
-                className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 font-medium text-sm"
-              >
-                Convert to Job
-              </button>
-            )}
-            {quote.status !== 'Converted' && (
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 border border-brand-cyan-600 text-brand-cyan-600 rounded-md hover:bg-brand-cyan-50 font-medium text-sm"
-              >
-                Edit
-              </button>
-            )}
+      <div className="flex gap-2">
+        {quote.status === 'Sent' && (
+          <>
             <button
-              onClick={handleDelete}
+              onClick={handleAccept}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm"
+            >
+              Accept
+            </button>
+            <button
+              onClick={handleDecline}
               className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 font-medium text-sm"
             >
-              Delete
+              Decline
             </button>
+          </>
+        )}
+        {quote.status === 'Accepted' && (
+          <button
+            onClick={handleConvertToJob}
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 font-medium text-sm"
+          >
+            Convert to Job
+          </button>
+        )}
+        {quote.status !== 'Converted' && (
+          <button
+            onClick={handleEdit}
+            className="px-4 py-2 border border-brand-cyan-600 text-brand-cyan-600 rounded-md hover:bg-brand-cyan-50 font-medium text-sm"
+          >
+            Edit
+          </button>
+        )}
+        <button
+          onClick={handleDelete}
+          className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 font-medium text-sm"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2 space-y-4">
+          {proposal && <ProposalPreview proposal={proposal} />}
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-900">Good/Better/Best</p>
+                <p className="text-xs text-brand-gray-600">Let customers pick the right scope.</p>
+              </div>
+              <span className="text-xs text-brand-gray-500">Live</span>
+            </div>
+            <PricingOptionsGrid
+              options={pricingOptions}
+              onSelect={handleSelectOption}
+              onRecommend={handleRecommendOption}
+              isLoading={isOptionLoading}
+              selectedOptionId={selectedOptionId}
+            />
+          </div>
+
+          <QuoteVersionTimeline versions={versions} onSnapshot={handleSaveVersion} isSaving={savingVersion} />
+
+          <div className="bg-white border border-brand-gray-200 rounded-lg shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-brand-gray-900">AI Accuracy Loop</p>
+                <p className="text-xs text-brand-gray-600">Close the loop with actuals to tune estimates.</p>
+              </div>
+              {aiStats && (
+                <span className="text-xs px-2 py-1 rounded-full bg-brand-cyan-50 text-brand-cyan-700 border border-brand-cyan-100">
+                  Avg score {aiStats.summary.avg_accuracy_score.toFixed(1)}
+                </span>
+              )}
+            </div>
+
+            <form className="mt-3 space-y-3" onSubmit={handleSubmitAccuracy}>
+              <div>
+                <label className="text-xs font-semibold text-brand-gray-600 block">Final price used</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="mt-1 w-full rounded-md border border-brand-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-cyan-500"
+                  value={accuracyForm.actualPrice}
+                  onChange={(e) => setAccuracyForm((prev) => ({ ...prev, actualPrice: e.target.value }))}
+                  placeholder="Enter actual invoice amount"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-brand-gray-600 block">Notes</label>
+                <textarea
+                  className="mt-1 w-full rounded-md border border-brand-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-cyan-500"
+                  rows={2}
+                  value={accuracyForm.notes}
+                  onChange={(e) => setAccuracyForm((prev) => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Why did the price change?"
+                />
+              </div>
+              <label className="inline-flex items-center gap-2 text-sm text-brand-gray-700">
+                <input
+                  type="checkbox"
+                  checked={accuracyForm.aiSuggestionsFollowed}
+                  onChange={(e) => setAccuracyForm((prev) => ({ ...prev, aiSuggestionsFollowed: e.target.checked }))}
+                  className="h-4 w-4 text-brand-cyan-600 border-brand-gray-300 rounded"
+                />
+                Followed AI suggestions
+              </label>
+              <button
+                type="submit"
+                className="w-full px-3 py-2 rounded-md bg-brand-cyan-600 text-white text-sm font-semibold hover:bg-brand-cyan-700"
+              >
+                Send feedback
+              </button>
+              {aiStats && (
+                <div className="mt-2 text-xs text-brand-gray-600 flex items-center gap-2">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-brand-gray-100 text-brand-gray-700">
+                    Feedback rate {aiStats.summary.feedback_rate}%
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-amber-50 text-amber-800">
+                    Variance avg {aiStats.summary.avg_variance_percentage}%
+                  </span>
+                </div>
+              )}
+            </form>
           </div>
         </div>
       </div>

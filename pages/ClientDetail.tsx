@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Client, Property, Contact, Quote, Job } from '../types';
+import { Client, Property, Contact, Quote, Job, CustomerActivityEvent } from '../types';
 import { clientService, quoteService, jobService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
@@ -24,10 +24,13 @@ const ClientDetail: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [activity, setActivity] = useState<CustomerActivityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isActivityLoading, setIsActivityLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quoteStatusFilter, setQuoteStatusFilter] = useState<string>('all');
   const [jobStatusFilter, setJobStatusFilter] = useState<string>('all');
+  const [activityFilter, setActivityFilter] = useState<'all' | 'communications' | 'work' | 'billing'>('all');
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const [isPropertyEditorOpen, setIsPropertyEditorOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | undefined>(undefined);
@@ -37,29 +40,33 @@ const ClientDetail: React.FC = () => {
   useEffect(() => {
     const fetchClientData = async () => {
       if (!id) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+      setIsActivityLoading(true);
+
       try {
-        const [clientData, propertiesData, contactsData, allQuotes, allJobs] = await Promise.all([
+        const [clientData, propertiesData, contactsData, allQuotes, allJobs, activityLog] = await Promise.all([
           clientService.getById(id),
           clientService.getProperties(id),
           clientService.getContacts(id),
           quoteService.getAll(),
           jobService.getAll(),
+          clientService.getActivity(id),
         ]);
-        
+
         setClient(clientData);
         setProperties(propertiesData);
         setContacts(contactsData);
         setQuotes(allQuotes.filter(q => q.clientId === id));
         setJobs(allJobs.filter(j => j.clientId === id));
+        setActivity(activityLog);
       } catch (err: any) {
         console.error('Error fetching client data:', err);
         setError(err.message || 'Failed to load client data');
       } finally {
         setIsLoading(false);
+        setIsActivityLoading(false);
       }
     };
 
@@ -156,6 +163,55 @@ const ClientDetail: React.FC = () => {
     if (!type) return '';
     return type.replace('_', ' ');
   };
+
+  const formatActivityIcon = (type: CustomerActivityEvent['type']) => {
+    switch (type) {
+      case 'call':
+        return '📞';
+      case 'email':
+        return '✉️';
+      case 'sms':
+        return '💬';
+      case 'quote_sent':
+        return '📄';
+      case 'quote_accepted':
+        return '✅';
+      case 'job_scheduled':
+        return '📆';
+      case 'job_completed':
+        return '🪓';
+      case 'invoice_sent':
+        return '🧾';
+      case 'payment_received':
+        return '💵';
+      case 'site_visit':
+        return '📍';
+      case 'nurture_touch':
+        return '🤖';
+      case 'task':
+        return '✅';
+      default:
+        return '📝';
+    }
+  };
+
+  const filteredActivity = useMemo(() => {
+    const grouped = activity.sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
+    if (activityFilter === 'all') return grouped;
+
+    return grouped.filter((event) => {
+      if (activityFilter === 'communications') {
+        return ['call', 'email', 'sms'].includes(event.type);
+      }
+      if (activityFilter === 'work') {
+        return ['quote_sent', 'quote_accepted', 'job_scheduled', 'job_completed'].includes(event.type);
+      }
+      if (activityFilter === 'billing') {
+        return ['invoice_sent', 'payment_received'].includes(event.type);
+      }
+      return true;
+    });
+  }, [activity, activityFilter]);
 
   const handleBack = () => {
     navigate('/crm');
@@ -1017,14 +1073,98 @@ const ClientDetail: React.FC = () => {
       )}
 
       {activeTab === 'activity' && (
-        <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-12 text-center">
-          <svg className="h-16 w-16 text-brand-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-xl font-semibold text-brand-gray-900 mb-2">Activity Tracking Coming Soon</h3>
-          <p className="text-brand-gray-600">
-            Timeline of client activities, communications, and interactions will be displayed here.
-          </p>
+        <div className="bg-white rounded-lg shadow border border-brand-gray-200 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-brand-gray-900">Customer Timeline</h3>
+              <p className="text-sm text-brand-gray-600">Every touchpoint across sales, service, and billing.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {([
+                { id: 'all', label: 'All' },
+                { id: 'communications', label: 'Comms' },
+                { id: 'work', label: 'Work' },
+                { id: 'billing', label: 'Billing' },
+              ] as const).map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setActivityFilter(filter.id)}
+                  className={`px-3 py-1 text-sm rounded-full border transition ${activityFilter === filter.id
+                    ? 'bg-brand-cyan-50 border-brand-cyan-500 text-brand-cyan-700'
+                    : 'border-brand-gray-200 text-brand-gray-700 hover:border-brand-gray-300'
+                    }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isActivityLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="animate-pulse flex gap-3 items-start">
+                  <div className="h-10 w-10 bg-brand-gray-100 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-brand-gray-100 rounded w-1/3" />
+                    <div className="h-3 bg-brand-gray-100 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredActivity.length === 0 ? (
+            <div className="text-center py-8 text-brand-gray-600">No activity logged yet. Calls, emails, quotes, and jobs will appear here automatically.</div>
+          ) : (
+            <div className="space-y-6">
+              {filteredActivity.map((event) => (
+                <div key={event.id} className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="h-10 w-10 rounded-full bg-brand-cyan-50 text-brand-cyan-700 flex items-center justify-center text-lg">
+                      {formatActivityIcon(event.type)}
+                    </div>
+                    <div className="flex-1 w-px bg-brand-gray-100" />
+                  </div>
+                  <div className="flex-1 pb-6 border-b border-brand-gray-100 last:border-b-0 last:pb-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-brand-gray-500">{new Date(event.occurredAt).toLocaleString()}</p>
+                        <h4 className="text-base font-semibold text-brand-gray-900 mt-1">{event.title}</h4>
+                        {event.description && <p className="text-sm text-brand-gray-700 mt-1">{event.description}</p>}
+                        {event.context && <p className="text-sm text-brand-gray-600 mt-2">{event.context}</p>}
+                        {event.tags && event.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {event.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag.id}
+                                className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
+                                style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
+                              >
+                                {tag.name}
+                              </span>
+                            ))}
+                            {event.tags.length > 3 && (
+                              <span className="inline-flex items-center rounded-full bg-brand-gray-100 px-2 py-1 text-xs font-medium text-brand-gray-600">
+                                +{event.tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right space-y-2 min-w-[160px]">
+                        <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-brand-gray-100 text-brand-gray-800 capitalize">
+                          {event.type.replace('_', ' ')}
+                        </span>
+                        {event.channel && (
+                          <div className="text-xs text-brand-gray-600">Channel: {event.channel}</div>
+                        )}
+                        {event.actor && <div className="text-xs text-brand-gray-600">By {event.actor}</div>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
