@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance } from '../types';
+import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -113,6 +113,10 @@ export const clientService = {
     const response = await apiFetch<{ success: boolean; data: Contact[] }>(`clients/${clientId}/contacts`);
     return response.data;
   },
+  getActivity: async (clientId: string): Promise<CustomerActivityEvent[]> => {
+    const response = await apiFetch<{ success: boolean; data: CustomerActivityEvent[] }>(`clients/${clientId}/activity`);
+    return response.data ?? [];
+  },
 };
 export const propertyService = {
   ...createApiService<Property>('properties'),
@@ -120,6 +124,79 @@ export const propertyService = {
     apiFetch(`clients/${clientId}/properties`, { method: 'POST', body: JSON.stringify(data) }),
 };
 export const leadService = createApiService<Lead>('leads');
+export const segmentService = {
+  getAll: async (): Promise<CustomerSegment[]> => {
+    const response = await apiFetch<{ success: boolean; data: CustomerSegment[] }>('segments');
+    return response.data ?? [];
+  },
+  preview: async (segmentId: string): Promise<{ audienceCount: number; sampleTags?: string[] }> => {
+    const response = await apiFetch<{ success: boolean; data: { audienceCount: number; sampleTags?: string[] } }>(`segments/${segmentId}/preview`);
+    return response.data ?? { audienceCount: 0 };
+  },
+};
+
+export const marketingService = {
+  sendCampaign: async (payload: { segmentId: string; subject: string; body: string; scheduleAt?: string }): Promise<EmailCampaignSend> => {
+    const response = await apiFetch<{ success: boolean; data: EmailCampaignSend }>('marketing/campaigns/send', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return response.data;
+  },
+  getNurtureSequences: async (): Promise<NurtureSequence[]> => {
+    const response = await apiFetch<{ success: boolean; data: NurtureSequence[] }>('marketing/nurture-sequences');
+    return response.data ?? [];
+  },
+  updateNurtureStatus: async (sequenceId: string, status: NurtureSequence['status']): Promise<NurtureSequence> => {
+    const response = await apiFetch<{ success: boolean; data: NurtureSequence }>(`marketing/nurture-sequences/${sequenceId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    });
+    return response.data;
+  },
+  getWebLeadForms: async (): Promise<WebLeadFormConfig[]> => {
+    const response = await apiFetch<{ success: boolean; data: WebLeadFormConfig[] }>('marketing/web-lead-forms');
+    return response.data ?? [];
+  },
+  previewEmbed: async (formId: string): Promise<{ embedToken: string; scriptUrl: string }> => {
+    const response = await apiFetch<{ success: boolean; data: { embedToken: string; scriptUrl: string } }>(`marketing/web-lead-forms/${formId}/embed`);
+    return response.data;
+  }
+};
+
+export const integrationService = {
+  getConnections: async (): Promise<IntegrationConnection[]> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection[] }>('integrations');
+    return response.data ?? [];
+  },
+  connect: async (
+    provider: IntegrationProvider,
+    payload?: { environment?: 'sandbox' | 'production'; scopes?: string[] }
+  ): Promise<IntegrationConnection> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection }>(`integrations/${provider}/connect`, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {})
+    });
+    return response.data;
+  },
+  disconnect: async (provider: IntegrationProvider): Promise<void> => {
+    await apiFetch<void>(`integrations/${provider}`, { method: 'DELETE' });
+  },
+  refreshStatus: async (provider: IntegrationProvider): Promise<IntegrationConnection> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection }>(`integrations/${provider}`);
+    return response.data;
+  },
+  triggerSync: async (provider: IntegrationProvider): Promise<IntegrationConnection> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationConnection }>(`integrations/${provider}/sync`, { method: 'POST' });
+    return response.data;
+  },
+  sendTest: async (provider: IntegrationProvider): Promise<IntegrationTestResult> => {
+    const response = await apiFetch<{ success: boolean; data: IntegrationTestResult }>(`integrations/${provider}/test`, {
+      method: 'POST'
+    });
+    return response.data;
+  }
+};
 export const quoteService = {
   getAll: async (): Promise<Quote[]> => {
     const response = await apiFetch<{ success: boolean; data: Quote[]; pagination: any }>('quotes');
@@ -143,6 +220,61 @@ export const quoteService = {
       `quotes/${id}/convert-to-invoice`,
       { method: 'POST' }
     );
+    return response.data;
+  },
+  getProposal: async (quoteId: string): Promise<QuoteProposalData> => {
+    const response = await apiFetch<{ success: boolean; data: QuoteProposalData }>(`quotes/${quoteId}/proposal`);
+    return response.data;
+  },
+  getPricingOptions: async (quoteId: string): Promise<QuotePricingOption[]> => {
+    const response = await apiFetch<{ success: boolean; data: QuotePricingOption[] }>(`quotes/${quoteId}/pricing-options`);
+    return response.data ?? [];
+  },
+  recommendPricingOption: async (optionId: string): Promise<QuotePricingOption> => {
+    const response = await apiFetch<{ success: boolean; data: QuotePricingOption }>(
+      `quotes/pricing-options/${optionId}/recommend`,
+      { method: 'POST' }
+    );
+    return response.data;
+  },
+  selectPricingOption: async (quoteId: string, optionId: string): Promise<{ selected: QuotePricingOption; options: QuotePricingOption[] }> => {
+    const response = await apiFetch<{ success: boolean; data: { selected: QuotePricingOption; options: QuotePricingOption[] } }>(
+      `quotes/${quoteId}/select-option`,
+      { method: 'POST', body: JSON.stringify({ optionId }) }
+    );
+    return response.data;
+  },
+  getVersionHistory: async (quoteId: string): Promise<QuoteVersion[]> => {
+    const response = await apiFetch<{ success: boolean; data: QuoteVersion[] }>(`quotes/${quoteId}/versions`);
+    return response.data ?? [];
+  },
+  createVersion: async (quoteId: string, changesSummary?: string): Promise<QuoteVersion> => {
+    const response = await apiFetch<{ success: boolean; data: QuoteVersion }>(`quotes/${quoteId}/versions`, {
+      method: 'POST',
+      body: JSON.stringify({ changesSummary })
+    });
+    return response.data;
+  },
+  requestSignature: async (quoteId: string, payload: { signerName: string; signerEmail?: string; signerPhone?: string }): Promise<any> => {
+    const response = await apiFetch<{ success: boolean; data: any }>(`quotes/${quoteId}/request-signature`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return response.data;
+  },
+  recordAccuracy: async (quoteId: string, actualPrice: number, feedback?: { notes?: string; corrections?: string[]; ai_suggestions_followed?: boolean }) => {
+    const response = await apiFetch<{ success: boolean; data: any }>(`quotes/${quoteId}/accuracy-feedback`, {
+      method: 'POST',
+      body: JSON.stringify({ actualPrice, feedback })
+    });
+    return response.data;
+  },
+  getAiAccuracyStats: async (period: 'week' | 'month' | 'quarter' | 'year' = 'month'): Promise<AiAccuracyStats> => {
+    const response = await apiFetch<{ success: boolean; data: AiAccuracyStats }>(`analytics/ai-accuracy?period=${period}`);
+    return response.data;
+  },
+  getConversionAnalytics: async (): Promise<any> => {
+    const response = await apiFetch<{ success: boolean; data: any }>('analytics/conversions');
     return response.data;
   }
 };
@@ -397,6 +529,18 @@ export const operationsService = {
     });
     return response.data;
   },
+  getRoutePlan: async (params: { date: string; crewId: string }): Promise<RouteOptimizationResult | null> => {
+    const query = new URLSearchParams({ date: params.date, crew_id: params.crewId }).toString();
+    const response = await apiFetch<{ success: boolean; data: RouteOptimizationResult | null }>(`operations/route-plan?${query}`);
+    return response.data ?? null;
+  },
+  reorderRoutePlan: async (routePlanId: string, stops: { jobId: string; order: number }[]): Promise<{ message: string }> => {
+    const response = await apiFetch<{ success: boolean; message: string }>('operations/route-plan/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ routePlanId, stops })
+    });
+    return { message: response.message || 'Route reordered' };
+  },
   getAvailability: async (params: { startDate: string; endDate: string; crewId?: string }): Promise<CrewAvailabilitySummary[]> => {
     const queryParams = new URLSearchParams({
       start_date: params.startDate,
@@ -423,6 +567,50 @@ export const operationsService = {
     const response = await apiFetch<{ success: boolean; data: DispatchResult }>('operations/dispatch-messages', {
       method: 'POST',
       body: JSON.stringify(payload)
+    });
+    return response.data;
+  },
+  sendOnMyWay: async (payload: { jobId: string; crewId?: string; etaMinutes?: number; channel?: 'sms' | 'push' | 'email' }): Promise<{ message: string }> => {
+    const response = await apiFetch<{ success: boolean; message: string }>('operations/on-my-way', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return { message: response.message || 'Customer notified' };
+  }
+};
+
+export const aiService = {
+  getJobDurationPrediction: async (jobId: string): Promise<AiJobDurationPrediction> => {
+    const response = await apiFetch<{ success: boolean; data: AiJobDurationPrediction }>(`ai/jobs/${jobId}/duration`);
+    return response.data;
+  },
+  getScheduleSuggestions: async (params: { date: string; crewId?: string }): Promise<{
+    suggestions: AiSchedulingSuggestion[];
+    predictions: AiJobDurationPrediction[];
+  }> => {
+    const query = new URLSearchParams({ date: params.date });
+    if (params.crewId) query.append('crew_id', params.crewId);
+    const response = await apiFetch<{ success: boolean; data: { suggestions: AiSchedulingSuggestion[]; predictions: AiJobDurationPrediction[] } }>(
+      `ai/schedule-suggestions?${query.toString()}`
+    );
+    return response.data;
+  },
+  assessJobRisk: async (jobId: string): Promise<AiRiskAssessment> => {
+    const response = await apiFetch<{ success: boolean; data: AiRiskAssessment }>(`ai/jobs/${jobId}/risk`);
+    return response.data;
+  },
+  getQuoteRecommendations: async (quoteId: string): Promise<AiQuoteRecommendation> => {
+    const response = await apiFetch<{ success: boolean; data: AiQuoteRecommendation }>(`ai/quotes/${quoteId}/recommendations`);
+    return response.data;
+  },
+  getWorkflowRecommendations: async (): Promise<AiWorkflowRecommendation[]> => {
+    const response = await apiFetch<{ success: boolean; data: AiWorkflowRecommendation[] }>('ai/workflows/recommendations');
+    return response.data ?? [];
+  },
+  setAutomationAiMode: async (enabled: boolean): Promise<{ enabled: boolean; message?: string }> => {
+    const response = await apiFetch<{ success: boolean; data: { enabled: boolean; message?: string } }>('ai/workflows/ai-mode', {
+      method: 'POST',
+      body: JSON.stringify({ enabled })
     });
     return response.data;
   }

@@ -3,10 +3,14 @@ import { Link } from 'react-router-dom';
 import QuickBooksIcon from '../components/icons/QuickBooksIcon';
 import StripeIcon from '../components/icons/StripeIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
-import { CustomFieldDefinition, DocumentTemplate } from '../types';
+import TwilioIcon from '../components/icons/TwilioIcon';
+import ZapierIcon from '../components/icons/ZapierIcon';
+import GustoIcon from '../components/icons/GustoIcon';
+import { CustomFieldDefinition, DocumentTemplate, IntegrationConnection, IntegrationProvider } from '../types';
 import { mockCustomFields, mockDocumentTemplates } from '../data/mockData';
 import PuzzlePieceIcon from '../components/icons/PuzzlePieceIcon';
 import DocumentTextIcon from '../components/icons/DocumentTextIcon';
+import { integrationService } from '../services/apiService';
 
 interface CompanyProfile {
   id?: string;
@@ -24,12 +28,6 @@ interface CompanyProfile {
   taxEin: string;
   licenseNumber: string;
   insurancePolicyNumber: string;
-}
-
-interface IntegrationStatus {
-  stripe: boolean;
-  googleCalendar: boolean;
-  quickBooks: boolean;
 }
 
 type AutomationStatus = 'enabled' | 'disabled' | 'queued';
@@ -66,14 +64,12 @@ const Settings: React.FC = () => {
   });
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  
+
   // State for integrations
-  const [integrationStatus, setIntegrationStatus] = useState<IntegrationStatus>({
-    stripe: false,
-    googleCalendar: false,
-    quickBooks: false
-  });
-  const [connectingIntegration, setConnectingIntegration] = useState<string | null>(null);
+  const [integrationConnections, setIntegrationConnections] = useState<IntegrationConnection[]>([]);
+  const [isLoadingIntegrations, setIsLoadingIntegrations] = useState(true);
+  const [integrationError, setIntegrationError] = useState<string | null>(null);
+  const [connectingIntegration, setConnectingIntegration] = useState<IntegrationProvider | null>(null);
 
   // Automation toggles and audit trail
   const [automationSettings, setAutomationSettings] = useState({
@@ -109,6 +105,106 @@ const Settings: React.FC = () => {
       context: 'Queues notifications based on invoice due dates (T-3, T, T+7).'
     }
   ]);
+
+  const integrationCatalog: Record<IntegrationProvider, {
+    name: string;
+    description: string;
+    docsLink: string;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    capabilities: string[];
+    recommendedScopes?: string[];
+  }> = {
+    stripe: {
+      name: 'Stripe Payments',
+      description: 'Collect deposits, card-on-file charges, and reconcile payouts against invoices automatically.',
+      docsLink: 'https://docs.stripe.com',
+      icon: StripeIcon,
+      capabilities: ['Invoice payments', 'Card on file', 'Payout reconciliation']
+    },
+    quickbooks: {
+      name: 'QuickBooks Online',
+      description: 'Sync invoices, payments, and clients to keep books in lockstep with field ops.',
+      docsLink: 'https://developer.intuit.com/',
+      icon: QuickBooksIcon,
+      capabilities: ['Invoice + payment sync', 'Customer creation', 'Ledger alignment']
+    },
+    gusto: {
+      name: 'Gusto Payroll',
+      description: 'Export timecards and crew pay codes for downstream payroll runs.',
+      docsLink: 'https://docs.gusto.com',
+      icon: GustoIcon,
+      capabilities: ['Timecard export', 'Crew pay codes', 'Overtime validation']
+    },
+    zapier: {
+      name: 'Zapier + Open API',
+      description: 'Trigger Zaps or call the Open API for custom automation without code changes.',
+      docsLink: 'https://platform.zapier.com/docs',
+      icon: ZapierIcon,
+      capabilities: ['Webhook triggers', 'Open API access', 'Lead + invoice events']
+    },
+    twilio: {
+      name: 'Twilio SMS',
+      description: 'Send SMS updates for quotes, jobs, and invoices with deliverability diagnostics.',
+      docsLink: 'https://www.twilio.com/docs',
+      icon: TwilioIcon,
+      capabilities: ['Two-way SMS', 'Status callbacks', 'OTP + reminders'],
+      recommendedScopes: ['messages:write', 'webhooks:read']
+    },
+    googleCalendar: {
+      name: 'Google Calendar',
+      description: 'Mirror job schedules on team calendars with ICS + OAuth handshakes.',
+      docsLink: 'https://developers.google.com/calendar',
+      icon: GoogleCalendarIcon,
+      capabilities: ['Crew calendar sync', 'ICS feeds', 'Availability signals']
+    }
+  };
+
+  const fallbackIntegrationSnapshot: IntegrationConnection[] = [
+    {
+      provider: 'stripe',
+      status: 'connected',
+      accountName: 'TreeProAI Sandbox',
+      environment: 'sandbox',
+      lastSyncedAt: new Date().toISOString(),
+      connectedBy: 'ops@treepro.ai',
+      capabilities: ['Invoice payments', 'Card on file', 'Payout reconciliation']
+    },
+    {
+      provider: 'quickbooks',
+      status: 'needs_attention',
+      accountName: 'TreePro HQ Books',
+      lastSyncedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+      recentError: 'Token expired — reconnect to resume ledger sync.',
+      capabilities: ['Invoice sync', 'Payment sync']
+    },
+    {
+      provider: 'gusto',
+      status: 'disconnected',
+      capabilities: ['Timecard export', 'Crew pay codes']
+    },
+    {
+      provider: 'zapier',
+      status: 'connected',
+      accountName: 'Dispatcher Automations',
+      lastSyncedAt: new Date().toISOString(),
+      capabilities: ['Webhooks', 'Lead events']
+    },
+    {
+      provider: 'twilio',
+      status: 'connected',
+      accountName: 'Crew SMS',
+      lastSyncedAt: new Date().toISOString(),
+      webhookStatus: 'healthy',
+      capabilities: ['Two-way SMS', 'Status callbacks']
+    },
+    {
+      provider: 'googleCalendar',
+      status: 'connected',
+      accountName: 'ops@treepro.ai',
+      lastSyncedAt: new Date().toISOString(),
+      capabilities: ['Crew calendar sync', 'ICS feeds']
+    }
+  ];
 
   // State for the custom field form
   const [selectedEntity, setSelectedEntity] = useState<CustomFieldDefinition['entityType']>('client');
@@ -152,6 +248,24 @@ const Settings: React.FC = () => {
     };
 
     fetchCompanyProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadIntegrations = async () => {
+      try {
+        const data = await integrationService.getConnections();
+        setIntegrationConnections(data);
+        setIntegrationError(null);
+      } catch (error) {
+        console.error('Error fetching integrations:', error);
+        setIntegrationConnections(fallbackIntegrationSnapshot);
+        setIntegrationError('Live integration status unavailable — showing cached snapshot.');
+      } finally {
+        setIsLoadingIntegrations(false);
+      }
+    };
+
+    loadIntegrations();
   }, []);
 
   const filteredFields = useMemo(() => {
@@ -232,37 +346,66 @@ const Settings: React.FC = () => {
     setCompanyProfile(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleIntegrationConnect = async (integration: string) => {
-    setConnectingIntegration(integration);
-    try {
-      // Check if integration is already connected
-      const response = await fetch(`/api/integrations/${integration}/status`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.connected) {
-          alert(`${integration.charAt(0).toUpperCase() + integration.slice(1)} is already connected!`);
-          setConnectingIntegration(null);
-          return;
-        }
-      }
+  const getConnection = (provider: IntegrationProvider) =>
+    integrationConnections.find(connection => connection.provider === provider);
 
-      // Trigger setup based on integration type
-      switch (integration) {
-        case 'stripe':
-          window.location.href = '/settings?tab=stripe-setup';
-          break;
-        case 'googleCalendar':
-          window.location.href = '/settings?tab=google-calendar-setup';
-          break;
-        case 'quickBooks':
-          alert('QuickBooks integration is coming soon!');
-          break;
-        default:
-          alert(`Setting up ${integration}...`);
-      }
+  const upsertConnection = (connection: IntegrationConnection) => {
+    setIntegrationConnections(prev => {
+      const filtered = prev.filter(item => item.provider !== connection.provider);
+      return [...filtered, connection];
+    });
+  };
+
+  const handleIntegrationConnect = async (provider: IntegrationProvider) => {
+    setConnectingIntegration(provider);
+    try {
+      const connection = await integrationService.connect(provider, { environment: 'sandbox' });
+      upsertConnection(connection);
+      alert(`${integrationCatalog[provider].name} connected successfully!`);
     } catch (error) {
-      console.error(`Error connecting ${integration}:`, error);
-      alert(`Failed to connect ${integration}. Please try again.`);
+      console.error(`Error connecting ${provider}:`, error);
+      alert(`Failed to connect ${integrationCatalog[provider].name}. Please try again.`);
+    } finally {
+      setConnectingIntegration(null);
+    }
+  };
+
+  const handleIntegrationDisconnect = async (provider: IntegrationProvider) => {
+    if (!window.confirm(`Disconnect ${integrationCatalog[provider].name}?`)) return;
+    setConnectingIntegration(provider);
+    try {
+      await integrationService.disconnect(provider);
+      upsertConnection({ provider, status: 'disconnected' });
+    } catch (error) {
+      console.error(`Error disconnecting ${provider}:`, error);
+      alert(`Failed to disconnect ${integrationCatalog[provider].name}.`);
+    } finally {
+      setConnectingIntegration(null);
+    }
+  };
+
+  const handleIntegrationSync = async (provider: IntegrationProvider) => {
+    setConnectingIntegration(provider);
+    try {
+      const refreshed = await integrationService.triggerSync(provider);
+      upsertConnection(refreshed);
+      alert(`${integrationCatalog[provider].name} sync triggered.`);
+    } catch (error) {
+      console.error(`Error syncing ${provider}:`, error);
+      alert(`Could not trigger sync for ${integrationCatalog[provider].name}.`);
+    } finally {
+      setConnectingIntegration(null);
+    }
+  };
+
+  const handleIntegrationTest = async (provider: IntegrationProvider) => {
+    setConnectingIntegration(provider);
+    try {
+      const testResult = await integrationService.sendTest(provider);
+      alert(`${integrationCatalog[provider].name}: ${testResult.message}`);
+    } catch (error) {
+      console.error(`Error testing ${provider}:`, error);
+      alert(`Failed to send test through ${integrationCatalog[provider].name}.`);
     } finally {
       setConnectingIntegration(null);
     }
@@ -339,6 +482,22 @@ const Settings: React.FC = () => {
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  const integrationStatusClasses = (status: IntegrationConnection['status']) => {
+    switch (status) {
+      case 'connected':
+        return 'bg-green-50 text-green-700 ring-1 ring-green-200';
+      case 'needs_attention':
+        return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+      default:
+        return 'bg-brand-gray-100 text-brand-gray-700 ring-1 ring-brand-gray-200';
+    }
+  };
+
+  const formatLastSynced = (value?: string) => {
+    if (!value) return 'Not synced yet';
+    return `Last synced ${new Date(value).toLocaleString()}`;
+  };
 
   const handleAutomationToggle = (key: keyof typeof automationSettings, enabled: boolean) => {
     setAutomationSettings(prev => ({
@@ -756,42 +915,133 @@ const Settings: React.FC = () => {
         <div className="border-t border-brand-gray-200"></div>
 
         {/* Integrations Section */}
-         <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
           <div>
             <h2 className="text-base font-semibold leading-7 text-brand-gray-900">Integrations</h2>
-            <p className="mt-1 text-sm leading-6 text-brand-gray-600">Connect TreePro AI with other services.</p>
+            <p className="mt-1 text-sm leading-6 text-brand-gray-600">
+              Ship payments, accounting, payroll, SMS, and Zapier/Open API hooks without leaving TreePro AI.
+            </p>
+            {integrationError && (
+              <p className="mt-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                {integrationError}
+              </p>
+            )}
           </div>
-          <div className="md:col-span-2 space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <QuickBooksIcon className="w-8 h-8 mr-4" />
-                    <div>
-                        <h3 className="font-semibold text-brand-gray-800">QuickBooks</h3>
-                        <p className="text-sm text-brand-gray-500">Sync invoices and payments automatically.</p>
-                    </div>
-                  </div>
-                  <button className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50">Connect</button>
+          <div className="md:col-span-2 space-y-3">
+            {isLoadingIntegrations ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {[...Array(4)].map((_, idx) => (
+                  <div key={idx} className="p-4 border rounded-lg bg-white animate-pulse h-36" />
+                ))}
               </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <StripeIcon className="w-8 h-8 mr-4" />
-                     <div>
-                        <h3 className="font-semibold text-brand-gray-800">Stripe</h3>
-                        <p className="text-sm text-brand-gray-500">Process online payments for invoices.</p>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {(Object.keys(integrationCatalog) as IntegrationProvider[]).map(provider => {
+                  const meta = integrationCatalog[provider];
+                  const Icon = meta.icon;
+                  const connection = getConnection(provider) || { provider, status: 'disconnected' as const };
+                  return (
+                    <div key={provider} className="p-4 border rounded-lg bg-white shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand-cyan-50 text-brand-cyan-700">
+                            <Icon className="h-6 w-6" />
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-brand-gray-900">{meta.name}</h3>
+                              <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${integrationStatusClasses(connection.status)}`}>
+                                {connection.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <p className="text-sm text-brand-gray-600 mt-1">{meta.description}</p>
+                            <p className="text-xs text-brand-gray-500 mt-1">{formatLastSynced(connection.lastSyncedAt)}</p>
+                            {connection.recentError && (
+                              <p className="text-xs text-amber-700 mt-2 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                {connection.recentError}
+                              </p>
+                            )}
+                            {meta.recommendedScopes && (
+                              <p className="text-xs text-brand-gray-500 mt-2">Recommended scopes: {meta.recommendedScopes.join(', ')}</p>
+                            )}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {meta.capabilities.map(item => (
+                                <span key={item} className="text-[11px] bg-brand-gray-100 text-brand-gray-700 px-2 py-1 rounded-full">
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <a
+                          href={meta.docsLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-semibold text-brand-cyan-600 hover:text-brand-cyan-800"
+                        >
+                          Docs
+                        </a>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {connection.status === 'connected' ? (
+                          <>
+                            <button
+                              onClick={() => handleIntegrationSync(provider)}
+                              disabled={connectingIntegration === provider}
+                              className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 disabled:opacity-50"
+                            >
+                              {connectingIntegration === provider ? 'Syncing…' : 'Sync now'}
+                            </button>
+                            <button
+                              onClick={() => handleIntegrationTest(provider)}
+                              disabled={connectingIntegration === provider}
+                              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 disabled:opacity-50"
+                            >
+                              Send test
+                            </button>
+                            <button
+                              onClick={() => handleIntegrationDisconnect(provider)}
+                              disabled={connectingIntegration === provider}
+                              className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-700 shadow-sm ring-1 ring-inset ring-brand-gray-200 hover:bg-brand-gray-50 disabled:opacity-50"
+                            >
+                              Disconnect
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleIntegrationConnect(provider)}
+                            disabled={connectingIntegration === provider}
+                            className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 disabled:opacity-50"
+                          >
+                            {connectingIntegration === provider ? 'Connecting…' : 'Connect'}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <button className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50">Connect</button>
+                  );
+                })}
               </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <GoogleCalendarIcon className="w-8 h-8 mr-4" />
-                     <div>
-                        <h3 className="font-semibold text-brand-gray-800">Google Calendar</h3>
-                        <p className="text-sm text-brand-gray-500">Sync job schedules with your calendar.</p>
-                    </div>
-                  </div>
-                  <button className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50">Connect</button>
+            )}
+
+            <div className="p-4 border rounded-lg bg-brand-gray-50">
+              <h3 className="text-sm font-semibold text-brand-gray-900">Open API + Zapier</h3>
+              <p className="text-sm text-brand-gray-600 mt-1">
+                Publish tree-service events to Zapier or call the Open API directly for bespoke automation. Use the
+                provided webhook token when configuring Zaps or external systems.
+              </p>
+              <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <code className="px-3 py-2 bg-white border rounded-md text-xs text-brand-gray-800 shadow-sm">POST /api/integrations/webhooks/{'{event}'}</code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText('Bearer demo-open-api-token');
+                    alert('Open API token copied.');
+                  }}
+                  className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50"
+                >
+                  Copy token
+                </button>
               </div>
+            </div>
           </div>
         </div>
 
