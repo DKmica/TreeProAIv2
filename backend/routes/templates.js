@@ -3,7 +3,7 @@ const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const { handleError, notFoundError, badRequestError } = require('../utils/errors');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
-const { isAuthenticated } = require('../replitAuth');
+const { isAuthenticated } = require('../auth');
 
 const router = express.Router();
 
