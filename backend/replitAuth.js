@@ -179,10 +179,6 @@ async function setupAuth(app) {
 
   app.get('/api/login', (req, res, next) => {
     const domain = getActualDomain(req);
-    console.log('[Auth Login] Domain:', domain);
-    console.log('[Auth Login] X-Forwarded-Host:', req.get('x-forwarded-host'));
-    console.log('[Auth Login] Hostname:', req.hostname);
-    console.log('[Auth Login] Session ID:', req.sessionID);
     ensureStrategy(domain);
     passport.authenticate(`replitauth:${domain}`, {
       prompt: 'login consent',
@@ -192,34 +188,19 @@ async function setupAuth(app) {
 
   app.get('/api/callback', (req, res, next) => {
     const domain = getActualDomain(req);
-    console.log('[Auth Callback] Domain:', domain);
-    console.log('[Auth Callback] Query params:', req.query);
-    console.log('[Auth Callback] Session ID:', req.sessionID);
     ensureStrategy(domain);
     passport.authenticate(`replitauth:${domain}`, (err, user, info) => {
-      console.log('[Auth Callback] Error:', err);
-      console.log('[Auth Callback] User:', user ? 'exists' : 'null');
-      console.log('[Auth Callback] Info:', info);
-      if (err) {
-        console.error('[Auth Callback] Authentication error:', err);
-        return res.redirect('/api/login');
-      }
-      if (!user) {
-        console.error('[Auth Callback] No user returned');
+      if (err || !user) {
         return res.redirect('/api/login');
       }
       req.logIn(user, (err) => {
         if (err) {
-          console.error('[Auth Callback] Login error:', err);
           return res.redirect('/api/login');
         }
-        console.log('[Auth Callback] Login successful');
         req.session.save((saveErr) => {
           if (saveErr) {
-            console.error('[Auth Callback] Session save error:', saveErr);
             return res.redirect('/api/login');
           }
-          console.log('[Auth Callback] Session saved, redirecting to /');
           return res.redirect('/');
         });
       });
@@ -239,10 +220,6 @@ async function setupAuth(app) {
   });
 
   app.get('/api/auth/user', async (req, res) => {
-    console.log('[Auth User] Session ID:', req.sessionID);
-    console.log('[Auth User] isAuthenticated:', req.isAuthenticated());
-    console.log('[Auth User] User:', req.user ? 'exists' : 'null');
-    console.log('[Auth User] Cookies:', req.headers.cookie ? 'present' : 'missing');
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
