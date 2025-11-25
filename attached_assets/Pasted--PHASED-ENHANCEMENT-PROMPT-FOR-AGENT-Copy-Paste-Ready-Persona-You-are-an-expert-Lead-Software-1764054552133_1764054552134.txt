@@ -1,0 +1,247 @@
+✅ PHASED ENHANCEMENT PROMPT FOR AGENT (Copy & Paste Ready)
+
+Persona:
+You are an expert Lead Software Architect, Senior Full-Stack Engineer, and AI Systems Integrator, specializing in large-scale SaaS platforms, field-service management systems, and AI-powered automation.
+
+Project:
+Enhance TreeProAI — a full-stack tree-service business management platform — by applying UX/UI improvements, workflow automation, optimized scheduling, expanded CRM tools, enhanced customer communication, and key integrations.
+The tech stack includes Next.js, NestJS, PostgreSQL (Drizzle), Supabase, FastAPI AI microservices, Clerk auth, Gemini/OpenAI, Turborepo, and Docker.
+
+⚡ Your Task
+
+You will implement the following enhancements in structured phases, ensuring each phase is stable, tested, and production-ready before proceeding.
+
+Each phase must include:
+
+Architectural plan
+
+File changes
+
+Database schema updates
+
+API additions/updates
+
+UI/UX improvements
+
+AI integration points
+
+Code examples (complete files)
+
+Testing instructions
+
+Deployment notes
+
+🚀 PHASE 1 — UX/UI MODERNIZATION (Make it Feel Like Jobber++ but Better)
+
+Goals: Clean, intuitive, mobile-first UI with global search and high performance.
+
+Deliverables:
+
+Global search (clients, leads, jobs, invoices, tags, properties)
+
+Responsive layout overhaul (mobile-first)
+
+New sidebar navigation structure
+
+Unified form components (auto-formatting, validation, masked inputs)
+
+Loading skeletons, toasts, and user feedback patterns
+
+Frontend performance optimizations (code splitting, caching)
+
+⚡ PHASE 2 — AUTOMATION ENGINE + WORKFLOWS
+Build a rule-based automation system:
+
+Triggers:
+
+Quote sent
+
+Quote not responded to (3, 5, 7 days)
+
+Job completed
+
+Invoice overdue
+
+New lead created
+
+Crew clock-in / clock-out irregularities
+
+Actions:
+
+Send email
+
+Send SMS
+
+Assign task
+
+Create follow-up reminder
+
+Move lead to new stage
+
+Auto-generate draft invoice
+
+Auto-send customer satisfaction request
+
+Deliverables:
+
+Workflow builder UI
+
+Backend automation engine with CRON and event listeners
+
+Templates for common workflows
+
+Logging + debugging console for automation events
+
+🌎 PHASE 3 — SCHEDULING 2.0 + ROUTE OPTIMIZATION
+Enhancements:
+
+Map-based scheduling optimization
+
+Drag-and-drop route assignment
+
+Crew capacity and skill-based assignment rules
+
+Conflict resolution suggestions
+
+Google Maps routing API integration
+
+“On my way” crew button that notifies the customer
+
+Deliverables:
+
+Updated scheduler UI views
+
+Route optimization backend service
+
+Realtime dispatcher <> crew communication
+
+Job time prediction model using past job durations
+
+🧾 PHASE 4 — QUOTING & PROPOSAL SYSTEM UPGRADE
+Enhancements:
+
+Professional proposal generator:
+
+Cover pages
+
+Embedded images & tree diagrams
+
+Good/Better/Best options
+
+Custom disclaimers
+
+Customer e-signature
+
+Quote version history
+
+AI accuracy feedback loop
+
+Quote -> job conversion analysis dashboard
+
+🧠 PHASE 5 — CRM IMPROVEMENTS + MARKETING AUTOMATION
+Enhancements:
+
+Customer timeline (all interactions, quotes, jobs, invoices, calls)
+
+Advanced filtering + segmentation (ZIP, service history, tags, tree species)
+
+Email marketing module or Mailchimp/SendGrid integration
+
+Web-to-lead embeddable forms
+
+Automated nurture sequences (drip campaigns)
+
+🚚 PHASE 6 — CREW APP (OFFLINE FIRST)
+Deliverables:
+
+React Native or PWA mobile interface
+
+Offline sync (jobs, notes, photos, forms, clock-in/out)
+
+GPS-enhanced features
+
+One-tap navigation
+
+Safety checklists + JHA forms
+
+Photo documentation + markup tools
+
+💬 PHASE 7 — CUSTOMER PORTAL (CLIENT HUB)
+Features:
+
+View approved/pending quotes
+
+Approve quotes + e-sign
+
+Pay invoices online
+
+View job schedule
+
+Track crew ETA
+
+Request new work
+
+Upload images or videos for AI quoting
+
+🧩 PHASE 8 — INTEGRATIONS
+Implement:
+
+Stripe payments
+
+QuickBooks Online sync (invoices, payments, clients)
+
+Gusto payroll export
+
+Zapier connector + Open API
+
+SMS provider (Twilio)
+
+🧠 PHASE 9 — ADVANCED AI UPGRADES
+Add:
+
+AI-powered job duration prediction
+
+AI scheduling assistant (suggest best crew/time)
+
+AI risk assessment on job photos
+
+AI quote enhancement suggestions
+
+ProBot context awareness improvements
+
+“AI mode” auto-runs recommended workflows
+
+🔥 PHASE 10 — POLISH, OPTIMIZATION & DEPLOYMENT
+Deliverables:
+
+Full e2e testing suite
+
+CI/CD improvements
+
+Error tracking (Sentry)
+
+Performance profiling
+
+Database query optimization
+
+Code cleanup & removal of dead modules
+
+Product-ready V1.0 launch build
+
+📌 RULES FOR THE AGENT
+
+Work in phases. Do not skip ahead.
+
+Provide complete code, not snippets.
+
+Each phase must include a migration plan and testing instructions.
+
+If legacy code conflicts, refactor safely without breaking existing features.
+
+Maintain backward compatibility unless instructed otherwise.
+
+Document everything clearly so the system is maintainable long-term.
+
+🟢 BEGIN NOW
+
+Start with PHASE 1, produce a full plan + code implementation, then wait for user confirmation before moving to PHASE 2.
