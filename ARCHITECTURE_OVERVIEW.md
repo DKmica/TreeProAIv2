@@ -34,7 +34,7 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 - **Session Management:** express-session with PostgreSQL store (connect-pg-simple)
 
 ### Database
-- **System:** PostgreSQL 14+ (via Neon/Replit managed database)
+- **System:** PostgreSQL 14+ (self-hosted or managed provider such as Neon)
 - **Driver:** node-postgres (`pg`)
 - **Connection:** Connection pooling (max 10 connections)
 - **Features:**
@@ -52,11 +52,11 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 - **RAG Service:** Custom implementation for semantic search
 
 ### Authentication
-- **Provider:** Replit Auth (OpenID Connect)
-- **Libraries:** `openid-client` v6.8.1, `passport` v0.7.0
-- **Session Store:** PostgreSQL (via `connect-pg-simple`)
-- **Offline Mode:** Mock user for development
-- **Session TTL:** 7 days
+- **Provider:** Token-based API authentication (shared `AUTH_TOKEN` header)
+- **Libraries:** Express middleware
+- **Session Store:** None required; stateless API key validation
+- **Offline Mode:** Disabled when `AUTH_TOKEN` is unset for local development
+- **Session TTL:** Controlled externally by key rotation
 
 ### Testing Infrastructure
 - **Unit Tests:** Vitest 4.0.10 + Testing Library
@@ -631,14 +631,13 @@ Text-to-speech response: "I've created a quote for John Smith"
 
 ### Required Environment Variables
 
-**Backend (.env or Replit Secrets):**
+**Backend (.env):**
 - `DATABASE_URL` - PostgreSQL connection string
-- `VITE_GEMINI_API_KEY` - Google Gemini API key
-- `VITE_GOOGLE_MAPS_KEY` - Google Maps API key
-- `SESSION_SECRET` - Session encryption key
-- `ISSUER_URL` - Replit OIDC issuer (default: https://replit.com/oidc)
-- `REPL_ID` - Replit project ID (auto-set in Replit)
+- `GEMINI_API_KEY` - Google Gemini API key
+- `GOOGLE_MAPS_API_KEY` - Google Maps API key
+- `AUTH_TOKEN` - Shared API key for stateless authentication (optional)
 - `PORT` - Backend port (default: 3001)
+- `HOST` - Network interface (default: 0.0.0.0)
 - `NODE_ENV` - Environment (development | production)
 
 **Frontend (injected via Vite):**
@@ -679,7 +678,7 @@ Text-to-speech response: "I've created a quote for John Smith"
    - **Impact:** HIGH - Blocks real revenue collection
 
 4. **Limited Role-Based Access Control**
-   - Authentication works (Replit Auth)
+   - Authentication is a single shared API token
    - No role differentiation (all users are "owners")
    - Sensitive data (SSN, payroll) exposed to all authenticated users
    - **Impact:** MEDIUM - Security/privacy concern for multi-user deployments
@@ -787,10 +786,8 @@ Text-to-speech response: "I've created a quote for John Smith"
 ## Security Posture
 
 ### ✅ Implemented Security Features
-- HTTPS enforced (Replit environment)
-- Session-based auth with PostgreSQL store
-- HttpOnly cookies
-- Password-less auth (Replit OIDC)
+- TLS recommended at the load balancer or reverse proxy
+- API-key-based auth for protected endpoints
 - Environment variables for secrets
 - Parameterized SQL queries (prevents SQL injection)
 - UUID primary keys (prevents enumeration)
@@ -816,19 +813,19 @@ Text-to-speech response: "I've created a quote for John Smith"
 
 ## Deployment Architecture
 
-### Current Setup (Replit)
-- **Frontend:** Static build served from Vite dev server (port 5000)
-- **Backend:** Express server (port 3001)
-- **Database:** Replit-managed PostgreSQL (Neon)
-- **Domain:** Replit subdomain (*.replit.app)
+### Current Setup
+- **Frontend:** Static build served by Express from `backend/public`
+- **Backend:** Express server (port 3001 by default)
+- **Database:** PostgreSQL (self-hosted or managed)
+- **Domain:** Any custom domain fronted by TLS termination (e.g., Nginx/Cloudflare)
 
 ### Production Recommendations
-- Build frontend: `npm run build`
-- Serve static files from Express in production
-- Use process manager (PM2) for backend
-- Enable PostgreSQL SSL
-- Set up CDN for static assets
-- Configure custom domain
+- Build frontend: `pnpm run build` and copy assets into `backend/public`
+- Serve behind a reverse proxy with HTTPS enforced
+- Use a process manager (PM2/systemd) for the backend
+- Enable PostgreSQL SSL where supported
+- Set up CDN for static assets if serving large media files
+- Configure a custom domain and route `/api` to the backend
 
 ---
 
@@ -874,14 +871,14 @@ Text-to-speech response: "I've created a quote for John Smith"
    - API key required: `VITE_GOOGLE_MAPS_KEY`
    - Async loading optimization implemented
 
-3. **Replit Auth (OpenID Connect)**
-   - Authentication provider
-   - Auto-configured in Replit environment
-   - Offline mode for development
+3. **Authentication (API Token)**
+   - Shared `AUTH_TOKEN` supplied via environment variable
+   - Send as `Bearer <token>` or `x-api-key` header
+   - Offline/local mode when token is unset
 
 4. **Stripe** (Phase 1 - Payment Processing) ✅ **IMPLEMENTED**
-   - Production-ready payment processing via Replit connector
-   - Sandbox environment for development/testing
+   - Uses standard Stripe API keys from environment variables
+   - Sandbox/testing supported with test keys
    - Webhook-driven invoice status updates
    - See detailed implementation in **Stripe Payment Processing** section below
 
@@ -908,7 +905,7 @@ Text-to-speech response: "I've created a quote for John Smith"
 
 **Status:** ✅ **Production-Ready** | **Completed:** November 2025
 
-TreePro AI implements a comprehensive Stripe payment integration that enables customers to pay invoices online through a secure checkout flow. The system uses Replit's Stripe connector for credential management and operates in sandbox mode for development/testing with production-ready architecture.
+TreePro AI implements a comprehensive Stripe payment integration that enables customers to pay invoices online through a secure checkout flow. The system reads Stripe credentials from environment variables and operates in sandbox mode for development/testing with production-ready architecture.
 
 ### Overview
 
@@ -921,24 +918,15 @@ The payment system provides:
 - **Payment Tracking**: Full audit trail via `payment_records` table
 
 **Environment:**
-- **Development:** Stripe sandbox (test mode) via Replit connector
-- **Production:** Production Stripe keys (when connector configured for production)
+- **Development:** Stripe sandbox (test mode) using test keys
+- **Production:** Production Stripe keys supplied via environment variables
 - **API Version:** `2025-08-27.basil`
 
 ### Backend Components
 
 #### 1. `stripeClient.js` - Credential Management
 
-Handles secure retrieval of Stripe credentials from Replit's connector API:
-
-```javascript
-// Key features:
-- Automatic environment detection (development vs production)
-- Fetches credentials from Replit connector hostname
-- Returns: publishableKey, secretKey, webhookSecretKey
-- Uses REPL_IDENTITY or WEB_REPL_RENEWAL for authentication
-- Supports both repl (development) and depl (deployment) contexts
-```
+Loads Stripe credentials directly from environment variables (`STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) with no platform-specific dependencies.
 
 **Functions:**
 - `getUncachableStripeClient()` - Returns fresh Stripe SDK instance
@@ -1330,45 +1318,9 @@ IS 'Stripe customer ID for payment processing';
 - Supports customer portal sessions
 - Indexed for fast lookups
 
-#### Stripe Schema (via `stripe-replit-sync`)
+#### Stripe Schema
 
-**Package:** `stripe-replit-sync`
-
-Automatically creates `stripe` schema with tables mirroring Stripe data:
-
-```
-stripe.customers
-stripe.checkout_sessions
-stripe.payment_intents
-stripe.invoices (Stripe invoices, not TreePro invoices)
-stripe.subscriptions
-... (30+ tables)
-```
-
-**Features:**
-- **Backfill Sync**: Initial sync of all Stripe data on first run
-- **Webhook Sync**: Automatic updates as Stripe events occur
-- **Query Performance**: Local database queries instead of Stripe API calls
-- **Schema Isolation**: Separate `stripe` schema prevents conflicts with app tables
-
-**Initialization:**
-```javascript
-const { runMigrations, StripeSync } = require('stripe-replit-sync');
-
-// Run migrations to create stripe schema
-await runMigrations({ 
-  databaseUrl: process.env.DATABASE_URL,
-  schema: 'stripe'
-});
-
-// Sync Stripe data
-const stripeSync = new StripeSync({
-  poolConfig: { connectionString: databaseUrl },
-  stripeSecretKey: cachedStripeSecretKey,
-  stripeWebhookSecret: cachedWebhookSecret
-});
-await stripeSync.syncBackfill();
-```
+Stripe data is accessed directly through the Stripe API. The application stores only the identifiers it needs (`stripe_customer_id` on clients and invoice payment metadata) and relies on webhooks to keep invoice payment state in sync. No platform-specific schema synchronization is required.
 
 ### Known Limitations & Future Enhancements
 
@@ -1470,7 +1422,7 @@ await stripeSync.syncBackfill();
    - [ ] Duplicate webhook handling (send same webhook twice)
 
 **Production Checklist:**
-- [ ] Replit Stripe connector configured for production environment
+- [ ] Production Stripe keys configured via environment variables
 - [ ] Production Stripe keys tested
 - [ ] Webhook endpoint publicly accessible
 - [ ] Webhook secret matches production
@@ -1487,7 +1439,7 @@ await stripeSync.syncBackfill();
 
 1. **Prerequisites:**
    - Node.js 18+ installed
-   - PostgreSQL 14+ (or use Replit database)
+   - PostgreSQL 14+ (self-hosted or managed)
    - Google Gemini API key
    - Google Maps API key
 
@@ -1498,10 +1450,10 @@ await stripeSync.syncBackfill();
 
 3. **Environment Setup:**
    - Copy `.env.example` to `.env`
-   - Set `DATABASE_URL` (or use Replit database)
-   - Set `VITE_GEMINI_API_KEY`
-   - Set `VITE_GOOGLE_MAPS_KEY`
-   - Set `SESSION_SECRET` (random string)
+   - Set `DATABASE_URL`
+   - Set `GEMINI_API_KEY`
+   - Set `GOOGLE_MAPS_API_KEY`
+   - Set `AUTH_TOKEN` if API protection is required
 
 4. **Database Setup:**
    ```bash
@@ -1531,7 +1483,7 @@ await stripeSync.syncBackfill();
 ├── backend/
 │   ├── server.js           # Main Express server (9829 lines)
 │   ├── db.js               # PostgreSQL connection
-│   ├── replitAuth.js       # Authentication setup
+│   ├── auth.js            # Authentication setup
 │   ├── init.sql            # Database schema
 │   ├── migrations/         # Schema migrations
 │   └── services/           # Business logic services

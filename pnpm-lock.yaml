@@ -86,9 +86,6 @@ importers:
       stripe:
         specifier: ^20.0.0
         version: 20.0.0(@types/node@22.18.12)
-      stripe-replit-sync:
-        specifier: ^0.0.8
-        version: 0.0.8(stripe@20.0.0(@types/node@22.18.12))
       supertest:
         specifier: ^7.1.4
         version: 7.1.4
@@ -1921,11 +1918,6 @@ packages:
   strip-indent@3.0.0:
     resolution: {integrity: sha512-laJTa3Jb+VQpaC6DseHhF7dXVqHTfJPCRDaEbid/drOhgitgYku/letMUqOXFoWV0zIIUbjpdH2t+tYj4bQMRQ==}
     engines: {node: '>=8'}
-
-  stripe-replit-sync@0.0.8:
-    resolution: {integrity: sha512-27Y5TrHLPCdqllVk2EZzSu8Atl/PvpXi72KC/XFWnOJ6iubzzWEac8NmpyWkvUx2wCE6mCeTkTl6AniSDAh8xg==}
-    peerDependencies:
-      stripe: '> 11'
 
   stripe@20.0.0:
     resolution: {integrity: sha512-EaZeWpbJOCcDytdjKSwdrL5BxzbDGNueiCfHjHXlPdBQvLqoxl6AAivC35SPzTmVXJb5duXQlXFGS45H0+e6Gg==}
@@ -3966,18 +3958,6 @@ snapshots:
   strip-indent@3.0.0:
     dependencies:
       min-indent: 1.0.1
-
-  stripe-replit-sync@0.0.8(stripe@20.0.0(@types/node@22.18.12)):
-    dependencies:
-      pg: 8.16.3
-      pg-node-migrations: 0.0.8
-      stripe: 20.0.0(@types/node@22.18.12)
-      ws: 8.18.3
-      yesql: 7.0.0
-    transitivePeerDependencies:
-      - bufferutil
-      - pg-native
-      - utf-8-validate
 
   stripe@20.0.0(@types/node@22.18.12):
     dependencies:

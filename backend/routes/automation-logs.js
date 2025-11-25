@@ -2,7 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { handleError, notFoundError } = require('../utils/errors');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
-const { isAuthenticated } = require('../replitAuth');
+const { isAuthenticated } = require('../auth');
 
 const router = express.Router();
 

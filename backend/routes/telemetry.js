@@ -1,7 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-const { isAuthenticated } = require('../replitAuth');
+const { isAuthenticated } = require('../auth');
 
 const router = express.Router();
 
