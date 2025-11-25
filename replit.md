@@ -8,6 +8,24 @@ TreePro AI is a comprehensive business management platform for tree service comp
 ## User Preferences
 I prefer that the AI assistant prioritizes clear and concise explanations. When proposing code changes, please provide a high-level overview of the approach first and ask for confirmation before implementing detailed modifications. I value iterative development, so small, reviewable changes are preferred over large, monolithic updates. For any significant architectural decisions or third-party integrations, please consult me beforehand. I prefer to use the latest stable versions of frameworks and libraries unless there's a compelling reason otherwise.
 
+## Recent Changes
+
+### Backend Refactoring (November 2025)
+Successfully migrated 4 major domains from monolithic `server.js` into modular Router-Controller-Service architecture:
+- **Extracted Domains**: Clients, Properties, Contacts, Tags
+- **Code Reduction**: Reduced server.js from 10,277 lines to 9,795 lines (482 lines extracted)
+- **New Files**: Created 30 modular files following industry-standard separation of concerns
+- **Architecture Pattern**: Routes (request handling) → Controllers (orchestration) → Services (business logic)
+- **Shared Utilities**: Centralized error handling, data formatters, and normalization helpers
+- **Migration Strategy**: Using `USE_MODULAR_ROUTES` environment flag for gradual migration
+- **Status**: All refactored endpoints tested and running successfully
+
+### Modular Structure
+- **Routes** (`backend/routes/`): RESTful endpoint definitions with Express Router
+- **Controllers** (`backend/controllers/`): Request/response handling and input validation
+- **Services** (`backend/services/`): Database operations and business logic
+- **Utils** (`backend/utils/`): Shared helpers (errors.js, formatters.js, helpers.js, constants.js)
+
 ## System Architecture
 
 ### UI/UX Decisions

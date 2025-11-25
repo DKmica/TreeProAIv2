@@ -97,6 +97,10 @@ localPort = 44743
 externalPort = 8008
 
 [[ports]]
+localPort = 45209
+externalPort = 8081
+
+[[ports]]
 localPort = 46015
 externalPort = 3000
 
@@ -104,3 +108,6 @@ externalPort = 3000
 deploymentTarget = "autoscale"
 run = ["node", "backend/server.js"]
 build = ["pnpm", "run", "build:production"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-8fb6b9ef-fd35-44d1-999c-913002f16677"

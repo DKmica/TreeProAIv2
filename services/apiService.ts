@@ -1,4 +1,5 @@
 import { Customer, Lead, Quote, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance } from '../types';
+import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -47,6 +48,37 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
     
     throw error;
   }
+}
+
+export function buildPaginatedUrl(endpoint: string, params?: PaginationParams): string {
+  if (!params) return endpoint;
+  
+  const searchParams = new URLSearchParams();
+  
+  if (params.page !== undefined) {
+    searchParams.set('page', params.page.toString());
+  }
+  if (params.pageSize !== undefined) {
+    searchParams.set('pageSize', params.pageSize.toString());
+  }
+  if (params.search !== undefined && params.search.trim() !== '') {
+    searchParams.set('search', params.search.trim());
+  }
+  
+  const queryString = searchParams.toString();
+  return queryString ? `${endpoint}?${queryString}` : endpoint;
+}
+
+export async function fetchPaginated<T>(
+  endpoint: string,
+  params?: PaginationParams
+): Promise<PaginatedResponse<T>> {
+  const url = buildPaginatedUrl(endpoint, params);
+  const response = await apiFetch<{ success: boolean; data: T[]; pagination: PaginatedResponse<T>['pagination'] }>(url);
+  return {
+    data: response.data ?? [],
+    pagination: response.pagination,
+  };
 }
 
 // Generic CRUD operations
