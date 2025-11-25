@@ -1,11 +1,10 @@
 const express = require('express');
-const { getDb } = require('../db.js');
+const db = require('../db.js');
 
 const router = express.Router();
 
 router.get('/badge-counts', async (req, res) => {
   try {
-    const db = await getDb();
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);

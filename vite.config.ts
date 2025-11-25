@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => {
             target: 'http://localhost:3001',
             changeOrigin: false,
             secure: false,
+            cookieDomainRewrite: '',
             headers: {
               'X-Forwarded-Host': process.env.REPLIT_DEV_DOMAIN || '',
               'X-Forwarded-Proto': 'https'

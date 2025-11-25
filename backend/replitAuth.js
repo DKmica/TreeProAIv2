@@ -49,8 +49,9 @@ function getSession() {
     proxy: true,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || process.env.REPLIT_DEV_DOMAIN !== undefined,
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'none',
+      path: '/',
       maxAge: sessionTtl,
     },
   });
@@ -212,8 +213,15 @@ async function setupAuth(app) {
           console.error('[Auth Callback] Login error:', err);
           return res.redirect('/api/login');
         }
-        console.log('[Auth Callback] Login successful, redirecting to /');
-        return res.redirect('/');
+        console.log('[Auth Callback] Login successful');
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error('[Auth Callback] Session save error:', saveErr);
+            return res.redirect('/api/login');
+          }
+          console.log('[Auth Callback] Session saved, redirecting to /');
+          return res.redirect('/');
+        });
       });
     })(req, res, next);
   });
@@ -231,6 +239,10 @@ async function setupAuth(app) {
   });
 
   app.get('/api/auth/user', async (req, res) => {
+    console.log('[Auth User] Session ID:', req.sessionID);
+    console.log('[Auth User] isAuthenticated:', req.isAuthenticated());
+    console.log('[Auth User] User:', req.user ? 'exists' : 'null');
+    console.log('[Auth User] Cookies:', req.headers.cookie ? 'present' : 'missing');
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
