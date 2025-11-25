@@ -1,53 +1,16 @@
 const Stripe = require('stripe');
 
-let connectionSettings = null;
-
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY
-    ? 'repl ' + process.env.REPL_IDENTITY
-    : process.env.WEB_REPL_RENEWAL
-      ? 'depl ' + process.env.WEB_REPL_RENEWAL
-      : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
-  }
-
-  const connectorName = 'stripe';
-
-  const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
-  const targetEnvironment = isProduction ? 'production' : 'development';
-
-  const url = new URL(`https://${hostname}/api/v2/connection`);
-  url.searchParams.set('include_secrets', 'true');
-  url.searchParams.set('connector_names', connectorName);
-  url.searchParams.set('environment', targetEnvironment);
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      'Accept': 'application/json',
-      'X_REPLIT_TOKEN': xReplitToken
-    }
-  });
-
-  const data = await response.json();
-  
-  connectionSettings = data.items?.[0];
-
-  if (!connectionSettings || (!connectionSettings.settings.publishable || !connectionSettings.settings.secret || !connectionSettings.settings.webhook_secret)) {
-    throw new Error(`Stripe ${targetEnvironment} connection not found`);
-  }
-
-  return {
-    publishableKey: connectionSettings.settings.publishable,
-    secretKey: connectionSettings.settings.secret,
-    webhookSecretKey: connectionSettings.settings.webhook_secret,
-  };
+function getRequiredEnv(name) {
+  const value = process.env[name];
+  return value && value.trim() ? value.trim() : null;
 }
 
 async function getUncachableStripeClient() {
-  const { secretKey } = await getCredentials();
+  const secretKey = getRequiredEnv('STRIPE_SECRET_KEY');
+
+  if (!secretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not configured.');
+  }
 
   return new Stripe(secretKey, {
     apiVersion: '2025-08-27.basil',
@@ -55,18 +18,15 @@ async function getUncachableStripeClient() {
 }
 
 async function getStripePublishableKey() {
-  const { publishableKey } = await getCredentials();
-  return publishableKey;
+  return getRequiredEnv('STRIPE_PUBLISHABLE_KEY');
 }
 
 async function getStripeSecretKey() {
-  const { secretKey } = await getCredentials();
-  return secretKey;
+  return getRequiredEnv('STRIPE_SECRET_KEY');
 }
 
 async function getStripeWebhookSecret() {
-  const { webhookSecretKey } = await getCredentials();
-  return webhookSecretKey;
+  return getRequiredEnv('STRIPE_WEBHOOK_SECRET');
 }
 
 module.exports = {

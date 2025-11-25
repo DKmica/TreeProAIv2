@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, AiQuoteRecommendation } from '../types';
-import { quoteService, clientService, jobService, aiService } from '../services/apiService';
-import { Quote, Client, Invoice, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats } from '../types';
-import { quoteService, clientService, jobService } from '../services/apiService';
+import {
+  Quote,
+  Client,
+  Invoice,
+  QuotePricingOption,
+  QuoteProposalData,
+  QuoteVersion,
+  AiAccuracyStats,
+  AiQuoteRecommendation,
+} from '../types';
+import { quoteService, clientService, aiService, getApiErrorMessage } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import QuoteIcon from '../components/icons/QuoteIcon';
@@ -100,31 +107,19 @@ const QuoteDetail: React.FC = () => {
   useEffect(() => {
     const fetchQuoteData = async () => {
       if (!id) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
-        try {
-          const quoteData = await quoteService.getById(id);
-          setQuote(quoteData);
 
-          loadProposalData(id);
-          loadPricingOptions(id);
-          loadVersionHistory(id);
-          loadAiAccuracy();
-          loadAiRecommendation(id);
-
-          if (quoteData.clientId) {
-            try {
-              const clientData = await clientService.getById(quoteData.clientId);
       try {
         const quoteData = await quoteService.getById(id);
         setQuote(quoteData);
 
-        loadProposalData(id);
-        loadPricingOptions(id);
-        loadVersionHistory(id);
-        loadAiAccuracy();
+        await loadProposalData(id);
+        await loadPricingOptions(id);
+        await loadVersionHistory(id);
+        await loadAiAccuracy();
+        await loadAiRecommendation(id);
 
         if (quoteData.clientId) {
           try {

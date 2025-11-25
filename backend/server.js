@@ -4,7 +4,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const express = require('express');
 const db = require('./db');
 const { v4: uuidv4 } = require('uuid');
-const { setupAuth, isAuthenticated, getUser } = require('./replitAuth');
+const { setupAuth, isAuthenticated, getUser } = require('./auth');
 const { applyStandardMiddleware } = require('./config/express');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const ragService = require('./services/ragService');
@@ -38,39 +38,20 @@ let cachedWebhookSecret = null;
 let stripeInitialized = false;
 
 async function initStripe() {
-  const databaseUrl = process.env.DATABASE_URL;
-  
-  if (!databaseUrl) {
-    console.warn('⚠️ DATABASE_URL not found. Stripe integration will be disabled.');
-    return false;
-  }
-
   try {
-    console.log('🔄 Initializing Stripe schema...');
-    const { runMigrations, StripeSync } = require('stripe-replit-sync');
-    
-    await runMigrations({ 
-      databaseUrl,
-      schema: 'stripe'
-    });
-    console.log('✅ Stripe schema ready');
-
     console.log('🔄 Fetching and caching Stripe credentials...');
     cachedStripeSecretKey = await getStripeSecretKey();
     cachedWebhookSecret = await getStripeWebhookSecret();
-    console.log('✅ Stripe credentials cached');
 
-    console.log('🔄 Syncing Stripe data...');
-    const stripeSync = new StripeSync({
-      poolConfig: {
-        connectionString: databaseUrl,
-        max: 10,
-      },
-      stripeSecretKey: cachedStripeSecretKey,
-      stripeWebhookSecret: cachedWebhookSecret,
-    });
-    await stripeSync.syncBackfill();
-    console.log('✅ Stripe data synced');
+    if (!cachedStripeSecretKey || !cachedWebhookSecret) {
+      console.warn('⚠️ Stripe keys are not fully configured. Payment features will be disabled.');
+      cachedStripeSecretKey = null;
+      cachedWebhookSecret = null;
+      stripeInitialized = false;
+      return false;
+    }
+
+    console.log('✅ Stripe credentials cached');
     stripeInitialized = true;
     return true;
   } catch (error) {
@@ -118,32 +99,6 @@ app.post(
       if (!cachedWebhookSecret || !cachedStripeSecretKey) {
         console.error('❌ CRITICAL: Webhook secret not initialized. Rejecting webhook.');
         return res.status(503).json({ error: 'Webhook secret not initialized' });
-      }
-
-      const { StripeSync } = require('stripe-replit-sync');
-      
-      const stripeSync = new StripeSync({
-        poolConfig: {
-          connectionString: process.env.DATABASE_URL,
-          max: 2,
-        },
-        stripeSecretKey: cachedStripeSecretKey,
-        stripeWebhookSecret: cachedWebhookSecret,
-      });
-      
-      // Process webhook with stripe-replit-sync (for syncing Stripe data)
-      try {
-        await stripeSync.processWebhook(req.body, sig, undefined);
-      } catch (syncError) {
-        // stripe-replit-sync throws "Unhandled webhook event" for event types it doesn't sync
-        // This is NOT an error - just means the event isn't one we sync to the database
-        if (syncError.message && syncError.message.includes('Unhandled webhook event')) {
-          console.log(`ℹ️ Stripe event not synced (unhandled by stripe-replit-sync): ${syncError.message}`);
-          // Continue processing - we may still want to handle the event for our business logic
-        } else {
-          // Real sync error - rethrow to be handled by outer catch block
-          throw syncError;
-        }
       }
 
       const stripe = require('stripe')(cachedStripeSecretKey);

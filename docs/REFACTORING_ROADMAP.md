@@ -165,7 +165,7 @@ test('Complete quote-to-job workflow', async ({ page }) => {
 
 #### 4. CI/CD Integration (1-2 hours)
 
-**Setup GitHub Actions** (or Replit's CI):
+**Setup GitHub Actions**:
 
 ```yaml
 # .github/workflows/test.yml
@@ -236,7 +236,7 @@ jobs:
    - Configure for CI
 
 6. **Configure CI/CD** (1-2 hours)
-   - Setup GitHub Actions or Replit CI
+   - Setup GitHub Actions
    - Configure test database
    - Add status badges to README
 

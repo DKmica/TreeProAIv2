@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { handleError, notFoundError, badRequestError } = require('../utils/errors');
-const { isAuthenticated } = require('../replitAuth');
+const { isAuthenticated } = require('../auth');
 const scheduling = require('../services/scheduling');
 
 const router = express.Router();

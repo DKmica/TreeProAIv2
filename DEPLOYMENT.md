@@ -1,136 +1,68 @@
 # TreePro AI - Deployment Guide
 
-## Production Deployment Configuration
+This guide describes how to run TreePro AI outside of Replit using standard infrastructure. The application ships as a Vite-powered React frontend and an Express API that can be hosted on any server with Node.js and PostgreSQL available.
 
-TreePro AI is configured for deployment on Replit's autoscale infrastructure.
+## Prerequisites
+- Node.js 20+
+- PostgreSQL 14+
+- pnpm (recommended) or npm
+- Stripe account and webhook signing secret (optional for payments)
 
-### Deployment Settings
+## Environment Variables
+Configure the following variables for your target environment:
 
-**Deployment Target:** `autoscale`  
-**Build Command:** `pnpm run build:production`  
-**Run Command:** `node backend/server.js`
+| Name | Purpose |
+| ---- | ------- |
+| `HOST` | Interface for the API server (default: `0.0.0.0`). |
+| `PORT` | Port for the API server (default: `3001`). |
+| `DATABASE_URL` | PostgreSQL connection string. |
+| `GEMINI_API_KEY` | Google Gemini API key for AI features. |
+| `GOOGLE_MAPS_API_KEY` | Google Maps API key for geocoding and map features. |
+| `AUTH_TOKEN` | Shared secret for API authentication (send as `Bearer` token or `x-api-key`). Leave unset to disable auth in non-production environments. |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (optional). |
+| `STRIPE_SECRET_KEY` | Stripe secret key (optional). |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (optional). |
 
-### Build Process
-
-The production build follows these steps:
-
-1. **Install Dependencies**
+## Build and Bundle
+1. Install dependencies:
    ```bash
    pnpm install
    cd backend && pnpm install
    ```
-
-2. **Build Frontend**
+2. Build the frontend:
    ```bash
    pnpm run build
    ```
-   - Compiles React/TypeScript with Vite
-   - Outputs to `dist/` directory
-   - Includes code splitting and minification
-
-3. **Copy to Backend**
+3. Copy the production assets into the backend so Express can serve them:
    ```bash
    mkdir -p backend/public
    cp -r dist/* backend/public/
    ```
-   - Creates `backend/public/` directory
-   - Copies all built files from `dist/`
 
-### Server Configuration
-
-The backend server (`backend/server.js`) is configured to:
-
-1. **Serve API Routes** - All `/api/*` routes handled by Express
-2. **Serve Static Files** - Frontend assets from `backend/public/`
-3. **SPA Fallback** - All non-API routes serve `index.html` for client-side routing
-
-```javascript
-// Static file serving
-app.use(express.static(path.join(__dirname, 'public')));
-
-// SPA fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-```
-
-### Database Initialization
-
-For fresh deployments, the database is initialized from `backend/init.sql`:
-
+## Database Initialization
+Bootstrap a new PostgreSQL database with the consolidated schema:
 ```bash
-psql $DATABASE_URL -f backend/init.sql
+psql "$DATABASE_URL" -f backend/init.sql
 ```
 
-This creates all 38 required tables with proper foreign key relationships.
+## Running the Server
+Start the API (and static asset host) with:
+```bash
+node backend/server.js
+```
+The server will listen on `HOST:PORT` and serve both `/api/*` routes and the compiled frontend from `backend/public/`.
 
-### Environment Variables
+## Deployment Checklist
+- [ ] Database reachable at `DATABASE_URL`
+- [ ] Environment variables configured for the target environment
+- [ ] Frontend built and copied into `backend/public`
+- [ ] Stripe keys and webhook secret set (if payments are enabled)
+- [ ] Health check (`/api/health`) returns `200`
 
-Required environment variables:
-- `DATABASE_URL` - PostgreSQL connection string (automatically provided by Replit)
-- `GEMINI_API_KEY` - Google Gemini API key for AI features
-- `GOOGLE_MAPS_API_KEY` - Google Maps API key for location features
+## Troubleshooting
+- **Static assets not loading:** ensure the build artifacts are present in `backend/public` and that the server has read access.
+- **Authentication failures:** confirm `AUTH_TOKEN` is set consistently on the server and in client requests.
+- **Stripe webhook errors:** verify `STRIPE_WEBHOOK_SECRET` matches the value in your Stripe dashboard and that the route `/api/stripe/webhook` is reachable from Stripe.
 
-Optional (Stripe integration):
-- `STRIPE_SECRET_KEY` - Automatically managed by Replit Stripe connector
-- `STRIPE_WEBHOOK_SECRET` - Automatically managed by Replit Stripe connector
-
-### Development vs Production
-
-| Environment | Frontend | Backend | Database |
-|------------|----------|---------|----------|
-| **Development** | Vite dev server (port 5000) | Express API (port 3001) | PostgreSQL (development) |
-| **Production** | Served by Express from `backend/public/` | Express (port from env) | PostgreSQL (production) |
-
-### Deployment Checklist
-
-Before deploying:
-
-- [ ] All tests passing (`npm run test`)
-- [ ] Database schema up to date (`backend/init.sql`)
-- [ ] Environment variables configured
-- [ ] Build script tested locally (`pnpm run build:production`)
-- [ ] No console errors in frontend
-- [ ] API endpoints verified
-- [ ] Stripe webhook configured (if using payments)
-
-### Troubleshooting
-
-**Build fails with "directory does not exist"**
-- Fixed: `backend/public/` directory is created during build
-- Directory tracked in git via `.gitkeep` file
-
-**Frontend not loading in production**
-- Check: `backend/public/` contains built files
-- Check: Express static serving configured
-- Check: SPA fallback route configured
-
-**Database errors on deployment**
-- Ensure `backend/init.sql` is up to date
-- Check all foreign key references are valid
-- Verify PostgreSQL version compatibility (14+)
-
-### Monitoring
-
-After deployment:
-1. Check server logs for startup errors
-2. Verify `/api/health` endpoint responds
-3. Test frontend loads at root URL
-4. Verify database connection
-5. Test critical user flows
-
-### Scaling
-
-The autoscale deployment automatically:
-- Scales up during high traffic
-- Scales down during low traffic
-- Maintains zero downtime during deployments
-- Handles SSL/TLS certificates automatically
-
-### Support
-
-For deployment issues:
-1. Check server logs in Replit console
-2. Verify environment variables are set
-3. Test build script locally first
-4. Review this deployment guide
+## Monitoring
+After deployment, monitor server logs for startup errors, verify database connectivity, and test core flows (login, lead creation, quote generation, payment webhook) in the deployed environment.

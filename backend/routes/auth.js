@@ -1,5 +1,5 @@
 const express = require('express');
-const { isAuthenticated, getUser } = require('../replitAuth');
+const { isAuthenticated, getUser } = require('../auth');
 
 const router = express.Router();
 

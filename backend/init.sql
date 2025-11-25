@@ -16,7 +16,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- SECTION 1: AUTHENTICATION & SESSION MANAGEMENT
 -- ============================================================================
 
--- Sessions table for Replit Auth (REQUIRED)
+-- Sessions table for optional session-based auth
 CREATE TABLE IF NOT EXISTS sessions (
     sid VARCHAR PRIMARY KEY,
     sess JSONB NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE INDEX IF NOT EXISTS IDX_session_expire ON sessions(expire);
 
--- Users table for Replit Auth
+-- Users table for token-authenticated user profile storage
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
     email VARCHAR UNIQUE,

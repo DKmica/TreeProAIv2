@@ -135,12 +135,8 @@ test.describe('Feature Name', () => {
 
 ## Authentication Handling
 
-TreePro AI uses Replit Auth. The tests handle authentication by:
-
-1. Checking if redirected to `/login`
-2. Clicking the "Sign In" button if on login page
-3. Waiting for redirect to dashboard or main app
-4. Verifying authenticated state by checking for header/sidebar
+TreePro AI now uses a shared API token (`AUTH_TOKEN`). Tests should attach the token to all requests by setting
+either the `Authorization: Bearer <token>` or `x-api-key` header when creating API clients or Playwright contexts.
 
 ## Troubleshooting
 
