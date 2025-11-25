@@ -6,6 +6,10 @@ const clientsRouter = require('./clients');
 const propertiesRouter = require('./properties');
 const contactsRouter = require('./contacts');
 const tagsRouter = require('./tags');
+const jobsRouter = require('./jobs');
+const invoicesRouter = require('./invoices');
+const employeesRouter = require('./employees');
+const equipmentRouter = require('./equipment');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -18,6 +22,10 @@ function buildApiRouter() {
   router.use(propertiesRouter);
   router.use(contactsRouter);
   router.use(tagsRouter);
+  router.use(jobsRouter);
+  router.use(invoicesRouter);
+  router.use(employeesRouter);
+  router.use(equipmentRouter);
   return router;
 }
 
