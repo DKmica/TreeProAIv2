@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Activity, 
   ArrowLeft, 
-  Search, 
-  Filter, 
+  Search,
+  Filter,
   RefreshCw,
   CheckCircle,
   XCircle,
   Clock,
   AlertCircle,
   ChevronDown,
-  ChevronUp,
   BarChart3,
   Timer,
   TrendingUp,
   Zap
 } from 'lucide-react';
-import { 
+import {
   automationLogService, 
   workflowService,
   AutomationLog, 
@@ -26,6 +25,8 @@ import {
   TRIGGER_TYPES,
   ACTION_TYPES
 } from '../services/workflowService';
+import { useToast } from '../components/ui/Toast';
+import AutomationLogDrawer from '../components/AutomationLogDrawer';
 
 const AutomationLogs: React.FC = () => {
   const [logs, setLogs] = useState<AutomationLog[]>([]);
@@ -42,9 +43,12 @@ const AutomationLogs: React.FC = () => {
     end_date: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const seenLogIds = useRef<Set<string>>(new Set());
+  const hasHydratedLogs = useRef(false);
+  const toast = useToast();
   const pageSize = 20;
 
   useEffect(() => {
@@ -55,6 +59,14 @@ const AutomationLogs: React.FC = () => {
     loadLogs();
     loadStats();
   }, [page, filters]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleRefresh();
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, [filters, page]);
 
   const loadWorkflows = async () => {
     try {
@@ -79,6 +91,22 @@ const AutomationLogs: React.FC = () => {
       setLogs(response.data);
       setTotalPages(response.pagination.totalPages);
       setError(null);
+
+      response.data.forEach((log) => {
+        if (!seenLogIds.current.has(log.id)) {
+          seenLogIds.current.add(log.id);
+          if (hasHydratedLogs.current) {
+            const summary = `${log.workflow_name || 'Workflow'} • ${getTriggerLabel(log.trigger_type)}${log.action_type ? ` → ${getActionLabel(log.action_type)}` : ''}`;
+            if (log.status === 'failed') {
+              toast.error('Automation run failed', summary);
+            } else if (log.status === 'completed') {
+              toast.success('Automation run completed', summary);
+            }
+          }
+        }
+      });
+
+      hasHydratedLogs.current = true;
     } catch (err: any) {
       setError(err.message || 'Failed to load automation logs');
     } finally {
@@ -417,61 +445,14 @@ const AutomationLogs: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
-                          onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
-                          className="text-brand-gray-400 hover:text-brand-gray-600"
+                          onClick={() => setSelectedExecutionId(log.execution_id)}
+                          className="inline-flex items-center gap-1 text-brand-cyan-600 hover:text-brand-cyan-700 text-sm font-medium"
                         >
-                          {expandedLog === log.id ? (
-                            <ChevronUp className="w-5 h-5" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5" />
-                          )}
+                          View details
+                          <ChevronDown className="w-4 h-4" />
                         </button>
                       </td>
                     </tr>
-                    {expandedLog === log.id && (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-4 bg-brand-gray-50">
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="font-medium text-brand-gray-700 mb-1">Execution ID</p>
-                              <p className="text-brand-gray-600 font-mono text-xs">{log.execution_id}</p>
-                            </div>
-                            {log.triggered_by_entity_type && (
-                              <div>
-                                <p className="font-medium text-brand-gray-700 mb-1">Entity</p>
-                                <p className="text-brand-gray-600">
-                                  {log.triggered_by_entity_type}: {log.triggered_by_entity_id}
-                                </p>
-                              </div>
-                            )}
-                            {log.error_message && (
-                              <div className="col-span-2">
-                                <p className="font-medium text-red-700 mb-1">Error Message</p>
-                                <p className="text-red-600 bg-red-50 p-2 rounded font-mono text-xs">
-                                  {log.error_message}
-                                </p>
-                              </div>
-                            )}
-                            {log.input_data && Object.keys(log.input_data).length > 0 && (
-                              <div className="col-span-2">
-                                <p className="font-medium text-brand-gray-700 mb-1">Input Data</p>
-                                <pre className="text-brand-gray-600 bg-brand-gray-100 p-2 rounded text-xs overflow-auto max-h-32">
-                                  {JSON.stringify(log.input_data, null, 2)}
-                                </pre>
-                              </div>
-                            )}
-                            {log.output_data && Object.keys(log.output_data).length > 0 && (
-                              <div className="col-span-2">
-                                <p className="font-medium text-brand-gray-700 mb-1">Output Data</p>
-                                <pre className="text-brand-gray-600 bg-brand-gray-100 p-2 rounded text-xs overflow-auto max-h-32">
-                                  {JSON.stringify(log.output_data, null, 2)}
-                                </pre>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    )}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -503,6 +484,11 @@ const AutomationLogs: React.FC = () => {
           </>
         )}
       </div>
+
+      <AutomationLogDrawer
+        executionId={selectedExecutionId}
+        onClose={() => setSelectedExecutionId(null)}
+      />
     </div>
   );
 };
