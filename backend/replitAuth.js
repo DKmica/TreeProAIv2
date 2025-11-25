@@ -189,6 +189,29 @@ async function setupAuth(app) {
       );
     });
   });
+
+  app.get('/api/auth/user', async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    
+    try {
+      const claims = req.user.claims;
+      if (!claims) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
+      const user = await getUser(claims.sub);
+      if (!user) {
+        return res.status(401).json({ message: 'User not found' });
+      }
+      
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
 }
 
 const isAuthenticated = async (req, res, next) => {
