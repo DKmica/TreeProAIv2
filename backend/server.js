@@ -2071,8 +2071,16 @@ apiRouter.put('/company-profile', async (req, res) => {
     }
     
     const data = transformToDb(req.body, 'company_profile');
-    const columns = Object.keys(data);
-    const values = Object.values(data);
+    
+    const allowedColumns = [
+      'company_name', 'legal_name', 'phone_number', 'email', 'address', 
+      'city', 'state', 'zip_code', 'website', 'logo_url', 'tagline', 
+      'business_hours', 'license_number', 'insurance_policy_number', 
+      'tax_ein', 'about', 'services', 'updated_at'
+    ];
+    
+    const columns = Object.keys(data).filter(col => allowedColumns.includes(col));
+    const values = columns.map(col => data[col]);
     const setString = columns.map((col, i) => `${col} = $${i + 2}`).join(', ');
     
     const queryText = `UPDATE company_profile SET ${setString}, updated_at = NOW() WHERE id = $1 RETURNING *`;
