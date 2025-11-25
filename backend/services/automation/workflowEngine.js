@@ -1,39 +1,15 @@
 const db = require('../../db');
 const { v4: uuidv4 } = require('uuid');
+const emailService = require('./emailService');
+const smsService = require('./smsService');
 
 const ACTION_HANDLERS = {
   send_email: async (config, context) => {
-    const { template_id, subject, body, to } = config;
-    const recipient = to || context.entityData?.email || context.entityData?.customer_email;
-    
-    console.log(`[Action:send_email] Would send email to: ${recipient}`);
-    console.log(`  Subject: ${subject || 'From template'}`);
-    console.log(`  Template ID: ${template_id || 'N/A'}`);
-    
-    return {
-      success: true,
-      action: 'send_email',
-      recipient,
-      templateId: template_id,
-      note: 'Email sending stub - integrate with email service'
-    };
+    return await emailService.sendEmail(config, context);
   },
 
   send_sms: async (config, context) => {
-    const { template_id, message, to } = config;
-    const recipient = to || context.entityData?.phone || context.entityData?.customer_phone;
-    
-    console.log(`[Action:send_sms] Would send SMS to: ${recipient}`);
-    console.log(`  Message: ${message || 'From template'}`);
-    console.log(`  Template ID: ${template_id || 'N/A'}`);
-    
-    return {
-      success: true,
-      action: 'send_sms',
-      recipient,
-      templateId: template_id,
-      note: 'SMS sending stub - integrate with SMS service'
-    };
+    return await smsService.sendSms(config, context);
   },
 
   create_task: async (config, context) => {

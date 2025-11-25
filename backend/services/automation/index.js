@@ -1,9 +1,14 @@
 const eventEmitter = require('./eventEmitter');
 const cronScheduler = require('./cronScheduler');
 const workflowEngine = require('./workflowEngine');
+const emailService = require('./emailService');
+const smsService = require('./smsService');
 
 const initializeAutomationEngine = () => {
   console.log('[AutomationEngine] Initializing automation engine...');
+
+  emailService.initializeSendGrid();
+  smsService.initializeTwilio();
 
   cronScheduler.start(workflowEngine);
 
@@ -24,7 +29,9 @@ const initializeAutomationEngine = () => {
   return {
     eventEmitter: eventEmitter.businessEventEmitter,
     cronScheduler,
-    workflowEngine
+    workflowEngine,
+    emailService,
+    smsService
   };
 };
 
@@ -52,5 +59,10 @@ module.exports = {
   executeWorkflow: workflowEngine.executeWorkflow,
   executeWorkflowsForEvent: workflowEngine.executeWorkflowsForEvent,
   getWorkflowsByTriggerType: workflowEngine.getWorkflowsByTriggerType,
-  ACTION_HANDLERS: workflowEngine.ACTION_HANDLERS
+  ACTION_HANDLERS: workflowEngine.ACTION_HANDLERS,
+  
+  sendEmail: emailService.sendEmail,
+  sendSms: smsService.sendSms,
+  emailService,
+  smsService
 };
