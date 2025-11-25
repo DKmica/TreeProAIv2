@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist, AiRiskAssessment } from '../../types';
+import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
 import ClockIcon from '../../components/icons/ClockIcon';

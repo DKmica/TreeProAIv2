@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Client, CustomerUpload, Job } from '../../types';
 import { useClientsQuery, useQuotesQuery, useJobsQuery, useInvoicesQuery } from '../../hooks/useDataQueries';
@@ -351,6 +352,7 @@ const ClientHub: React.FC = () => {
               Download PDF
             </button>
           </div>
+          <p className="text-xs text-brand-gray-500">Review, approve, or chat with us about any proposal.</p>
         </div>
         <div className="divide-y divide-brand-gray-50">
           {clientQuotes.map(quote => (

@@ -42,11 +42,13 @@ This document records current progress against the phased enhancement plan and c
    - Crew layout now wraps an offline sync provider with connectivity badges and manual sync controls.
    - Crew dashboard surfaces offline state, pending sync counts, and reassurance that route, clock, and note data persists on-device.
    - Job detail adds offline-capable notes, safety checklist logging, queued job updates (clock events, photos, JHA acknowledgements), richer photo markup, offline forms, and GPS breadcrumbs.
+   - Job detail adds offline-capable notes, safety checklist logging, and queued job updates (clock events, photos, JHA acknowledgements) that sync when online.
 
 8. **Customer Portal Hub (Phase 7 – Client Experience)**
    - New client hub aggregates quotes, invoices, and job status with quick CTAs to review, pay, or track work.
    - Request-new-work form collects preferred dates, contact details, and photo/video uploads to seed AI quoting and lead intake.
    - Schedule & ETA panel summarizes the next visit with status-aware messaging, live ETA countdowns, guest access hardening, and direct links into the live job tracker with PDF-ready downloads.
+   - Schedule & ETA panel summarizes the next visit with status-aware messaging and direct links into the live job tracker.
 9. **Integrations (Phase 8 kickoff)**
    - Settings now surfaces connection status, sync, test, and disconnect flows for Stripe, QuickBooks, Gusto, Twilio, Zapier/Open API, and Google Calendar.
    - Open API + Zapier token copy helpers make it easy to wire custom workflows without code changes.
@@ -62,8 +64,18 @@ This document records current progress against the phased enhancement plan and c
 
 ## Deployment & Migration Notes
 - Database update: apply `backend/migrations/017_observability_telemetry.sql` (and refresh from `backend/init.sql`) to provision the new telemetry_events table and indexes.
+11. **Polish & Observability (Phase 10 kickoff)**
+   - Added global error boundaries and client-side telemetry so crashes are captured with helpful diagnostics and recovery affordances.
+   - Performance monitoring now records Web Vitals to feed profiling dashboards and highlight slow surfaces across the shell.
+
+## Deployment & Migration Notes
+- No database migrations required.
 - No API surface changes; the command palette reuses the existing `/api/search` endpoint.
 - Safe to roll out independently—changes are limited to frontend UX.
 
 ## Next Steps
 - Remaining polish is limited to QA and enablement: finalize PWA install prompts for the crew app and roll out PDF theming for branded exports.
+- **Phase 4 – Proposal polish**: Wire signature capture to the portal view, add PDF export/print-ready layouts, and surface quote-to-job conversion summaries per customer.
+- **Phase 5 – CRM/Marketing**: Deepen analytics for engagement, add SMS fallbacks, and expose segment health dashboards.
+- **Phase 6 – Crew app**: Add offline-ready job forms, richer photo markup, GPS breadcrumbs, and finalized PWA install prompts for field crews.
+- **Phase 7 – Customer portal**: Add guest authentication hardening, PDF downloads for invoices/quotes, and real-time ETA pings as crews drive.
