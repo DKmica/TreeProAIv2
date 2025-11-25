@@ -28,7 +28,7 @@ router.get('/dashboard/summary', async (req, res) => {
         (SELECT COUNT(*) FROM invoices WHERE status NOT IN ('Paid', 'Void', 'Draft') AND due_date IS NOT NULL AND 
           CASE 
             WHEN due_date ~ '^\d+$' THEN to_timestamp(due_date::bigint / 1000) < NOW()
-            WHEN due_date ~ '^\d{4}-\d{2}-\d{2}' THEN due_date::date < CURRENT_DATE
+            WHEN due_date ~ '^\d{4}-\d{2}-\d{2}' THEN due_date::timestamp < CURRENT_TIMESTAMP
             ELSE false 
           END
         ) AS overdue_invoices_count,
