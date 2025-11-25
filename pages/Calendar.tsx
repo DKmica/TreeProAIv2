@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Job, Employee, Customer, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult } from '../types';
+import { Job, Crew, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult } from '../types';
 import { CalendarView } from './Calendar/types';
 import JobIcon from '../components/icons/JobIcon';
 import GoogleCalendarIcon from '../components/icons/GoogleCalendarIcon';
@@ -7,6 +7,7 @@ import SpinnerIcon from '../components/icons/SpinnerIcon';
 import TemplateSelector from '../components/TemplateSelector';
 import { syncJobsToGoogleCalendar } from '../services/googleCalendarService';
 import * as api from '../services/apiService';
+import { useJobsQuery, useEmployeesQuery, useClientsQuery } from '../hooks/useDataQueries';
 
 import MonthView from './Calendar/views/MonthView';
 import WeekView from './Calendar/views/WeekView';
@@ -16,14 +17,10 @@ import ListView from './Calendar/views/ListView';
 import MapViewWrapper from './Calendar/views/MapViewWrapper';
 import CrewView from './Calendar/views/CrewView';
 
-interface CalendarProps {
-    jobs: Job[];
-    employees: Employee[];
-    customers?: Customer[];
-    setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
-}
-
-const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], setJobs }) => {
+const Calendar: React.FC = () => {
+    const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
+    const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
+    const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [activeView, setActiveView] = useState<CalendarView>('month');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -224,8 +221,8 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
 
     const handleUseTemplate = async (templateId: string) => {
         try {
-            const newJob = await api.jobTemplateService.useTemplate(templateId);
-            setJobs(prev => [newJob, ...prev]);
+            await api.jobTemplateService.useTemplate(templateId);
+            refetchJobs();
             setShowTemplateSelector(false);
         } catch (error: any) {
             console.error('Failed to create job from template:', error);
@@ -255,7 +252,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
         if (dayCell) dayCell.classList.remove('bg-brand-green-100');
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>, date: Date | null) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>, date: Date | null) => {
         e.preventDefault();
         const target = e.target as HTMLDivElement;
         const dayCell = target.closest('.calendar-day');
@@ -266,11 +263,12 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
         const jobId = e.dataTransfer.getData('jobId');
         const newScheduledDate = date.toISOString().split('T')[0];
 
-        setJobs(prevJobs => 
-            prevJobs.map(job => 
-                job.id === jobId ? { ...job, scheduledDate: newScheduledDate, status: 'Scheduled' } : job
-            )
-        );
+        try {
+            await api.jobService.update(jobId, { scheduledDate: newScheduledDate, status: 'Scheduled' });
+            refetchJobs();
+        } catch (error) {
+            console.error('Failed to update job:', error);
+        }
     };
     
     const getStatusColor = (status: Job['status']) => {
@@ -339,6 +337,17 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
         }
     };
 
+    const handleJobDrop = async (jobId: string, newDate: string) => {
+        try {
+            await api.jobService.update(jobId, { scheduledDate: newDate, status: 'Scheduled' });
+            refetchJobs();
+        } catch (error) {
+            console.error('Failed to update job:', error);
+        }
+    };
+
+    const dataLoading = jobsLoading || employeesLoading || customersLoading;
+
     const viewProps = {
         jobs,
         employees,
@@ -348,14 +357,8 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
         filteredJobs: filteredJobsOnCalendar,
         jobsByDate,
         onDateChange: setCurrentDate,
-        onJobDrop: (jobId: string, newDate: string) => {
-            setJobs(prevJobs => 
-                prevJobs.map(job => 
-                    job.id === jobId ? { ...job, scheduledDate: newDate, status: 'Scheduled' } : job
-                )
-            );
-        },
-        setJobs,
+        onJobDrop: handleJobDrop,
+        refetchJobs,
         handleDragStart,
         handleDragEnd,
         handleDragOver,
@@ -721,7 +724,7 @@ const Calendar: React.FC<CalendarProps> = ({ jobs, employees, customers = [], se
                     {activeView === '3-day' && <ThreeDayView {...viewProps} />}
                     {activeView === 'list' && <ListView {...viewProps} />}
                     {activeView === 'map' && <MapViewWrapper {...viewProps} customers={customers} />}
-                    {activeView === 'crew' && <CrewView jobs={jobs} currentDate={currentDate} setJobs={setJobs} onJobDrop={viewProps.onJobDrop} handleDragStart={handleDragStart} handleDragEnd={handleDragEnd} draggedJobId={draggedJobId} />}
+                    {activeView === 'crew' && <CrewView jobs={jobs} currentDate={currentDate} refetchJobs={refetchJobs} onJobDrop={viewProps.onJobDrop} handleDragStart={handleDragStart} handleDragEnd={handleDragEnd} draggedJobId={draggedJobId} />}
                 </div>
             </div>
 

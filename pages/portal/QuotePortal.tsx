@@ -1,19 +1,16 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Quote, LineItem, PortalMessage, CustomerUpload } from '../../types';
+import { useParams } from 'react-router-dom';
+import { LineItem, PortalMessage, CustomerUpload } from '../../types';
 import SignaturePad from '../../components/SignaturePad';
 import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import PortalMessaging from '../../components/PortalMessaging';
 import * as api from '../../services/apiService';
+import { useQuotesQuery } from '../../hooks/useDataQueries';
 
-interface QuotePortalProps {
-  quotes: Quote[];
-  setQuotes: React.Dispatch<React.SetStateAction<Quote[]>>;
-}
-
-const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
+const QuotePortal: React.FC = () => {
   const { quoteId } = useParams<{ quoteId: string }>();
+  const { data: quotes = [], isLoading, refetch } = useQuotesQuery();
 
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId]);
 
@@ -31,7 +28,7 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
   }, [quote]);
 
   const handleLineItemToggle = (index: number) => {
-      if (quote?.status !== 'Sent') return; // Prevent changes if not in 'Sent' state
+      if (quote?.status !== 'Sent') return;
       const updatedItems = [...lineItems];
       updatedItems[index].selected = !updatedItems[index].selected;
       setLineItems(updatedItems);
@@ -78,14 +75,9 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
 
       const newCustomerUploads = [...(quote?.customerUploads || []), ...uploads];
 
-      setQuotes(prev => prev.map(q =>
-        q.id === quoteId
-          ? { ...q, customerUploads: newCustomerUploads }
-          : q
-      ));
-
       try {
         await api.quoteService.update(quoteId, { customerUploads: newCustomerUploads });
+        refetch();
       } catch (apiError: any) {
         console.error('Failed to save uploads to backend:', apiError);
         setUploadError(`Files uploaded to portal, but failed to save: ${apiError.message || 'Unknown error'}`);
@@ -100,48 +92,57 @@ const QuotePortal: React.FC<QuotePortalProps> = ({ quotes, setQuotes }) => {
     }
   };
 
-  const handleSendMessage = (text: string) => {
-    if (!quoteId) return;
+  const handleSendMessage = async (text: string) => {
+    if (!quoteId || !quote) return;
     const newMessage: PortalMessage = {
         sender: 'customer',
         text,
         timestamp: new Date().toISOString(),
     };
-    setQuotes(prev => prev.map(q => 
-        q.id === quoteId 
-            ? { ...q, messages: [...(q.messages || []), newMessage] } 
-            : q
-    ));
+    try {
+      await api.quoteService.update(quoteId, { 
+        messages: [...(quote.messages || []), newMessage] 
+      });
+      refetch();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
 
-  const handleSignatureSave = (signatureDataUrl: string) => {
-    if (!quote) return;
+  const handleSignatureSave = async (signatureDataUrl: string) => {
+    if (!quote || !quoteId) return;
     setIsSaving(true);
-    // Simulate network delay
-    setTimeout(() => {
-      setQuotes(prevQuotes =>
-        prevQuotes.map(q =>
-          q.id === quote.id
-            ? {
-                ...q,
-                lineItems, // Save the customer's final selection
-                status: 'Accepted',
-                signature: signatureDataUrl,
-                acceptedAt: new Date().toISOString(),
-              }
-            : q
-        )
-      );
-      setIsSaving(false);
+    
+    try {
+      await api.quoteService.update(quoteId, {
+        lineItems,
+        status: 'Accepted',
+        signature: signatureDataUrl,
+        acceptedAt: new Date().toISOString(),
+      });
+      refetch();
       setIsSigning(false);
-    }, 1500);
+    } catch (error) {
+      console.error('Failed to accept quote:', error);
+      alert('Failed to accept quote. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const totalAmount = useMemo(() => {
     const itemsTotal = lineItems.reduce((sum, item) => (item.selected ? sum + item.price : sum), 0);
     return itemsTotal + (quote?.stumpGrindingPrice || 0);
   }, [lineItems, quote]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
+      </div>
+    );
+  }
 
   if (!quote) {
     return (

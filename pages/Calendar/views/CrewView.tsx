@@ -6,14 +6,14 @@ import * as api from '../../../services/apiService';
 interface CrewViewProps extends DragHandlers {
   jobs: Job[];
   currentDate: Date;
-  setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
+  refetchJobs: () => void;
   onJobDrop: (jobId: string, newDate: string) => void;
 }
 
 const CrewView: React.FC<CrewViewProps> = ({ 
   jobs,
   currentDate,
-  setJobs,
+  refetchJobs,
   onJobDrop,
   handleDragStart,
   handleDragEnd,
@@ -150,11 +150,7 @@ const CrewView: React.FC<CrewViewProps> = ({
         assignedDate
       });
 
-      setJobs(prevJobs =>
-        prevJobs.map(job =>
-          job.id === jobId ? { ...job, scheduledDate: assignedDate, status: 'Scheduled' as const } : job
-        )
-      );
+      refetchJobs();
 
       await loadData();
     } catch (err: any) {

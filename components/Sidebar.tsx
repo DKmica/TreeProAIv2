@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useMemo, useState, useCallback } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import DashboardIcon from './icons/DashboardIcon';
 import JobIcon from './icons/JobIcon';
 import CustomerIcon from './icons/CustomerIcon';
@@ -19,7 +19,12 @@ import ClockIcon from './icons/ClockIcon';
 import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
 import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
 
-type NavigationItem = { name: string; href: string; icon: React.ComponentType<{ className?: string }> };
+type NavigationItem = { 
+  name: string; 
+  href: string; 
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number | string;
+};
 
 const pinnedNavigation: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
@@ -29,10 +34,11 @@ const pinnedNavigation: NavigationItem[] = [
 const groupedNavigation: {
   title: string;
   items: NavigationItem[];
-  collapsible?: boolean;
+  defaultExpanded?: boolean;
 }[] = [
   {
     title: 'Sales',
+    defaultExpanded: true,
     items: [
       { name: 'CRM', href: '/crm', icon: CustomerIcon },
       { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
@@ -42,6 +48,7 @@ const groupedNavigation: {
   },
   {
     title: 'Work',
+    defaultExpanded: true,
     items: [
       { name: 'Jobs', href: '/jobs', icon: JobIcon },
       { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon },
@@ -54,6 +61,7 @@ const groupedNavigation: {
   },
   {
     title: 'Finance',
+    defaultExpanded: true,
     items: [
       { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
       { name: 'Profitability', href: '/profitability', icon: DollarIcon },
@@ -61,95 +69,127 @@ const groupedNavigation: {
     ],
   },
   {
-    title: 'Marketing',
-    collapsible: true,
-    items: [{ name: 'Marketing', href: '/marketing', icon: MarketingIcon }],
+    title: 'Marketing & AI',
+    defaultExpanded: false,
+    items: [
+      { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
+      { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
+    ],
   },
   {
-    title: 'AI Core',
-    collapsible: true,
-    items: [{ name: 'AI Core', href: '/ai-core', icon: AICoreIcon }],
-  },
-  {
-    title: 'Settings',
+    title: 'System',
+    defaultExpanded: false,
     items: [
       { name: 'Settings', href: '/settings', icon: CogIcon },
-      { name: 'Exception Queue', href: '/exception-queue', icon: ExclamationTriangleIcon },
+      { name: 'Exceptions', href: '/exception-queue', icon: ExclamationTriangleIcon },
     ],
   },
 ];
 
-const Sidebar: React.FC<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }> = ({ sidebarOpen, setSidebarOpen }) => {
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
-    Marketing: true,
-    'AI Core': true,
-  });
+interface SidebarProps {
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}
 
-  const toggleGroup = (title: string) => {
-    setCollapsedGroups((prev) => ({
+const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
+  const location = useLocation();
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    groupedNavigation.forEach(group => {
+      initial[group.title] = group.defaultExpanded ?? true;
+    });
+    return initial;
+  });
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleGroup = useCallback((title: string) => {
+    setExpandedGroups((prev) => ({
       ...prev,
       [title]: !prev[title],
     }));
-  };
+  }, []);
 
   const sectionedNavigation = useMemo(
     () => [
-      { title: 'Pinned', items: pinnedNavigation },
+      { title: 'Quick Access', items: pinnedNavigation, defaultExpanded: true },
       ...groupedNavigation,
     ],
     [],
   );
 
-  const renderNavItem = (item: NavigationItem) => (
-    <NavLink
-      key={item.name}
-      to={item.href}
-      onClick={() => setSidebarOpen(false)}
-      className={({ isActive }) =>
-        `group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-          isActive
-            ? 'bg-brand-cyan-600 text-white shadow-lg shadow-brand-cyan-500/30'
-            : 'text-brand-gray-300 hover:bg-brand-gray-800 hover:text-brand-cyan-400'
-        }`
-      }
-    >
-      <item.icon className="mr-3 h-6 w-6 flex-shrink-0" />
-      {item.name}
-    </NavLink>
-  );
+  const isActiveRoute = useCallback((href: string) => {
+    if (href === '/dashboard') return location.pathname === '/dashboard';
+    if (href === '/crm') return location.pathname.startsWith('/crm');
+    return location.pathname.startsWith(href);
+  }, [location.pathname]);
 
-  const NavLinks = () => (
-    <div className="space-y-4">
+  const renderNavItem = (item: NavigationItem, collapsed: boolean = false) => {
+    const isActive = isActiveRoute(item.href);
+    
+    return (
+      <NavLink
+        key={item.name}
+        to={item.href}
+        onClick={() => setSidebarOpen(false)}
+        title={collapsed ? item.name : undefined}
+        className={`
+          group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg
+          transition-all duration-200 relative
+          ${isActive
+            ? 'bg-gradient-to-r from-brand-cyan-600 to-brand-cyan-500 text-white shadow-lg shadow-brand-cyan-500/20'
+            : 'text-brand-gray-300 hover:bg-brand-gray-800/80 hover:text-white'
+          }
+          ${collapsed ? 'justify-center' : ''}
+        `}
+      >
+        <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? '' : 'group-hover:text-brand-cyan-400'}`} />
+        {!collapsed && (
+          <>
+            <span className="flex-1">{item.name}</span>
+            {item.badge && (
+              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-500 text-white">
+                {item.badge}
+              </span>
+            )}
+          </>
+        )}
+        {collapsed && item.badge && (
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+        )}
+      </NavLink>
+    );
+  };
+
+  const NavLinks = ({ collapsed = false }: { collapsed?: boolean }) => (
+    <div className="space-y-6">
       {sectionedNavigation.map((section) => {
-        const isCollapsed = section.collapsible ? collapsedGroups[section.title] : false;
+        const isExpanded = expandedGroups[section.title] ?? true;
 
         return (
-          <div key={section.title} className="space-y-2">
-            <div className="flex items-center justify-between px-2 text-xs font-semibold uppercase tracking-wider text-brand-gray-400">
-              <span>{section.title}</span>
-              {section.collapsible && (
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(section.title)}
-                  className="text-brand-gray-400 hover:text-brand-cyan-400"
-                  aria-expanded={!isCollapsed}
-                  aria-controls={`${section.title}-section`}
+          <div key={section.title}>
+            {!collapsed && (
+              <button
+                onClick={() => toggleGroup(section.title)}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-gray-400 hover:text-brand-gray-200 transition-colors"
+              >
+                <span>{section.title}</span>
+                <svg
+                  className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
                 >
-                  <span className="sr-only">Toggle {section.title}</span>
-                  <svg
-                    className={`h-4 w-4 transition-transform ${isCollapsed ? '' : 'rotate-180'}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <div id={`${section.title}-section`} className="space-y-1">
-              {(!section.collapsible || !isCollapsed) && section.items.map(renderNavItem)}
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            )}
+            
+            <div className={`
+              space-y-1 mt-2 overflow-hidden transition-all duration-200
+              ${!collapsed && !isExpanded ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'}
+            `}>
+              {section.items.map((item) => renderNavItem(item, collapsed))}
             </div>
           </div>
         );
@@ -157,76 +197,142 @@ const Sidebar: React.FC<{ sidebarOpen: boolean, setSidebarOpen: (open: boolean) 
     </div>
   );
 
-  const AiQuickActions = () => (
-    <div className="mt-6 space-y-2 px-2">
-      <p className="text-xs font-semibold uppercase tracking-wider text-brand-gray-400">AI Quick Actions</p>
-      <div className="space-y-2">
-        <NavLink
-          to="/ai-tree-estimator"
-          onClick={() => setSidebarOpen(false)}
-          className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/30 hover:from-cyan-500 hover:to-emerald-500"
-        >
-          <SparklesIcon className="h-5 w-5" />
-          Run AI Estimator
-        </NavLink>
-        <NavLink
-          to="/ai-core"
-          onClick={() => setSidebarOpen(false)}
-          className="flex items-center justify-center gap-2 rounded-lg border border-brand-cyan-500/40 bg-brand-gray-800 px-3 py-2 text-sm font-semibold text-cyan-100 hover:bg-brand-gray-700 hover:border-brand-cyan-400"
-        >
-          <AICoreIcon className="h-5 w-5" />
-          Open AI Core
-        </NavLink>
+  const QuickActions = ({ collapsed = false }: { collapsed?: boolean }) => (
+    <div className={`space-y-2 ${collapsed ? '' : 'px-2'}`}>
+      {!collapsed && (
+        <p className="px-1 text-xs font-semibold uppercase tracking-wider text-brand-gray-400 mb-3">
+          Quick Actions
+        </p>
+      )}
+      <NavLink
+        to="/ai-tree-estimator"
+        onClick={() => setSidebarOpen(false)}
+        title={collapsed ? "AI Estimator" : undefined}
+        className={`
+          flex items-center gap-2 rounded-lg 
+          bg-gradient-to-r from-brand-cyan-600 to-emerald-600 
+          text-white font-semibold shadow-lg shadow-brand-cyan-500/20 
+          hover:from-brand-cyan-500 hover:to-emerald-500 
+          transition-all duration-200
+          ${collapsed ? 'p-2.5 justify-center' : 'px-4 py-2.5'}
+        `}
+      >
+        <SparklesIcon className="h-5 w-5" />
+        {!collapsed && <span>AI Estimator</span>}
+      </NavLink>
+      <NavLink
+        to="/chat"
+        onClick={() => setSidebarOpen(false)}
+        title={collapsed ? "Ask ProBot" : undefined}
+        className={`
+          flex items-center gap-2 rounded-lg 
+          border border-brand-cyan-500/40 bg-brand-gray-800 
+          text-brand-cyan-100 font-medium
+          hover:bg-brand-gray-700 hover:border-brand-cyan-400 
+          transition-all duration-200
+          ${collapsed ? 'p-2.5 justify-center' : 'px-4 py-2.5'}
+        `}
+      >
+        <ChatIcon className="h-5 w-5" />
+        {!collapsed && <span>Ask ProBot</span>}
+      </NavLink>
+    </div>
+  );
+
+  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
+    <div className="flex flex-col h-full">
+      <div className={`
+        flex items-center border-b border-brand-gray-800 bg-brand-gray-900
+        ${collapsed ? 'h-16 justify-center' : 'h-16 px-4 gap-3'}
+      `}>
+        <img 
+          src="/logo.jpg" 
+          alt="TreePro AI" 
+          className={`rounded-full ring-2 ring-brand-cyan-500/50 ${collapsed ? 'h-9 w-9' : 'h-10 w-10'}`} 
+        />
+        {!collapsed && (
+          <div>
+            <span className="text-lg font-bold text-white">TreePro AI</span>
+            <span className="block text-xs text-brand-gray-400">Field Service Management</span>
+          </div>
+        )}
       </div>
+      
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-brand-gray-700 scrollbar-track-transparent">
+        <nav className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
+          <NavLinks collapsed={collapsed} />
+        </nav>
+      </div>
+      
+      <div className={`border-t border-brand-gray-800 py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
+        <QuickActions collapsed={collapsed} />
+      </div>
+      
+      {!collapsed && (
+        <button
+          onClick={() => setIsCollapsed(true)}
+          className="hidden lg:flex items-center justify-center gap-2 px-4 py-2 mx-3 mb-3 text-xs text-brand-gray-400 hover:text-white rounded-lg hover:bg-brand-gray-800 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+          Collapse sidebar
+        </button>
+      )}
     </div>
   );
 
   return (
     <>
-      {/* Static sidebar for desktop */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex min-h-0 flex-1 flex-col bg-brand-gray-900">
-          <div className="flex h-16 flex-shrink-0 items-center bg-brand-gray-950 px-4 border-b border-brand-cyan-500/30">
-            <img src="/logo.jpg" alt="TreePro AI" className="h-10 w-10 rounded-full ring-2 ring-brand-cyan-500/50" />
-            <span className="ml-3 text-xl font-bold text-white">TreePro AI</span>
-          </div>
-          <div className="flex flex-1 flex-col overflow-y-auto">
-            <nav className="flex-1 space-y-1 px-2 py-4">
-              <NavLinks />
-              <AiQuickActions />
-            </nav>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-40 flex lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`} role="dialog" aria-modal="true">
-        {/* Off-canvas menu overlay, show/hide based on sidebar state */}
-        <div className="fixed inset-0 bg-brand-gray-600 bg-opacity-75" aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
+      <div className={`
+        hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col
+        bg-brand-gray-900 border-r border-brand-gray-800
+        transition-all duration-300 ease-in-out
+        ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
+      `}>
+        <SidebarContent collapsed={isCollapsed} />
         
-        <div className="relative flex w-full max-w-xs flex-1 flex-col bg-brand-gray-900">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button type="button" className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" onClick={() => setSidebarOpen(false)}>
-              <span className="sr-only">Close sidebar</span>
-              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex h-16 flex-shrink-0 items-center bg-brand-gray-950 px-4 border-b border-brand-cyan-500/30">
-            <img src="/logo.jpg" alt="TreePro AI" className="h-10 w-10 rounded-full ring-2 ring-brand-cyan-500/50" />
-            <span className="ml-3 text-xl font-bold text-white">TreePro AI</span>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <nav className="space-y-1 px-2 py-4">
-              <NavLinks />
-              <AiQuickActions />
-            </nav>
-          </div>
-        </div>
-
-        <div className="w-14 flex-shrink-0"></div>
+        {isCollapsed && (
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 text-brand-gray-400 hover:text-white rounded-lg hover:bg-brand-gray-800 transition-colors"
+            title="Expand sidebar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
       </div>
+
+      <div 
+        className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        aria-hidden="true"
+      >
+        <div 
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+        
+        <div className={`
+          absolute inset-y-0 left-0 w-72 bg-brand-gray-900 
+          transform transition-transform duration-300 ease-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}>
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="absolute top-4 right-4 p-2 text-brand-gray-400 hover:text-white rounded-lg hover:bg-brand-gray-800 transition-colors z-10"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          <SidebarContent />
+        </div>
+      </div>
+      
+      <div className={`hidden lg:block transition-all duration-300 ${isCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`} />
     </>
   );
 };

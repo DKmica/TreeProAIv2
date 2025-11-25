@@ -6,12 +6,17 @@ import FunctionCallIcon from '../components/icons/FunctionCallIcon';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
 import MicrophoneIcon from '../components/icons/MicrophoneIcon';
 import BroadcastIcon from '../components/icons/BroadcastIcon';
+import { useAiCoreStatus, useInitializeAiCore } from '../contexts/AppDataContext';
 
-interface ChatPageProps {
-    isAiCoreInitialized: boolean;
-}
-
-const ChatPage: React.FC<ChatPageProps> = ({ isAiCoreInitialized }) => {
+const ChatPage: React.FC = () => {
+    const isAiCoreInitialized = useAiCoreStatus();
+    const initializeAiCore = useInitializeAiCore();
+    
+    useEffect(() => {
+        if (!isAiCoreInitialized) {
+            initializeAiCore();
+        }
+    }, [isAiCoreInitialized, initializeAiCore]);
     const { messages, inputValue, setInputValue, handleSubmit, isLoading, error, messagesEndRef, sendMessage } = useAICore({
         pageContext: "The user is on the dedicated full-screen Chat page. They may ask about any aspect of the application.",
         isAiCoreReady: isAiCoreInitialized,

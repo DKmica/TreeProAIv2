@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, useId } from 'react';
 
 interface SelectOption {
   value: string;
@@ -34,8 +34,8 @@ const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(({
   ...props
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
-  
-  const inputId = id || name || `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || name || generatedId;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (onChange) {

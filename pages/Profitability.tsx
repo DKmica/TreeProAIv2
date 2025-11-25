@@ -1,19 +1,18 @@
 import React from 'react';
-import { Job, Quote, LineItem, Employee } from '../types';
+import { Job, Quote, LineItem } from '../types';
+import { useJobsQuery, useQuotesQuery } from '../hooks/useDataQueries';
 
-interface ProfitabilityProps {
-    jobs: Job[];
-    quotes: Quote[];
-    employees: Employee[];
-}
-
-// Helper to calculate total from quote line items
 const calculateQuoteTotal = (lineItems: LineItem[], stumpGrindingPrice: number): number => {
     const itemsTotal = lineItems.reduce((sum, item) => item.selected ? sum + item.price : sum, 0);
     return itemsTotal + (stumpGrindingPrice || 0);
 };
 
-const Profitability: React.FC<ProfitabilityProps> = ({ jobs, quotes }) => {
+const Profitability: React.FC = () => {
+    const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
+    const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+
+    const isLoading = jobsLoading || quotesLoading;
+
     const completedJobsWithCosts = jobs.filter(job => job.status === 'Completed' && job.costs);
 
     const profitabilityData = completedJobsWithCosts.map(job => {
@@ -35,7 +34,6 @@ const Profitability: React.FC<ProfitabilityProps> = ({ jobs, quotes }) => {
         };
     }).filter((item): item is NonNullable<typeof item> => item !== null);
 
-    // KPI Calculations
     const totalProfit = profitabilityData.reduce((sum, item) => sum + item.profit, 0);
     const totalRevenue = profitabilityData.reduce((sum, item) => sum + item.quoteAmount, 0);
     const avgProfit = profitabilityData.length > 0 ? totalProfit / profitabilityData.length : 0;
@@ -49,6 +47,14 @@ const Profitability: React.FC<ProfitabilityProps> = ({ jobs, quotes }) => {
     ];
 
     const getProfitColor = (value: number) => value >= 0 ? 'text-green-600' : 'text-red-600';
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div>

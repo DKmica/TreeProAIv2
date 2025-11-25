@@ -1,16 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Equipment as EquipmentType, MaintenanceLog, MaintenanceAdvice } from '../types';
+import { MaintenanceLog, MaintenanceAdvice } from '../types';
 import ArrowLeftIcon from '../components/icons/ArrowLeftIcon';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import { generateMaintenanceAdvice } from '../services/geminiService';
 import SparklesIcon from '../components/icons/SparklesIcon';
 import WrenchScrewdriverIcon from '../components/icons/WrenchScrewdriverIcon';
-
-interface EquipmentDetailProps {
-    equipment: EquipmentType[];
-    setEquipment: React.Dispatch<React.SetStateAction<EquipmentType[]>>;
-}
+import { useEquipmentQuery } from '../hooks/useDataQueries';
+import * as api from '../services/apiService';
 
 const AddMaintenanceLogForm: React.FC<{ onSave: (log: Omit<MaintenanceLog, 'id'>) => void }> = ({ onSave }) => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -41,8 +38,9 @@ const AddMaintenanceLogForm: React.FC<{ onSave: (log: Omit<MaintenanceLog, 'id'>
     );
 };
 
-const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ equipment, setEquipment }) => {
+const EquipmentDetail: React.FC = () => {
     const { equipmentId } = useParams<{ equipmentId: string }>();
+    const { data: equipment = [], isLoading, refetch } = useEquipmentQuery();
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiAdvice, setAiAdvice] = useState<MaintenanceAdvice | null>(null);
     const [aiError, setAiError] = useState('');
@@ -64,16 +62,24 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ equipment, setEquipme
         }
     };
 
-    const handleSaveLog = (log: Omit<MaintenanceLog, 'id'>) => {
+    const handleSaveLog = async (log: Omit<MaintenanceLog, 'id'>) => {
         if (!item) return;
-        const newLog: MaintenanceLog = { id: `maint-${Date.now()}`, ...log };
-        const updatedHistory = [...(item.maintenanceHistory || []), newLog];
-
-        // Update the last service date if the new log date is the most recent
-        const mostRecentDate = updatedHistory.reduce((latest, current) => new Date(current.date) > new Date(latest) ? current.date : latest, item.lastServiceDate);
-
-        setEquipment(prev => prev.map(e => e.id === equipmentId ? { ...e, maintenanceHistory: updatedHistory, lastServiceDate: mostRecentDate } : e));
+        try {
+            await api.addMaintenanceLog(item.id, log);
+            refetch();
+        } catch (error) {
+            console.error('Failed to save maintenance log:', error);
+            alert('Failed to save maintenance log');
+        }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+            </div>
+        );
+    }
 
     if (!item) {
         return <div className="p-8 text-center">Equipment not found.</div>;

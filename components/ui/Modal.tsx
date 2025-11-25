@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useId } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -24,6 +24,8 @@ const sizeClasses: Record<ModalSize, string> = {
   full: 'max-w-[95vw] max-h-[95vh]',
 };
 
+const FOCUSABLE_ELEMENTS = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -39,12 +41,42 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const modalId = useId();
+  const titleId = `${modalId}-title`;
+  const descriptionId = `${modalId}-description`;
+
+  const getFocusableElements = useCallback(() => {
+    if (!modalRef.current) return [];
+    return Array.from(modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_ELEMENTS))
+      .filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
+  }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && closeOnEscape) {
       onClose();
+      return;
     }
-  }, [onClose, closeOnEscape]);
+
+    if (e.key === 'Tab') {
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement || document.activeElement === modalRef.current) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    }
+  }, [onClose, closeOnEscape, getFocusableElements]);
 
   useEffect(() => {
     if (isOpen) {
@@ -53,7 +85,12 @@ const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = 'hidden';
       
       setTimeout(() => {
-        modalRef.current?.focus();
+        const focusableElements = getFocusableElements();
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+        } else {
+          modalRef.current?.focus();
+        }
       }, 0);
     }
 
@@ -65,7 +102,7 @@ const Modal: React.FC<ModalProps> = ({
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, handleKeyDown]);
+  }, [isOpen, handleKeyDown, getFocusableElements]);
 
   if (!isOpen) return null;
 
@@ -81,8 +118,8 @@ const Modal: React.FC<ModalProps> = ({
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
-      aria-describedby={description ? 'modal-description' : undefined}
+      aria-labelledby={title ? titleId : undefined}
+      aria-describedby={description ? descriptionId : undefined}
     >
       <div 
         className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
@@ -108,7 +145,7 @@ const Modal: React.FC<ModalProps> = ({
             <div>
               {title && (
                 <h2 
-                  id="modal-title"
+                  id={titleId}
                   className="text-lg font-semibold text-white"
                 >
                   {title}
@@ -116,7 +153,7 @@ const Modal: React.FC<ModalProps> = ({
               )}
               {description && (
                 <p 
-                  id="modal-description"
+                  id={descriptionId}
                   className="mt-1 text-sm text-brand-gray-400"
                 >
                   {description}

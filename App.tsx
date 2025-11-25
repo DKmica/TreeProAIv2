@@ -1,251 +1,109 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import CRM from './pages/CRM';
-import ClientDetail from './pages/ClientDetail';
-import QuoteDetail from './pages/QuoteDetail';
-import Jobs from './pages/Jobs';
-import JobTemplates from './pages/JobTemplates';
-import FormTemplates from './pages/FormTemplates';
-import Invoices from './pages/Invoices';
-import Calendar from './pages/Calendar';
-import Crews from './pages/Crews';
-import TimeTracking from './pages/TimeTracking';
-import Employees from './pages/Employees';
-import Equipment from './pages/Equipment';
-import Marketing from './pages/Marketing';
-import AICore from './pages/AICore';
-import AITreeEstimator from './pages/AITreeEstimator';
-import EstimateFeedbackAnalytics from './pages/EstimateFeedbackAnalytics';
-import ChatPage from './pages/Chat';
-import CrewLayout from './components/CrewLayout';
-import CrewDashboard from './pages/crew/CrewDashboard';
-import CrewJobDetail from './pages/crew/CrewJobDetail';
-import CustomerPortalLayout from './components/CustomerPortalLayout';
-import QuotePortal from './pages/portal/QuotePortal';
-import InvoicePortal from './pages/portal/InvoicePortal';
-import { Customer, Client, Lead, Quote, Job, Invoice, Employee, Equipment as EquipmentType } from './types';
-import Profitability from './pages/Profitability';
-import EquipmentDetail from './pages/EquipmentDetail';
-import JobStatusPortal from './pages/portal/JobStatusPortal';
-import Settings from './pages/Settings';
-import ExceptionQueue from './pages/ExceptionQueue';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import TemplateViewer from './pages/TemplateViewer';
-import Payroll from './pages/Payroll';
-import * as api from './services/apiService';
+import CrewLayout from './components/CrewLayout';
+import CustomerPortalLayout from './components/CustomerPortalLayout';
 import SpinnerIcon from './components/icons/SpinnerIcon';
-import { aiCore } from './services/gemini/aiCore';
+import { AppDataProvider } from './contexts/AppDataContext';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const CRM = lazy(() => import('./pages/CRM'));
+const ClientDetail = lazy(() => import('./pages/ClientDetail'));
+const QuoteDetail = lazy(() => import('./pages/QuoteDetail'));
+const Jobs = lazy(() => import('./pages/Jobs'));
+const JobTemplates = lazy(() => import('./pages/JobTemplates'));
+const FormTemplates = lazy(() => import('./pages/FormTemplates'));
+const Invoices = lazy(() => import('./pages/Invoices'));
+const Calendar = lazy(() => import('./pages/Calendar'));
+const Crews = lazy(() => import('./pages/Crews'));
+const TimeTracking = lazy(() => import('./pages/TimeTracking'));
+const Employees = lazy(() => import('./pages/Employees'));
+const Equipment = lazy(() => import('./pages/Equipment'));
+const EquipmentDetail = lazy(() => import('./pages/EquipmentDetail'));
+const Marketing = lazy(() => import('./pages/Marketing'));
+const AICore = lazy(() => import('./pages/AICore'));
+const AITreeEstimator = lazy(() => import('./pages/AITreeEstimator'));
+const EstimateFeedbackAnalytics = lazy(() => import('./pages/EstimateFeedbackAnalytics'));
+const ChatPage = lazy(() => import('./pages/Chat'));
+const Profitability = lazy(() => import('./pages/Profitability'));
+const ExceptionQueue = lazy(() => import('./pages/ExceptionQueue'));
+const Settings = lazy(() => import('./pages/Settings'));
+const TemplateViewer = lazy(() => import('./pages/TemplateViewer'));
+const Payroll = lazy(() => import('./pages/Payroll'));
+const CrewDashboard = lazy(() => import('./pages/crew/CrewDashboard'));
+const CrewJobDetail = lazy(() => import('./pages/crew/CrewJobDetail'));
+const QuotePortal = lazy(() => import('./pages/portal/QuotePortal'));
+const InvoicePortal = lazy(() => import('./pages/portal/InvoicePortal'));
+const JobStatusPortal = lazy(() => import('./pages/portal/JobStatusPortal'));
+
+const PageLoader: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="text-center">
+      <SpinnerIcon className="w-10 h-10 animate-spin text-brand-cyan-400 mx-auto mb-3" />
+      <p className="text-brand-gray-400 text-sm">Loading...</p>
+    </div>
+  </div>
+);
 
 const App: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [equipment, setEquipment] = useState<EquipmentType[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAiCoreInitialized, setIsAiCoreInitialized] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log("🚀 Starting data fetch from backend...");
-      try {
-        const [
-          clientsData,
-          leadsData,
-          quotesData,
-          jobsData,
-          invoicesData,
-          employeesData,
-          equipmentData
-        ] = await Promise.all([
-          api.clientService.getAll().catch(() => []),
-          api.leadService.getAll().catch(() => []),
-          api.quoteService.getAll().catch(() => []),
-          api.jobService.getAll().catch(() => []),
-          api.invoiceService.getAll().catch(() => []),
-          api.employeeService.getAll().catch(() => []),
-          api.equipmentService.getAll().catch(() => []),
-        ]);
-
-        console.log("✅ Data fetched successfully");
-        setClients(clientsData);
-        setLeads(leadsData);
-        setQuotes(quotesData);
-        setJobs(jobsData);
-        setInvoices(invoicesData);
-        setEmployees(employeesData);
-        setEquipment(equipmentData);
-
-        try {
-          const [
-            payrollRecords,
-            timeEntries,
-            payPeriods,
-            companyProfile
-          ] = await Promise.all([
-            api.payrollRecordService.getAll(),
-            api.timeEntryService.getAll(),
-            api.payPeriodService.getAll(),
-            api.companyProfileService.get().catch(() => null)
-          ]);
-
-          await aiCore.initialize({
-            clients: clientsData,
-            leads: leadsData,
-            quotes: quotesData,
-            jobs: jobsData,
-            invoices: invoicesData,
-            employees: employeesData,
-            equipment: equipmentData,
-            payrollRecords,
-            timeEntries,
-            payPeriods,
-            companyProfile,
-            lastUpdated: new Date()
-          });
-          setIsAiCoreInitialized(true);
-        } catch (aiError) {
-          console.error("❌ Failed to initialize AI Core:", aiError);
-          setIsAiCoreInitialized(true);
-        }
-      } catch (e: any) {
-        console.error("❌ Failed to fetch initial data:", e);
-        setError(`Failed to connect to the backend server. Please ensure it is running with 'node backend/server.js' and that the database is correctly configured as per the replit.md documentation. Error: ${e.message}`);
-      } finally {
-        console.log("⏹️ Fetch complete, setting isLoading to false");
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (!isAiCoreInitialized) {
-      return;
-    }
-
-    const refreshAiContext = async () => {
-      console.log("🔄 AI Core context is stale, refreshing...");
-      try {
-        const [
-          payrollRecords,
-          timeEntries,
-          payPeriods,
-          companyProfile
-        ] = await Promise.all([
-          api.payrollRecordService.getAll(),
-          api.timeEntryService.getAll(),
-          api.payPeriodService.getAll(),
-          api.companyProfileService.get().catch(() => null)
-        ]);
-
-        await aiCore.refresh({
-          clients,
-          leads,
-          quotes,
-          jobs,
-          invoices,
-          employees,
-          equipment,
-          payrollRecords,
-          timeEntries,
-          payPeriods,
-          companyProfile,
-          lastUpdated: new Date()
-        });
-      } catch (err) {
-        console.error("❌ Failed to refresh AI Core context:", err);
-      }
-    };
-
-    refreshAiContext();
-
-  }, [isAiCoreInitialized, clients, leads, quotes, jobs, invoices, employees, equipment]);
-
-  const appData = { clients, leads, quotes, jobs, invoices, employees, equipment };
-  const appSetters = { setClients, setLeads, setQuotes, setJobs, setInvoices, setEmployees, setEquipment };
-  const appState = { data: appData, setters: appSetters };
-
-  if (isLoading || !isAiCoreInitialized) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-brand-gray-950">
-        <div className="text-center">
-          <SpinnerIcon className="w-12 h-12 animate-spin text-brand-cyan-400 mx-auto mb-4" />
-          <p className="text-brand-gray-300">Initializing TreePro AI...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-brand-gray-950">
-        <div className="text-center max-w-md">
-          <p className="text-brand-red-400 font-bold mb-4">Connection Error</p>
-          <p className="text-brand-gray-300 mb-4">{error}</p>
-          <p className="text-brand-gray-400 text-sm">Please check the backend server and database configuration.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
+    <AppDataProvider>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-      {/* Main App Protected Routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<Layout appState={appState} isAiCoreInitialized={isAiCoreInitialized} />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard jobs={jobs} employees={employees} customers={clients} leads={leads} quotes={quotes} />} />
-          <Route path="/crm" element={<CRM />} />
-          <Route path="/crm/clients/:id" element={<ClientDetail />} />
-          <Route path="/quotes/:id" element={<QuoteDetail />} />
-          <Route path="/ai-core" element={<AICore leads={leads} jobs={jobs} quotes={quotes} employees={employees} equipment={equipment} setJobs={setJobs} />} />
-          <Route path="/ai-tree-estimator" element={<AITreeEstimator />} />
-          <Route path="/estimate-feedback-analytics" element={<EstimateFeedbackAnalytics />} />
-          <Route path="/chat" element={<ChatPage isAiCoreInitialized={isAiCoreInitialized} />} />
-          <Route path="/leads" element={<Navigate to="/crm?tab=leads" replace />} />
-          <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
-          <Route path="/jobs" element={<Jobs jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} invoices={invoices} setInvoices={setInvoices} employees={employees} />} />
-          <Route path="/job-templates" element={<JobTemplates />} />
-          <Route path="/forms" element={<FormTemplates />} />
-          <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
-          <Route path="/invoices" element={<Invoices invoices={invoices} quotes={quotes} />} />
-          <Route path="/calendar" element={<Calendar jobs={jobs} setJobs={setJobs} employees={employees} customers={clients} />} />
-          <Route path="/crews" element={<Crews />} />
-          <Route path="/time-tracking" element={<TimeTracking />} />
-          <Route path="/employees" element={<Employees employees={employees} setEmployees={setEmployees} />} />
-          <Route path="/payroll" element={<Payroll />} />
-          <Route path="/equipment" element={<Equipment equipment={equipment} setEquipment={setEquipment} />} />
-          <Route path="/equipment/:equipmentId" element={<EquipmentDetail equipment={equipment} setEquipment={setEquipment} />} />
-          <Route path="/marketing" element={<Marketing />} />
-          <Route path="/profitability" element={<Profitability jobs={jobs} quotes={quotes} employees={employees} />} />
-          <Route path="/exception-queue" element={<ExceptionQueue />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/settings/template/:templateId" element={<TemplateViewer />} />
-        </Route>
-      </Route>
-      
-      {/* Crew App Layout */}
-      <Route path="/crew" element={<CrewLayout />}>
-          <Route index element={<CrewDashboard jobs={jobs} customers={clients} />} />
-          <Route path="job/:jobId" element={<CrewJobDetail jobs={jobs} setJobs={setJobs} quotes={quotes} customers={clients} />} />
-      </Route>
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={
+                <Suspense fallback={<PageLoader />}>
+                  <Dashboard />
+                </Suspense>
+              } />
+              <Route path="/crm" element={<Suspense fallback={<PageLoader />}><CRM /></Suspense>} />
+              <Route path="/crm/clients/:id" element={<Suspense fallback={<PageLoader />}><ClientDetail /></Suspense>} />
+              <Route path="/quotes/:id" element={<Suspense fallback={<PageLoader />}><QuoteDetail /></Suspense>} />
+              <Route path="/ai-core" element={<Suspense fallback={<PageLoader />}><AICore /></Suspense>} />
+              <Route path="/ai-tree-estimator" element={<Suspense fallback={<PageLoader />}><AITreeEstimator /></Suspense>} />
+              <Route path="/estimate-feedback-analytics" element={<Suspense fallback={<PageLoader />}><EstimateFeedbackAnalytics /></Suspense>} />
+              <Route path="/chat" element={<Suspense fallback={<PageLoader />}><ChatPage /></Suspense>} />
+              <Route path="/leads" element={<Navigate to="/crm?tab=leads" replace />} />
+              <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
+              <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><Jobs /></Suspense>} />
+              <Route path="/job-templates" element={<Suspense fallback={<PageLoader />}><JobTemplates /></Suspense>} />
+              <Route path="/forms" element={<Suspense fallback={<PageLoader />}><FormTemplates /></Suspense>} />
+              <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
+              <Route path="/invoices" element={<Suspense fallback={<PageLoader />}><Invoices /></Suspense>} />
+              <Route path="/calendar" element={<Suspense fallback={<PageLoader />}><Calendar /></Suspense>} />
+              <Route path="/crews" element={<Suspense fallback={<PageLoader />}><Crews /></Suspense>} />
+              <Route path="/time-tracking" element={<Suspense fallback={<PageLoader />}><TimeTracking /></Suspense>} />
+              <Route path="/employees" element={<Suspense fallback={<PageLoader />}><Employees /></Suspense>} />
+              <Route path="/payroll" element={<Suspense fallback={<PageLoader />}><Payroll /></Suspense>} />
+              <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><Equipment /></Suspense>} />
+              <Route path="/equipment/:equipmentId" element={<Suspense fallback={<PageLoader />}><EquipmentDetail /></Suspense>} />
+              <Route path="/marketing" element={<Suspense fallback={<PageLoader />}><Marketing /></Suspense>} />
+              <Route path="/profitability" element={<Suspense fallback={<PageLoader />}><Profitability /></Suspense>} />
+              <Route path="/exception-queue" element={<Suspense fallback={<PageLoader />}><ExceptionQueue /></Suspense>} />
+              <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
+              <Route path="/settings/template/:templateId" element={<Suspense fallback={<PageLoader />}><TemplateViewer /></Suspense>} />
+            </Route>
+          </Route>
 
-      {/* Customer Portal Layout */}
-      <Route path="/portal" element={<CustomerPortalLayout />}>
-        <Route path="quote/:quoteId" element={<QuotePortal quotes={quotes} setQuotes={setQuotes} />} />
-        <Route path="invoice/:invoiceId" element={<InvoicePortal invoices={invoices} setInvoices={setInvoices} />} />
-        <Route path="job/:jobId" element={<JobStatusPortal jobs={jobs} quotes={quotes} employees={employees} setJobs={setJobs} />} />
-      </Route>
-    </Routes>
+          <Route path="/crew" element={<CrewLayout />}>
+            <Route index element={<Suspense fallback={<PageLoader />}><CrewDashboard /></Suspense>} />
+            <Route path="job/:jobId" element={<Suspense fallback={<PageLoader />}><CrewJobDetail /></Suspense>} />
+          </Route>
+
+          <Route path="/portal" element={<CustomerPortalLayout />}>
+            <Route path="quote/:quoteId" element={<Suspense fallback={<PageLoader />}><QuotePortal /></Suspense>} />
+            <Route path="invoice/:invoiceId" element={<Suspense fallback={<PageLoader />}><InvoicePortal /></Suspense>} />
+            <Route path="job/:jobId" element={<Suspense fallback={<PageLoader />}><JobStatusPortal /></Suspense>} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </AppDataProvider>
   );
 };
 

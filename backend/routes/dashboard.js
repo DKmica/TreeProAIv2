@@ -8,7 +8,7 @@ router.get('/dashboard/summary', async (req, res) => {
   try {
     const summaryQuery = `
       SELECT
-        -- Entity counts
+        -- Entity counts (only clients, leads, quotes have deleted_at)
         (SELECT COUNT(*) FROM clients WHERE deleted_at IS NULL) AS clients_count,
         (SELECT COUNT(*) FROM leads WHERE deleted_at IS NULL) AS leads_count,
         (SELECT COUNT(*) FROM leads WHERE deleted_at IS NULL AND status NOT IN ('Won', 'Lost', 'Closed')) AS active_leads_count,
@@ -19,13 +19,13 @@ router.get('/dashboard/summary', async (req, res) => {
         (SELECT COUNT(*) FROM jobs WHERE status = 'Completed') AS completed_jobs_count,
         (SELECT COUNT(*) FROM invoices) AS invoices_count,
         (SELECT COUNT(*) FROM invoices WHERE status != 'Paid') AS unpaid_invoices_count,
-        (SELECT COUNT(*) FROM employees WHERE deleted_at IS NULL) AS employees_count,
-        (SELECT COUNT(*) FROM equipment WHERE deleted_at IS NULL) AS equipment_count,
+        (SELECT COUNT(*) FROM employees) AS employees_count,
+        (SELECT COUNT(*) FROM equipment) AS equipment_count,
         
         -- Recent activity (last 7 days)
         (SELECT COUNT(*) FROM leads WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '7 days') AS recent_leads_count,
         (SELECT COUNT(*) FROM jobs WHERE created_at >= NOW() - INTERVAL '7 days') AS recent_jobs_count,
-        (SELECT COUNT(*) FROM invoices WHERE due_date < NOW() AND status != 'Paid') AS overdue_invoices_count,
+        (SELECT COUNT(*) FROM invoices WHERE status NOT IN ('Paid', 'Void', 'Draft') AND due_date IS NOT NULL AND due_date::timestamp < NOW()) AS overdue_invoices_count,
         
         -- Revenue metrics
         (SELECT COALESCE(SUM(total_amount), 0) FROM invoices) AS total_invoiced,

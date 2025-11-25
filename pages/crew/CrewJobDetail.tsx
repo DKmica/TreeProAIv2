@@ -1,8 +1,6 @@
-
-
 import React, { useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Job, Quote, Customer, JobHazardAnalysis } from '../../types';
+import { Job, JobHazardAnalysis } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
@@ -12,18 +10,18 @@ import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import { generateJobHazardAnalysis } from '../../services/geminiService';
 import ExclamationTriangleIcon from '../../components/icons/ExclamationTriangleIcon';
 import ShieldCheckIcon from '../../components/icons/ShieldCheckIcon';
+import { useJobsQuery, useQuotesQuery, useClientsQuery } from '../../hooks/useDataQueries';
+import * as api from '../../services/apiService';
 
-interface CrewJobDetailProps {
-  jobs: Job[];
-  setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
-  quotes: Quote[];
-  customers: Customer[];
-}
-
-const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, customers }) => {
+const CrewJobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
+  const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+  const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
+  
   const [isClocking, setIsClocking] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isGeneratingJha, setIsGeneratingJha] = useState(false);
@@ -33,9 +31,15 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
   const quote = useMemo(() => quotes.find(q => q.id === job?.quoteId), [quotes, job]);
   const customer = useMemo(() => customers.find(c => c.name === job?.customerName), [customers, job]);
 
-  const isJhaAcknowledged = Boolean(job.jhaAcknowledgedAt);
-  const isJhaRequired = job.jhaRequired ?? false;
-  const isJhaMissing = isJhaRequired && !job.jha;
+  const isLoading = jobsLoading || quotesLoading || customersLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
+      </div>
+    );
+  }
 
   if (!job) {
     return (
@@ -50,8 +54,17 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
     );
   }
 
-  const handleStatusUpdate = (updates: Partial<Job>) => {
-    setJobs(prevJobs => prevJobs.map(j => (j.id === jobId ? { ...j, ...updates } : j)));
+  const isJhaAcknowledged = Boolean(job.jhaAcknowledgedAt);
+  const isJhaRequired = job.jhaRequired ?? false;
+  const isJhaMissing = isJhaRequired && !job.jha;
+
+  const handleStatusUpdate = async (updates: Partial<Job>) => {
+    try {
+      await api.jobService.update(job.id, updates);
+      refetchJobs();
+    } catch (error) {
+      console.error('Failed to update job:', error);
+    }
   };
 
   const handleAcknowledgeJha = () => {
@@ -143,6 +156,11 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
       });
   };
 
+  const services = quote?.lineItems.filter(item => item.selected) || [];
+  if (quote && (quote.stumpGrindingPrice > 0)) {
+    services.push({ description: 'Stump Grinding', price: quote.stumpGrindingPrice, selected: true });
+  }
+
   const handleGenerateJHA = async () => {
     if (!job.photos || job.photos.length === 0) {
       setJhaError("Please upload at least one photo of the job site first.");
@@ -174,7 +192,6 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
       const newPhotoUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file as Blob));
       const existingPhotos = job.photos || [];
       handleStatusUpdate({ photos: [...existingPhotos, ...newPhotoUrls] });
-      // Reset file input value to allow uploading the same file again
       e.target.value = '';
     }
   };
@@ -185,11 +202,6 @@ const CrewJobDetail: React.FC<CrewJobDetailProps> = ({ jobs, setJobs, quotes, cu
       navigate('/crew');
     }
   };
-
-  const services = quote?.lineItems.filter(item => item.selected) || [];
-  if (quote && (quote.stumpGrindingPrice > 0)) {
-    services.push({ description: 'Stump Grinding', price: quote.stumpGrindingPrice, selected: true });
-  }
 
   let clockButtonText = 'Clock In';
   let clockButtonDisabled = false;

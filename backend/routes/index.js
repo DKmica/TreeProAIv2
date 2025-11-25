@@ -11,6 +11,7 @@ const invoicesRouter = require('./invoices');
 const employeesRouter = require('./employees');
 const equipmentRouter = require('./equipment');
 const dashboardRouter = require('./dashboard');
+const searchRouter = require('./search');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -28,13 +29,13 @@ function buildApiRouter() {
   router.use(invoicesRouter);
   router.use(employeesRouter);
   router.use(equipmentRouter);
+  router.use('/search', searchRouter);
   return router;
 }
 
 function mountApiRoutes(app, legacyRouter) {
   const modularRouter = buildApiRouter();
 
-  // When USE_MODULAR_ROUTES is true, only mount the modular stack
   if (useModularRoutes) {
     if (legacyRouter) {
       modularRouter.use(legacyRouter);
@@ -43,8 +44,6 @@ function mountApiRoutes(app, legacyRouter) {
     return;
   }
 
-  // Default: mount modular routes alongside the legacy router
-  // so health/auth endpoints remain available during migration
   if (!legacyRouter) {
     app.use('/api', modularRouter);
     return;

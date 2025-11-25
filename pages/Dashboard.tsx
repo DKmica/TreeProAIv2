@@ -1,21 +1,19 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MapView from '../components/MapView';
-import { Job, Employee, Customer, Lead, Quote, PayrollRecord, TimeEntry, PayPeriod, Equipment, AICoreInsights } from '../types';
+import { Job, PayrollRecord, TimeEntry, PayPeriod, Equipment, AICoreInsights } from '../types';
 import { payrollRecordService, timeEntryService, payPeriodService, equipmentService } from '../services/apiService';
 import { getAiCoreInsights } from '../services/gemini/businessService';
+import { useJobsQuery, useEmployeesQuery, useClientsQuery, useLeadsQuery, useQuotesQuery } from '../hooks/useDataQueries';
 
-interface DashboardProps {
-    jobs: Job[];
-    employees: Employee[];
-    customers: Customer[];
-    leads: Lead[];
-    quotes: Quote[];
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads, quotes }) => {
+const Dashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
+    const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
+    const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
+    const { data: leads = [], isLoading: leadsLoading } = useLeadsQuery();
+    const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'jobs' | 'map'>('jobs');
     const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
@@ -25,6 +23,8 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads
     const [aiInsights, setAiInsights] = useState<AICoreInsights | null>(null);
     const [loadingInsights, setLoadingInsights] = useState(false);
     const [insightsError, setInsightsError] = useState<string | null>(null);
+
+    const isLoading = jobsLoading || employeesLoading || customersLoading || leadsLoading || quotesLoading;
 
     const activeJobs = useMemo(() => 
         jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress')
@@ -54,11 +54,11 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads
         
         return jobs
             .filter(job => {
-                if (job.status !== 'Completed' || !job.completedDate) return false;
-                const completedDate = new Date(job.completedDate);
+                if (job.status !== 'Completed' || !job.workEndedAt) return false;
+                const completedDate = new Date(job.workEndedAt);
                 return completedDate.getMonth() === currentMonth && completedDate.getFullYear() === currentYear;
             })
-            .reduce((sum, job) => sum + (job.totalCost || 0), 0);
+            .reduce((sum, job) => sum + (job.costs?.total || 0), 0);
     }, [jobs]);
 
     useEffect(() => {
@@ -85,6 +85,8 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads
 
     useEffect(() => {
         const fetchAiInsights = async () => {
+            if (isLoading) return;
+            
             setLoadingInsights(true);
             setInsightsError(null);
             
@@ -109,10 +111,10 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads
             }
         };
         
-        if (leads.length > 0 || jobs.length > 0 || employees.length > 0) {
+        if (!isLoading && (leads.length > 0 || jobs.length > 0 || employees.length > 0)) {
             fetchAiInsights();
         }
-    }, [leads, jobs, quotes, employees, equipment, payrollRecords, timeEntries, payPeriods]);
+    }, [isLoading, leads, jobs, quotes, employees, equipment, payrollRecords, timeEntries, payPeriods]);
 
     const getStatusColor = (status: Job['status']) => {
         switch (status) {
@@ -150,6 +152,14 @@ const Dashboard: React.FC<DashboardProps> = ({ jobs, employees, customers, leads
             maximumFractionDigits: 2
         }).format(amount);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+            </div>
+        );
+    }
 
   return (
     <div>

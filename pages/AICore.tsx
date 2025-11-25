@@ -1,26 +1,26 @@
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getAiCoreInsights } from '../services/geminiService';
-import { AICoreInsights, Lead, Job, Quote, Employee, Equipment as EquipmentType, JobScheduleSuggestion } from '../types';
+import { AICoreInsights, Job, JobScheduleSuggestion } from '../types';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import LeadIcon from '../components/icons/LeadIcon';
 import JobIcon from '../components/icons/JobIcon';
 import EquipmentIcon from '../components/icons/EquipmentIcon';
+import { useLeadsQuery, useJobsQuery, useQuotesQuery, useEmployeesQuery, useEquipmentQuery } from '../hooks/useDataQueries';
+import * as api from '../services/apiService';
 
 const ModifyScheduleModal: React.FC<{
   suggestion: JobScheduleSuggestion;
-  employees: Employee[];
+  employeesList: { id: string; name: string; jobTitle: string }[];
   onSave: (updatedJobData: Omit<Job, 'id'>) => void;
   onClose: () => void;
-}> = ({ suggestion, employees, onSave, onClose }) => {
+}> = ({ suggestion, employeesList, onSave, onClose }) => {
     const [scheduledDate, setScheduledDate] = useState(suggestion.suggestedDate);
     
     const initialCrewIds = useMemo(() => 
         suggestion.suggestedCrew
-            .map(name => employees.find(e => e.name === name)?.id)
+            .map(name => employeesList.find(e => e.name === name)?.id)
             .filter((id): id is string => !!id), 
-        [suggestion.suggestedCrew, employees]
+        [suggestion.suggestedCrew, employeesList]
     );
 
     const [selectedCrew, setSelectedCrew] = useState<string[]>(initialCrewIds);
@@ -72,7 +72,7 @@ const ModifyScheduleModal: React.FC<{
                       <h4 className="text-sm font-medium leading-6 text-brand-gray-900">Assign Crew</h4>
                       <p className="text-sm text-brand-gray-500">Select the employees to assign to this job.</p>
                       <div className="mt-2 max-h-40 overflow-y-auto space-y-2 rounded-md border p-2">
-                          {employees.map(emp => (
+                          {employeesList.map(emp => (
                               <div key={emp.id} className="relative flex items-start">
                                   <div className="flex h-6 items-center">
                                       <input 
@@ -105,22 +105,23 @@ const ModifyScheduleModal: React.FC<{
     );
 };
 
-interface AICoreProps {
-    leads: Lead[];
-    jobs: Job[];
-    quotes: Quote[];
-    employees: Employee[];
-    equipment: EquipmentType[];
-    setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
-}
-
-const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipment, setJobs }) => {
+const AICore: React.FC = () => {
+    const { data: leads = [], isLoading: leadsLoading } = useLeadsQuery();
+    const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
+    const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+    const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
+    const { data: equipment = [], isLoading: equipmentLoading } = useEquipmentQuery();
+    
     const [insights, setInsights] = useState<AICoreInsights | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingSchedule, setEditingSchedule] = useState<JobScheduleSuggestion | null>(null);
 
+    const dataLoading = leadsLoading || jobsLoading || quotesLoading || employeesLoading || equipmentLoading;
+
     const fetchInsights = useCallback(async () => {
+        if (dataLoading) return;
+        
         setIsLoading(true);
         setError(null);
         try {
@@ -131,36 +132,51 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
         } finally {
             setIsLoading(false);
         }
-    }, [leads, jobs, quotes, employees, equipment]);
+    }, [dataLoading, leads, jobs, quotes, employees, equipment]);
 
     useEffect(() => {
-        fetchInsights();
-    }, [fetchInsights]);
+        if (!dataLoading) {
+            fetchInsights();
+        }
+    }, [dataLoading, fetchInsights]);
 
-    const handleAcceptSuggestion = (suggestion: JobScheduleSuggestion) => {
+    const handleAcceptSuggestion = async (suggestion: JobScheduleSuggestion) => {
         const crewIds = suggestion.suggestedCrew
             .map(name => employees.find(e => e.name === name)?.id)
             .filter((id): id is string => !!id);
 
-        const newJob: Omit<Job, 'id'> = {
-            quoteId: suggestion.quoteId,
-            customerName: suggestion.customerName,
-            status: 'Scheduled',
-            scheduledDate: suggestion.suggestedDate,
-            assignedCrew: crewIds,
-            jobNumber: `JOB-${Date.now()}`,
-            updatedAt: new Date().toISOString(),
-        };
-        setJobs(prev => [...prev, { ...newJob, id: `job-${Date.now()}` }]);
+        try {
+            await api.jobService.create({
+                quoteId: suggestion.quoteId,
+                customerName: suggestion.customerName,
+                status: 'Scheduled',
+                scheduledDate: suggestion.suggestedDate,
+                assignedCrew: crewIds,
+                jobNumber: `JOB-${Date.now()}`,
+            });
+            refetchJobs();
+        } catch (err) {
+            console.error('Failed to create job:', err);
+            alert('Failed to create job');
+        }
     };
 
-    const handleSaveModifiedSchedule = (updatedJobData: Omit<Job, 'id'>) => {
-        setJobs(prev => [...prev, { ...updatedJobData, id: `job-${Date.now()}` }]);
-        setEditingSchedule(null); // Close modal
+    const handleSaveModifiedSchedule = async (updatedJobData: Omit<Job, 'id'>) => {
+        try {
+            await api.jobService.create({
+                ...updatedJobData,
+                jobNumber: `JOB-${Date.now()}`,
+            });
+            refetchJobs();
+            setEditingSchedule(null);
+        } catch (err) {
+            console.error('Failed to create job:', err);
+            alert('Failed to create job');
+        }
     };
 
 
-    if (isLoading) {
+    if (dataLoading || isLoading) {
         return (
             <div className="flex flex-col items-center justify-center h-64">
                 <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
@@ -195,7 +211,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             </div>
 
             <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Automated Lead Scoring */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <div className="flex items-center">
                         <LeadIcon className="h-8 w-8 text-brand-green-600" />
@@ -218,7 +233,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                     </ul>
                 </div>
 
-                {/* Smart Job Scheduling */}
                 <div className="bg-white p-6 rounded-lg shadow">
                     <div className="flex items-center">
                         <JobIcon className="h-8 w-8 text-brand-green-600" />
@@ -248,7 +262,6 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
                 </div>
             </div>
 
-            {/* Proactive Maintenance */}
             <div className="mt-8 bg-white p-6 rounded-lg shadow">
                 <div className="flex items-center">
                     <EquipmentIcon className="h-8 w-8 text-brand-green-600" />
@@ -284,7 +297,7 @@ const AICore: React.FC<AICoreProps> = ({ leads, jobs, quotes, employees, equipme
             {editingSchedule && (
                 <ModifyScheduleModal
                     suggestion={editingSchedule}
-                    employees={employees}
+                    employeesList={employees}
                     onSave={handleSaveModifiedSchedule}
                     onClose={() => setEditingSchedule(null)}
                 />

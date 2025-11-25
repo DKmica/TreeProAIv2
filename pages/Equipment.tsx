@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Equipment as EquipmentType } from '../types';
+import { useEquipmentQuery } from '../hooks/useDataQueries';
+import * as api from '../services/apiService';
 
 interface AddEquipmentFormProps {
     onSave: (equipment: Partial<EquipmentType>) => void;
@@ -31,7 +33,6 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
                 assignedTo: initialData.assignedTo || ''
             });
         } else {
-            // Reset for new entry
             setFormData({
                 name: '',
                 make: '',
@@ -103,12 +104,8 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
     );
 };
 
-interface EquipmentProps {
-    equipment: EquipmentType[];
-    setEquipment: React.Dispatch<React.SetStateAction<EquipmentType[]>>;
-}
-
-const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
+const Equipment: React.FC = () => {
+    const { data: equipment = [], isLoading, refetch } = useEquipmentQuery();
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingEquipment, setEditingEquipment] = useState<EquipmentType | null>(null);
@@ -142,33 +139,39 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
         setShowAddForm(true);
     };
 
-    const handleArchiveEquipment = (equipmentId: string) => {
+    const handleArchiveEquipment = async (equipmentId: string) => {
         if (window.confirm('Are you sure you want to archive this equipment?')) {
-            setEquipment(prev => prev.filter(item => item.id !== equipmentId));
+            try {
+                await api.equipmentService.remove(equipmentId);
+                refetch();
+            } catch (error) {
+                console.error('Failed to archive equipment:', error);
+                alert('Failed to archive equipment');
+            }
         }
     };
     
-    const handleSaveEquipment = (equipmentData: Partial<EquipmentType>) => {
-        if (editingEquipment) {
-            // Update
-            setEquipment(prev => prev.map(item => 
-                item.id === editingEquipment.id ? { ...item, ...equipmentData } as EquipmentType : item
-            ));
-        } else {
-            // Create
-            const newEquipmentItem: EquipmentType = {
-                id: `equip-${Date.now()}`,
-                name: equipmentData.name || 'N/A',
-                make: equipmentData.make || 'N/A',
-                model: equipmentData.model || 'N/A',
-                purchaseDate: equipmentData.purchaseDate || '',
-                lastServiceDate: equipmentData.lastServiceDate || '',
-                status: equipmentData.status || 'Operational',
-                assignedTo: equipmentData.assignedTo || undefined
-            };
-            setEquipment(prev => [newEquipmentItem, ...prev]);
+    const handleSaveEquipment = async (equipmentData: Partial<EquipmentType>) => {
+        try {
+            if (editingEquipment) {
+                await api.equipmentService.update(editingEquipment.id, equipmentData);
+            } else {
+                await api.equipmentService.create({
+                    name: equipmentData.name || 'N/A',
+                    make: equipmentData.make || 'N/A',
+                    model: equipmentData.model || 'N/A',
+                    purchaseDate: equipmentData.purchaseDate || '',
+                    lastServiceDate: equipmentData.lastServiceDate || '',
+                    status: equipmentData.status || 'Operational',
+                    assignedTo: equipmentData.assignedTo || undefined
+                });
+            }
+            refetch();
+            handleCancel();
+        } catch (error) {
+            console.error('Failed to save equipment:', error);
+            alert('Failed to save equipment');
         }
-        handleCancel();
     };
   
     const filteredEquipment = useMemo(() => equipment.filter(e => 
@@ -185,6 +188,14 @@ const Equipment: React.FC<EquipmentProps> = ({ equipment, setEquipment }) => {
             case 'Out of Service': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+            </div>
+        );
     }
 
     return (

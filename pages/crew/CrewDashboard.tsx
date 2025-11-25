@@ -1,14 +1,9 @@
-
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Customer, Job } from '../../types';
 import JobIcon from '../../components/icons/JobIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
-
-interface CrewDashboardProps {
-  jobs: Job[];
-  customers: Customer[];
-}
+import { useJobsQuery, useClientsQuery } from '../../hooks/useDataQueries';
 
 interface RouteStop {
   order: number;
@@ -19,10 +14,11 @@ interface RouteStop {
   estimatedDriveMinutes: number;
 }
 
-const CrewDashboard: React.FC<CrewDashboardProps> = ({ jobs, customers }) => {
-  // Simulate logged-in user ID. In a real app, this would come from an auth context.
-  const currentUserId = 'emp1'; // Mike Miller
+const CrewDashboard: React.FC = () => {
+  const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
+  const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
 
+  const currentUserId = 'emp1';
   const today = new Date().toISOString().split('T')[0];
 
   const [isPlanningRoute, setIsPlanningRoute] = useState(false);
@@ -35,7 +31,7 @@ const CrewDashboard: React.FC<CrewDashboardProps> = ({ jobs, customers }) => {
       job.assignedCrew.includes(currentUserId) &&
       job.status !== 'Completed' &&
       job.status !== 'Cancelled'
-    ).sort((a, b) => a.status === 'In Progress' ? -1 : 1); // Show "In Progress" first
+    ).sort((a, b) => a.status === 'In Progress' ? -1 : 1);
   }, [jobs, today, currentUserId]);
 
   const customerByName = useMemo(() => {
@@ -49,7 +45,7 @@ const CrewDashboard: React.FC<CrewDashboardProps> = ({ jobs, customers }) => {
   const toRadians = (value: number) => (value * Math.PI) / 180;
 
   const getDistanceMiles = (from: { lat: number; lng: number }, to: { lat: number; lng: number }) => {
-    const R = 3958.8; // Earth radius in miles
+    const R = 3958.8;
     const dLat = toRadians(to.lat - from.lat);
     const dLon = toRadians(to.lng - from.lng);
     const lat1 = toRadians(from.lat);
@@ -116,7 +112,7 @@ const CrewDashboard: React.FC<CrewDashboardProps> = ({ jobs, customers }) => {
       const stops: RouteStop[] = ordered.map((entry, index) => {
         const previous = index === 0 ? null : ordered[index - 1];
         const distance = previous ? getDistanceMiles(previous.customer.coordinates, entry.customer.coordinates) : 0;
-        const estimatedDriveMinutes = previous ? Math.max(5, Math.round((distance / 30) * 60)) : 0; // assume 30 mph average
+        const estimatedDriveMinutes = previous ? Math.max(5, Math.round((distance / 30) * 60)) : 0;
 
         return {
           order: index + 1,
@@ -156,6 +152,14 @@ const CrewDashboard: React.FC<CrewDashboardProps> = ({ jobs, customers }) => {
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
+
+  if (jobsLoading || customersLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
+      </div>
+    );
+  }
 
   return (
     <div>

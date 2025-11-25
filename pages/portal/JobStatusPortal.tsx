@@ -1,23 +1,22 @@
 import React, { useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Job, Quote, Employee, PortalMessage } from '../../types';
-import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
+import { useParams } from 'react-router-dom';
+import { PortalMessage } from '../../types';
 import CheckCircleIcon from '../../components/icons/CheckCircleIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
 import QuoteIcon from '../../components/icons/QuoteIcon';
 import CalendarDaysIcon from '../../components/icons/CalendarDaysIcon';
 import PortalMessaging from '../../components/PortalMessaging';
+import SpinnerIcon from '../../components/icons/SpinnerIcon';
+import { useJobsQuery, useQuotesQuery, useEmployeesQuery } from '../../hooks/useDataQueries';
+import * as api from '../../services/apiService';
 
-
-interface JobStatusPortalProps {
-  jobs: Job[];
-  quotes: Quote[];
-  employees: Employee[];
-  setJobs: React.Dispatch<React.SetStateAction<Job[]>>; // Add setJobs prop
-}
-
-const JobStatusPortal: React.FC<JobStatusPortalProps> = ({ jobs, quotes, employees, setJobs }) => {
+const JobStatusPortal: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
+  const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
+  const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
+
+  const isLoading = jobsLoading || quotesLoading || employeesLoading;
 
   const job = useMemo(() => jobs.find(j => j.id === jobId), [jobs, jobId]);
   const quote = useMemo(() => quotes.find(q => q.id === job?.quoteId), [quotes, job]);
@@ -29,6 +28,14 @@ const JobStatusPortal: React.FC<JobStatusPortalProps> = ({ jobs, quotes, employe
       .filter((name): name is string => !!name);
   }, [job, employees]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
+      </div>
+    );
+  }
+
   if (!job || !quote) {
     return (
       <div className="text-center p-8 bg-white rounded-lg shadow">
@@ -38,18 +45,21 @@ const JobStatusPortal: React.FC<JobStatusPortalProps> = ({ jobs, quotes, employe
     );
   }
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = async (text: string) => {
     if (!jobId) return;
     const newMessage: PortalMessage = {
         sender: 'customer',
         text,
         timestamp: new Date().toISOString(),
     };
-    setJobs(prev => prev.map(j => 
-        j.id === jobId 
-            ? { ...j, messages: [...(j.messages || []), newMessage] } 
-            : j
-    ));
+    try {
+      await api.jobService.update(jobId, { 
+        messages: [...(job.messages || []), newMessage] 
+      });
+      refetchJobs();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
 

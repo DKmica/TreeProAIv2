@@ -1,16 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Invoice } from '../../types';
 import CheckBadgeIcon from '../../components/icons/CheckBadgeIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
+import { useInvoicesQuery } from '../../hooks/useDataQueries';
 
-interface InvoicePortalProps {
-  invoices: Invoice[];
-  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
-}
-
-const InvoicePortal: React.FC<InvoicePortalProps> = ({ invoices, setInvoices }) => {
+const InvoicePortal: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
+  const { data: invoices = [], isLoading } = useInvoicesQuery();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +43,14 @@ const InvoicePortal: React.FC<InvoicePortalProps> = ({ invoices, setInvoices }) 
       setIsProcessing(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (

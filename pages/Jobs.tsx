@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Job, Quote, Customer, Invoice, Employee, LineItem, JobCost, PortalMessage, CustomerDetailsInput } from '../types';
+import { Job, Quote, Invoice, Employee, LineItem, JobCost, PortalMessage, CustomerDetailsInput } from '../types';
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
 import PortalMessaging from '../components/PortalMessaging';
@@ -16,6 +16,7 @@ import * as api from '../services/apiService';
 import AssociationModal from '../components/AssociationModal';
 import RecurringJobsPanel from '../components/RecurringJobsPanel';
 import { formatPhone, formatZip, formatState, parseEquipment, lookupZipCode } from '../utils/formatters';
+import { useJobsQuery, useQuotesQuery, useInvoicesQuery, useEmployeesQuery } from '../hooks/useDataQueries';
 
 
 // Helper to calculate total
@@ -625,17 +626,11 @@ const JobForm: React.FC<{
     );
 };
 
-interface JobsProps {
-  jobs: Job[];
-  setJobs: React.Dispatch<React.SetStateAction<Job[]>>;
-  quotes: Quote[];
-  customers: Customer[];
-  invoices: Invoice[];
-  setInvoices: React.Dispatch<React.SetStateAction<Invoice[]>>;
-  employees: Employee[];
-}
-
-const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoices, employees }) => {
+const Jobs: React.FC = () => {
+  const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
+  const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useInvoicesQuery();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
@@ -694,7 +689,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
 
       try {
           await api.jobService.remove(jobId);
-          setJobs(prev => prev.filter(j => j.id !== jobId));
+          refetchJobs();
       } catch (error: any) {
           console.error('Failed to archive job', error);
           alert(`Failed to archive job: ${error.message || 'Unknown error'}`);
@@ -705,8 +700,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
       try {
           if ('id' in jobData && jobData.id) { // Editing
               const { id, ...updatePayload } = jobData as Job;
-              const updatedJob = await api.jobService.update(id, updatePayload);
-              setJobs(prev => prev.map(j => j.id === updatedJob.id ? updatedJob : j));
+              await api.jobService.update(id, updatePayload);
+              refetchJobs();
           } else { // Creating
               const quote = quotes.find(q => q.id === jobData.quoteId);
               if (!quote) {
@@ -742,12 +737,12 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
                       quoteId: convertedJob.quoteId,
                   } as Partial<Job>;
 
-                  createdJob = await api.jobService.update(convertedJob.id, updatePayload);
+                  await api.jobService.update(convertedJob.id, updatePayload);
               } else {
-                  createdJob = await api.jobService.create(newJobPayload);
+                  await api.jobService.create(newJobPayload);
               }
 
-              setJobs(prev => [createdJob, ...prev]);
+              refetchJobs();
           }
           handleCancel();
       } catch (error: any) {
@@ -785,15 +780,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     setIsInvoiceEditorOpen(true);
   };
 
-  const handleInvoiceSaved = (savedInvoice: Invoice) => {
-    setInvoices(prev => {
-      const existing = prev.find(inv => inv.id === savedInvoice.id);
-      if (existing) {
-        return prev.map(inv => inv.id === savedInvoice.id ? savedInvoice : inv);
-      } else {
-        return [savedInvoice, ...prev];
-      }
-    });
+  const handleInvoiceSaved = () => {
+    refetchInvoices();
     alert('Invoice created successfully!');
   };
 
@@ -804,71 +792,71 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     setTimeout(() => setLinkCopied(''), 2000);
   };
   
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = async (text: string) => {
     if (!viewingMessages) return;
     const newMessage: PortalMessage = {
         sender: 'company',
         text,
         timestamp: new Date().toISOString(),
     };
-    setJobs(prev => prev.map(j => 
-        j.id === viewingMessages.id 
-            ? { ...j, messages: [...(j.messages || []), newMessage] } 
-            : j
-    ));
-    setViewingMessages(prev => prev ? { ...prev, messages: [...(prev.messages || []), newMessage] } : null);
+    try {
+      await api.jobService.update(viewingMessages.id, { 
+        messages: [...(viewingMessages.messages || []), newMessage] 
+      });
+      refetchJobs();
+      setViewingMessages(prev => prev ? { ...prev, messages: [...(prev.messages || []), newMessage] } : null);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
-  const handleStatusChange = (jobId: string, newStatus: Job['status']) => {
-    setJobs(prevJobs => prevJobs.map(j => {
-      if (j.id === jobId) {
-        const updatedJob = { ...j, status: newStatus };
+  const handleStatusChange = async (jobId: string, newStatus: Job['status']) => {
+    try {
+      const job = jobs.find(j => j.id === jobId);
+      if (!job) return;
 
-        // If status is changing TO 'Completed' and costs haven't been calculated yet
-        if (newStatus === 'Completed' && !updatedJob.costs) {
-          // 1. Calculate labor cost
-          let laborCost = 0;
-          if (updatedJob.workStartedAt && updatedJob.workEndedAt && updatedJob.assignedCrew.length > 0) {
-            const startTime = new Date(updatedJob.workStartedAt).getTime();
-            const endTime = new Date(updatedJob.workEndedAt).getTime();
-            const durationHours = (endTime - startTime) / (1000 * 60 * 60);
+      let updatePayload: Partial<Job> = { status: newStatus };
 
-            const totalCrewHourlyRate = updatedJob.assignedCrew.reduce((sum, empId) => {
-              const employee = employees.find(e => e.id === empId);
-              return sum + (employee?.payRate || 0);
-            }, 0);
-            
-            laborCost = durationHours * totalCrewHourlyRate;
-          }
+      if (newStatus === 'Completed' && !job.costs) {
+        let laborCost = 0;
+        if (job.workStartedAt && job.workEndedAt && job.assignedCrew.length > 0) {
+          const startTime = new Date(job.workStartedAt).getTime();
+          const endTime = new Date(job.workEndedAt).getTime();
+          const durationHours = (endTime - startTime) / (1000 * 60 * 60);
 
-          // 2. Simulated operational costs
-          const equipmentCost = 100; // Simulated cost for equipment usage
-          const materialsCost = 20;  // Simulated cost for materials
-          const disposalCost = 80;   // Simulated cost for debris disposal
-
-          // 3. Total cost
-          const totalCost = laborCost + equipmentCost + materialsCost + disposalCost;
-
-          const jobCost: JobCost = {
-            labor: parseFloat(laborCost.toFixed(2)),
-            equipment: equipmentCost,
-            materials: materialsCost,
-            disposal: disposalCost,
-            total: parseFloat(totalCost.toFixed(2)),
-          };
+          const totalCrewHourlyRate = job.assignedCrew.reduce((sum, empId) => {
+            const employee = employees.find(e => e.id === empId);
+            return sum + (employee?.payRate || 0);
+          }, 0);
           
-          return { ...updatedJob, costs: jobCost };
+          laborCost = durationHours * totalCrewHourlyRate;
         }
-        return updatedJob;
+
+        const equipmentCost = 100;
+        const materialsCost = 20;
+        const disposalCost = 80;
+        const totalCost = laborCost + equipmentCost + materialsCost + disposalCost;
+
+        updatePayload.costs = {
+          labor: parseFloat(laborCost.toFixed(2)),
+          equipment: equipmentCost,
+          materials: materialsCost,
+          disposal: disposalCost,
+          total: parseFloat(totalCost.toFixed(2)),
+        };
       }
-      return j;
-    }));
+
+      await api.jobService.update(jobId, updatePayload);
+      refetchJobs();
+    } catch (error) {
+      console.error('Failed to update job status:', error);
+    }
   };
 
   const handleStateChanged = async (jobId: string, newState: string) => {
     try {
       const updatedJob = await api.jobService.getById(jobId);
-      setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? updatedJob : j));
+      refetchJobs();
       if (viewingJobDetail?.id === jobId) {
         setViewingJobDetail(updatedJob);
       }
@@ -879,8 +867,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
 
   const handleUseTemplate = async (templateId: string) => {
     try {
-      const newJob = await api.jobTemplateService.useTemplate(templateId);
-      setJobs(prev => [newJob, ...prev]);
+      await api.jobTemplateService.useTemplate(templateId);
+      refetchJobs();
       setShowTemplateSelector(false);
     } catch (error: any) {
       console.error('Failed to create job from template:', error);
@@ -888,11 +876,8 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     }
   };
 
-  const handleRecurringJobCreated = (job: Job) => {
-    setJobs(prevJobs => {
-      const filtered = prevJobs.filter(existing => existing.id !== job.id);
-      return [job, ...filtered];
-    });
+  const handleRecurringJobCreated = () => {
+    refetchJobs();
   };
 
   const handleViewDetails = (job: Job) => {
@@ -910,7 +895,7 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     if (!associationJob) return;
     try {
       const updated = await api.jobService.update(associationJob.id, { clientId, propertyId });
-      setJobs(prev => prev.map(job => job.id === updated.id ? updated : job));
+      refetchJobs();
       setViewingJobDetail(prev => (prev && prev.id === updated.id ? updated : prev));
       setAssociationJob(null);
       setShowAssociationModal(false);
@@ -919,9 +904,20 @@ const Jobs: React.FC<JobsProps> = ({ jobs, setJobs, quotes, invoices, setInvoice
     }
   };
 
+  const isLoading = jobsLoading || quotesLoading || invoicesLoading || employeesLoading;
+
   const filteredJobs = useMemo(() => jobs.filter(job =>
     Object.values(job).some(value => value.toString().toLowerCase().includes(searchTerm.toLowerCase()))
   ), [jobs, searchTerm]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-cyan-600"></div>
+        <span className="ml-2 text-brand-gray-600">Loading jobs...</span>
+      </div>
+    );
+  }
 
   return (
     <div>

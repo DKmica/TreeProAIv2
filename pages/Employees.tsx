@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Employee } from '../types';
+import { useEmployeesQuery } from '../hooks/useDataQueries';
+import * as api from '../services/apiService';
 
 const EmployeeForm: React.FC<{
     onSave: (employee: Partial<Employee>) => void;
@@ -113,12 +115,8 @@ const EmployeeForm: React.FC<{
     );
 };
 
-interface EmployeesProps {
-    employees: Employee[];
-    setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
-}
-
-const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
+const Employees: React.FC = () => {
+    const { data: employees = [], isLoading, refetch } = useEmployeesQuery();
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -156,28 +154,34 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
         setShowForm(true);
     };
 
-    const handleArchiveEmployee = (employeeId: string) => {
+    const handleArchiveEmployee = async (employeeId: string) => {
         if (window.confirm('Are you sure you want to archive this employee?')) {
-            setEmployees(prev => prev.filter(e => e.id !== employeeId));
+            try {
+                await api.employeeService.remove(employeeId);
+                refetch();
+            } catch (error) {
+                console.error('Failed to archive employee:', error);
+                alert('Failed to archive employee');
+            }
         }
     };
     
-    const handleSaveEmployee = (employeeData: Partial<Employee>) => {
-        if (editingEmployee) {
-            // Update
-            setEmployees(prev => prev.map(e => 
-                e.id === editingEmployee.id ? { ...e, ...employeeData } as Employee : e
-            ));
-        } else {
-            // Create
-            const newEmployee: Employee = {
-                id: `emp-${Date.now()}`,
-                coordinates: { lat: 0, lng: 0 },
-                ...employeeData,
-            } as Employee;
-            setEmployees(prev => [newEmployee, ...prev]);
+    const handleSaveEmployee = async (employeeData: Partial<Employee>) => {
+        try {
+            if (editingEmployee) {
+                await api.employeeService.update(editingEmployee.id, employeeData);
+            } else {
+                await api.employeeService.create({
+                    coordinates: { lat: 0, lng: 0 },
+                    ...employeeData,
+                } as Partial<Employee>);
+            }
+            refetch();
+            handleCancel();
+        } catch (error) {
+            console.error('Failed to save employee:', error);
+            alert('Failed to save employee');
         }
-        handleCancel();
     };
     
     const requestSort = (key: keyof Employee) => {
@@ -224,6 +228,14 @@ const Employees: React.FC<EmployeesProps> = ({ employees, setEmployees }) => {
             </button>
         );
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div>
