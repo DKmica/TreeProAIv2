@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance } from '../types';
+import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -113,6 +113,10 @@ export const clientService = {
     const response = await apiFetch<{ success: boolean; data: Contact[] }>(`clients/${clientId}/contacts`);
     return response.data;
   },
+  getActivity: async (clientId: string): Promise<CustomerActivityEvent[]> => {
+    const response = await apiFetch<{ success: boolean; data: CustomerActivityEvent[] }>(`clients/${clientId}/activity`);
+    return response.data ?? [];
+  },
 };
 export const propertyService = {
   ...createApiService<Property>('properties'),
@@ -120,6 +124,45 @@ export const propertyService = {
     apiFetch(`clients/${clientId}/properties`, { method: 'POST', body: JSON.stringify(data) }),
 };
 export const leadService = createApiService<Lead>('leads');
+export const segmentService = {
+  getAll: async (): Promise<CustomerSegment[]> => {
+    const response = await apiFetch<{ success: boolean; data: CustomerSegment[] }>('segments');
+    return response.data ?? [];
+  },
+  preview: async (segmentId: string): Promise<{ audienceCount: number; sampleTags?: string[] }> => {
+    const response = await apiFetch<{ success: boolean; data: { audienceCount: number; sampleTags?: string[] } }>(`segments/${segmentId}/preview`);
+    return response.data ?? { audienceCount: 0 };
+  },
+};
+
+export const marketingService = {
+  sendCampaign: async (payload: { segmentId: string; subject: string; body: string; scheduleAt?: string }): Promise<EmailCampaignSend> => {
+    const response = await apiFetch<{ success: boolean; data: EmailCampaignSend }>('marketing/campaigns/send', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    return response.data;
+  },
+  getNurtureSequences: async (): Promise<NurtureSequence[]> => {
+    const response = await apiFetch<{ success: boolean; data: NurtureSequence[] }>('marketing/nurture-sequences');
+    return response.data ?? [];
+  },
+  updateNurtureStatus: async (sequenceId: string, status: NurtureSequence['status']): Promise<NurtureSequence> => {
+    const response = await apiFetch<{ success: boolean; data: NurtureSequence }>(`marketing/nurture-sequences/${sequenceId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    });
+    return response.data;
+  },
+  getWebLeadForms: async (): Promise<WebLeadFormConfig[]> => {
+    const response = await apiFetch<{ success: boolean; data: WebLeadFormConfig[] }>('marketing/web-lead-forms');
+    return response.data ?? [];
+  },
+  previewEmbed: async (formId: string): Promise<{ embedToken: string; scriptUrl: string }> => {
+    const response = await apiFetch<{ success: boolean; data: { embedToken: string; scriptUrl: string } }>(`marketing/web-lead-forms/${formId}/embed`);
+    return response.data;
+  }
+};
 export const quoteService = {
   getAll: async (): Promise<Quote[]> => {
     const response = await apiFetch<{ success: boolean; data: Quote[]; pagination: any }>('quotes');

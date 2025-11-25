@@ -4,6 +4,7 @@ import { Customer, Job } from '../../types';
 import JobIcon from '../../components/icons/JobIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import { useJobsQuery, useClientsQuery } from '../../hooks/useDataQueries';
+import { useCrewSync } from '../../contexts/CrewSyncContext';
 
 interface RouteStop {
   order: number;
@@ -17,6 +18,7 @@ interface RouteStop {
 const CrewDashboard: React.FC = () => {
   const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
   const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
+  const { isOnline, pendingActions, syncPendingActions, syncing } = useCrewSync();
 
   const currentUserId = 'emp1';
   const today = new Date().toISOString().split('T')[0];
@@ -165,6 +167,28 @@ const CrewDashboard: React.FC = () => {
     <div>
       <h1 className="text-2xl font-bold text-brand-gray-900">Today's Jobs</h1>
       <p className="mt-1 text-brand-gray-600">Jobs assigned to you for {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-lg border border-brand-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-brand-gray-800">Connectivity</p>
+          <p className="mt-1 text-sm text-brand-gray-600">{isOnline ? 'Online — data will sync automatically' : 'Offline — logging to device storage'}</p>
+          <div className="mt-2 flex items-center justify-between text-xs text-brand-gray-500">
+            <span>{pendingActions.length} pending action{pendingActions.length === 1 ? '' : 's'}</span>
+            <button
+              onClick={syncPendingActions}
+              disabled={!isOnline || syncing || pendingActions.length === 0}
+              className="inline-flex items-center rounded-md border border-brand-gray-200 px-2 py-1 font-semibold text-brand-gray-700 hover:bg-brand-gray-50 disabled:text-brand-gray-400 disabled:bg-brand-gray-100"
+            >
+              {syncing ? 'Syncing…' : 'Force sync'}
+            </button>
+          </div>
+        </div>
+        <div className="rounded-lg border border-brand-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-brand-gray-800">Offline kit</p>
+          <p className="mt-1 text-sm text-brand-gray-600">Clock-ins, notes, photos, and checklists are saved locally if the network drops.</p>
+          <p className="mt-2 text-xs text-brand-gray-500">Resume connectivity to push changes back to HQ.</p>
+        </div>
+      </div>
 
       {todaysJobs.length > 0 && (
         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

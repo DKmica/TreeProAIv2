@@ -6,6 +6,7 @@ This document records current progress against the phased enhancement plan and c
 - **Frontend modernized**: Global search, unified form components, responsive layout, Suspense-driven lazy loading, and contextual AI copilot already exist across the shell.
 - **Automation engine**: Workflow builder, templates, and automation logs are present; additional UX polish is underway.
 - **Quoting & proposals**: Proposal templates, version history, G/B/B pricing, and AI accuracy feedback are now surfaced in the quote workspace.
+- **CRM/Marketing**: Segmentation filters, saved audiences, nurture sequences, and web-to-lead embeds connect CRM data to outbound channels.
 
 ## Today’s Deliverables
 1. **Command Palette (Phase 1 – UX Modernization)**
@@ -30,6 +31,15 @@ This document records current progress against the phased enhancement plan and c
    - Good/Better/Best pricing cards support selection and recommendation with inline signals.
    - Version timeline snapshots and AI accuracy feedback capture keep the proposal loop measured and improvable.
 
+6. **CRM + Marketing Automation (Phase 5)**
+   - CRM adds geo/service/tag filters, saved segments with previews, and a customer timeline per client.
+   - Marketing module now supports segment-aware sends, nurture sequences, and embeddable web-to-lead scripts to keep the funnel fed.
+
+7. **Crew App Offline Kit (Phase 6 kickoff)**
+   - Crew layout now wraps an offline sync provider with connectivity badges and manual sync controls.
+   - Crew dashboard surfaces offline state, pending sync counts, and reassurance that route, clock, and note data persists on-device.
+   - Job detail adds offline-capable notes, safety checklist logging, and queued job updates (clock events, photos, JHA acknowledgements) that sync when online.
+
 ## Deployment & Migration Notes
 - No database migrations required.
 - No API surface changes; the command palette reuses the existing `/api/search` endpoint.
@@ -37,4 +47,5 @@ This document records current progress against the phased enhancement plan and c
 
 ## Next Steps
 - **Phase 4 – Proposal polish**: Wire signature capture to the portal view, add PDF export/print-ready layouts, and surface quote-to-job conversion summaries per customer.
-- **Phase 5 – CRM/Marketing**: Advance segmentation, drip campaigns, and embeddable web-to-lead forms.
+- **Phase 5 – CRM/Marketing**: Deepen analytics for engagement, add SMS fallbacks, and expose segment health dashboards.
+- **Phase 6 – Crew app**: Add offline-ready job forms, richer photo markup, GPS breadcrumbs, and finalized PWA install prompts for field crews.

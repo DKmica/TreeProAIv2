@@ -123,6 +123,113 @@ export interface QuoteSignature {
   termsVersion?: string;
 }
 
+export type CustomerActivityType =
+  | 'note'
+  | 'call'
+  | 'email'
+  | 'sms'
+  | 'site_visit'
+  | 'quote_sent'
+  | 'quote_accepted'
+  | 'job_scheduled'
+  | 'job_completed'
+  | 'invoice_sent'
+  | 'payment_received'
+  | 'nurture_touch'
+  | 'task';
+
+export interface CustomerActivityEvent {
+  id: string;
+  clientId: string;
+  type: CustomerActivityType;
+  title: string;
+  description?: string;
+  occurredAt: string;
+  actor?: string;
+  channel?: 'email' | 'sms' | 'call' | 'system';
+  relatedQuoteId?: string;
+  relatedJobId?: string;
+  relatedInvoiceId?: string;
+  tags?: Tag[];
+  context?: string;
+}
+
+export type SegmentField =
+  | 'zip'
+  | 'city'
+  | 'state'
+  | 'tag'
+  | 'service'
+  | 'status'
+  | 'species'
+  | 'lifetimeValue'
+  | 'lastInteraction'
+  | 'clientType';
+
+export interface SegmentCriterion {
+  id: string;
+  field: SegmentField;
+  operator: 'equals' | 'contains' | 'in' | 'gte' | 'lte' | 'between' | 'before' | 'after';
+  value: string | number | string[] | { min?: number; max?: number };
+  label?: string;
+}
+
+export interface CustomerSegment {
+  id: string;
+  name: string;
+  description?: string;
+  criteria: SegmentCriterion[];
+  audienceCount: number;
+  lastRefreshed?: string;
+  sampleTags?: string[];
+}
+
+export interface EmailCampaignSend {
+  id: string;
+  subject: string;
+  body: string;
+  audienceSegmentId: string;
+  status: 'draft' | 'sending' | 'sent';
+  scheduledAt?: string;
+  completedAt?: string;
+}
+
+export interface NurtureStep {
+  id: string;
+  delayDays: number;
+  channel: 'email' | 'sms' | 'task';
+  templateName: string;
+  subject?: string;
+  body?: string;
+}
+
+export interface NurtureSequence {
+  id: string;
+  name: string;
+  audienceSegmentId?: string;
+  steps: NurtureStep[];
+  status: 'draft' | 'active' | 'paused';
+  stats?: { deliveries: number; opens: number; clicks: number; replies: number; conversions: number };
+}
+
+export interface WebLeadFormField {
+  name: string;
+  label: string;
+  type?: 'text' | 'email' | 'phone' | 'textarea' | 'select';
+  required?: boolean;
+  options?: string[];
+}
+
+export interface WebLeadFormConfig {
+  id: string;
+  name: string;
+  embedToken?: string;
+  destinationEmail?: string;
+  successMessage?: string;
+  fields: WebLeadFormField[];
+  createdAt?: string;
+}
+
 export interface QuotePricingOption {
   id: string;
   quoteId: string;
@@ -226,6 +333,24 @@ export interface JobHazardAnalysis {
     analysis_timestamp: string;
 }
 
+export interface CrewNote {
+  id: string;
+  author: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface SafetyChecklist {
+  eyeProtection: boolean;
+  helmet: boolean;
+  harnessUsed: boolean;
+  communicationsChecked: boolean;
+  utilitiesLocated: boolean;
+  weatherClear?: boolean;
+  tailgateBriefingAt?: string;
+  notes?: string;
+}
+
 export interface JobCost {
     labor: number;
     equipment: number;
@@ -249,6 +374,8 @@ export interface Job {
   clockOutCoordinates?: { lat: number; lng: number; };
   jha?: JobHazardAnalysis;
   jhaAcknowledgedAt?: string;
+  crewNotes?: CrewNote[];
+  safetyChecklist?: SafetyChecklist;
   costs?: JobCost;
   messages?: PortalMessage[];
   jobLocation?: string;
@@ -1174,4 +1301,20 @@ export interface JobForm {
   createdAt: string;
   updatedAt: string;
   template?: FormTemplate;
+}
+
+export type CrewOfflineActionType =
+  | 'status_update'
+  | 'clock_event'
+  | 'photo_upload'
+  | 'note'
+  | 'checklist';
+
+export interface CrewPendingAction {
+  id: string;
+  jobId: string;
+  type: CrewOfflineActionType;
+  description: string;
+  payload: Partial<Job>;
+  createdAt: string;
 }

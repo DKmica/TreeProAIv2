@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Job, JobHazardAnalysis } from '../../types';
+import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
@@ -12,6 +12,18 @@ import ExclamationTriangleIcon from '../../components/icons/ExclamationTriangleI
 import ShieldCheckIcon from '../../components/icons/ShieldCheckIcon';
 import { useJobsQuery, useQuotesQuery, useClientsQuery } from '../../hooks/useDataQueries';
 import * as api from '../../services/apiService';
+import { useCrewSync } from '../../contexts/CrewSyncContext';
+
+const defaultChecklist: SafetyChecklist = {
+  eyeProtection: false,
+  helmet: false,
+  harnessUsed: false,
+  communicationsChecked: false,
+  utilitiesLocated: false,
+  weatherClear: true,
+  tailgateBriefingAt: undefined,
+  notes: '',
+};
 
 const CrewJobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -21,15 +33,40 @@ const CrewJobDetail: React.FC = () => {
   const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
   const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
   const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
-  
+
+  const { isOnline, queueJobUpdate, jobPatches, pendingActions, syncPendingActions, syncing } = useCrewSync();
+
   const [isClocking, setIsClocking] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isGeneratingJha, setIsGeneratingJha] = useState(false);
   const [jhaError, setJhaError] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [checklistDraft, setChecklistDraft] = useState<SafetyChecklist>(defaultChecklist);
 
   const job = useMemo(() => jobs.find(j => j.id === jobId), [jobs, jobId]);
-  const quote = useMemo(() => quotes.find(q => q.id === job?.quoteId), [quotes, job]);
-  const customer = useMemo(() => customers.find(c => c.name === job?.customerName), [customers, job]);
+  const mergedJob = useMemo(() => {
+    if (!job) return undefined;
+    const patch = jobPatches[job.id];
+    if (!patch) return job;
+    return {
+      ...job,
+      ...patch,
+      photos: patch.photos ?? job.photos,
+      crewNotes: patch.crewNotes ?? job.crewNotes,
+      safetyChecklist: patch.safetyChecklist ?? job.safetyChecklist,
+    };
+  }, [job, jobPatches]);
+  const quote = useMemo(() => quotes.find(q => q.id === mergedJob?.quoteId), [quotes, mergedJob]);
+  const customer = useMemo(() => customers.find(c => c.name === mergedJob?.customerName), [customers, mergedJob]);
+  const pendingForJob = useMemo(() => pendingActions.filter(action => action.jobId === jobId), [pendingActions, jobId]);
+
+  useEffect(() => {
+    if (mergedJob?.safetyChecklist) {
+      setChecklistDraft({ ...defaultChecklist, ...mergedJob.safetyChecklist });
+    } else {
+      setChecklistDraft(defaultChecklist);
+    }
+  }, [mergedJob?.safetyChecklist]);
 
   const isLoading = jobsLoading || quotesLoading || customersLoading;
 
@@ -54,26 +91,36 @@ const CrewJobDetail: React.FC = () => {
     );
   }
 
-  const isJhaAcknowledged = Boolean(job.jhaAcknowledgedAt);
-  const isJhaRequired = job.jhaRequired ?? false;
-  const isJhaMissing = isJhaRequired && !job.jha;
+  const isJhaAcknowledged = Boolean(mergedJob?.jhaAcknowledgedAt);
+  const isJhaRequired = mergedJob?.jhaRequired ?? false;
+  const isJhaMissing = isJhaRequired && !mergedJob?.jha;
 
-  const handleStatusUpdate = async (updates: Partial<Job>) => {
+  const submitJobUpdate = async (
+    updates: Partial<Job>,
+    type: CrewPendingAction['type'],
+    description: string
+  ) => {
+    if (!job) return;
+
+    const patch = { ...updates, updatedAt: new Date().toISOString() };
+
     try {
-      await api.jobService.update(job.id, updates);
+      if (!isOnline) throw new Error('Offline mode — queueing update');
+      await api.jobService.update(job.id, patch);
       refetchJobs();
     } catch (error) {
-      console.error('Failed to update job:', error);
+      console.warn('Queuing offline job update', error);
+      queueJobUpdate(job.id, patch, type, description);
     }
   };
 
   const handleAcknowledgeJha = () => {
-    if (!job.jha) {
+    if (!mergedJob?.jha) {
       setJhaError('Generate a Job Hazard Analysis before acknowledging.');
       return;
     }
 
-    handleStatusUpdate({ jhaAcknowledgedAt: new Date().toISOString() });
+    submitJobUpdate({ jhaAcknowledgedAt: new Date().toISOString() }, 'checklist', 'JHA acknowledged by crew');
   };
 
   const getCurrentLocation = (): Promise<{ lat: number; lng: number }> => {
@@ -114,18 +161,18 @@ const CrewJobDetail: React.FC = () => {
     setIsClocking(true);
     try {
         const location = await getCurrentLocation();
-        
-        if (!job.workStartedAt) {
-            handleStatusUpdate({ 
-                workStartedAt: new Date().toISOString(), 
+
+        if (!mergedJob?.workStartedAt) {
+            submitJobUpdate({
+                workStartedAt: new Date().toISOString(),
                 status: 'In Progress',
-                clockInCoordinates: location 
-            });
-        } else if (!job.workEndedAt) {
-            handleStatusUpdate({ 
+                clockInCoordinates: location
+            }, 'clock_event', 'Clock in recorded');
+        } else if (!mergedJob.workEndedAt) {
+            submitJobUpdate({
                 workEndedAt: new Date().toISOString(),
                 clockOutCoordinates: location
-            });
+            }, 'clock_event', 'Clock out recorded');
         }
     } catch (error: any) {
         setLocationError(error.message);
@@ -162,7 +209,7 @@ const CrewJobDetail: React.FC = () => {
   }
 
   const handleGenerateJHA = async () => {
-    if (!job.photos || job.photos.length === 0) {
+    if (!mergedJob?.photos || mergedJob.photos.length === 0) {
       setJhaError("Please upload at least one photo of the job site first.");
       return;
     }
@@ -172,12 +219,12 @@ const CrewJobDetail: React.FC = () => {
 
     try {
         const imageParts = await Promise.all(
-            job.photos.map(url => blobUrlToBase64(url))
+            (mergedJob.photos || []).map(url => blobUrlToBase64(url))
         );
 
         const servicesText = services.map(s => s.description).join(', ');
         const result = await generateJobHazardAnalysis(imageParts, servicesText);
-        handleStatusUpdate({ jha: result });
+        submitJobUpdate({ jha: result }, 'checklist', 'Job hazard analysis generated');
 
     } catch (error: any) {
         setJhaError(error.message || "An unknown error occurred.");
@@ -190,16 +237,38 @@ const CrewJobDetail: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newPhotoUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file as Blob));
-      const existingPhotos = job.photos || [];
-      handleStatusUpdate({ photos: [...existingPhotos, ...newPhotoUrls] });
+      const existingPhotos = mergedJob?.photos || [];
+      submitJobUpdate({ photos: [...existingPhotos, ...newPhotoUrls] }, 'photo_upload', 'Photos captured on device');
       e.target.value = '';
     }
   };
-  
+
   const handleMarkComplete = () => {
     if (window.confirm('Are you sure you want to mark this job as complete?')) {
-      handleStatusUpdate({ status: 'Completed', workEndedAt: job.workEndedAt || new Date().toISOString() });
+      submitJobUpdate({ status: 'Completed', workEndedAt: mergedJob?.workEndedAt || new Date().toISOString() }, 'status_update', 'Job marked complete');
       navigate('/crew');
+    }
+  };
+
+  const handleAddNote = () => {
+    if (!mergedJob || !noteText.trim()) return;
+    const newNote: CrewNote = {
+      id: `local-${Date.now()}`,
+      author: 'You',
+      message: noteText.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedNotes = [...(mergedJob.crewNotes ?? []), newNote];
+    submitJobUpdate({ crewNotes: updatedNotes }, 'note', 'Crew note captured');
+    setNoteText('');
+  };
+
+  const handleChecklistChange = (field: keyof SafetyChecklist, value: string | boolean) => {
+    const updated: SafetyChecklist = { ...checklistDraft, [field]: value };
+    setChecklistDraft(updated);
+    if (mergedJob) {
+      submitJobUpdate({ safetyChecklist: updated }, 'checklist', 'Safety checklist updated');
     }
   };
 
@@ -210,10 +279,10 @@ const CrewJobDetail: React.FC = () => {
   if (isClocking) {
       clockButtonText = 'Getting Location...';
       clockButtonClasses = "bg-brand-gray-400 cursor-wait";
-  } else if (job.workStartedAt && !job.workEndedAt) {
+  } else if (mergedJob?.workStartedAt && !mergedJob.workEndedAt) {
     clockButtonText = 'Clock Out';
     clockButtonClasses = "bg-yellow-500 hover:bg-yellow-600";
-  } else if (job.workStartedAt && job.workEndedAt) {
+  } else if (mergedJob?.workStartedAt && mergedJob.workEndedAt) {
     clockButtonText = 'Work Logged';
     clockButtonDisabled = true;
     clockButtonClasses = "bg-brand-gray-400 cursor-not-allowed";
@@ -232,8 +301,8 @@ const CrewJobDetail: React.FC = () => {
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 sm:p-6">
-          <h1 className="text-2xl font-bold text-brand-gray-900">{job.customerName}</h1>
-          <p className="text-brand-gray-600 mt-1">Job ID: {job.id}</p>
+          <h1 className="text-2xl font-bold text-brand-gray-900">{mergedJob?.customerName}</h1>
+          <p className="text-brand-gray-600 mt-1">Job ID: {mergedJob?.id}</p>
           {customer && (
              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}`} target="_blank" rel="noopener noreferrer" className="mt-2 text-brand-green-600 inline-flex items-center hover:underline">
                 <MapPinIcon className="w-5 h-5 mr-2"/>
@@ -265,7 +334,7 @@ const CrewJobDetail: React.FC = () => {
             <div className="ml-3">
               <h3 className="text-lg font-semibold">Safety Warning: JHA Required</h3>
               <p className="mt-2 text-sm">
-                AI has flagged this job as <strong>{job.riskLevel || 'Medium'} Risk</strong>.
+                AI has flagged this job as <strong>{mergedJob?.riskLevel || 'Medium'} Risk</strong>.
                 A Job Hazard Analysis (JHA) is <strong>mandatory</strong> before work can begin.
               </p>
               <p className="mt-1 text-sm">
@@ -278,11 +347,11 @@ const CrewJobDetail: React.FC = () => {
 
       <div className="mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-brand-gray-800 mb-3">Safety & Compliance Co-pilot</h2>
-        {!job.jha ? (
+        {!mergedJob?.jha ? (
              <div>
-                <button 
-                    onClick={handleGenerateJHA} 
-                    disabled={!job.photos || job.photos.length === 0 || isGeneratingJha}
+                <button
+                    onClick={handleGenerateJHA}
+                    disabled={!mergedJob?.photos || mergedJob.photos.length === 0 || isGeneratingJha}
                     className={`w-full inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:bg-brand-gray-400 disabled:cursor-not-allowed ${
                       isJhaMissing
                         ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500 animate-pulse'
@@ -292,7 +361,7 @@ const CrewJobDetail: React.FC = () => {
                     {isGeneratingJha ? <SpinnerIcon className="h-5 w-5 mr-2"/> :  <ShieldCheckIcon className="h-5 w-5 mr-2" />}
                     {isGeneratingJha ? 'Analyzing Site...' : 'Generate Job Hazard Analysis'}
                 </button>
-                {(!job.photos || job.photos.length === 0) && <p className="text-xs text-center mt-2 text-brand-gray-500">Please upload job photos to enable analysis.</p>}
+                {(!mergedJob?.photos || mergedJob.photos.length === 0) && <p className="text-xs text-center mt-2 text-brand-gray-500">Please upload job photos to enable analysis.</p>}
                 {jhaError && <p className="mt-2 text-sm text-red-600 text-center">{jhaError}</p>}
             </div>
         ) : (
@@ -303,7 +372,7 @@ const CrewJobDetail: React.FC = () => {
                         Identified Hazards
                     </h3>
                     <ul className="mt-2 list-disc list-inside space-y-1 text-brand-gray-700 text-sm">
-                        {job.jha.identified_hazards.map((hazard, i) => <li key={i}>{hazard}</li>)}
+                        {mergedJob?.jha?.identified_hazards.map((hazard, i) => <li key={i}>{hazard}</li>)}
                     </ul>
                 </div>
                 <div>
@@ -312,7 +381,7 @@ const CrewJobDetail: React.FC = () => {
                         Recommended PPE
                     </h3>
                     <ul className="mt-2 list-disc list-inside space-y-1 text-brand-gray-700 text-sm">
-                        {job.jha.recommended_ppe.map((ppe, i) => <li key={i}>{ppe}</li>)}
+                        {mergedJob?.jha?.recommended_ppe.map((ppe, i) => <li key={i}>{ppe}</li>)}
                     </ul>
                 </div>
                 <div className="rounded-md border border-brand-gray-200 p-3 bg-brand-gray-50">
@@ -328,20 +397,22 @@ const CrewJobDetail: React.FC = () => {
                         >
                             {isJhaAcknowledged ? 'Acknowledged' : 'I Have Read and Acknowledge'}
                         </button>
-                        {isJhaAcknowledged && job.jhaAcknowledgedAt && (
+                        {isJhaAcknowledged && mergedJob?.jhaAcknowledgedAt && (
                             <p className="text-xs text-brand-gray-500">
-                                Acknowledged at {new Date(job.jhaAcknowledgedAt).toLocaleTimeString()}
+                                Acknowledged at {new Date(mergedJob.jhaAcknowledgedAt).toLocaleTimeString()}
                             </p>
                         )}
                     </div>
                 </div>
-                <p className="text-xs text-brand-gray-400 text-right">Analysis generated at {new Date(job.jha.analysis_timestamp).toLocaleTimeString()}</p>
+                {mergedJob?.jha?.analysis_timestamp && (
+                  <p className="text-xs text-brand-gray-400 text-right">Analysis generated at {new Date(mergedJob.jha.analysis_timestamp).toLocaleTimeString()}</p>
+                )}
             </div>
         )}
 
       </div>
       
-      {(job.workStartedAt || locationError) && (
+      {(mergedJob?.workStartedAt || locationError) && (
         <div className="mt-6 bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-brand-gray-800 mb-3">Work Log</h2>
             {locationError && (
@@ -351,13 +422,13 @@ const CrewJobDetail: React.FC = () => {
                 </div>
             )}
             <div className="space-y-3">
-                {job.workStartedAt && (
+                {mergedJob?.workStartedAt && (
                     <div className="flex items-start">
                         <ClockIcon className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0"/>
                         <div>
-                            <p className="font-semibold text-brand-gray-800">Clocked In: {new Date(job.workStartedAt).toLocaleTimeString()}</p>
-                            {job.clockInCoordinates && (
-                                <a href={`https://www.google.com/maps?q=${job.clockInCoordinates.lat},${job.clockInCoordinates.lng}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-green-600 hover:underline inline-flex items-center">
+                            <p className="font-semibold text-brand-gray-800">Clocked In: {new Date(mergedJob.workStartedAt).toLocaleTimeString()}</p>
+                            {mergedJob.clockInCoordinates && (
+                                <a href={`https://www.google.com/maps?q=${mergedJob.clockInCoordinates.lat},${mergedJob.clockInCoordinates.lng}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-green-600 hover:underline inline-flex items-center">
                                     <MapPinIcon className="w-3 h-3 mr-1"/>
                                     View Location
                                 </a>
@@ -365,13 +436,13 @@ const CrewJobDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
-                {job.workEndedAt && (
+                {mergedJob?.workEndedAt && (
                      <div className="flex items-start">
                         <ClockIcon className="w-5 h-5 text-yellow-500 mr-3 mt-0.5 flex-shrink-0"/>
                         <div>
-                            <p className="font-semibold text-brand-gray-800">Clocked Out: {new Date(job.workEndedAt).toLocaleTimeString()}</p>
-                            {job.clockOutCoordinates && (
-                                <a href={`https://www.google.com/maps?q=${job.clockOutCoordinates.lat},${job.clockOutCoordinates.lng}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-green-600 hover:underline inline-flex items-center">
+                            <p className="font-semibold text-brand-gray-800">Clocked Out: {new Date(mergedJob.workEndedAt).toLocaleTimeString()}</p>
+                            {mergedJob.clockOutCoordinates && (
+                                <a href={`https://www.google.com/maps?q=${mergedJob.clockOutCoordinates.lat},${mergedJob.clockOutCoordinates.lng}`} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-green-600 hover:underline inline-flex items-center">
                                      <MapPinIcon className="w-3 h-3 mr-1"/>
                                     View Location
                                 </a>
@@ -383,6 +454,114 @@ const CrewJobDetail: React.FC = () => {
         </div>
       )}
 
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-brand-gray-800">Crew Notes & Offline Trail</h2>
+            {pendingForJob.length > 0 && (
+              <span className="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-1">
+                Pending sync: {pendingForJob.length}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-brand-gray-600">Capture site notes, customer requests, and time stamps. Notes save locally when offline and sync automatically.</p>
+          <div className="space-y-2">
+            <textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-brand-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500"
+              placeholder="Add a quick note for this job"
+            />
+            <div className="flex items-center justify-between text-xs text-brand-gray-500">
+              <span>{isOnline ? 'Online' : 'Offline'} — notes are queued if the network drops</span>
+              <button
+                onClick={handleAddNote}
+                disabled={!noteText.trim()}
+                className="inline-flex items-center rounded-md bg-brand-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-brand-green-700 disabled:bg-brand-gray-300"
+              >
+                Save note
+              </button>
+            </div>
+          </div>
+          <div className="border-t border-brand-gray-100 pt-3 space-y-2 max-h-48 overflow-y-auto">
+            {(mergedJob?.crewNotes ?? []).length === 0 && (
+              <p className="text-sm text-brand-gray-500">No notes yet.</p>
+            )}
+            {mergedJob?.crewNotes?.map((note) => (
+              <div key={note.id} className="rounded-md border border-brand-gray-100 p-2">
+                <div className="flex items-center justify-between text-xs text-brand-gray-500">
+                  <span className="font-semibold text-brand-gray-700">{note.author}</span>
+                  <span>{new Date(note.createdAt).toLocaleTimeString()}</span>
+                </div>
+                <p className="text-sm text-brand-gray-800 mt-1">{note.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-brand-gray-800">Safety Checklist</h2>
+            <button
+              onClick={syncPendingActions}
+              disabled={!isOnline || syncing || pendingForJob.length === 0}
+              className="inline-flex items-center rounded-md border border-brand-gray-200 px-3 py-1.5 text-xs font-semibold text-brand-gray-700 hover:bg-brand-gray-50 disabled:text-brand-gray-400"
+            >
+              {syncing ? 'Syncing…' : 'Sync job data'}
+            </button>
+          </div>
+          <p className="text-sm text-brand-gray-600">Log PPE and site readiness. Updates persist offline and sync back when connectivity returns.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-brand-gray-800">
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={checklistDraft.eyeProtection} onChange={(e) => handleChecklistChange('eyeProtection', e.target.checked)} />
+              Eye/face protection
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={checklistDraft.helmet} onChange={(e) => handleChecklistChange('helmet', e.target.checked)} />
+              Helmet secured
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={checklistDraft.harnessUsed} onChange={(e) => handleChecklistChange('harnessUsed', e.target.checked)} />
+              Harness/anchor checked
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={checklistDraft.communicationsChecked} onChange={(e) => handleChecklistChange('communicationsChecked', e.target.checked)} />
+              Radios/phones tested
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={checklistDraft.utilitiesLocated} onChange={(e) => handleChecklistChange('utilitiesLocated', e.target.checked)} />
+              Utilities located/marked
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={Boolean(checklistDraft.weatherClear)} onChange={(e) => handleChecklistChange('weatherClear', e.target.checked)} />
+              Weather clear to work
+            </label>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <label className="block">
+              <span className="text-brand-gray-700 font-semibold text-xs">Tailgate briefing</span>
+              <input
+                type="time"
+                value={checklistDraft.tailgateBriefingAt || ''}
+                onChange={(e) => handleChecklistChange('tailgateBriefingAt', e.target.value)}
+                className="mt-1 w-full rounded-md border border-brand-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500"
+              />
+            </label>
+            <label className="block">
+              <span className="text-brand-gray-700 font-semibold text-xs">Notes</span>
+              <input
+                type="text"
+                value={checklistDraft.notes || ''}
+                onChange={(e) => handleChecklistChange('notes', e.target.value)}
+                className="mt-1 w-full rounded-md border border-brand-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500"
+                placeholder="Line clearance, wildlife, customer requests"
+              />
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div className="mt-6 space-y-4">
         <h2 className="text-xl font-bold text-brand-gray-900">Job Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -391,7 +570,7 @@ const CrewJobDetail: React.FC = () => {
                     {isClocking ? <SpinnerIcon className="w-6 h-6 mr-2" /> : <ClockIcon className="w-6 h-6 mr-2" />}
                     {clockButtonText}
                 </button>
-                {!isJhaAcknowledged && !job.workStartedAt && (
+                {!isJhaAcknowledged && !mergedJob?.workStartedAt && (
                     <p className="text-xs text-brand-gray-600 text-center">
                         Review and acknowledge the Job Hazard Analysis to unlock clock-in.
                     </p>
@@ -402,18 +581,18 @@ const CrewJobDetail: React.FC = () => {
                 Upload Photos
             </button>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple accept="image/*" capture="environment" className="hidden" />
-            <button onClick={handleMarkComplete} disabled={job.status === 'Completed'} className="flex items-center justify-center p-4 bg-brand-green-600 text-white font-bold rounded-lg shadow-md hover:bg-brand-green-700 transition-transform active:scale-95 disabled:bg-brand-gray-400 disabled:cursor-not-allowed">
+            <button onClick={handleMarkComplete} disabled={mergedJob?.status === 'Completed'} className="flex items-center justify-center p-4 bg-brand-green-600 text-white font-bold rounded-lg shadow-md hover:bg-brand-green-700 transition-transform active:scale-95 disabled:bg-brand-gray-400 disabled:cursor-not-allowed">
                 <CheckCircleIcon className="w-6 h-6 mr-2" />
                 Mark as Complete
             </button>
         </div>
       </div>
 
-      {job.photos && job.photos.length > 0 && (
+      {mergedJob?.photos && mergedJob.photos.length > 0 && (
           <div className="mt-6">
             <h2 className="text-xl font-bold text-brand-gray-900">Job Photos</h2>
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {job.photos.map((photoUrl, index) => (
+                {mergedJob.photos.map((photoUrl, index) => (
                     <a key={index} href={photoUrl} target="_blank" rel="noopener noreferrer">
                         <img src={photoUrl} alt={`Job photo ${index + 1}`} className="aspect-square w-full object-cover rounded-lg shadow-md hover:ring-2 hover:ring-brand-green-500 hover:ring-offset-2 transition-all" />
                     </a>
