@@ -162,76 +162,7 @@ const CRM: React.FC = () => {
     }
   }, [clientCategoryFilter, isLoading]);
 
-  const filteredClients = useMemo(() => {
-    const base = clients.filter((client) => matchesAdvancedFilters({
-      zip: client.billingZip,
-      city: client.billingCity,
-      state: client.billingState,
-      tags: (client as any)?.tags?.map((t: any) => t.name) ?? [],
-      services: client.notes ? [client.notes] : [],
-      species: [],
-      status: client.status,
-      clientType: client.clientType,
-      lifetimeValue: client.lifetimeValue,
-      lastInteraction: client.updatedAt,
-    }));
-
-    if (!searchTerm) return base;
-    const term = searchTerm.toLowerCase();
-    return base.filter(
-      (client) =>
-        client.companyName?.toLowerCase().includes(term) ||
-        client.firstName?.toLowerCase().includes(term) ||
-        client.lastName?.toLowerCase().includes(term) ||
-        client.primaryEmail?.toLowerCase().includes(term) ||
-        client.primaryPhone?.toLowerCase().includes(term)
-      );
-    }, [clients, searchTerm, zipFilter, serviceFilter, tagFilters, speciesFilter, activeSegment]);
-
-  const isLeadStalled = (lead: Lead) => {
-    const now = new Date();
-    const lastContact = lead.lastContactDate ? new Date(lead.lastContactDate) : null;
-    const nextFollowup = lead.nextFollowupDate ? new Date(lead.nextFollowupDate) : null;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    if (nextFollowup && nextFollowup < now) return true;
-    if (!nextFollowup && lastContact && lastContact < sevenDaysAgo) return true;
-    if (!nextFollowup && !lastContact) return true;
-    return false;
-  };
-
-  const leadQueueFilter = (lead: Lead, queue: typeof activeLeadQueue) => {
-    switch (queue) {
-      case 'stalled':
-        return isLeadStalled(lead);
-      case 'awaiting_response':
-        return lead.status === 'Contacted' && !lead.nextFollowupDate;
-      case 'high_value':
-        return (lead.estimatedValue || 0) >= 10000;
-      default:
-        return true;
-    }
-  };
-
-  const leadQueueCounts = useMemo(() => {
-    return {
-      all: leads.length,
-      stalled: leads.filter((lead) => leadQueueFilter(lead, 'stalled')).length,
-      awaiting_response: leads.filter((lead) => leadQueueFilter(lead, 'awaiting_response')).length,
-      high_value: leads.filter((lead) => leadQueueFilter(lead, 'high_value')).length,
-    };
-  }, [leads]);
-
-  const queueFilteredLeads = useMemo(() => {
-    return leads.filter((lead) => leadQueueFilter(lead, activeLeadQueue));
-  }, [leads, activeLeadQueue]);
-
   const activeSegment = useMemo(() => segments.find((s) => s.id === activeSegmentId) || null, [segments, activeSegmentId]);
-
-  const toggleTagFilter = (tagName: string) => {
-    setTagFilters((prev) => prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]);
-  };
 
   const evaluateSegmentCriteria = (segment: CustomerSegment | null, context: { zip?: string; city?: string; state?: string; tags?: string[]; services?: string[]; species?: string[]; status?: string; clientType?: string; lifetimeValue?: number; lastInteraction?: string; }) => {
     if (!segment) return true;
@@ -301,6 +232,75 @@ const CRM: React.FC = () => {
     }
 
     return true;
+  };
+
+  const filteredClients = useMemo(() => {
+    const base = clients.filter((client) => matchesAdvancedFilters({
+      zip: client.billingZip,
+      city: client.billingCity,
+      state: client.billingState,
+      tags: (client as any)?.tags?.map((t: any) => t.name) ?? [],
+      services: client.notes ? [client.notes] : [],
+      species: [],
+      status: client.status,
+      clientType: client.clientType,
+      lifetimeValue: client.lifetimeValue,
+      lastInteraction: client.updatedAt,
+    }));
+
+    if (!searchTerm) return base;
+    const term = searchTerm.toLowerCase();
+    return base.filter(
+      (client) =>
+        client.companyName?.toLowerCase().includes(term) ||
+        client.firstName?.toLowerCase().includes(term) ||
+        client.lastName?.toLowerCase().includes(term) ||
+        client.primaryEmail?.toLowerCase().includes(term) ||
+        client.primaryPhone?.toLowerCase().includes(term)
+      );
+    }, [clients, searchTerm, zipFilter, serviceFilter, tagFilters, speciesFilter, activeSegment]);
+
+  const isLeadStalled = (lead: Lead) => {
+    const now = new Date();
+    const lastContact = lead.lastContactDate ? new Date(lead.lastContactDate) : null;
+    const nextFollowup = lead.nextFollowupDate ? new Date(lead.nextFollowupDate) : null;
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    if (nextFollowup && nextFollowup < now) return true;
+    if (!nextFollowup && lastContact && lastContact < sevenDaysAgo) return true;
+    if (!nextFollowup && !lastContact) return true;
+    return false;
+  };
+
+  const leadQueueFilter = (lead: Lead, queue: typeof activeLeadQueue) => {
+    switch (queue) {
+      case 'stalled':
+        return isLeadStalled(lead);
+      case 'awaiting_response':
+        return lead.status === 'Contacted' && !lead.nextFollowupDate;
+      case 'high_value':
+        return (lead.estimatedValue || 0) >= 10000;
+      default:
+        return true;
+    }
+  };
+
+  const leadQueueCounts = useMemo(() => {
+    return {
+      all: leads.length,
+      stalled: leads.filter((lead) => leadQueueFilter(lead, 'stalled')).length,
+      awaiting_response: leads.filter((lead) => leadQueueFilter(lead, 'awaiting_response')).length,
+      high_value: leads.filter((lead) => leadQueueFilter(lead, 'high_value')).length,
+    };
+  }, [leads]);
+
+  const queueFilteredLeads = useMemo(() => {
+    return leads.filter((lead) => leadQueueFilter(lead, activeLeadQueue));
+  }, [leads, activeLeadQueue]);
+
+  const toggleTagFilter = (tagName: string) => {
+    setTagFilters((prev) => prev.includes(tagName) ? prev.filter((t) => t !== tagName) : [...prev, tagName]);
   };
 
   const filteredLeads = useMemo(() => {
