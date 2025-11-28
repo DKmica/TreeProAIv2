@@ -131,7 +131,8 @@ const GlobalSearchEnhanced: React.FC<GlobalSearchEnhancedProps> = ({
       if (stored) {
         setRecentSearches(JSON.parse(stored));
       }
-    } catch {
+    } catch (error) {
+      console.error('Failed to load recent searches from localStorage:', error);
       setRecentSearches([]);
     }
   }, []);
@@ -146,7 +147,9 @@ const GlobalSearchEnhanced: React.FC<GlobalSearchEnhancedProps> = ({
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(newSearches));
-      } catch {}
+      } catch (error) {
+        console.error('Failed to save recent searches to localStorage:', error);
+      }
     }
   }, [recentSearches]);
 
@@ -287,7 +290,9 @@ const GlobalSearchEnhanced: React.FC<GlobalSearchEnhancedProps> = ({
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem(RECENT_SEARCHES_KEY);
-      } catch {}
+      } catch (error) {
+        console.error('Failed to clear recent searches from localStorage:', error);
+      }
     }
   };
 

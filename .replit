@@ -47,6 +47,7 @@ outputType = "console"
 
 [[ports]]
 localPort = 3001
+externalPort = 8081
 
 [[ports]]
 localPort = 5000
@@ -54,7 +55,7 @@ externalPort = 80
 
 [[ports]]
 localPort = 33217
-externalPort = 5000
+externalPort = 9000
 
 [[ports]]
 localPort = 34437
