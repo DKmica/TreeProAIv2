@@ -1,4 +1,4 @@
-import { onCLS, onFID, onLCP, onINP, onTTFB, Metric } from 'web-vitals';
+import { onCLS, onLCP, onINP, onTTFB, type Metric } from 'web-vitals';
 import { recordMetric, recordEvent } from './telemetry';
 
 function logMetric(metric: Metric): void {
@@ -12,7 +12,6 @@ export function startPerformanceMonitoring(): void {
   if (typeof window === 'undefined') return;
 
   onCLS(logMetric);
-  onFID(logMetric);
   onLCP(logMetric);
   onINP(logMetric);
   onTTFB(logMetric);
