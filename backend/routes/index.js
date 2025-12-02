@@ -19,6 +19,9 @@ const templatesRouter = require('./templates');
 const schedulingRouter = require('./scheduling');
 const quotingRouter = require('./quoting');
 const telemetryRouter = require('./telemetry');
+const segmentsRouter = require('./segments');
+const integrationsRouter = require('./integrations');
+const aiRouter = require('./ai');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -44,6 +47,9 @@ function buildApiRouter() {
   router.use(schedulingRouter);
   router.use(quotingRouter);
   router.use(telemetryRouter);
+  router.use(segmentsRouter);
+  router.use(integrationsRouter);
+  router.use(aiRouter);
   return router;
 }
 

@@ -24,9 +24,6 @@ import WorkflowEditor from '../components/WorkflowEditor';
 import { useToast } from '../components/ui/Toast';
 import AutomationLogDrawer from '../components/AutomationLogDrawer';
 import AiInsightsPanel from '../components/AiInsightsPanel';
-import WorkflowEditor from '../components/WorkflowEditor';
-import { useToast } from '../components/ui/Toast';
-import AutomationLogDrawer from '../components/AutomationLogDrawer';
 
 const Workflows: React.FC = () => {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
@@ -301,7 +298,7 @@ const Workflows: React.FC = () => {
       skipped: 'bg-amber-100 text-amber-700',
     };
 
-    const icons: Record<string, JSX.Element> = {
+    const icons: Record<string, React.ReactNode> = {
       completed: <CheckCircle className="w-3.5 h-3.5" />,
       failed: <XCircle className="w-3.5 h-3.5" />,
       running: <Loader2 className="w-3.5 h-3.5 animate-spin" />,
