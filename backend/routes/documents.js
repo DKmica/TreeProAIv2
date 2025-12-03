@@ -93,30 +93,55 @@ const contractExtractionSchema = {
 async function extractContractData(imageBuffer, mimeType) {
   const base64Image = imageBuffer.toString('base64');
   
-  const prompt = `You are an expert at reading handwritten service contracts for tree service companies. 
-Analyze this image of a service contract and extract all the information you can read.
+  const prompt = `You are an OCR expert specializing in reading handwritten and printed documents, especially service contracts for tree service and landscaping companies.
 
-Extract the following fields:
-1. Customer Information: name, address (full address with city, state, zip), phone number, email
-2. Work Description: Everything written in the "Work to be performed" section
-3. Financial Details: Total cost of project, deposit amount, balance due
-4. Dates: Start date, completion date, scheduled time
-5. Signatures: Names and roles of signers
-6. Tree Species: Any tree types mentioned (oak, pine, sweetgum, etc.)
-7. Services: Type of work (removal, trimming, pruning, stump grinding, etc.)
+TASK: Carefully analyze this image and extract ALL visible text and information. This could be:
+- A handwritten service contract or estimate
+- A printed invoice or work order  
+- A business card with customer info
+- Any document with customer and job details
 
-IMPORTANT:
-- For phone numbers, format as XXX-XXX-XXXX
-- For currency, extract just the numeric value (e.g., 2600.00 not "$2,600.00")
-- For dates, try to convert to YYYY-MM-DD format when possible
-- If you cannot read something clearly, make your best guess and note low confidence
-- Read carefully - handwriting may be difficult to decipher
+EXTRACT THESE FIELDS (use empty string "" if not found, don't skip fields):
 
-Return the extracted data as structured JSON.`;
+{
+  "customer": {
+    "name": "Full customer name (first and last)",
+    "address": "Complete street address including city, state, zip",
+    "phone": "Phone number in format XXX-XXX-XXXX",
+    "email": "Email address if visible"
+  },
+  "work_description": "All text describing the work to be done - be thorough and include all details",
+  "totals": {
+    "total": 0,
+    "deposit": 0,
+    "balance": 0
+  },
+  "dates": {
+    "start_date": "YYYY-MM-DD or null",
+    "completion_date": "YYYY-MM-DD or null", 
+    "scheduled_time": "Time or day if mentioned"
+  },
+  "signatures": [],
+  "tree_species": ["list", "of", "tree", "types"],
+  "services": ["list", "of", "services"]
+}
+
+CRITICAL INSTRUCTIONS:
+1. READ THE IMAGE CAREFULLY - Look at every part of the document
+2. Handwriting can be messy - make your best interpretation
+3. For money amounts: extract the NUMBER only (2600 not "$2,600.00")
+4. For phone: format as XXX-XXX-XXXX
+5. Look for: names, addresses, phone numbers, prices, dates, descriptions of work
+6. Common tree services: removal, trimming, pruning, stump grinding, hauling, cleanup
+7. Common tree types: oak, pine, maple, sweetgum, cedar, elm, ash, pecan, magnolia
+
+Return ONLY valid JSON with all fields populated (use "" for missing strings, 0 for missing numbers, [] for missing arrays).`;
 
   if (!ai) {
     throw new Error('Document scanning is not available. Gemini API key is not configured.');
   }
+
+  console.log('[DocumentScanner] Processing image, mimeType:', mimeType, 'size:', imageBuffer.length, 'bytes');
 
   try {
     const response = await ai.models.generateContent({
@@ -146,21 +171,27 @@ Return the extracted data as structured JSON.`;
     } else if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
       responseText = response.candidates[0].content.parts[0].text;
     } else {
+      console.error('[DocumentScanner] No text in Gemini response:', JSON.stringify(response, null, 2).slice(0, 500));
       throw new Error('No text response from Gemini');
     }
 
     responseText = responseText.trim();
+    console.log('[DocumentScanner] Raw Gemini response:', responseText.slice(0, 500));
+    
     const cleanedJson = responseText.replace(/^```json\s*|```$/g, '').trim();
     
     try {
       const rawData = JSON.parse(cleanedJson);
-      return normalizeGeminiResponse(rawData);
+      console.log('[DocumentScanner] Parsed data keys:', Object.keys(rawData));
+      const normalized = normalizeGeminiResponse(rawData);
+      console.log('[DocumentScanner] Normalized - Customer:', normalized.customer?.name, 'Total:', normalized.totals?.total);
+      return normalized;
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', cleanedJson);
+      console.error('[DocumentScanner] Failed to parse Gemini response:', cleanedJson.slice(0, 500));
       throw new Error('Failed to parse AI response as JSON');
     }
   } catch (error) {
-    console.error('Error extracting contract data:', error);
+    console.error('[DocumentScanner] Error extracting contract data:', error.message);
     throw new Error(`Failed to extract contract data: ${error.message}`);
   }
 }
