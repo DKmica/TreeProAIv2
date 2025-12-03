@@ -153,7 +153,8 @@ Return the extracted data as structured JSON.`;
     const cleanedJson = responseText.replace(/^```json\s*|```$/g, '').trim();
     
     try {
-      return JSON.parse(cleanedJson);
+      const rawData = JSON.parse(cleanedJson);
+      return normalizeGeminiResponse(rawData);
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', cleanedJson);
       throw new Error('Failed to parse AI response as JSON');
@@ -162,6 +163,67 @@ Return the extracted data as structured JSON.`;
     console.error('Error extracting contract data:', error);
     throw new Error(`Failed to extract contract data: ${error.message}`);
   }
+}
+
+function normalizeGeminiResponse(raw) {
+  const getNestedValue = (obj, keys) => {
+    for (const key of keys) {
+      const found = Object.keys(obj || {}).find(k => 
+        k.toLowerCase().replace(/[_\s]/g, '') === key.toLowerCase().replace(/[_\s]/g, '')
+      );
+      if (found) return obj[found];
+    }
+    return undefined;
+  };
+
+  const customerInfo = getNestedValue(raw, ['customer', 'Customer Information', 'customer_information', 'customerInfo']) || {};
+  const financialInfo = getNestedValue(raw, ['totals', 'Financial Details', 'financial_details', 'financials']) || {};
+  const dateInfo = getNestedValue(raw, ['dates', 'Dates', 'date_information']) || {};
+  const signatureInfo = getNestedValue(raw, ['signatures', 'Signatures']) || [];
+
+  const extractNumber = (val) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const num = parseFloat(val.replace(/[^0-9.]/g, ''));
+      return isNaN(num) ? 0 : num;
+    }
+    return 0;
+  };
+
+  const normalized = {
+    customer: {
+      name: customerInfo.name || customerInfo['name'] || raw.customer?.name || '',
+      address: customerInfo.address || customerInfo['address'] || raw.customer?.address || '',
+      phone: customerInfo.phone || customerInfo['phone number'] || customerInfo['phone_number'] || raw.customer?.phone || '',
+      email: customerInfo.email || customerInfo['email'] || raw.customer?.email || null
+    },
+    work_description: raw.work_description || raw['Work Description'] || raw['work description'] || 
+                     getNestedValue(raw, ['work_description', 'Work Description', 'workDescription']) || '',
+    totals: {
+      total: extractNumber(financialInfo.total || financialInfo['total cost'] || financialInfo['total_cost'] || raw.totals?.total),
+      deposit: extractNumber(financialInfo.deposit || financialInfo['deposit amount'] || financialInfo['deposit_amount'] || raw.totals?.deposit),
+      balance: extractNumber(financialInfo.balance || financialInfo['balance due'] || financialInfo['balance_due'] || raw.totals?.balance)
+    },
+    dates: {
+      start_date: dateInfo.start_date || dateInfo['start date'] || raw.dates?.start_date || null,
+      completion_date: dateInfo.completion_date || dateInfo['completion date'] || raw.dates?.completion_date || null,
+      scheduled_time: dateInfo.scheduled_time || dateInfo['scheduled time'] || raw.dates?.scheduled_time || null
+    },
+    signatures: Array.isArray(signatureInfo) ? signatureInfo : 
+      Object.entries(signatureInfo || {}).map(([key, val]) => ({
+        name: val?.name || key,
+        role: val?.role || 'unknown',
+        present: val?.present !== false
+      })),
+    tree_species: raw.tree_species || raw['Tree Species'] || raw['tree species'] || [],
+    services: raw.services || raw['Services'] || raw['services'] || []
+  };
+
+  if (normalized.totals.total > 0 && normalized.totals.deposit > 0 && !normalized.totals.balance) {
+    normalized.totals.balance = normalized.totals.total - normalized.totals.deposit;
+  }
+
+  return normalized;
 }
 
 function normalizePhoneNumber(phone) {
