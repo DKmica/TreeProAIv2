@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import DashboardIcon from './icons/DashboardIcon';
 import JobIcon from './icons/JobIcon';
@@ -29,72 +29,29 @@ type NavigationItem = {
   badge?: number | string;
 };
 
-const pinnedNavigation: NavigationItem[] = [
+const navigationItems: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-];
-
-const groupedNavigation: {
-  title: string;
-  items: NavigationItem[];
-  defaultExpanded?: boolean;
-}[] = [
-  {
-    title: 'Sales',
-    defaultExpanded: true,
-    items: [
-      { name: 'CRM', href: '/crm', icon: CustomerIcon },
-      { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
-      { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon },
-      { name: 'Chat', href: '/chat', icon: ChatIcon },
-    ],
-  },
-  {
-    title: 'Work',
-    defaultExpanded: true,
-    items: [
-      { name: 'Jobs', href: '/jobs', icon: JobIcon },
-      { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon },
-      { name: 'Forms', href: '/forms', icon: ClipboardDocumentListIcon },
-      { name: 'Crews', href: '/crews', icon: UsersIcon },
-      { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },
-      { name: 'Employees', href: '/employees', icon: EmployeeIcon },
-      { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
-    ],
-  },
-  {
-    title: 'Finance',
-    defaultExpanded: true,
-    items: [
-      { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
-      { name: 'Profitability', href: '/profitability', icon: DollarIcon },
-      { name: 'Payroll', href: '/payroll', icon: DollarIcon },
-    ],
-  },
-  {
-    title: 'Marketing & AI',
-    defaultExpanded: false,
-    items: [
-      { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
-      { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
-    ],
-  },
-  {
-    title: 'Automation',
-    defaultExpanded: false,
-    items: [
-      { name: 'Workflows', href: '/workflows', icon: AutomationIcon },
-      { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon },
-    ],
-  },
-  {
-    title: 'System',
-    defaultExpanded: false,
-    items: [
-      { name: 'Settings', href: '/settings', icon: CogIcon },
-      { name: 'Exceptions', href: '/exception-queue', icon: ExclamationTriangleIcon },
-    ],
-  },
+  { name: 'CRM', href: '/crm', icon: CustomerIcon },
+  { name: 'Jobs', href: '/jobs', icon: JobIcon },
+  { name: 'Crews', href: '/crews', icon: UsersIcon },
+  { name: 'Employees', href: '/employees', icon: EmployeeIcon },
+  { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },
+  { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
+  { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
+  { name: 'Payroll', href: '/payroll', icon: DollarIcon },
+  { name: 'Profitability', href: '/profitability', icon: DollarIcon },
+  { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
+  { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon },
+  { name: 'Chat', href: '/chat', icon: ChatIcon },
+  { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
+  { name: 'Workflows', href: '/workflows', icon: AutomationIcon },
+  { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon },
+  { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon },
+  { name: 'Forms', href: '/forms', icon: ClipboardDocumentListIcon },
+  { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
+  { name: 'Settings', href: '/settings', icon: CogIcon },
+  { name: 'Exceptions', href: '/exception-queue', icon: ExclamationTriangleIcon },
 ];
 
 interface SidebarProps {
@@ -105,13 +62,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
   const { counts } = useBadgeCounts();
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    groupedNavigation.forEach(group => {
-      initial[group.title] = group.defaultExpanded ?? true;
-    });
-    return initial;
-  });
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navigationWithBadges = useMemo(() => {
@@ -123,35 +73,11 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       '/chat': counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
     };
 
-    const applyBadges = (items: NavigationItem[]): NavigationItem[] => 
-      items.map(item => ({
-        ...item,
-        badge: badgeMap[item.href],
-      }));
-
-    return {
-      pinned: applyBadges(pinnedNavigation),
-      grouped: groupedNavigation.map(group => ({
-        ...group,
-        items: applyBadges(group.items),
-      })),
-    };
-  }, [counts]);
-
-  const toggleGroup = useCallback((title: string) => {
-    setExpandedGroups((prev) => ({
-      ...prev,
-      [title]: !prev[title],
+    return navigationItems.map(item => ({
+      ...item,
+      badge: badgeMap[item.href],
     }));
-  }, []);
-
-  const sectionedNavigation = useMemo(
-    () => [
-      { title: 'Quick Access', items: navigationWithBadges.pinned, defaultExpanded: true },
-      ...navigationWithBadges.grouped,
-    ],
-    [navigationWithBadges],
-  );
+  }, [counts]);
 
   const isActiveRoute = useCallback((href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
@@ -197,39 +123,8 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   const NavLinks = ({ collapsed = false }: { collapsed?: boolean }) => (
-    <div className="space-y-6">
-      {sectionedNavigation.map((section) => {
-        const isExpanded = expandedGroups[section.title] ?? true;
-
-        return (
-          <div key={section.title}>
-            {!collapsed && (
-              <button
-                onClick={() => toggleGroup(section.title)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-gray-400 hover:text-brand-gray-200 transition-colors"
-              >
-                <span>{section.title}</span>
-                <svg
-                  className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            )}
-            
-            <div className={`
-              space-y-1 mt-2 overflow-hidden transition-all duration-200
-              ${!collapsed && !isExpanded ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'}
-            `}>
-              {section.items.map((item) => renderNavItem(item, collapsed))}
-            </div>
-          </div>
-        );
-      })}
+    <div className="space-y-1">
+      {navigationWithBadges.map((item) => renderNavItem(item, collapsed))}
     </div>
   );
 
