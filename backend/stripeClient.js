@@ -86,7 +86,7 @@ async function getUncachableStripeClient() {
   }
 
   return new Stripe(credentials.secretKey, {
-    apiVersion: '2025-08-27.basil',
+    apiVersion: '2024-06-20',
   });
 }
 

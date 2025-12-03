@@ -88,6 +88,27 @@ async function calculateAudienceCount(criteria) {
           }
           break;
         case 'lastServiceDate':
+          if (criterion.operator === 'after') {
+            whereConditions.push(`EXISTS (
+              SELECT 1 FROM jobs j
+              JOIN properties p ON j.property_id = p.id
+              WHERE p.client_id = c.id 
+              AND j.completed_at IS NOT NULL 
+              AND j.completed_at >= $${paramIndex}::timestamp
+            )`);
+            params.push(criterion.value);
+            paramIndex++;
+          } else if (criterion.operator === 'before') {
+            whereConditions.push(`NOT EXISTS (
+              SELECT 1 FROM jobs j
+              JOIN properties p ON j.property_id = p.id
+              WHERE p.client_id = c.id 
+              AND j.completed_at IS NOT NULL 
+              AND j.completed_at >= $${paramIndex}::timestamp
+            )`);
+            params.push(criterion.value);
+            paramIndex++;
+          }
           break;
         default:
           break;
@@ -178,12 +199,69 @@ router.get('/segments/:id/clients', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Segment not found' });
     }
 
+    let whereConditions = ['c.deleted_at IS NULL'];
+    const params = [];
+    let paramIndex = 1;
+
+    for (const criterion of segment.criteria) {
+      switch (criterion.field) {
+        case 'lifetimeValue':
+          if (criterion.operator === 'gte') {
+            whereConditions.push(`c.lifetime_value >= $${paramIndex}`);
+            params.push(criterion.value);
+            paramIndex++;
+          } else if (criterion.operator === 'lte') {
+            whereConditions.push(`c.lifetime_value <= $${paramIndex}`);
+            params.push(criterion.value);
+            paramIndex++;
+          }
+          break;
+        case 'clientType':
+          if (criterion.operator === 'equals') {
+            whereConditions.push(`c.client_type = $${paramIndex}`);
+            params.push(criterion.value);
+            paramIndex++;
+          } else if (criterion.operator === 'in' && Array.isArray(criterion.value)) {
+            const placeholders = criterion.value.map((_, i) => `$${paramIndex + i}`).join(', ');
+            whereConditions.push(`c.client_type IN (${placeholders})`);
+            params.push(...criterion.value);
+            paramIndex += criterion.value.length;
+          }
+          break;
+        case 'lastServiceDate':
+          if (criterion.operator === 'after') {
+            whereConditions.push(`EXISTS (
+              SELECT 1 FROM jobs j
+              JOIN properties p ON j.property_id = p.id
+              WHERE p.client_id = c.id 
+              AND j.completed_at IS NOT NULL 
+              AND j.completed_at >= $${paramIndex}::timestamp
+            )`);
+            params.push(criterion.value);
+            paramIndex++;
+          } else if (criterion.operator === 'before') {
+            whereConditions.push(`NOT EXISTS (
+              SELECT 1 FROM jobs j
+              JOIN properties p ON j.property_id = p.id
+              WHERE p.client_id = c.id 
+              AND j.completed_at IS NOT NULL 
+              AND j.completed_at >= $${paramIndex}::timestamp
+            )`);
+            params.push(criterion.value);
+            paramIndex++;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
     const result = await query(`
-      SELECT id, first_name, last_name, company_name, primary_email, client_type, lifetime_value
-      FROM clients
-      WHERE deleted_at IS NULL
+      SELECT c.id, c.first_name, c.last_name, c.company_name, c.primary_email, c.client_type, c.lifetime_value
+      FROM clients c
+      WHERE ${whereConditions.join(' AND ')}
       LIMIT 100
-    `);
+    `, params);
 
     res.json({
       success: true,

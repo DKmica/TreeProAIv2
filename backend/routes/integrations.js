@@ -3,6 +3,17 @@ const router = express.Router();
 
 async function checkStripeConnection() {
   try {
+    const envSecretKey = process.env.STRIPE_SECRET_KEY;
+    const envPublishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+    
+    if (envSecretKey && envPublishableKey) {
+      return {
+        connected: true,
+        accountName: 'Stripe (Environment)',
+        environment: envSecretKey.startsWith('sk_live_') ? 'production' : 'sandbox'
+      };
+    }
+
     const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
     const xReplitToken = process.env.REPL_IDENTITY
       ? 'repl ' + process.env.REPL_IDENTITY
@@ -11,13 +22,16 @@ async function checkStripeConnection() {
         : null;
 
     if (!xReplitToken || !hostname) {
-      return { connected: false, error: 'Missing Replit token or hostname' };
+      return { connected: false, error: 'Stripe not configured' };
     }
 
+    const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
+    const targetEnvironment = isProduction ? 'production' : 'development';
+
     const url = new URL(`https://${hostname}/api/v2/connection`);
-    url.searchParams.set('include_secrets', 'false');
+    url.searchParams.set('include_secrets', 'true');
     url.searchParams.set('connector_names', 'stripe');
-    url.searchParams.set('environment', 'development');
+    url.searchParams.set('environment', targetEnvironment);
 
     const response = await fetch(url.toString(), {
       headers: {
@@ -32,8 +46,8 @@ async function checkStripeConnection() {
     if (connection?.settings?.publishable && connection?.settings?.secret) {
       return {
         connected: true,
-        accountName: 'Stripe Sandbox',
-        environment: 'sandbox'
+        accountName: 'Stripe (Replit)',
+        environment: isProduction ? 'production' : 'sandbox'
       };
     }
 

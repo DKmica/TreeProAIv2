@@ -6,6 +6,32 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 
 **Current Status:** Production-ready foundation with active development. Core CRM, job management, and AI features are fully operational in Phase 2 (Partial).
 
+## Recent Changes
+
+### December 2024 - Bug Fixes and Feature Completion
+
+**Fixed Issues:**
+1. **Workflows Page Error** - Removed duplicate imports in pages/Workflows.tsx that blocked the page from loading
+2. **Missing API Routes** - Created backend routes for:
+   - `/api/segments` - Customer segmentation with audience counts
+   - `/api/integrations/status` - Integration connection status (Stripe, Twilio, SendGrid)
+   - `/api/ai/workflow-recommendations` - AI-powered workflow suggestions
+   - `/api/ai/mode` - Toggle AI automation mode
+3. **Stripe Integration** - Updated stripeClient.js to fetch credentials from Replit connection API with fallback to environment variables; fixed invalid API version
+4. **Customer Segmentation** - Implemented proper date-based filtering for Active/Dormant customer segments using `lastServiceDate` criteria with subqueries against completed jobs
+
+**Integration Status:**
+- Stripe: Supports both Replit connector and environment variable configuration
+- SendGrid (Email): Disabled until SENDGRID_API_KEY is configured
+- Twilio (SMS): Disabled until TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are configured
+
+**Default Segments Available:**
+- High Value Customers (lifetime value >= $5,000)
+- Residential Clients (client_type = 'residential')
+- Commercial Clients (client_type in ['commercial', 'property_manager'])
+- Active Customers (service within last 6 months)
+- Dormant Customers (no service in 1+ year)
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -156,6 +182,7 @@ Preferred communication style: Simple, everyday language.
 - Stripe (v20.0.0) for payment collection
 - Webhook verification for secure event handling
 - Environment variables: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
+- Note: User dismissed Replit's built-in Stripe integration. To enable payments, manually add STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY as secrets
 
 **AI & Machine Learning:**
 - Google Gemini API for natural language processing
