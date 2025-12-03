@@ -1655,5 +1655,40 @@ CREATE INDEX IF NOT EXISTS idx_telemetry_events_type ON telemetry_events (type);
 CREATE INDEX IF NOT EXISTS idx_telemetry_events_severity ON telemetry_events (severity);
 
 -- ============================================================================
+-- SECTION 12: DOCUMENT SCANNING
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS document_scans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'records_created')),
+    
+    original_filename VARCHAR(255),
+    mime_type VARCHAR(100),
+    file_size INTEGER,
+    
+    raw_text TEXT,
+    parsed_data JSONB,
+    confidence_scores JSONB,
+    warnings TEXT[],
+    errors TEXT[],
+    
+    created_client_id UUID REFERENCES clients(id),
+    created_property_id UUID REFERENCES properties(id),
+    created_job_id UUID REFERENCES jobs(id),
+    created_quote_id UUID,
+    created_invoice_id UUID REFERENCES invoices(id),
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    processed_at TIMESTAMP WITH TIME ZONE,
+    created_by VARCHAR(100)
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_scans_status ON document_scans(status);
+CREATE INDEX IF NOT EXISTS idx_document_scans_created_at ON document_scans(created_at DESC);
+
+COMMENT ON TABLE document_scans IS 'Stores scanned document data and extraction results for converting handwritten proposals to digital records';
+
+-- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================
