@@ -8,6 +8,30 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 
 ## Recent Changes
 
+### December 2024 - Document Scanner Feature
+
+**New Feature: Document Scanner**
+AI-powered system to digitize handwritten service contracts using Google Gemini Vision API.
+
+**Key Components:**
+- `backend/routes/documents.js` - Backend API for document upload, AI extraction, and record creation
+- `pages/DocumentScanner.tsx` - Frontend 3-step workflow: Upload → Review → Create Records
+- `components/icons/ScanIcon.tsx` - Custom icon for sidebar navigation
+- `backend/init.sql` - New `document_scans` table for scan tracking
+
+**Features:**
+1. Upload photos of handwritten contracts (JPEG, PNG, HEIC up to 25MB)
+2. AI extracts customer info, work description, pricing, dates, tree species, services
+3. Review and edit extracted data with confidence scores
+4. Create client, property, job, and invoice records in one click
+5. Transaction-wrapped record creation prevents partial data
+6. Idempotency checks prevent duplicate records on retry
+
+**Sidebar Reorganization:**
+- Removed grouped sections (QUICK ACCESS, SALES, WORK, etc.)
+- Flat, logical workflow-ordered navigation
+- Document Scanner placed after Jobs for easy access
+
 ### December 2024 - Bug Fixes and Feature Completion
 
 **Fixed Issues:**
@@ -19,6 +43,7 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
    - `/api/ai/mode` - Toggle AI automation mode
 3. **Stripe Integration** - Updated stripeClient.js to fetch credentials from Replit connection API with fallback to environment variables; fixed invalid API version
 4. **Customer Segmentation** - Implemented proper date-based filtering for Active/Dormant customer segments using `lastServiceDate` criteria with subqueries against completed jobs
+5. **Segments Route** - Fixed column reference error (used `work_ended_at` instead of non-existent `completed_at`)
 
 **Integration Status:**
 - Stripe: Supports both Replit connector and environment variable configuration

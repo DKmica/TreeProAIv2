@@ -22,6 +22,7 @@ const telemetryRouter = require('./telemetry');
 const segmentsRouter = require('./segments');
 const integrationsRouter = require('./integrations');
 const aiRouter = require('./ai');
+const documentsRouter = require('./documents');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -50,6 +51,7 @@ function buildApiRouter() {
   router.use(segmentsRouter);
   router.use(integrationsRouter);
   router.use(aiRouter);
+  router.use(documentsRouter);
   return router;
 }
 

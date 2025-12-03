@@ -1,12 +1,16 @@
 const express = require('express');
 const multer = require('multer');
 const { GoogleGenAI } = require('@google/genai');
-const { query } = require('../db');
+const { query, pool } = require('../db');
 const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
-const ai = new GoogleGenAI({ apiKey: process.env.VITE_GEMINI_API_KEY });
+const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+if (!GEMINI_API_KEY) {
+  console.warn('[DocumentScanner] No Gemini API key found. Document scanning will be disabled.');
+}
+const ai = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null;
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -20,10 +24,26 @@ const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`File type ${file.mimetype} not supported. Please upload JPEG, PNG, or HEIC images.`));
+      cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', `File type ${file.mimetype} not supported`));
     }
   }
 });
+
+function handleMulterError(err, req, res, next) {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ success: false, error: 'File too large. Maximum size is 25MB.' });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ success: false, error: err.field || 'Unsupported file type. Please upload JPEG, PNG, or HEIC images.' });
+    }
+    return res.status(400).json({ success: false, error: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+  next();
+}
 
 const contractExtractionSchema = {
   type: 'object',
@@ -94,6 +114,10 @@ IMPORTANT:
 
 Return the extracted data as structured JSON.`;
 
+  if (!ai) {
+    throw new Error('Document scanning is not available. Gemini API key is not configured.');
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
@@ -116,9 +140,24 @@ Return the extracted data as structured JSON.`;
       }
     });
 
-    const responseText = response.text.trim();
+    let responseText;
+    if (response.text) {
+      responseText = response.text;
+    } else if (response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      responseText = response.candidates[0].content.parts[0].text;
+    } else {
+      throw new Error('No text response from Gemini');
+    }
+
+    responseText = responseText.trim();
     const cleanedJson = responseText.replace(/^```json\s*|```$/g, '').trim();
-    return JSON.parse(cleanedJson);
+    
+    try {
+      return JSON.parse(cleanedJson);
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', cleanedJson);
+      throw new Error('Failed to parse AI response as JSON');
+    }
   } catch (error) {
     console.error('Error extracting contract data:', error);
     throw new Error(`Failed to extract contract data: ${error.message}`);
@@ -206,8 +245,15 @@ function validateExtractedData(data) {
   return { warnings, confidence };
 }
 
-router.post('/documents/scan', upload.single('image'), async (req, res) => {
+router.post('/documents/scan', upload.single('image'), handleMulterError, async (req, res) => {
   try {
+    if (!ai) {
+      return res.status(503).json({ 
+        success: false, 
+        error: 'Document scanning is not available. AI service is not configured.' 
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No image file provided' });
     }
@@ -306,21 +352,42 @@ router.get('/documents/scans/:id', async (req, res) => {
 });
 
 router.post('/documents/scans/:id/create-records', async (req, res) => {
+  const client = await pool.connect();
+  
   try {
     const { id } = req.params;
     const { extractedData } = req.body;
     
-    const scanResult = await query(`SELECT * FROM document_scans WHERE id = $1`, [id]);
+    const scanResult = await client.query(`SELECT * FROM document_scans WHERE id = $1`, [id]);
     if (scanResult.rows.length === 0) {
+      client.release();
       return res.status(404).json({ success: false, error: 'Scan not found' });
     }
     
     const scan = scanResult.rows[0];
+    
+    if (scan.status === 'records_created') {
+      client.release();
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Records have already been created from this scan',
+        data: {
+          clientId: scan.created_client_id,
+          propertyId: scan.created_property_id,
+          jobId: scan.created_job_id,
+          invoiceId: scan.created_invoice_id
+        }
+      });
+    }
+    
     const data = extractedData || scan.parsed_data;
     
     if (!data?.customer?.name) {
+      client.release();
       return res.status(400).json({ success: false, error: 'Customer name is required' });
     }
+
+    await client.query('BEGIN');
 
     const nameParts = data.customer.name.split(' ');
     const firstName = nameParts[0] || '';
@@ -330,7 +397,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
     
     let clientId = null;
     if (phone) {
-      const existingClient = await query(`
+      const existingClient = await client.query(`
         SELECT id FROM clients 
         WHERE primary_phone = $1 AND deleted_at IS NULL
         LIMIT 1
@@ -342,7 +409,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
     }
     
     if (!clientId) {
-      const clientResult = await query(`
+      const clientResult = await client.query(`
         INSERT INTO clients (first_name, last_name, primary_email, primary_phone, client_type, status, lead_source)
         VALUES ($1, $2, $3, $4, 'residential', 'active', 'document_scan')
         RETURNING id
@@ -353,7 +420,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
     let propertyId = null;
     const parsedAddr = data.customer.parsedAddress || parseAddress(data.customer.address);
     if (parsedAddr.line1) {
-      const existingProperty = await query(`
+      const existingProperty = await client.query(`
         SELECT id FROM properties 
         WHERE client_id = $1 AND address_line1 ILIKE $2 AND deleted_at IS NULL
         LIMIT 1
@@ -362,7 +429,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
       if (existingProperty.rows.length > 0) {
         propertyId = existingProperty.rows[0].id;
       } else {
-        const propertyResult = await query(`
+        const propertyResult = await client.query(`
           INSERT INTO properties (client_id, address_line1, city, state, zip_code)
           VALUES ($1, $2, $3, $4, $5)
           RETURNING id
@@ -400,7 +467,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
       });
     }
 
-    const jobResult = await query(`
+    const jobResult = await client.query(`
       INSERT INTO jobs (
         property_id, status, description, scheduled_date, 
         total_cost, deposit_amount, notes, created_by
@@ -414,7 +481,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
 
     let invoiceId = null;
     if (total > 0) {
-      const invoiceResult = await query(`
+      const invoiceResult = await client.query(`
         INSERT INTO invoices (
           client_id, property_id, job_id, amount, status, 
           paid_amount, due_date, notes
@@ -433,7 +500,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
       invoiceId = invoiceResult.rows[0].id;
     }
 
-    await query(`
+    await client.query(`
       UPDATE document_scans 
       SET status = 'records_created',
           created_client_id = $1,
@@ -444,12 +511,15 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
       WHERE id = $5
     `, [clientId, propertyId, jobId, invoiceId, id]);
 
-    await query(`
+    await client.query(`
       UPDATE clients 
       SET lifetime_value = lifetime_value + $1,
           updated_at = NOW()
       WHERE id = $2
     `, [total, clientId]);
+
+    await client.query('COMMIT');
+    client.release();
 
     res.json({
       success: true,
@@ -463,6 +533,13 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
     });
 
   } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Error rolling back transaction:', rollbackError);
+    }
+    client.release();
+    
     console.error('Error creating records from scan:', error);
     res.status(500).json({ 
       success: false, 

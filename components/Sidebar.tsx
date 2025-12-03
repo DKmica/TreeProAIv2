@@ -20,6 +20,7 @@ import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
 import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
 import AutomationIcon from './icons/AutomationIcon';
 import LogsIcon from './icons/LogsIcon';
+import ScanIcon from './icons/ScanIcon';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
 
 type NavigationItem = { 
@@ -34,6 +35,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'CRM', href: '/crm', icon: CustomerIcon },
   { name: 'Jobs', href: '/jobs', icon: JobIcon },
+  { name: 'Document Scanner', href: '/document-scanner', icon: ScanIcon },
   { name: 'Crews', href: '/crews', icon: UsersIcon },
   { name: 'Employees', href: '/employees', icon: EmployeeIcon },
   { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },

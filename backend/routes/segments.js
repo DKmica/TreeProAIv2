@@ -91,20 +91,20 @@ async function calculateAudienceCount(criteria) {
           if (criterion.operator === 'after') {
             whereConditions.push(`EXISTS (
               SELECT 1 FROM jobs j
-              JOIN properties p ON j.property_id = p.id
-              WHERE p.client_id = c.id 
-              AND j.completed_at IS NOT NULL 
-              AND j.completed_at >= $${paramIndex}::timestamp
+              WHERE j.property_id IN (SELECT id FROM properties WHERE client_id = c.id)
+              AND j.status = 'completed'
+              AND j.work_ended_at IS NOT NULL 
+              AND j.work_ended_at >= $${paramIndex}::timestamp
             )`);
             params.push(criterion.value);
             paramIndex++;
           } else if (criterion.operator === 'before') {
             whereConditions.push(`NOT EXISTS (
               SELECT 1 FROM jobs j
-              JOIN properties p ON j.property_id = p.id
-              WHERE p.client_id = c.id 
-              AND j.completed_at IS NOT NULL 
-              AND j.completed_at >= $${paramIndex}::timestamp
+              WHERE j.property_id IN (SELECT id FROM properties WHERE client_id = c.id)
+              AND j.status = 'completed'
+              AND j.work_ended_at IS NOT NULL 
+              AND j.work_ended_at >= $${paramIndex}::timestamp
             )`);
             params.push(criterion.value);
             paramIndex++;
@@ -232,20 +232,20 @@ router.get('/segments/:id/clients', async (req, res) => {
           if (criterion.operator === 'after') {
             whereConditions.push(`EXISTS (
               SELECT 1 FROM jobs j
-              JOIN properties p ON j.property_id = p.id
-              WHERE p.client_id = c.id 
-              AND j.completed_at IS NOT NULL 
-              AND j.completed_at >= $${paramIndex}::timestamp
+              WHERE j.property_id IN (SELECT id FROM properties WHERE client_id = c.id)
+              AND j.status = 'completed'
+              AND j.work_ended_at IS NOT NULL 
+              AND j.work_ended_at >= $${paramIndex}::timestamp
             )`);
             params.push(criterion.value);
             paramIndex++;
           } else if (criterion.operator === 'before') {
             whereConditions.push(`NOT EXISTS (
               SELECT 1 FROM jobs j
-              JOIN properties p ON j.property_id = p.id
-              WHERE p.client_id = c.id 
-              AND j.completed_at IS NOT NULL 
-              AND j.completed_at >= $${paramIndex}::timestamp
+              WHERE j.property_id IN (SELECT id FROM properties WHERE client_id = c.id)
+              AND j.status = 'completed'
+              AND j.work_ended_at IS NOT NULL 
+              AND j.work_ended_at >= $${paramIndex}::timestamp
             )`);
             params.push(criterion.value);
             paramIndex++;
