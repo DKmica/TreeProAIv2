@@ -1,4 +1,4 @@
-]modules = ["nodejs-20", "swift-5.8", "bash", "web", "python-3.11", "postgresql-16"]
+modules = ["nodejs-20", "swift-5.8", "bash", "web", "python-3.11", "postgresql-16"]
 [agent]
 expertMode = true
 integrations = ["stripe:1.0.0"]
@@ -45,16 +45,69 @@ args = "npm run dev:backend"
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[ports]]
+localPort = 3001
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 33217
+externalPort = 5000
+
+[[ports]]
+localPort = 34437
+externalPort = 3001
+
+[[ports]]
+localPort = 34601
+externalPort = 5173
+
+[[ports]]
+localPort = 36497
+externalPort = 6800
+
+[[ports]]
+localPort = 36715
+externalPort = 4200
+
+[[ports]]
+localPort = 37909
+externalPort = 8000
+
+[[ports]]
+localPort = 39349
+externalPort = 8080
+
+[[ports]]
+localPort = 41639
+externalPort = 6000
+
+[[ports]]
+localPort = 42129
+externalPort = 3003
+
+[[ports]]
+localPort = 42199
+externalPort = 3002
+
+[[ports]]
+localPort = 44743
+externalPort = 8008
+
+[[ports]]
+localPort = 45707
+externalPort = 8081
+
+[[ports]]
+localPort = 46015
+externalPort = 3000
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 run = ["node", "backend/server.js"]
-build = ["bash", "-c", "pnpm install && cd backend && npm install && cd .. && pnpm run build && mkdir -p backend/public && cp -r dist/* backend/public/"]
+build = ["pnpm", "run", "build:production"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-8fb6b9ef-fd35-44d1-999c-913002f16677"
