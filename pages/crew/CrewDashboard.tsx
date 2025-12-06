@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Customer, Job } from '../../types';
+import { Client, Job, Property } from '../../types';
 import JobIcon from '../../components/icons/JobIcon';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import { useJobsQuery, useClientsQuery } from '../../hooks/useDataQueries';
@@ -15,9 +15,26 @@ interface RouteStop {
   estimatedDriveMinutes: number;
 }
 
+const getClientDisplayName = (client: Client): string => {
+  if (client.companyName) return client.companyName;
+  const firstName = client.firstName || '';
+  const lastName = client.lastName || '';
+  return `${firstName} ${lastName}`.trim() || 'Unknown Client';
+};
+
+const getClientAddress = (client: Client): string => {
+  const parts = [
+    client.billingAddressLine1,
+    client.billingCity,
+    client.billingState,
+    client.billingZip,
+  ].filter(Boolean);
+  return parts.join(', ') || '';
+};
+
 const CrewDashboard: React.FC = () => {
   const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
-  const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
+  const { data: clients = [], isLoading: clientsLoading } = useClientsQuery();
   const { isOnline, pendingActions, syncPendingActions, syncing } = useCrewSync();
 
   const currentUserId = 'emp1';
@@ -36,13 +53,14 @@ const CrewDashboard: React.FC = () => {
     ).sort((a, b) => a.status === 'In Progress' ? -1 : 1);
   }, [jobs, today, currentUserId]);
 
-  const customerByName = useMemo(() => {
-    const map = new Map<string, Customer>();
-    customers.forEach(customer => {
-      map.set(customer.name.toLowerCase(), customer);
+  const clientByName = useMemo(() => {
+    const map = new Map<string, Client>();
+    clients.forEach(client => {
+      const displayName = getClientDisplayName(client);
+      map.set(displayName.toLowerCase(), client);
     });
     return map;
-  }, [customers]);
+  }, [clients]);
 
   const toRadians = (value: number) => (value * Math.PI) / 180;
 
@@ -71,6 +89,28 @@ const CrewDashboard: React.FC = () => {
     return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving${waypoints ? `&waypoints=${waypoints}` : ''}`;
   };
 
+  const getJobCoordinates = (job: Job, client?: Client): { lat: number; lng: number } | null => {
+    if (job.property?.lat != null && job.property?.lon != null) {
+      return { lat: job.property.lat, lng: job.property.lon };
+    }
+    return null;
+  };
+
+  const getJobAddress = (job: Job, client?: Client): string => {
+    if (job.jobLocation) return job.jobLocation;
+    if (job.property) {
+      const parts = [
+        job.property.addressLine1,
+        job.property.city,
+        job.property.state,
+        job.property.zipCode,
+      ].filter(Boolean);
+      if (parts.length > 0) return parts.join(', ');
+    }
+    if (client) return getClientAddress(client);
+    return '';
+  };
+
   const handlePlanRoute = () => {
     setIsPlanningRoute(true);
     setRouteError(null);
@@ -78,10 +118,12 @@ const CrewDashboard: React.FC = () => {
     try {
       const jobsWithCoords = todaysJobs
         .map(job => {
-          const customer = customerByName.get(job.customerName.toLowerCase());
-          return customer && customer.coordinates ? { job, customer } : null;
+          const client = clientByName.get(job.customerName.toLowerCase());
+          const coords = getJobCoordinates(job, client);
+          const address = getJobAddress(job, client);
+          return coords ? { job, client, coords, address } : null;
         })
-        .filter((value): value is { job: Job; customer: Customer } => Boolean(value));
+        .filter((value): value is { job: Job; client: Client | undefined; coords: { lat: number; lng: number }; address: string } => Boolean(value));
 
       if (jobsWithCoords.length === 0) {
         setRoutePlan(null);
@@ -100,7 +142,7 @@ const CrewDashboard: React.FC = () => {
         let minDistance = Number.POSITIVE_INFINITY;
 
         remaining.forEach((candidate, index) => {
-          const distance = getDistanceMiles(current.customer.coordinates, candidate.customer.coordinates);
+          const distance = getDistanceMiles(current.coords, candidate.coords);
           if (distance < minDistance) {
             minDistance = distance;
             closestIndex = index;
@@ -113,14 +155,14 @@ const CrewDashboard: React.FC = () => {
 
       const stops: RouteStop[] = ordered.map((entry, index) => {
         const previous = index === 0 ? null : ordered[index - 1];
-        const distance = previous ? getDistanceMiles(previous.customer.coordinates, entry.customer.coordinates) : 0;
+        const distance = previous ? getDistanceMiles(previous.coords, entry.coords) : 0;
         const estimatedDriveMinutes = previous ? Math.max(5, Math.round((distance / 30) * 60)) : 0;
 
         return {
           order: index + 1,
           jobId: entry.job.id,
           customerName: entry.job.customerName,
-          address: entry.customer.address,
+          address: entry.address,
           distanceMiles: Number(distance.toFixed(1)),
           estimatedDriveMinutes,
         };
@@ -155,7 +197,7 @@ const CrewDashboard: React.FC = () => {
     }
   };
 
-  if (jobsLoading || customersLoading) {
+  if (jobsLoading || clientsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <SpinnerIcon className="h-12 w-12 text-brand-green-600" />
@@ -164,7 +206,7 @@ const CrewDashboard: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="pb-20">
       <h1 className="text-2xl font-bold text-brand-gray-900">Today's Jobs</h1>
       <p className="mt-1 text-brand-gray-600">Jobs assigned to you for {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
 

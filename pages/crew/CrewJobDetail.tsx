@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist, AiRiskAssessment } from '../../types';
-import { CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist } from '../../types';
+import { Client, CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist, AiRiskAssessment } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
@@ -14,6 +13,37 @@ import ShieldCheckIcon from '../../components/icons/ShieldCheckIcon';
 import { useJobsQuery, useQuotesQuery, useClientsQuery } from '../../hooks/useDataQueries';
 import * as api from '../../services/apiService';
 import { useCrewSync } from '../../contexts/CrewSyncContext';
+import VoiceNotes from '../../components/crew/VoiceNotes';
+
+const getClientDisplayName = (client: Client): string => {
+  if (client.companyName) return client.companyName;
+  const firstName = client.firstName || '';
+  const lastName = client.lastName || '';
+  return `${firstName} ${lastName}`.trim() || 'Unknown Client';
+};
+
+const getJobAddress = (job: Job, client?: Client): string => {
+  if (job.jobLocation) return job.jobLocation;
+  if (job.property) {
+    const parts = [
+      job.property.addressLine1,
+      job.property.city,
+      job.property.state,
+      job.property.zipCode,
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(', ');
+  }
+  if (client) {
+    const parts = [
+      client.billingAddressLine1,
+      client.billingCity,
+      client.billingState,
+      client.billingZip,
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(', ');
+  }
+  return '';
+};
 
 const defaultChecklist: SafetyChecklist = {
   eyeProtection: false,
@@ -61,7 +91,15 @@ const CrewJobDetail: React.FC = () => {
     };
   }, [job, jobPatches]);
   const quote = useMemo(() => quotes.find(q => q.id === mergedJob?.quoteId), [quotes, mergedJob]);
-  const customer = useMemo(() => customers.find(c => c.name === mergedJob?.customerName), [customers, mergedJob]);
+  const client = useMemo(() => {
+    if (!mergedJob?.customerName) return undefined;
+    const targetName = mergedJob.customerName.toLowerCase();
+    return customers.find(c => {
+      const displayName = getClientDisplayName(c);
+      return displayName.toLowerCase() === targetName;
+    });
+  }, [customers, mergedJob]);
+  const jobAddress = useMemo(() => mergedJob ? getJobAddress(mergedJob, client) : '', [mergedJob, client]);
   const pendingForJob = useMemo(() => pendingActions.filter(action => action.jobId === jobId), [pendingActions, jobId]);
 
   useEffect(() => {
@@ -326,10 +364,10 @@ const CrewJobDetail: React.FC = () => {
         <div className="p-4 sm:p-6">
           <h1 className="text-2xl font-bold text-brand-gray-900">{mergedJob?.customerName}</h1>
           <p className="text-brand-gray-600 mt-1">Job ID: {mergedJob?.id}</p>
-          {customer && (
-             <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(customer.address)}`} target="_blank" rel="noopener noreferrer" className="mt-2 text-brand-green-600 inline-flex items-center hover:underline">
+          {jobAddress && (
+             <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(jobAddress)}`} target="_blank" rel="noopener noreferrer" className="mt-2 text-brand-green-600 inline-flex items-center hover:underline">
                 <MapPinIcon className="w-5 h-5 mr-2"/>
-                {customer.address}
+                {jobAddress}
               </a>
           )}
         </div>
@@ -564,13 +602,18 @@ const CrewJobDetail: React.FC = () => {
           </div>
           <p className="text-sm text-brand-gray-600">Capture site notes, customer requests, and time stamps. Notes save locally when offline and sync automatically.</p>
           <div className="space-y-2">
-            <textarea
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              rows={3}
-              className="w-full rounded-md border border-brand-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500"
-              placeholder="Add a quick note for this job"
-            />
+            <div className="flex items-start gap-2">
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                rows={3}
+                className="flex-1 rounded-md border border-brand-gray-200 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green-500"
+                placeholder="Add a quick note for this job"
+              />
+              <VoiceNotes
+                onTranscribe={(text) => setNoteText(prev => prev ? `${prev} ${text}` : text)}
+              />
+            </div>
             <div className="flex items-center justify-between text-xs text-brand-gray-500">
               <span>{isOnline ? 'Online' : 'Offline'} — notes are queued if the network drops</span>
               <button
