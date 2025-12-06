@@ -8,6 +8,34 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 
 ## Recent Changes
 
+### December 2024 - Form Templates Sample Seeding
+
+**New Feature: Sample Form Templates**
+Added 5 professional form templates for tree service operations with ability to load them in production.
+
+**Sample Templates:**
+1. Pre-Job Safety Checklist - PPE, equipment, hazards, weather conditions
+2. Tree Removal Inspection - Species, height, health, obstacles, equipment recommendations
+3. Equipment Check - Daily equipment inspection and maintenance
+4. Customer Approval Form - Customer satisfaction and sign-off
+5. Job Completion Checklist - Quality assurance and cleanup verification
+
+**Key Components:**
+- `POST /api/form-templates/seed` - Backend endpoint to seed sample templates
+- `pages/FormTemplates.tsx` - Added "Load Sample Templates" button
+- `services/apiService.ts` - Added `formService.seedTemplates()` function
+
+**Features:**
+- Idempotency checks prevent duplicate templates
+- UI shows success/error messages after seeding
+- Templates work with all categories (safety, inspection, equipment, approval, completion)
+
+**Production Database Note:**
+Schema changes sync automatically when publishing. To add sample templates in production:
+1. Go to Form Templates page
+2. Click "Load Sample Templates" button
+3. Templates will be inserted with duplicate checking
+
 ### December 2024 - Document Scanner Feature
 
 **New Feature: Document Scanner**
