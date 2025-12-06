@@ -8,6 +8,18 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 
 ## Recent Changes
 
+### December 2024 - Data Display Bug Fixes
+
+**Fixed Issues:**
+1. **Date fields returning empty objects** - Fixed `snakeToCamel` and `camelToSnake` utility functions in `backend/utils/formatters.js` to properly preserve Date objects, Buffers, and other special types during transformation
+2. **Client activity endpoint missing** - Added `GET /api/clients/:id/activity` endpoint in `backend/routes/clients.js` that aggregates activity from quotes, jobs, and invoices
+3. **Client detail page 404 error** - Fixed by implementing the missing activity endpoint
+
+**Technical Details:**
+- The formatters were recursively converting Date objects (which have no enumerable properties) into empty objects
+- Added checks for `instanceof Date`, `Buffer.isBuffer()`, and non-plain objects to preserve their values
+- Activity endpoint generates synthetic activity feed from related quote, job, and invoice records
+
 ### December 2024 - PDF Download and Email Feature
 
 **New Feature: PDF Generation and Delivery**

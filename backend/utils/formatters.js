@@ -2,6 +2,11 @@ const snakeToCamel = (obj) => {
   if (obj === null || obj === undefined) return obj;
   if (Array.isArray(obj)) return obj.map(snakeToCamel);
   if (typeof obj !== 'object') return obj;
+  
+  // Don't transform Date objects, Buffer, or other special types
+  if (obj instanceof Date) return obj;
+  if (Buffer.isBuffer(obj)) return obj;
+  if (obj.constructor && obj.constructor.name !== 'Object') return obj;
 
   const camelObj = {};
   for (const [key, value] of Object.entries(obj)) {
@@ -13,7 +18,19 @@ const snakeToCamel = (obj) => {
     } else {
       camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
     }
-    camelObj[camelKey] = (value && typeof value === 'object') ? snakeToCamel(value) : value;
+    // Preserve Date objects, Buffers, and other special types
+    if (value instanceof Date || Buffer.isBuffer(value)) {
+      camelObj[camelKey] = value;
+    } else if (value && typeof value === 'object') {
+      // Check if it's a plain object before recursing
+      if (value.constructor && value.constructor.name !== 'Object' && !Array.isArray(value)) {
+        camelObj[camelKey] = value;
+      } else {
+        camelObj[camelKey] = snakeToCamel(value);
+      }
+    } else {
+      camelObj[camelKey] = value;
+    }
   }
   return camelObj;
 };
@@ -22,6 +39,11 @@ const camelToSnake = (obj) => {
   if (obj === null || obj === undefined) return obj;
   if (Array.isArray(obj)) return obj.map(camelToSnake);
   if (typeof obj !== 'object') return obj;
+  
+  // Don't transform Date objects, Buffer, or other special types
+  if (obj instanceof Date) return obj;
+  if (Buffer.isBuffer(obj)) return obj;
+  if (obj.constructor && obj.constructor.name !== 'Object') return obj;
 
   const snakeObj = {};
   for (const [key, value] of Object.entries(obj)) {
@@ -35,7 +57,18 @@ const camelToSnake = (obj) => {
     } else {
       snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
     }
-    snakeObj[snakeKey] = (value && typeof value === 'object') ? camelToSnake(value) : value;
+    // Preserve Date objects, Buffers, and other special types
+    if (value instanceof Date || Buffer.isBuffer(value)) {
+      snakeObj[snakeKey] = value;
+    } else if (value && typeof value === 'object') {
+      if (value.constructor && value.constructor.name !== 'Object' && !Array.isArray(value)) {
+        snakeObj[snakeKey] = value;
+      } else {
+        snakeObj[snakeKey] = camelToSnake(value);
+      }
+    } else {
+      snakeObj[snakeKey] = value;
+    }
   }
   return snakeObj;
 };
