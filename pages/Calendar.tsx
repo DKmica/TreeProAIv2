@@ -71,7 +71,7 @@ const Calendar: React.FC = () => {
     }, []);
 
     const schedulableJobs = useMemo(() => {
-        return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'In Progress')
+        return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress')
             .sort((a, b) => a.id.localeCompare(b.id));
     }, [jobs]);
 

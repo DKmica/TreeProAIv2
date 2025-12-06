@@ -362,7 +362,7 @@ async function seedDatabase(db) {
       );
 
       // Create job
-      const jobStatuses = ['Unscheduled', 'Scheduled', 'In Progress', 'Completed'];
+      const jobStatuses = ['Unscheduled', 'Scheduled', 'En Route', 'On Site', 'In Progress', 'Completed'];
       const status = jobStatuses[Math.floor(Math.random() * jobStatuses.length)];
 
       const assignedCrew = [];

@@ -34,7 +34,9 @@ const STATE_TRANSITION_MATRIX = {
   draft: ['needs_permit', 'waiting_on_client', 'scheduled', 'cancelled'],
   needs_permit: ['waiting_on_client', 'scheduled', 'cancelled'],
   waiting_on_client: ['scheduled', 'cancelled'],
-  scheduled: ['in_progress', 'weather_hold', 'cancelled'],
+  scheduled: ['en_route', 'in_progress', 'weather_hold', 'cancelled'],
+  en_route: ['on_site', 'scheduled', 'weather_hold', 'cancelled'],
+  on_site: ['in_progress', 'scheduled', 'weather_hold', 'cancelled'],
   weather_hold: ['scheduled', 'cancelled'],
   in_progress: ['completed', 'weather_hold', 'cancelled'],
   completed: ['invoiced'],
@@ -51,6 +53,8 @@ const STATE_NAMES = {
   needs_permit: 'Needs Permit',
   waiting_on_client: 'Waiting on Client',
   scheduled: 'Scheduled',
+  en_route: 'En Route',
+  on_site: 'On Site',
   weather_hold: 'Weather Hold',
   in_progress: 'In Progress',
   completed: 'Completed',
@@ -228,6 +232,42 @@ const VALIDATION_RULES = {
   waiting_on_client: async (job, db) => {
     // No specific validation - this is a holding state
     return { valid: true, errors: [] };
+  },
+
+  /**
+   * Validate transition to 'en_route' state
+   * Crew has departed and is traveling to job site
+   */
+  en_route: async (job, db) => {
+    const errors = [];
+    
+    if (!job.scheduled_date) {
+      errors.push('Job must be scheduled before marking as en route');
+    }
+    
+    if (!job.assigned_crew || job.assigned_crew.length === 0) {
+      errors.push('Crew must be assigned before marking as en route');
+    }
+    
+    return { valid: errors.length === 0, errors };
+  },
+
+  /**
+   * Validate transition to 'on_site' state
+   * Crew has arrived at job site but work has not started
+   */
+  on_site: async (job, db) => {
+    const errors = [];
+    
+    if (!job.scheduled_date) {
+      errors.push('Job must be scheduled before marking as on site');
+    }
+    
+    if (!job.assigned_crew || job.assigned_crew.length === 0) {
+      errors.push('Crew must be assigned before marking as on site');
+    }
+    
+    return { valid: errors.length === 0, errors };
   },
 
   /**

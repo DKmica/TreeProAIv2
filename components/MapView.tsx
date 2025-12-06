@@ -132,7 +132,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
         const newMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
 
         // Add Job Markers
-        const activeJobs = jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress');
+        const activeJobs = jobs.filter(job => job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress');
         activeJobs.forEach(job => {
             const customer = customers.find(c => c.name === job.customerName);
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
@@ -140,12 +140,21 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
             const isSelected = job.id === selectedJobId;
             const routeStop = orderedRouteStops.find(stop => stop.jobId === job.id);
 
+            const getStatusColor = (status: string) => {
+                switch(status) {
+                    case 'In Progress': return '#1d4ed8';
+                    case 'En Route': return '#0284c7';
+                    case 'On Site': return '#ea580c';
+                    default: return '#16a34a';
+                }
+            };
+
             const jobPin = new google.maps.marker.PinElement({
                 background: isSelected
                     ? '#ca8a04'
                     : routeStop
                         ? '#0ea5e9'
-                        : (job.status === 'In Progress' ? '#1d4ed8' : '#16a34a'), // Gold for selected, Cyan for routed, Blue for 'In Progress', Green for 'Scheduled'
+                        : getStatusColor(job.status),
                 borderColor: '#fff',
                 glyphColor: '#fff',
                 glyph: routeStop ? `${routeStop.order}` : undefined,

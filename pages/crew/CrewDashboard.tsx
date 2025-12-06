@@ -50,7 +50,14 @@ const CrewDashboard: React.FC = () => {
       job.assignedCrew.includes(currentUserId) &&
       job.status !== 'Completed' &&
       job.status !== 'Cancelled'
-    ).sort((a, b) => a.status === 'In Progress' ? -1 : 1);
+    ).sort((a, b) => {
+      const activeStatuses = ['In Progress', 'On Site', 'En Route'];
+      const aActive = activeStatuses.includes(a.status);
+      const bActive = activeStatuses.includes(b.status);
+      if (aActive && !bActive) return -1;
+      if (!aActive && bActive) return 1;
+      return 0;
+    });
   }, [jobs, today, currentUserId]);
 
   const clientByName = useMemo(() => {
@@ -133,7 +140,7 @@ const CrewDashboard: React.FC = () => {
 
       const ordered: typeof jobsWithCoords = [];
       const remaining = [...jobsWithCoords];
-      let current = remaining.find(item => item.job.status === 'In Progress') || remaining[0];
+      let current = remaining.find(item => ['In Progress', 'On Site', 'En Route'].includes(item.job.status)) || remaining[0];
       ordered.push(current);
       remaining.splice(remaining.indexOf(current), 1);
 

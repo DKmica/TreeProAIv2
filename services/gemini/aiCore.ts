@@ -1656,7 +1656,7 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
           metrics: {
             totalRevenue: totalRev,
             totalCustomers: businessContext.clients.length,
-            activeJobs: businessContext.jobs.filter(j => j.status === 'Scheduled' || j.status === 'In Progress').length,
+            activeJobs: businessContext.jobs.filter(j => j.status === 'Scheduled' || j.status === 'En Route' || j.status === 'On Site' || j.status === 'In Progress').length,
             completedJobs: businessContext.jobs.filter(j => j.status === 'Completed').length,
             newLeads: businessContext.leads.filter(l => l.status === 'New').length,
             pendingQuotes: businessContext.quotes.filter(q => q.status === 'Sent').length,

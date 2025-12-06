@@ -393,7 +393,7 @@ export interface Job {
   id: string;
   quoteId?: string;
   customerName: string;
-  status: 'Unscheduled' | 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
+  status: 'Unscheduled' | 'Scheduled' | 'En Route' | 'On Site' | 'In Progress' | 'Completed' | 'Cancelled';
   scheduledDate?: string;
   arrivalEtaMinutes?: number;
   etaWindowStart?: string;
@@ -628,6 +628,33 @@ export interface Equipment {
   status: 'Operational' | 'Needs Maintenance' | 'Out of Service';
   assignedTo?: string;
   maintenanceHistory?: MaintenanceLog[];
+}
+
+export interface EquipmentUsage {
+  id: string;
+  equipmentId: string;
+  jobId?: string;
+  usedBy?: string;
+  startTime: string;
+  endTime?: string;
+  hoursUsed?: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface EquipmentMaintenance {
+  id: string;
+  equipmentId: string;
+  maintenanceType: 'scheduled' | 'repair' | 'inspection';
+  scheduledDate?: string;
+  actualDate?: string;
+  performedBy?: string;
+  cost?: number;
+  notes?: string;
+  status: 'pending' | 'completed' | 'overdue';
+  nextDueDate?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 // ============================================================================

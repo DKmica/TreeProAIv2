@@ -10,6 +10,8 @@ type StatusPaletteKey =
   | 'converted'
   | 'unscheduled'
   | 'scheduled'
+  | 'en_route'
+  | 'on_site'
   | 'in_progress'
   | 'completed'
   | 'cancelled'
@@ -35,6 +37,8 @@ const STATUS_COLORS: Record<StatusPaletteKey, string> = {
   converted: 'bg-purple-600 text-purple-100',
   unscheduled: 'bg-slate-600 text-slate-100',
   scheduled: 'bg-blue-600 text-blue-100',
+  en_route: 'bg-sky-600 text-sky-100',
+  on_site: 'bg-orange-600 text-orange-100',
   in_progress: 'bg-cyan-600 text-cyan-100',
   completed: 'bg-green-700 text-green-100',
   cancelled: 'bg-red-700 text-red-100',
@@ -42,7 +46,7 @@ const STATUS_COLORS: Record<StatusPaletteKey, string> = {
   overdue: 'bg-amber-600 text-amber-100',
   void: 'bg-gray-700 text-gray-100',
   needs_permit: 'bg-yellow-600 text-yellow-100',
-  waiting_on_client: 'bg-orange-600 text-orange-100',
+  waiting_on_client: 'bg-orange-500 text-orange-100',
   weather_hold: 'bg-indigo-600 text-indigo-100',
   invoiced: 'bg-indigo-600 text-indigo-100',
 };

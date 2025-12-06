@@ -1690,5 +1690,44 @@ CREATE INDEX IF NOT EXISTS idx_document_scans_created_at ON document_scans(creat
 COMMENT ON TABLE document_scans IS 'Stores scanned document data and extraction results for converting handwritten proposals to digital records';
 
 -- ============================================================================
+-- SECTION 13: EQUIPMENT USAGE & MAINTENANCE TRACKING (Phase 4)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS equipment_usage (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  equipment_id UUID NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+  job_id UUID REFERENCES jobs(id) ON DELETE SET NULL,
+  used_by UUID REFERENCES employees(id) ON DELETE SET NULL,
+  start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  end_time TIMESTAMPTZ,
+  hours_used DECIMAL(6,2),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS equipment_maintenance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  equipment_id UUID NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+  maintenance_type VARCHAR(50) NOT NULL,
+  scheduled_date DATE,
+  actual_date DATE,
+  performed_by UUID REFERENCES employees(id),
+  cost DECIMAL(10,2),
+  notes TEXT,
+  status VARCHAR(20) DEFAULT 'pending',
+  next_due_date DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_due ON equipment_maintenance(equipment_id, status, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_equipment_usage_job ON equipment_usage(job_id);
+CREATE INDEX IF NOT EXISTS idx_equipment_usage_equipment ON equipment_usage(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_equipment_usage_used_by ON equipment_usage(used_by);
+
+COMMENT ON TABLE equipment_usage IS 'Tracks when equipment is used, by whom, and for which jobs';
+COMMENT ON TABLE equipment_maintenance IS 'Tracks scheduled and completed maintenance for equipment';
+
+-- ============================================================================
 -- MIGRATION COMPLETE
 -- ============================================================================

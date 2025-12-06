@@ -83,6 +83,18 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
 
   const allowedTransitions = transitions.filter(t => t.allowed);
 
+  const getTransitionButtonColor = (state: string) => {
+    switch(state) {
+      case 'en_route': return 'bg-blue-600 hover:bg-blue-700';
+      case 'on_site': return 'bg-orange-600 hover:bg-orange-700';
+      case 'in_progress': return 'bg-indigo-600 hover:bg-indigo-700';
+      case 'completed': return 'bg-green-600 hover:bg-green-700';
+      case 'cancelled': return 'bg-red-600 hover:bg-red-700';
+      case 'scheduled': return 'bg-cyan-600 hover:bg-cyan-700';
+      default: return 'bg-gray-600 hover:bg-gray-700';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
@@ -110,7 +122,7 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
             <button
               key={transition.state}
               onClick={() => handleTransitionClick(transition.state)}
-              className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors text-sm font-medium"
+              className={`px-4 py-2 text-white rounded-md transition-colors text-sm font-medium ${getTransitionButtonColor(transition.state)}`}
               title={`Transition to ${transition.state.replace(/_/g, ' ')}`}
             >
               {transition.state.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}

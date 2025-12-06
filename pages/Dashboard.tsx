@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
     const isLoading = jobsLoading || employeesLoading || customersLoading || leadsLoading || quotesLoading;
 
     const activeJobs = useMemo(() => 
-        jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress')
+        jobs.filter(job => job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress')
             .sort((a, b) => (a.scheduledDate || '').localeCompare(b.scheduledDate || '')), 
         [jobs]
     );
@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
     );
 
     const activeJobsCount = useMemo(() => 
-        jobs.filter(job => job.status === 'Scheduled' || job.status === 'In Progress').length,
+        jobs.filter(job => job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress').length,
         [jobs]
     );
 

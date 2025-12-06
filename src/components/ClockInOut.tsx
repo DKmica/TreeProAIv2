@@ -30,7 +30,7 @@ export default function ClockInOut({ employees, onClockAction }: ClockInOutProps
     try {
       const response = await fetch('/api/jobs');
       const data = await response.json();
-      setJobs(data.filter((j: Job) => j.status === 'Scheduled' || j.status === 'In Progress'));
+      setJobs(data.filter((j: Job) => j.status === 'Scheduled' || j.status === 'En Route' || j.status === 'On Site' || j.status === 'In Progress'));
     } catch (err) {
       console.error('Failed to load jobs:', err);
     }
