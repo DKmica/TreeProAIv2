@@ -109,16 +109,19 @@ const ACTION_HANDLERS = {
     const job = context.entityData;
     
     if (!job || !job.id) {
-      throw new Error('Job data not found in context for invoice creation');
+      console.log('[Action:create_invoice] Skipping - no job data in context');
+      return { success: false, action: 'create_invoice', reason: 'No job data' };
     }
     
     const jobId = job.id;
     const clientId = job.client_id || null;
     const propertyId = job.property_id || null;
-    const customerName = job.customer_name || 'Unknown';
+    const quoteId = job.quote_id || null;
+    const customerName = job.customer_name || 'Unknown Customer';
     const lineItems = job.line_items || [];
     
-    const subtotal = job.price || job.total_amount || 0;
+    const price = Number(job.price) || Number(job.total_amount) || 0;
+    const subtotal = price;
     const discountAmount = 0;
     const discountPercentage = 0;
     const taxRate = 0;
@@ -131,86 +134,96 @@ const ACTION_HANDLERS = {
     
     const customerEmail = job.customer_email || null;
     const customerPhone = job.customer_phone || null;
-    const customerAddress = job.job_location || job.customer_address || null;
+    const customerAddress = job.full_property_address || job.customer_address || null;
     const notes = job.notes || null;
     const customerNotes = job.special_instructions || job.customer_notes || null;
     
-    const year = new Date().getFullYear();
-    const prefix = `INV-${year}-`;
-    const { rows: seqRows } = await db.query(`
-      SELECT COALESCE(
-        MAX(CAST(SUBSTRING(invoice_number FROM 'INV-[0-9]+-([0-9]+)') AS INTEGER)), 
-        0
-      ) as max_seq
-      FROM invoices
-      WHERE invoice_number LIKE $1
-    `, [`${prefix}%`]);
-    const nextSeq = (seqRows[0]?.max_seq || 0) + 1;
-    const invoiceNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
-    
-    const issueDate = new Date().toISOString().split('T')[0];
-    const dueDate = new Date(Date.now() + due_in_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
-    const invoiceId = uuidv4();
-    await db.query(`
-      INSERT INTO invoices (
-        id, quote_id, job_id, client_id, property_id, customer_name, status,
-        invoice_number, issue_date, due_date,
-        line_items, subtotal, discount_amount, discount_percentage,
-        tax_rate, tax_amount, total_amount, grand_total,
-        amount_paid, amount_due, payment_terms,
-        customer_email, customer_phone, customer_address,
-        notes, customer_notes, amount
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10,
-        $11, $12, $13, $14,
-        $15, $16, $17, $18,
-        $19, $20, $21,
-        $22, $23, $24,
-        $25, $26, $27
-      )
-    `, [
-      invoiceId,
-      null,
-      jobId,
-      clientId,
-      propertyId,
-      customerName,
-      'Draft',
-      invoiceNumber,
-      issueDate,
-      dueDate,
-      JSON.stringify(lineItems),
-      subtotal,
-      discountAmount,
-      discountPercentage,
-      taxRate,
-      taxAmount,
-      totalAmount,
-      grandTotal,
-      amountPaid,
-      amountDue,
-      paymentTerms,
-      customerEmail,
-      customerPhone,
-      customerAddress,
-      notes,
-      customerNotes,
-      grandTotal
-    ]);
-    
-    console.log(`[Action:create_invoice] Created draft invoice ${invoiceNumber} for job ${jobId}`);
-    
-    return {
-      success: true,
-      action: 'create_invoice',
-      invoiceId,
-      invoiceNumber,
-      jobId,
-      clientId,
-      amount: grandTotal
-    };
+    try {
+      const year = new Date().getFullYear();
+      const prefix = `INV-${year}-`;
+      const { rows: seqRows } = await db.query(`
+        SELECT COALESCE(
+          MAX(CAST(SUBSTRING(invoice_number FROM 'INV-[0-9]+-([0-9]+)') AS INTEGER)), 
+          0
+        ) as max_seq
+        FROM invoices
+        WHERE invoice_number LIKE $1
+      `, [`${prefix}%`]);
+      const nextSeq = (seqRows[0]?.max_seq || 0) + 1;
+      const invoiceNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+      
+      const issueDate = new Date().toISOString().split('T')[0];
+      const dueDate = new Date(Date.now() + due_in_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      const invoiceId = uuidv4();
+      await db.query(`
+        INSERT INTO invoices (
+          id, quote_id, job_id, client_id, property_id, customer_name, status,
+          invoice_number, issue_date, due_date,
+          line_items, subtotal, discount_amount, discount_percentage,
+          tax_rate, tax_amount, total_amount, grand_total,
+          amount_paid, amount_due, payment_terms,
+          customer_email, customer_phone, customer_address,
+          notes, customer_notes, amount
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7,
+          $8, $9, $10,
+          $11, $12, $13, $14,
+          $15, $16, $17, $18,
+          $19, $20, $21,
+          $22, $23, $24,
+          $25, $26, $27
+        )
+      `, [
+        invoiceId,
+        quoteId,
+        jobId,
+        clientId,
+        propertyId,
+        customerName,
+        'Draft',
+        invoiceNumber,
+        issueDate,
+        dueDate,
+        JSON.stringify(lineItems),
+        subtotal,
+        discountAmount,
+        discountPercentage,
+        taxRate,
+        taxAmount,
+        totalAmount,
+        grandTotal,
+        amountPaid,
+        amountDue,
+        paymentTerms,
+        customerEmail,
+        customerPhone,
+        customerAddress,
+        notes,
+        customerNotes,
+        grandTotal
+      ]);
+      
+      console.log(`[Action:create_invoice] Created draft invoice ${invoiceNumber} for job ${jobId}`);
+      
+      return {
+        success: true,
+        action: 'create_invoice',
+        invoiceId,
+        invoiceNumber,
+        jobId,
+        clientId,
+        amount: grandTotal
+      };
+    } catch (error) {
+      console.error(`[Action:create_invoice] Database error:`, error.message);
+      return {
+        success: false,
+        action: 'create_invoice',
+        reason: 'Database error',
+        error: error.message
+      };
+    }
   }
 };
 

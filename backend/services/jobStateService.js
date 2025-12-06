@@ -878,26 +878,73 @@ async function getJobWithRelations(jobId) {
     return null;
   }
   
-  const job = rows[0];
+  const row = rows[0];
   
-  // Compute derived fields for convenience
+  // Build enriched job with explicit null fallbacks for all fields
+  // This prevents undefined values that can cause UUID parsing errors in workflows
   const enrichedJob = {
-    ...job,
-    // Ensure customer_name is populated
-    customer_name: job.customer_name || 
-      (job.client_company_name || 
-        [job.client_first_name, job.client_last_name].filter(Boolean).join(' ')) || 
-      'Unknown',
-    // Price/total_amount for workflows (use quote grand_total or total_amount)
-    price: parseFloat(job.quote_grand_total) || parseFloat(job.quote_total_amount) || 0,
-    total_amount: parseFloat(job.quote_grand_total) || parseFloat(job.quote_total_amount) || 0,
+    ...row,
+    
+    // Ensure required IDs are present (explicit null, never undefined)
+    id: row.id,
+    client_id: row.client_id || null,
+    property_id: row.property_id || null,
+    quote_id: row.quote_id || null,
+    invoice_id: row.invoice_id || null,
+    
+    // Customer name with multiple fallbacks
+    customer_name: row.client_company_name || 
+      (row.client_first_name && row.client_last_name ? 
+        `${row.client_first_name} ${row.client_last_name}`.trim() : 
+        (row.client_first_name || row.client_last_name || row.customer_name || 'Unknown')),
+    
+    // Price with fallbacks (check job price first, then quote values)
+    price: parseFloat(row.price) || parseFloat(row.total_amount) || 
+           parseFloat(row.quote_grand_total) || parseFloat(row.quote_total_amount) || 0,
+    total_amount: parseFloat(row.total_amount) || parseFloat(row.quote_grand_total) || 
+                  parseFloat(row.quote_total_amount) || parseFloat(row.price) || 0,
+    
+    // Line items from quote or job (ensure array, never undefined)
+    line_items: row.quote_line_items || row.line_items || [],
+    
+    // Contact info from client (explicit null fallbacks)
+    customer_email: row.client_email || null,
+    customer_phone: row.client_phone || null,
+    
+    // Client fields with null fallbacks
+    client_first_name: row.client_first_name || null,
+    client_last_name: row.client_last_name || null,
+    client_company_name: row.client_company_name || null,
+    client_email: row.client_email || null,
+    client_phone: row.client_phone || null,
+    client_type: row.client_type || null,
+    client_category: row.client_category || null,
+    stripe_customer_id: row.stripe_customer_id || null,
+    
+    // Property fields with null fallbacks
+    property_name: row.property_name || null,
+    property_address: row.property_address || null,
+    property_city: row.property_city || null,
+    property_state: row.property_state || null,
+    property_zip: row.property_zip || null,
+    property_lat: row.property_lat || null,
+    property_lon: row.property_lon || null,
+    property_access_instructions: row.property_access_instructions || null,
+    
     // Full property address string
     full_property_address: [
-      job.property_address,
-      job.property_city,
-      job.property_state,
-      job.property_zip
-    ].filter(Boolean).join(', ') || null
+      row.property_address,
+      row.property_city,
+      row.property_state,
+      row.property_zip
+    ].filter(Boolean).join(', ') || null,
+    
+    // Quote fields with null/0 fallbacks
+    quote_total_amount: parseFloat(row.quote_total_amount) || 0,
+    quote_grand_total: parseFloat(row.quote_grand_total) || 0,
+    quote_discount_amount: parseFloat(row.quote_discount_amount) || 0,
+    quote_tax_amount: parseFloat(row.quote_tax_amount) || 0,
+    quote_line_items: row.quote_line_items || []
   };
   
   return enrichedJob;
