@@ -1,13 +1,13 @@
 import React, { ReactNode } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { get, set, del } from 'idb-keyval';
 
 const IDB_CACHE_KEY = 'treepro-react-query-cache';
 
-const idbStorage = {
+const asyncStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       const value = await get(key);
@@ -32,22 +32,8 @@ const idbStorage = {
   },
 };
 
-const persister = createSyncStoragePersister({
-  storage: {
-    getItem: (key: string) => {
-      let result: string | null = null;
-      idbStorage.getItem(key).then((val) => {
-        result = val;
-      });
-      return result;
-    },
-    setItem: (key: string, value: string) => {
-      idbStorage.setItem(key, value);
-    },
-    removeItem: (key: string) => {
-      idbStorage.removeItem(key);
-    },
-  },
+const asyncPersister = createAsyncStoragePersister({
+  storage: asyncStorage,
   key: IDB_CACHE_KEY,
 });
 
@@ -74,7 +60,7 @@ export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        persister,
+        persister: asyncPersister,
         maxAge: 24 * 60 * 60 * 1000,
         buster: 'v1',
       }}
