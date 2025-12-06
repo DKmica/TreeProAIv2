@@ -99,9 +99,13 @@ The application supports modern web standards, including ES2022, CSS Grid/Flexbo
 - Operations routes (employees, equipment, scheduling, AI)
 
 **Security Improvements:**
+- Fail-closed security model: errors during role lookup deny access instead of granting privileges
 - All RBAC middleware validates authentication before checking permissions
+- Users must have explicit role assignment in user_roles table - no default role fallback
 - Permission denials logged to audit_logs table
 - Role-based access matrix defines granular permissions per resource
+- Database errors during authentication clear user context entirely
 
 **Tests Added:**
 - `tests/unit/rbac.test.ts` - 18 unit tests for permissions matrix
+- Total test suite: 55 tests passing (7 test files)
