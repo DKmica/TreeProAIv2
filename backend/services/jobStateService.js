@@ -21,6 +21,7 @@
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const reminderService = require('./reminderService');
+const { emitBusinessEvent } = require('./automation');
 
 // ============================================================================
 // STATE TRANSITION MATRIX
@@ -62,6 +63,26 @@ const STATE_NAMES = {
   paid: 'Paid',
   cancelled: 'Cancelled'
 };
+
+/**
+ * Maps job states to supported business event types
+ * Supported events: job_created, job_scheduled, job_started, job_completed, job_cancelled
+ */
+const STATE_TO_EVENT_TYPE = {
+  scheduled: 'job_scheduled',
+  in_progress: 'job_started',
+  completed: 'job_completed',
+  cancelled: 'job_cancelled'
+};
+
+/**
+ * Get the business event type for a job state transition
+ * @param {string} toState - The state being transitioned to
+ * @returns {string|null} - The event type or null if no event should be emitted
+ */
+function getEventTypeForState(toState) {
+  return STATE_TO_EVENT_TYPE[toState] || null;
+}
 
 // ============================================================================
 // VALIDATION FUNCTIONS
@@ -987,6 +1008,27 @@ async function transitionJobState(jobId, toState, options = {}) {
     // Execute automated triggers (after commit, so they don't block)
     const transitionData = { jobId, fromState, toState, changedBy, reason, notes };
     await executeAutomatedTriggers(updatedJob, toState, transitionData);
+    
+    // Emit business event for automation engine
+    const eventType = getEventTypeForState(toState);
+    if (eventType) {
+      try {
+        await emitBusinessEvent(eventType, {
+          id: jobId,
+          ...updatedJob,
+          transition: {
+            from: fromState,
+            to: toState,
+            changedBy,
+            reason,
+            notes
+          }
+        });
+      } catch (eventError) {
+        console.error(`[State Machine] Failed to emit business event:`, eventError.message);
+        // Don't fail the transition if event emission fails
+      }
+    }
     
     console.log(`✅ [State Machine] Job ${jobId}: ${fromState} → ${toState}`);
     
