@@ -109,3 +109,36 @@ The application supports modern web standards, including ES2022, CSS Grid/Flexbo
 **Tests Added:**
 - `tests/unit/rbac.test.ts` - 18 unit tests for permissions matrix
 - Total test suite: 55 tests passing (7 test files)
+
+### December 2024 - Phase 2: Offline-First PWA Foundation
+
+**Status:** Complete
+
+**PWA Configuration:**
+- Installed `vite-plugin-pwa` with Workbox service worker generation
+- Configured runtime caching for `/api/jobs`, `/api/clients`, `/api/equipment` with NetworkFirst strategy
+- Created PWA manifest with app metadata, theme colors, and icons
+- Generated PWA icons (192x192, 512x512) in public folder
+
+**Query Persistence:**
+- Updated `QueryClientProvider` to use `PersistQueryClientProvider` with async storage
+- Configured IndexedDB storage via `idb-keyval` and `@tanstack/query-async-storage-persister`
+- Set 24-hour cache time for offline data access
+
+**Offline Sync:**
+- Integrated `CrewSyncContext` into the app (provides network detection, pending actions queue, sync on reconnect)
+- Pending actions stored in localStorage and synced when online
+
+**UI Indicators:**
+- Created `OfflineIndicator` component in `components/ui/OfflineIndicator.tsx`
+- Shows red badge when offline, amber badge for pending sync count, cyan spinner during sync
+- Green sync button appears when online with pending changes
+- Added to Header component for visibility
+
+**Key Files Created/Modified:**
+- `vite.config.ts` - PWA plugin configuration
+- `contexts/QueryClientProvider.tsx` - Async persistence with IndexedDB
+- `components/ui/OfflineIndicator.tsx` - Connection status UI
+- `components/Header.tsx` - Added OfflineIndicator
+- `index.tsx` - Wrapped app with CrewSyncProvider
+- `public/icon-192.png`, `public/icon-512.png` - PWA icons
