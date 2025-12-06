@@ -9,14 +9,36 @@ const {
   updateClient,
   deleteClient,
 } = require('../controllers/clientsController');
+const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
 
-router.post('/clients', createClient);
-router.get('/clients', getClients);
-router.get('/clients/:id', getClientById);
-router.put('/clients/:id', updateClient);
-router.delete('/clients/:id', deleteClient);
+router.post('/clients', 
+  requirePermission(RESOURCES.CLIENTS, ACTIONS.CREATE),
+  createClient
+);
 
-router.get('/clients/:id/activity', async (req, res) => {
+router.get('/clients', 
+  requirePermission(RESOURCES.CLIENTS, ACTIONS.LIST),
+  getClients
+);
+
+router.get('/clients/:id', 
+  requirePermission(RESOURCES.CLIENTS, ACTIONS.READ),
+  getClientById
+);
+
+router.put('/clients/:id', 
+  requirePermission(RESOURCES.CLIENTS, ACTIONS.UPDATE),
+  updateClient
+);
+
+router.delete('/clients/:id', 
+  requirePermission(RESOURCES.CLIENTS, ACTIONS.DELETE),
+  deleteClient
+);
+
+router.get('/clients/:id/activity', 
+  requirePermission(RESOURCES.CLIENTS, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { id } = req.params;
     const activities = [];

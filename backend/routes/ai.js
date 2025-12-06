@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
 
 let aiModeEnabled = false;
 
@@ -52,7 +53,9 @@ const defaultRecommendations = [
   }
 ];
 
-router.get('/ai/workflows/recommendations', async (req, res) => {
+router.get('/ai/workflows/recommendations', 
+  requirePermission(RESOURCES.AI, ACTIONS.LIST),
+  async (req, res) => {
   try {
     const { rows: existingWorkflows } = await db.query(`
       SELECT name, description FROM automation_workflows 
@@ -75,7 +78,9 @@ router.get('/ai/workflows/recommendations', async (req, res) => {
   }
 });
 
-router.post('/ai/workflows/ai-mode', async (req, res) => {
+router.post('/ai/workflows/ai-mode', 
+  requirePermission(RESOURCES.AI, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { enabled } = req.body;
     
@@ -96,7 +101,9 @@ router.post('/ai/workflows/ai-mode', async (req, res) => {
   }
 });
 
-router.get('/ai/workflows/ai-mode', async (req, res) => {
+router.get('/ai/workflows/ai-mode', 
+  requirePermission(RESOURCES.AI, ACTIONS.READ),
+  async (req, res) => {
   res.json({
     success: true,
     data: {

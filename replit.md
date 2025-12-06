@@ -72,6 +72,36 @@ The application supports modern web standards, including ES2022, CSS Grid/Flexbo
 - Automation engine scaffolded (event emitter, workflow engine, cron scheduler)
 
 **Recommended Next Steps:**
-1. Phase 1: Backend Refactor + RBAC enforcement (4-6 weeks)
-2. Phase 2: PWA/Offline foundation for field crews (2-3 weeks)
-3. Phase 7: QuickBooks Online integration (revenue critical)
+1. Phase 2: PWA/Offline foundation for field crews (2-3 weeks)
+2. Phase 7: QuickBooks Online integration (revenue critical)
+
+### December 2024 - Phase 1: Backend RBAC Implementation
+
+**Status:** Complete
+
+**New Components Created:**
+- `backend/src/modules/core/auth/` - Core RBAC module with:
+  - `permissions.js` - Permissions matrix (ROLES, ACTIONS, RESOURCES constants)
+  - `roleLoader.js` - User role loading with 5-minute caching
+  - `auditLogger.js` - Audit logging for security events
+  - `rbacMiddleware.js` - Express middleware for permission checks
+  - `index.js` - Consolidated module exports
+
+**Database Changes:**
+- Created `user_roles` table (user_id, role with CHECK constraint)
+- Created `audit_logs` table for security event tracking
+- Default owner role assigned to local-admin user
+
+**Route Protection Applied:**
+- Finance routes (invoices, payments)
+- Jobs and quotes routes
+- CRM routes (clients, properties, contacts, leads)
+- Operations routes (employees, equipment, scheduling, AI)
+
+**Security Improvements:**
+- All RBAC middleware validates authentication before checking permissions
+- Permission denials logged to audit_logs table
+- Role-based access matrix defines granular permissions per resource
+
+**Tests Added:**
+- `tests/unit/rbac.test.ts` - 18 unit tests for permissions matrix

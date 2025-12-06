@@ -1,3 +1,5 @@
+const { loadUserContext, ROLES } = require('./src/modules/core/auth');
+
 const defaultUser = {
   id: 'local-admin',
   email: process.env.ADMIN_EMAIL || 'owner@treepro.ai',
@@ -5,7 +7,7 @@ const defaultUser = {
   last_name: process.env.ADMIN_LAST_NAME || 'Owner',
   profile_image_url: null,
   created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
 };
 
 const authenticatedUser = {
@@ -23,19 +25,21 @@ function getRequestToken(req) {
 }
 
 async function setupAuth(app) {
-  app.use((req, _res, next) => {
+  app.use(async (req, _res, next) => {
     const requiredToken = process.env.AUTH_TOKEN;
     const providedToken = getRequestToken(req);
 
     if (!requiredToken) {
       req.user = authenticatedUser;
       req.isAuthenticated = () => true;
+      await loadUserContext(req, _res, () => {});
       return next();
     }
 
     if (providedToken && providedToken === requiredToken) {
       req.user = authenticatedUser;
       req.isAuthenticated = () => true;
+      await loadUserContext(req, _res, () => {});
       return next();
     }
 
@@ -77,4 +81,18 @@ const isAuthenticated = async (req, res, next) => {
   return res.status(401).json({ message: 'Unauthorized' });
 };
 
-module.exports = { setupAuth, isAuthenticated, getUser };
+const rbac = require('./src/modules/core/auth');
+
+module.exports = { 
+  setupAuth, 
+  isAuthenticated, 
+  getUser,
+  requireRole: rbac.requireRole,
+  requirePermission: rbac.requirePermission,
+  requireResourcePermission: rbac.requireResourcePermission,
+  requireOwnerOrAdmin: rbac.requireOwnerOrAdmin,
+  requireManager: rbac.requireManager,
+  ROLES: rbac.ROLES,
+  ACTIONS: rbac.ACTIONS,
+  RESOURCES: rbac.RESOURCES
+};

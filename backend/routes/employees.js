@@ -3,10 +3,13 @@ const db = require('../db');
 const { handleError } = require('../utils/errors');
 const { transformRow } = require('../utils/transformers');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
+const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
 
 const router = express.Router();
 
-router.get('/employees', async (req, res) => {
+router.get('/employees', 
+  requirePermission(RESOURCES.EMPLOYEES, ACTIONS.LIST),
+  async (req, res) => {
   try {
     const { search } = req.query;
     const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);

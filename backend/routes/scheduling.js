@@ -1,12 +1,15 @@
 const express = require('express');
 const db = require('../db');
 const { handleError, notFoundError, badRequestError } = require('../utils/errors');
-const { isAuthenticated } = require('../auth');
+const { isAuthenticated, requirePermission, RESOURCES, ACTIONS } = require('../auth');
 const scheduling = require('../services/scheduling');
 
 const router = express.Router();
 
-router.get('/scheduling/skills', isAuthenticated, async (req, res) => {
+router.get('/scheduling/skills', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.LIST),
+  async (req, res) => {
   try {
     const { category } = req.query;
     let query = 'SELECT * FROM skills';
@@ -26,7 +29,10 @@ router.get('/scheduling/skills', isAuthenticated, async (req, res) => {
   }
 });
 
-router.get('/scheduling/crews/:crewId/skills', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/:crewId/skills', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const skills = await scheduling.crewAssignmentService.getCrewSkills(crewId);
@@ -36,7 +42,10 @@ router.get('/scheduling/crews/:crewId/skills', isAuthenticated, async (req, res)
   }
 });
 
-router.post('/scheduling/crews/:crewId/skills', isAuthenticated, async (req, res) => {
+router.post('/scheduling/crews/:crewId/skills', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.CREATE),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { skillId, proficiencyLevel, certifiedUntil, notes } = req.body;
@@ -60,7 +69,10 @@ router.post('/scheduling/crews/:crewId/skills', isAuthenticated, async (req, res
   }
 });
 
-router.delete('/scheduling/crews/:crewId/skills/:skillId', isAuthenticated, async (req, res) => {
+router.delete('/scheduling/crews/:crewId/skills/:skillId', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.DELETE),
+  async (req, res) => {
   try {
     const { crewId, skillId } = req.params;
     
@@ -71,7 +83,10 @@ router.delete('/scheduling/crews/:crewId/skills/:skillId', isAuthenticated, asyn
   }
 });
 
-router.get('/scheduling/routes/:crewId/:date', isAuthenticated, async (req, res) => {
+router.get('/scheduling/routes/:crewId/:date', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId, date } = req.params;
     const routePlan = await scheduling.routeOptimizationService.getRoutePlan(crewId, date);
@@ -86,7 +101,10 @@ router.get('/scheduling/routes/:crewId/:date', isAuthenticated, async (req, res)
   }
 });
 
-router.post('/scheduling/routes/optimize', isAuthenticated, async (req, res) => {
+router.post('/scheduling/routes/optimize', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.CREATE),
+  async (req, res) => {
   try {
     const { crewId, date, startLocation, endLocation, useGoogleMaps } = req.body;
     
@@ -106,7 +124,10 @@ router.post('/scheduling/routes/optimize', isAuthenticated, async (req, res) => 
   }
 });
 
-router.patch('/scheduling/routes/:routePlanId/reorder', isAuthenticated, async (req, res) => {
+router.patch('/scheduling/routes/:routePlanId/reorder', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { routePlanId } = req.params;
     const { stopOrder } = req.body;
@@ -122,7 +143,10 @@ router.patch('/scheduling/routes/:routePlanId/reorder', isAuthenticated, async (
   }
 });
 
-router.post('/scheduling/routes/:routePlanId/publish', isAuthenticated, async (req, res) => {
+router.post('/scheduling/routes/:routePlanId/publish', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { routePlanId } = req.params;
     const userId = req.user?.id || req.user?.claims?.sub || 'unknown';
@@ -146,7 +170,10 @@ router.post('/scheduling/routes/:routePlanId/publish', isAuthenticated, async (r
   }
 });
 
-router.get('/scheduling/crews/available', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/available', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.LIST),
+  async (req, res) => {
   try {
     const { date, jobId, includeSkillMatch } = req.query;
     
@@ -165,7 +192,10 @@ router.get('/scheduling/crews/available', isAuthenticated, async (req, res) => {
   }
 });
 
-router.post('/scheduling/crews/:crewId/assign', isAuthenticated, async (req, res) => {
+router.post('/scheduling/crews/:crewId/assign', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.CREATE),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { jobId, date } = req.body;
@@ -181,7 +211,10 @@ router.post('/scheduling/crews/:crewId/assign', isAuthenticated, async (req, res
   }
 });
 
-router.get('/scheduling/crews/:crewId/capacity', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/:crewId/capacity', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { date } = req.query;
@@ -197,7 +230,10 @@ router.get('/scheduling/crews/:crewId/capacity', isAuthenticated, async (req, re
   }
 });
 
-router.get('/scheduling/jobs/:jobId/matching-crews', isAuthenticated, async (req, res) => {
+router.get('/scheduling/jobs/:jobId/matching-crews', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { jobId } = req.params;
     const { date } = req.query;
@@ -213,7 +249,10 @@ router.get('/scheduling/jobs/:jobId/matching-crews', isAuthenticated, async (req
   }
 });
 
-router.get('/scheduling/conflicts/:crewId/:date', isAuthenticated, async (req, res) => {
+router.get('/scheduling/conflicts/:crewId/:date', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId, date } = req.params;
     const conflicts = await scheduling.conflictResolutionService.getConflicts(crewId, date);
@@ -223,7 +262,10 @@ router.get('/scheduling/conflicts/:crewId/:date', isAuthenticated, async (req, r
   }
 });
 
-router.get('/scheduling/conflicts/:crewId/:date/alternatives', isAuthenticated, async (req, res) => {
+router.get('/scheduling/conflicts/:crewId/:date/alternatives', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId, date } = req.params;
     const { jobId } = req.query;
@@ -245,7 +287,10 @@ router.get('/scheduling/conflicts/:crewId/:date/alternatives', isAuthenticated, 
   }
 });
 
-router.get('/scheduling/crews/status', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/status', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.LIST),
+  async (req, res) => {
   try {
     const statuses = await scheduling.crewStatusService.getAllCrewStatuses();
     res.json({ success: true, data: statuses });
@@ -254,7 +299,10 @@ router.get('/scheduling/crews/status', isAuthenticated, async (req, res) => {
   }
 });
 
-router.get('/scheduling/crews/:crewId/status', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/:crewId/status', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const status = await scheduling.crewStatusService.getCurrentStatus(crewId);
@@ -264,7 +312,10 @@ router.get('/scheduling/crews/:crewId/status', isAuthenticated, async (req, res)
   }
 });
 
-router.post('/scheduling/crews/:crewId/status', isAuthenticated, async (req, res) => {
+router.post('/scheduling/crews/:crewId/status', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { status, latitude, longitude, accuracy, heading, speed, batteryLevel, currentJobId } = req.body;
@@ -292,7 +343,10 @@ router.post('/scheduling/crews/:crewId/status', isAuthenticated, async (req, res
   }
 });
 
-router.get('/scheduling/crews/:crewId/location-history', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/:crewId/location-history', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { startDate, endDate, limit } = req.query;
@@ -309,7 +363,10 @@ router.get('/scheduling/crews/:crewId/location-history', isAuthenticated, async 
   }
 });
 
-router.post('/scheduling/jobs/:jobId/on-my-way', isAuthenticated, async (req, res) => {
+router.post('/scheduling/jobs/:jobId/on-my-way', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { jobId } = req.params;
     const { crewId, etaMinutes } = req.body;
@@ -328,7 +385,10 @@ router.post('/scheduling/jobs/:jobId/on-my-way', isAuthenticated, async (req, re
   }
 });
 
-router.post('/scheduling/jobs/:jobId/arrived', isAuthenticated, async (req, res) => {
+router.post('/scheduling/jobs/:jobId/arrived', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { jobId } = req.params;
     const { crewId } = req.body;
@@ -345,7 +405,10 @@ router.post('/scheduling/jobs/:jobId/arrived', isAuthenticated, async (req, res)
   }
 });
 
-router.post('/scheduling/jobs/:jobId/completed', isAuthenticated, async (req, res) => {
+router.post('/scheduling/jobs/:jobId/completed', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const { jobId } = req.params;
     const { crewId, actualHours } = req.body;
@@ -365,7 +428,10 @@ router.post('/scheduling/jobs/:jobId/completed', isAuthenticated, async (req, re
   }
 });
 
-router.get('/scheduling/jobs/:jobId/notifications', isAuthenticated, async (req, res) => {
+router.get('/scheduling/jobs/:jobId/notifications', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { jobId } = req.params;
     const notifications = await scheduling.notificationService.getNotificationHistory(jobId);
@@ -375,7 +441,10 @@ router.get('/scheduling/jobs/:jobId/notifications', isAuthenticated, async (req,
   }
 });
 
-router.post('/scheduling/jobs/:jobId/predict-duration', isAuthenticated, async (req, res) => {
+router.post('/scheduling/jobs/:jobId/predict-duration', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { jobId } = req.params;
     
@@ -398,7 +467,10 @@ router.post('/scheduling/jobs/:jobId/predict-duration', isAuthenticated, async (
   }
 });
 
-router.get('/scheduling/duration-stats', isAuthenticated, async (req, res) => {
+router.get('/scheduling/duration-stats', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { jobType } = req.query;
     const stats = await scheduling.jobDurationService.getAveragesByType(jobType);
@@ -408,7 +480,10 @@ router.get('/scheduling/duration-stats', isAuthenticated, async (req, res) => {
   }
 });
 
-router.post('/scheduling/crews/:crewId/messages', isAuthenticated, async (req, res) => {
+router.post('/scheduling/crews/:crewId/messages', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.CREATE),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { message, messageType } = req.body;
@@ -432,7 +507,10 @@ router.post('/scheduling/crews/:crewId/messages', isAuthenticated, async (req, r
   }
 });
 
-router.get('/scheduling/crews/:crewId/messages', isAuthenticated, async (req, res) => {
+router.get('/scheduling/crews/:crewId/messages', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId } = req.params;
     const { limit, since } = req.query;
@@ -462,7 +540,10 @@ router.get('/scheduling/crews/:crewId/messages', isAuthenticated, async (req, re
   }
 });
 
-router.get('/scheduling/dispatcher/dashboard', isAuthenticated, async (req, res) => {
+router.get('/scheduling/dispatcher/dashboard', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { date } = req.query;
     const targetDate = date || new Date().toISOString().split('T')[0];
@@ -512,7 +593,10 @@ router.get('/scheduling/dispatcher/dashboard', isAuthenticated, async (req, res)
   }
 });
 
-router.get('/scheduling/capacity-calendar', isAuthenticated, async (req, res) => {
+router.get('/scheduling/capacity-calendar', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { crewId, startDate, endDate } = req.query;
     
@@ -542,7 +626,10 @@ router.get('/scheduling/capacity-calendar', isAuthenticated, async (req, res) =>
   }
 });
 
-router.post('/scheduling/capacity-calendar', isAuthenticated, async (req, res) => {
+router.post('/scheduling/capacity-calendar', 
+  isAuthenticated, 
+  requirePermission(RESOURCES.SCHEDULING, ACTIONS.CREATE),
+  async (req, res) => {
   try {
     const { crewId, date, availableHours, isAvailable, reason, notes } = req.body;
     

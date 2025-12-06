@@ -8,6 +8,7 @@ const { ensureClientAssociation } = require('../services/clientService');
 const { reindexDocument, removeFromVectorStore } = require('../utils/vectorStore');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
 const { getJson, setJson } = require('../services/cacheService');
+const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
 
 const { LEADS_CACHE_TTL_SECONDS } = process.env;
 const LEADS_CACHE_TTL = Number.isFinite(Number(LEADS_CACHE_TTL_SECONDS))
@@ -16,7 +17,9 @@ const LEADS_CACHE_TTL = Number.isFinite(Number(LEADS_CACHE_TTL_SECONDS))
 
 const router = express.Router();
 
-router.get('/leads', async (req, res) => {
+router.get('/leads', 
+  requirePermission(RESOURCES.LEADS, ACTIONS.LIST),
+  async (req, res) => {
   try {
     const { status, search } = req.query;
     const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);
@@ -117,7 +120,9 @@ router.get('/leads', async (req, res) => {
   }
 });
 
-router.post('/leads', async (req, res) => {
+router.post('/leads', 
+  requirePermission(RESOURCES.LEADS, ACTIONS.CREATE),
+  async (req, res) => {
   try {
     const leadData = req.body;
     const leadId = uuidv4();
@@ -175,7 +180,9 @@ router.post('/leads', async (req, res) => {
   }
 });
 
-router.get('/leads/:id', async (req, res) => {
+router.get('/leads/:id', 
+  requirePermission(RESOURCES.LEADS, ACTIONS.READ),
+  async (req, res) => {
   try {
     const { rows } = await db.query(`
       SELECT l.*, 
@@ -208,7 +215,9 @@ router.get('/leads/:id', async (req, res) => {
   }
 });
 
-router.put('/leads/:id', async (req, res) => {
+router.put('/leads/:id', 
+  requirePermission(RESOURCES.LEADS, ACTIONS.UPDATE),
+  async (req, res) => {
   try {
     const leadData = req.body;
     const { id } = req.params;
@@ -276,7 +285,9 @@ router.put('/leads/:id', async (req, res) => {
   }
 });
 
-router.delete('/leads/:id', async (req, res) => {
+router.delete('/leads/:id', 
+  requirePermission(RESOURCES.LEADS, ACTIONS.DELETE),
+  async (req, res) => {
   try {
     const result = await db.query('DELETE FROM leads WHERE id = $1', [req.params.id]);
 

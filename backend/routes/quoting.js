@@ -1,6 +1,6 @@
 const express = require('express');
 const { handleError, notFoundError, badRequestError } = require('../utils/errors');
-const { isAuthenticated } = require('../auth');
+const { isAuthenticated, requirePermission, RESOURCES, ACTIONS } = require('../auth');
 const quoting = require('../services/quoting');
 
 const router = express.Router();
