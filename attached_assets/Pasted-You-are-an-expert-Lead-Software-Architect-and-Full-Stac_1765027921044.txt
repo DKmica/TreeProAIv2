@@ -1,0 +1,508 @@
+You are an expert Lead Software Architect and Full-Stack Developer (React, Node.js, PostgreSQL, Vite, PWA, AI integration).
+You are working inside my existing repo: DKmica/TreeProAIv2.
+
+Your goal is to upgrade TreeProAIv2 from a functional MVP into a market-leading, production-ready tree service business management platform with:
+
+Modular backend architecture
+
+Powerful CRM/quoting/scheduling
+
+Offline-first crew PWA
+
+Crew mobile mode UI
+
+PHC (Plant Health Care) materials tracking
+
+Invoicing + payments + QuickBooks Online sync
+
+Automation/events
+
+AI helpers (tree estimator, assistant, visualizer)
+
+Solid tests and docs
+
+Work incrementally, keep all existing working features, and don’t break tests.
+
+PHASE 0 – ANALYSIS & PLAN
+
+Scan the repo and identify:
+
+Backend entry (e.g. backend/server.js).
+
+Frontend entry / main app / routing (e.g. src/main.tsx, src/App.tsx).
+
+Any roadmap / notes (ROADMAP, DEPLOYMENT.md, /attached_assets/…, etc.).
+
+Create/Update:
+
+docs/architecture.md – current architecture + target modular layout.
+
+docs/implementation_plan.md – checklist of the phases below and how you’ll implement them.
+
+PHASE 1 – BACKEND REFACTOR (MODULAR ARCHITECTURE + RBAC)
+
+Refactor the backend from monolith into domain modules, without breaking current behavior:
+
+Suggested structure under backend/src/:
+
+modules/core (db, auth, RBAC, common utils)
+
+modules/crm (clients, properties, contacts, leads)
+
+modules/quotes (quotes, quote line items, service templates, AI estimator hook)
+
+modules/jobs (jobs, status machine, scheduling)
+
+modules/crew (employees, roles, certifications, time tracking)
+
+modules/equipment (assets, maintenance, usage)
+
+modules/invoices (invoices, payments)
+
+modules/automation (events, rules engine)
+
+modules/analytics (reporting, dashboards)
+
+modules/ai (tree estimator, assistant/ProBot, scheduling helper, visualizer stubs)
+
+Tasks:
+
+Extract routing & business logic into controllers + services per module.
+
+Implement role-based access control (RBAC):
+
+Roles: admin, manager, sales, scheduler, crew, client.
+
+Middleware to enforce permissions on each route.
+
+Add unit tests (Jest/Vitest) for:
+
+Job state transitions.
+
+Quote → Job conversion.
+
+(Later) Invoice creation/payment.
+
+RBAC permissions.
+
+PHASE 2 – OFFLINE-FIRST PWA FOUNDATION
+
+Make the app offline-capable for field crews, using the concrete changes below.
+
+Install dependencies:
+
+vite-plugin-pwa
+
+@tanstack/react-query-persist-client
+
+Update vite.config.ts:
+
+Configure PWA:
+
+Name: "TreePro AI"
+
+Short Name: "TreePro"
+
+Theme Color: "#10b981"
+
+Proper icons (192/512 etc.)
+
+Register service worker via VitePWA plugin.
+
+Persisted React Query & offline sync:
+
+Wrap React Query usage with PersistQueryClientProvider from @tanstack/react-query-persist-client to persist jobs and related offline-critical data (e.g. localStorage or IndexedDB).
+
+Create src/contexts/OfflineSyncContext.tsx:
+
+Detect online/offline network status (window.navigator.onLine + online/offline events).
+
+Intercept/queue write operations (POST/PUT/PATCH/DELETE) to IndexedDB when offline.
+
+On reconnect, automatically replay queued requests in order.
+
+Wrap the app in OfflineSyncContextProvider (e.g. in src/main.tsx or App.tsx).
+
+Goal: crews can view and update jobs even with no signal; writes are queued and replayed.
+
+PHASE 3 – CREW MOBILE MODE (UI + VOICE NOTES)
+
+Create a dedicated Mobile Crew Mode view optimized for thumbs and field usage.
+
+New page: src/pages/crew/MobileMode.tsx.
+
+Layout:
+
+No sidebars; use a bottom navigation bar (e.g. Jobs, Today, Profile).
+
+Large, thumb-friendly buttons (min height ~60px) for:
+
+Start Job
+
+Navigate (open maps to job address)
+
+Safety Check
+
+Complete
+
+Hide all financial/pricing data in this view (no totals, no line item prices).
+
+Integrate with existing job data:
+
+Show “Today’s Jobs” for the currently logged-in crew user.
+
+Job detail screen with scope, notes, attachments, hazards.
+
+Voice Notes feature:
+
+Use browser’s Web Speech API.
+
+Add a microphone button that:
+
+Starts/stops recording.
+
+Transcribes speech to text in a Job Notes text area.
+
+Ensure graceful degradation if Web Speech API is not available.
+
+Goal: crews have a simple, mobile-first interface with voice-driven notes.
+
+PHASE 4 – CORE FIELD OPERATIONS (JOBS, CREW, TIME, EQUIPMENT)
+
+Build full operational support on top of existing jobs.
+
+Jobs:
+
+Confirm and standardize status flow:
+
+DRAFT, SCHEDULED, EN_ROUTE, ON_SITE, COMPLETED, INVOICED, CANCELLED.
+
+Add fields: scheduled start/end, assigned crews, assigned equipment.
+
+Crew management:
+
+Model Employee/CrewMember with roles, certifications, availability.
+
+Endpoints to assign crew to jobs and manage schedules.
+
+Time tracking:
+
+TimeEntry model: employee, job, start, end, total hours.
+
+APIs to start/stop job timers (hook to MobileMode buttons).
+
+Admin view for approving timesheets.
+
+Equipment & assets:
+
+Equipment model (trucks, chippers, saws, stump grinders).
+
+EquipmentUsage for linking equipment to jobs.
+
+EquipmentMaintenance for scheduled/actual maintenance.
+
+Basic rule-based “maintenance due” logic based on hours or calendar intervals.
+
+UI:
+
+Admin views for crews and equipment: lists, filters, detail pages.
+
+Jobs show which crew and equipment are assigned and hours logged.
+
+PHASE 5 – PHC & INVENTORY (PLANT HEALTH CARE MATERIALS)
+
+Add compliance-friendly tracking for Plant Health Care jobs.
+
+Create migration (e.g. backend/migrations/018_phc_materials.sql):
+
+CREATE TABLE job_materials (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
+  material_name VARCHAR(255) NOT NULL,
+  quantity_used NUMERIC(10,2),
+  unit VARCHAR(50),
+  epa_reg_number VARCHAR(100), -- Critical for compliance
+  application_method VARCHAR(100),
+  applied_by UUID REFERENCES employees(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+
+Run the migration and wire models.
+
+Backend routes (e.g. backend/routes/jobs.js or module equivalent):
+
+POST /api/jobs/:id/materials – add materials used to a job.
+
+GET /api/jobs/:id/materials – fetch materials for that job.
+
+Frontend UI:
+
+Update src/components/JobFormSubmission.tsx (or equivalent job completion form) to add a “Chemical/Material Usage” section:
+
+Inputs: name, quantity, unit, EPA reg number, application method, applied by.
+
+On submit, call the new materials endpoint.
+
+Goal: crews can log PHC chemical use with proper EPA/regulatory fields.
+
+PHASE 6 – SCHEDULING & ROUTE OPTIMIZATION
+
+Enhance scheduling for office/dispatch users.
+
+Scheduler API & UI:
+
+Calendar view (day/week/month).
+
+Crew timeline view (rows per crew, jobs as draggable blocks).
+
+Map view to show job locations with color-coded pins.
+
+Recurring jobs:
+
+Add recurrenceRule support for jobs (RRULE or equivalent).
+
+Worker/service to generate upcoming job instances.
+
+Route optimization v1:
+
+Implement a server-side function to suggest optimized job order per crew by location and estimated durations (use OR-Tools or simpler heuristic).
+
+Endpoint, e.g. POST /api/schedule/optimizeRoutes.
+
+In UI, add a “Optimize routes” button to apply suggestions (with confirmation).
+
+PHASE 7 – INVOICING, PAYMENTS & QUICKBOOKS ONLINE SYNC
+
+Complete the financial loop and connect to QB Online.
+
+Invoice & Payment models:
+
+Invoice (client, job(s), status, totals, due date, terms).
+
+InvoiceLineItem (description, quantity, unit price, tax).
+
+Payment (invoice, amount, method, date, externalId).
+
+Backend invoice logic:
+
+Create invoice from completed job(s).
+
+Allow editing before sending.
+
+Support progress billing (deposit, milestone, final).
+
+Client Portal:
+
+For client role or via secure token link:
+
+View and approve quotes.
+
+View and pay invoices.
+
+Stripe (or similar) Integration:
+
+Create checkout sessions for invoices.
+
+Webhook handler to mark invoices paid.
+
+QuickBooks Online Sync:
+
+Install node-quickbooks (or appropriate modern QuickBooks SDK / OAuth2 helper).
+
+Create backend/services/quickbooksService.js (or TS equivalent).
+
+Add routes in backend/routes/integrations.js (or module):
+
+GET /api/integrations/quickbooks/auth – redirect to QB OAuth.
+
+GET /api/integrations/quickbooks/callback – handle OAuth callback, exchange code for tokens, and store tokens in DB (create a quickbooks_tokens table or column as needed).
+
+Implement a syncInvoiceToQuickBooks(invoice) function that maps a TreePro invoice object to a QuickBooks Invoice JSON and sends it.
+
+A/R & reminders:
+
+Overdue detection (30/60/90 day aging).
+
+Automated reminder emails/texts via the automation system (below).
+
+PHASE 8 – AUTOMATION & EVENT SYSTEM
+
+Build an event-driven automation engine for key workflows.
+
+Implement an internal event bus:
+
+e.g. emitEvent('JOB_COMPLETED', payload) with subscribers.
+
+Core events:
+
+LEAD_CREATED, QUOTE_APPROVED, JOB_SCHEDULED, JOB_COMPLETED, INVOICE_CREATED, INVOICE_OVERDUE, etc.
+
+Implement initial hard-coded automations:
+
+JOB_COMPLETED → create draft invoice.
+
+JOB_COMPLETED → schedule review request email for +3 days.
+
+INVOICE_OVERDUE → send reminder and optional late fee.
+
+Log events and automation runs for debugging.
+
+Document in docs/automation.md.
+
+Later, this can become user-configurable, but v1 can be coded rules.
+
+PHASE 9 – AI ENHANCEMENTS (ESTIMATOR, ASSISTANT, SCHEDULER)
+
+Strengthen AI as a core differentiator.
+
+AI Tree Estimator module:
+
+Move estimator logic into modules/ai/treeEstimator.
+
+Ensure:
+
+Image uploads.
+
+Tree feature inputs (height, species, hazards).
+
+Output price suggestion(s).
+
+Persist each estimation with:
+
+Input data.
+
+Suggested price.
+
+Final approved price and job outcome.
+
+Add script/export route to dump this data for retraining.
+
+ProBot AI Assistant:
+
+Centralize as modules/ai/assistant.
+
+Add intents & endpoints for:
+
+“What jobs do we have tomorrow?”
+
+“How much revenue last month?”
+
+“Show outstanding invoices over 30 days.”
+
+Integrate a simple RAG layer:
+
+Index relevant business data into a vector store.
+
+Use it to answer context-aware questions (crew, jobs, revenue, etc.).
+
+AI help in scheduling & maintenance:
+
+Wrap route optimization and predicted job durations into an AI scheduling service endpoint.
+
+Add helper functions to flag likely overdue invoices and high-risk clients.
+
+PHASE 10 – AI VISUALIZER / VIRTUAL TRIMMER PAGE (SALES TOOL)
+
+Add a visual sales tool that lets users “mock up” removals/trims.
+
+Create new page: src/pages/Visualizer.tsx.
+
+Features:
+
+Image upload area (or camera capture) for a client’s tree.
+
+Display the image with an HTML Canvas or similar overlay.
+
+Masking/Brush Tool:
+
+Provide a brush tool that lets users paint over:
+
+Entire trees (for removal) or
+
+Specific limbs/branches (for trimming).
+
+Use semi-transparent red masking so the underlying image is still visible.
+
+Add Undo and Clear buttons for the mask.
+
+“Visualize Trim/Removal” button:
+
+Implement generateTrimPreview(image, mask) as a stub:
+
+For now, return the original image (or overlay a “Simulated AI Preview” watermark).
+
+Show a toast/notification:
+"Sending masked area to Generative Fill API... (Integration Pending)"
+
+Add comments / TODO describing future integration with a real in-painting/generative fill API (Stability, etc.).
+
+Add a simple Before/After slider component:
+
+Left: original image.
+
+Right: “AI” result (currently mocked).
+
+Even if images are identical now, the component should be ready for future real previews.
+
+Goal: build the full UI and integration hooks so only a real generative API call remains to be wired later.
+
+PHASE 11 – REPORTING & BUSINESS INTELLIGENCE
+
+Provide an admin “cockpit” for the business.
+
+Backend:
+
+Aggregate metrics: sales funnel, job profitability (estimated vs actual hours), crew productivity, equipment utilization, revenue by service type/date.
+
+Frontend:
+
+Dashboard pages with charts (e.g. using a chart library).
+
+Filters for date range, service type, crew, etc.
+
+CSV export for major reports.
+
+PHASE 12 – UX, ROLE FLOWS, TESTS & DOCS
+
+Role-aware navigation:
+
+admin/manager: full access.
+
+sales: CRM, quotes, partial schedule.
+
+scheduler: schedule, jobs, crew, equipment.
+
+crew: Mobile Mode + PWA only.
+
+client: portal (quotes, invoices, payments).
+
+Ensure the full flow is smooth:
+
+Lead → Quote → Schedule Job → Field execution → Invoice → Payment → Review/Follow-up.
+
+Write/extend tests for:
+
+Job state and workflows.
+
+Invoicing + payments + QuickBooks sync.
+
+Automation rules.
+
+Critical AI endpoints (at least smoke tests and mocks).
+
+Update:
+
+README.md – installation, env vars, basic usage.
+
+docs/architecture.md, docs/ai.md, docs/automation.md.
+
+CONSTRAINTS
+
+Maintain and reuse the existing TailwindCSS design system.
+
+All new SQL tables should use UUID primary keys.
+
+Do not break existing tests; update/add tests as needed.
+
+Changes must build and run inside Replit with clear instructions.
