@@ -16,7 +16,7 @@ const recurringJobsService = require('./services/recurringJobsService');
 const stripeService = require('./services/stripeService');
 const automationService = require('./services/automationService');
 const reminderService = require('./services/reminderService');
-const { initializeAutomationEngine, shutdownAutomationEngine } = require('./services/automation');
+const { initializeAutomationEngine, shutdownAutomationEngine, emitBusinessEvent } = require('./services/automation');
 const { generateJobNumber } = require('./services/numberService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
 const leadsRouter = require('./routes/leads');
@@ -5244,6 +5244,16 @@ apiRouter.post('/quotes/:id/send', async (req, res) => {
     
     const updatedQuote = snakeToCamel(updatedRows[0]);
     
+    // Emit quote_sent event
+    try {
+      await emitBusinessEvent('quote_sent', {
+        id: updatedQuote.id,
+        ...updatedQuote
+      });
+    } catch (e) {
+      console.error('[Automation] Failed to emit quote_sent:', e.message);
+    }
+    
     res.json({
       success: true,
       data: updatedQuote,
@@ -8565,6 +8575,16 @@ apiRouter.post('/quotes/:id/convert-to-invoice', async (req, res) => {
 
     reminderService.scheduleInvoiceReminders(invoiceRows[0]);
 
+    // Emit invoice_created event
+    try {
+      await emitBusinessEvent('invoice_created', {
+        id: invoice.id,
+        ...invoice
+      });
+    } catch (e) {
+      console.error('[Automation] Failed to emit invoice_created:', e.message);
+    }
+
     return res.status(201).json({
       success: true,
       data: { invoice, quote: updatedQuote },
@@ -8676,6 +8696,16 @@ apiRouter.post('/invoices', async (req, res) => {
     const result = transformRow(rows[0], 'invoices');
 
     reminderService.scheduleInvoiceReminders(rows[0]);
+
+    // Emit invoice_created event
+    try {
+      await emitBusinessEvent('invoice_created', {
+        id: result.id,
+        ...result
+      });
+    } catch (e) {
+      console.error('[Automation] Failed to emit invoice_created:', e.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -8887,6 +8917,24 @@ apiRouter.put('/invoices/:id', async (req, res) => {
       reminderService.cancelInvoiceReminders(id);
     } else {
       reminderService.scheduleInvoiceReminders(rows[0]);
+    }
+
+    // Emit invoice_sent event when status changes to 'Sent'
+    if (newStatus === 'Sent' && currentInvoice.status !== 'Sent') {
+      try {
+        await emitBusinessEvent('invoice_sent', { id: currentInvoice.id, ...result });
+      } catch (e) {
+        console.error('[Automation] Failed to emit invoice_sent:', e.message);
+      }
+    }
+
+    // Emit invoice_paid event when status changes to 'Paid'
+    if (newStatus === 'Paid' && currentInvoice.status !== 'Paid') {
+      try {
+        await emitBusinessEvent('invoice_paid', { id: currentInvoice.id, ...result });
+      } catch (e) {
+        console.error('[Automation] Failed to emit invoice_paid:', e.message);
+      }
     }
 
     res.json({

@@ -105,23 +105,63 @@ const ACTION_HANDLERS = {
   },
 
   create_invoice: async (config, context) => {
-    const { amount, due_in_days, line_items } = config;
-    const jobId = context.entityData?.id || context.entityData?.job_id;
-    const clientId = context.entityData?.client_id;
+    const { due_in_days = 30 } = config;
+    const job = context.entityData;
     
-    console.log(`[Action:create_invoice] Would create invoice:`);
-    console.log(`  Job ID: ${jobId}`);
-    console.log(`  Client ID: ${clientId}`);
-    console.log(`  Amount: ${amount || 'From line items'}`);
-    console.log(`  Due in days: ${due_in_days || 30}`);
+    if (!job || !job.id) {
+      throw new Error('Job data not found in context for invoice creation');
+    }
+    
+    const jobId = job.id;
+    const clientId = job.client_id;
+    const propertyId = job.property_id;
+    const customerName = job.customer_name || 'Unknown';
+    const price = job.price || job.total_amount || 0;
+    const lineItems = job.line_items || [];
+    
+    const year = new Date().getFullYear();
+    const prefix = `INV-${year}-`;
+    const { rows: seqRows } = await db.query(`
+      SELECT COALESCE(
+        MAX(CAST(SUBSTRING(invoice_number FROM 'INV-[0-9]+-([0-9]+)') AS INTEGER)), 
+        0
+      ) as max_seq
+      FROM invoices
+      WHERE invoice_number LIKE $1
+    `, [`${prefix}%`]);
+    const nextSeq = (seqRows[0]?.max_seq || 0) + 1;
+    const invoiceNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+    
+    const issueDate = new Date().toISOString().split('T')[0];
+    const dueDate = new Date(Date.now() + due_in_days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const invoiceId = uuidv4();
+    await db.query(`
+      INSERT INTO invoices (
+        id, job_id, client_id, property_id, customer_name,
+        invoice_number, issue_date, due_date, status,
+        line_items, total_amount, grand_total, amount_due, amount
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, 'Draft',
+        $9, $10, $10, $10, $10
+      )
+    `, [
+      invoiceId, jobId, clientId, propertyId, customerName,
+      invoiceNumber, issueDate, dueDate,
+      JSON.stringify(lineItems), price
+    ]);
+    
+    console.log(`[Action:create_invoice] Created draft invoice ${invoiceNumber} for job ${jobId}`);
     
     return {
       success: true,
       action: 'create_invoice',
+      invoiceId,
+      invoiceNumber,
       jobId,
       clientId,
-      amount,
-      note: 'Invoice creation stub - use existing invoice creation logic'
+      amount: price
     };
   }
 };
