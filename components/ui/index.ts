@@ -17,3 +17,4 @@ export { default as EmptyState, NoClientsState, NoJobsState, NoInvoicesState, Se
 export { default as MobileBottomNav } from './MobileBottomNav';
 export { default as DataTable } from './DataTable';
 export type { Column, DataTableProps } from './DataTable';
+export { default as OfflineIndicator } from './OfflineIndicator';

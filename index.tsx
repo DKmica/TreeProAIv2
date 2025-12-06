@@ -5,6 +5,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { QueryProvider } from './contexts/QueryClientProvider';
 import { AppDataProvider } from './contexts/AppDataContext';
+import { CrewSyncProvider } from './contexts/CrewSyncContext';
 import { ToastProvider } from './components/ui/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { registerGlobalErrorHandlers } from './utils/telemetry';
@@ -25,11 +26,13 @@ root.render(
     <QueryProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
-          <AppDataProvider>
-            <ToastProvider>
-              <App />
-            </ToastProvider>
-          </AppDataProvider>
+          <CrewSyncProvider>
+            <AppDataProvider>
+              <ToastProvider>
+                <App />
+              </ToastProvider>
+            </AppDataProvider>
+          </CrewSyncProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryProvider>

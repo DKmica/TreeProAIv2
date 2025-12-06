@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalSearch from './GlobalSearch';
+import OfflineIndicator from './ui/OfflineIndicator';
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -66,6 +67,8 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen, onOpenComm
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <OfflineIndicator />
+
           <button
             onClick={onOpenCommandPalette}
             className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-brand-gray-200 bg-brand-gray-800 hover:bg-brand-gray-700 border border-brand-gray-700 rounded-lg transition-colors"
