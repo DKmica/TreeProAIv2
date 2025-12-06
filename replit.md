@@ -142,3 +142,41 @@ The application supports modern web standards, including ES2022, CSS Grid/Flexbo
 - `components/Header.tsx` - Added OfflineIndicator
 - `index.tsx` - Wrapped app with CrewSyncProvider
 - `public/icon-192.png`, `public/icon-512.png` - PWA icons
+
+### December 2024 - Phase 3: Crew Mobile Mode
+
+**Status:** Complete
+
+**Type System Updates:**
+- Fixed crew pages to use `Client` type instead of legacy `Customer` type
+- Created helper functions for display names: `getClientDisplayName()` (companyName or firstName + lastName)
+- Created `getClientAddress()` helper using billing address fields
+- Created `getJobCoordinates()` and `getJobAddress()` helpers for property-based data
+
+**Bottom Navigation Bar:**
+- Added fixed bottom navigation to `components/CrewLayout.tsx`
+- Three tabs: Today (CalendarDays icon), All Jobs (Clock icon), Profile (Users icon)
+- Touch-friendly 64px height with dark theme (brand-gray-900 background)
+- Active state highlighting with brand-green-400 color
+- NavLink routing to `/crew`, `/crew/jobs`, `/crew/profile`
+
+**Voice Notes Component:**
+- Created `components/crew/VoiceNotes.tsx` with Web Speech API integration
+- Start/stop toggle button with microphone icon
+- Real-time interim transcription display during recording
+- Pulsing red animation during active recording
+- Graceful fallback when Web Speech API unavailable
+- `onTranscribe` callback for passing transcribed text
+
+**CrewJobDetail Integration:**
+- Added VoiceNotes component to notes section
+- Microphone button appends transcribed text to existing notes
+- Maintains existing note content when adding voice input
+
+**Key Files Created/Modified:**
+- `pages/crew/CrewDashboard.tsx` - Client type fixes, helper functions, bottom padding
+- `pages/crew/CrewJobDetail.tsx` - Client type fixes, VoiceNotes integration
+- `components/CrewLayout.tsx` - Bottom navigation bar
+- `components/crew/VoiceNotes.tsx` - New voice-to-text component
+
+**Test Status:** 55 tests passing (7 test files)
