@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Job, Quote, Invoice, Employee, LineItem, JobCost, PortalMessage, CustomerDetailsInput } from '../types';
 import ClipboardSignatureIcon from '../components/icons/ClipboardSignatureIcon';
 import ChatBubbleLeftRightIcon from '../components/icons/ChatBubbleLeftRightIcon';
+import { Download, Mail } from 'lucide-react';
 import PortalMessaging from '../components/PortalMessaging';
 import JobStatusBadge from '../components/JobStatusBadge';
 import StateTransitionControl from '../components/StateTransitionControl';
@@ -646,6 +647,12 @@ const Jobs: React.FC = () => {
   const [linkageWarnings, setLinkageWarnings] = useState<string[]>([]);
   const [associationJob, setAssociationJob] = useState<Job | null>(null);
   const [showAssociationModal, setShowAssociationModal] = useState(false);
+  const [showJobEmailModal, setShowJobEmailModal] = useState(false);
+  const [emailModalJob, setEmailModalJob] = useState<Job | null>(null);
+  const [jobEmailRecipient, setJobEmailRecipient] = useState('');
+  const [jobEmailSubject, setJobEmailSubject] = useState('');
+  const [jobEmailMessage, setJobEmailMessage] = useState('');
+  const [isSendingJobEmail, setIsSendingJobEmail] = useState(false);
 
   useEffect(() => {
     if (location.state?.openCreateForm) {
@@ -904,6 +911,48 @@ const Jobs: React.FC = () => {
     }
   };
 
+  const handleDownloadJobPdf = async (job: Job) => {
+    try {
+      await api.jobService.downloadPdf(job.id);
+    } catch (error: any) {
+      console.error('Failed to download work order PDF:', error);
+      alert(`Failed to download work order: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleSendJobPdf = (job: Job) => {
+    setEmailModalJob(job);
+    setJobEmailRecipient('');
+    setJobEmailSubject(`Work Order - ${job.customerName}`);
+    setJobEmailMessage('');
+    setShowJobEmailModal(true);
+  };
+
+  const handleSendJobEmail = async () => {
+    if (!emailModalJob || !jobEmailRecipient.trim()) {
+      alert('Please enter a recipient email address.');
+      return;
+    }
+
+    setIsSendingJobEmail(true);
+    try {
+      await api.jobService.sendPdf(
+        emailModalJob.id,
+        jobEmailRecipient.trim(),
+        jobEmailSubject || undefined,
+        jobEmailMessage || undefined
+      );
+      alert('Work order sent successfully!');
+      setShowJobEmailModal(false);
+      setEmailModalJob(null);
+    } catch (error: any) {
+      console.error('Failed to send work order:', error);
+      alert(`Failed to send work order: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSendingJobEmail(false);
+    }
+  };
+
   const isLoading = jobsLoading || quotesLoading || invoicesLoading || employeesLoading;
 
   const filteredJobs = useMemo(() => jobs.filter(job =>
@@ -1009,6 +1058,20 @@ const Jobs: React.FC = () => {
                                 className="ml-2 rounded bg-brand-green-50 px-2 py-1 text-xs font-semibold text-brand-green-600 shadow-sm hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed">
                                 Invoice
                             </button>
+                            <button 
+                                type="button" 
+                                onClick={() => handleDownloadJobPdf(job)}
+                                title="Download Work Order"
+                                className="ml-2 p-1 text-brand-gray-500 hover:text-brand-cyan-600 transition-colors">
+                                <Download className="h-4 w-4" />
+                            </button>
+                            <button 
+                                type="button" 
+                                onClick={() => handleSendJobPdf(job)}
+                                title="Send Work Order"
+                                className="ml-1 p-1 text-brand-gray-500 hover:text-brand-cyan-600 transition-colors">
+                                <Mail className="h-4 w-4" />
+                            </button>
                             <button onClick={() => handleEditClick(job)} className="ml-2 text-brand-green-600 hover:text-brand-green-900">Edit</button>
                             <button onClick={() => handleArchiveJob(job.id)} className="ml-2 text-red-600 hover:text-red-900">Archive</button>
                           </td>
@@ -1093,6 +1156,25 @@ const Jobs: React.FC = () => {
                 >
                   Invoice
                 </button>
+                <button 
+                  type="button" 
+                  onClick={() => handleDownloadJobPdf(job)}
+                  title="Download Work Order"
+                  className="px-3 py-2 text-sm font-medium text-brand-gray-600 hover:text-brand-cyan-600 border border-brand-gray-300 rounded-md hover:bg-brand-gray-50"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => handleSendJobPdf(job)}
+                  title="Send Work Order"
+                  className="px-3 py-2 text-sm font-medium text-brand-gray-600 hover:text-brand-cyan-600 border border-brand-gray-300 rounded-md hover:bg-brand-gray-50"
+                >
+                  <Mail className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex gap-2">
                 <button 
                   onClick={() => handleEditClick(job)} 
                   className="flex-1 px-3 py-2 text-sm font-medium text-brand-green-600 hover:text-brand-green-700 border border-brand-green-600 rounded-md hover:bg-brand-green-50"
@@ -1371,6 +1453,97 @@ const Jobs: React.FC = () => {
         defaultName={associationJob?.customerName}
         onCreated={handleAssociationsCreated}
       />
+
+      {showJobEmailModal && emailModalJob && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+          onClick={() => setShowJobEmailModal(false)}
+        >
+          <div
+            className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-white">Send Work Order</h2>
+              <button
+                onClick={() => setShowJobEmailModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-1"
+                type="button"
+              >
+                <XIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label htmlFor="emailRecipient" className="block text-sm font-medium text-gray-300 mb-1">
+                  Recipient Email *
+                </label>
+                <input
+                  type="email"
+                  id="emailRecipient"
+                  value={jobEmailRecipient}
+                  onChange={(e) => setJobEmailRecipient(e.target.value)}
+                  placeholder="customer@example.com"
+                  className="block w-full rounded-md border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="emailSubject" className="block text-sm font-medium text-gray-300 mb-1">
+                  Subject (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="emailSubject"
+                  value={jobEmailSubject}
+                  onChange={(e) => setJobEmailSubject(e.target.value)}
+                  placeholder="Work Order"
+                  className="block w-full rounded-md border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="emailMessage" className="block text-sm font-medium text-gray-300 mb-1">
+                  Message (Optional)
+                </label>
+                <textarea
+                  id="emailMessage"
+                  value={jobEmailMessage}
+                  onChange={(e) => setJobEmailMessage(e.target.value)}
+                  rows={3}
+                  placeholder="Add a personal message..."
+                  className="block w-full rounded-md border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm"
+                />
+              </div>
+
+              <div className="text-sm text-gray-400">
+                Work order for: <span className="text-white font-medium">{emailModalJob.customerName}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
+              <button
+                type="button"
+                onClick={() => setShowJobEmailModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                disabled={isSendingJobEmail}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSendJobEmail}
+                disabled={isSendingJobEmail || !jobEmailRecipient.trim()}
+                className="px-4 py-2 text-sm font-medium rounded-md bg-cyan-600 text-white shadow-sm hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSendingJobEmail ? 'Sending...' : 'Send'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

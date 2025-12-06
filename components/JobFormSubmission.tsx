@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { JobForm, FormField } from '../types';
 import { formService } from '../services/apiService';
 import XIcon from './icons/XIcon';
+import { Download, Mail } from 'lucide-react';
 
 interface JobFormSubmissionProps {
   isOpen: boolean;
@@ -29,6 +30,13 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [currentJobForm, setCurrentJobForm] = useState<JobForm>(jobForm);
+
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   useEffect(() => {
     setCurrentJobForm(jobForm);
@@ -109,6 +117,60 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
       setError(err.message || 'Failed to complete form');
       setIsCompleting(false);
     }
+  };
+
+  const handleDownloadFormPdf = async () => {
+    setIsDownloadingPdf(true);
+    setError(null);
+    try {
+      await formService.downloadSubmissionPdf(currentJobForm.id);
+    } catch (err: any) {
+      console.error('Error downloading PDF:', err);
+      setError(err.message || 'Failed to download PDF');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleSendFormPdf = () => {
+    setEmailSubject(`Form Submission: ${currentJobForm.template?.name || 'Form'}`);
+    setEmailMessage('');
+    setEmailRecipient('');
+    setShowEmailModal(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailRecipient.trim()) {
+      setError('Please enter a recipient email address');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    setError(null);
+    try {
+      await formService.sendSubmissionPdf(
+        currentJobForm.id,
+        emailRecipient.trim(),
+        emailSubject.trim() || undefined,
+        emailMessage.trim() || undefined
+      );
+      setShowEmailModal(false);
+      setEmailRecipient('');
+      setEmailSubject('');
+      setEmailMessage('');
+    } catch (err: any) {
+      console.error('Error sending PDF:', err);
+      setError(err.message || 'Failed to send PDF via email');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleCloseEmailModal = () => {
+    setShowEmailModal(false);
+    setEmailRecipient('');
+    setEmailSubject('');
+    setEmailMessage('');
   };
 
   const renderField = (field: FormField) => {
@@ -377,7 +439,34 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
         )}
 
         {isReadOnly && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-700 bg-[#0a1628]">
+          <div className="flex items-center justify-between p-6 border-t border-gray-700 bg-[#0a1628]">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleDownloadFormPdf}
+                disabled={isDownloadingPdf || isSendingEmail}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDownloadingPdf ? (
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Download PDF
+              </button>
+              <button
+                type="button"
+                onClick={handleSendFormPdf}
+                disabled={isDownloadingPdf || isSendingEmail}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                Send PDF
+              </button>
+            </div>
             <button
               type="button"
               onClick={onClose}
@@ -385,6 +474,97 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
             >
               Close
             </button>
+          </div>
+        )}
+
+        {showEmailModal && (
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseEmailModal();
+            }}
+          >
+            <div
+              className="bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-gray-700">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-purple-400" />
+                  Send Form PDF via Email
+                </h3>
+                <button
+                  onClick={handleCloseEmailModal}
+                  className="text-gray-400 hover:text-white transition-colors p-1"
+                  type="button"
+                >
+                  <XIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Recipient Email <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={emailRecipient}
+                    onChange={(e) => setEmailRecipient(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Subject <span className="text-gray-500 text-xs">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Email subject"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Message <span className="text-gray-500 text-xs">(optional)</span>
+                  </label>
+                  <textarea
+                    value={emailMessage}
+                    onChange={(e) => setEmailMessage(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Add a message to include in the email"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-700">
+                <button
+                  type="button"
+                  onClick={handleCloseEmailModal}
+                  className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+                  disabled={isSendingEmail}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendEmail}
+                  disabled={isSendingEmail || !emailRecipient.trim()}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSendingEmail && (
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  Send Email
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

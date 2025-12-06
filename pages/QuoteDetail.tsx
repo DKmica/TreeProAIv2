@@ -21,6 +21,7 @@ import PricingOptionsGrid from '../components/PricingOptionsGrid';
 import QuoteVersionTimeline from '../components/QuoteVersionTimeline';
 import { useToast } from '../components/ui/Toast';
 import AiInsightsPanel from '../components/AiInsightsPanel';
+import { Download, Mail } from 'lucide-react';
 
 const QuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +46,12 @@ const QuoteDetail: React.FC = () => {
   const [aiRecommendation, setAiRecommendation] = useState<AiQuoteRecommendation | null>(null);
   const [isAiRecommendationLoading, setIsAiRecommendationLoading] = useState(false);
   const [aiRecommendationError, setAiRecommendationError] = useState<string | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const toast = useToast();
 
   const loadProposalData = async (quoteId: string) => {
@@ -357,6 +364,49 @@ const QuoteDetail: React.FC = () => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!id) return;
+    setIsDownloadingPdf(true);
+    try {
+      await quoteService.downloadPdf(id);
+      toast?.success?.('PDF downloaded successfully');
+    } catch (err: any) {
+      console.error('Error downloading PDF:', err);
+      toast?.error?.(err.message || 'Failed to download PDF');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleSendPdf = () => {
+    setEmailRecipient(client?.primaryEmail || '');
+    setEmailSubject(`Quote ${quote?.quoteNumber || id?.slice(0, 8)}`);
+    setEmailMessage('');
+    setShowEmailModal(true);
+  };
+
+  const handleSendEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !emailRecipient) {
+      toast?.error?.('Please enter a recipient email address');
+      return;
+    }
+    setIsSendingEmail(true);
+    try {
+      await quoteService.sendPdf(id, emailRecipient, emailSubject, emailMessage);
+      toast?.success?.('Quote PDF sent successfully');
+      setShowEmailModal(false);
+      setEmailRecipient('');
+      setEmailSubject('');
+      setEmailMessage('');
+    } catch (err: any) {
+      console.error('Error sending PDF:', err);
+      toast?.error?.(err.message || 'Failed to send PDF');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -570,6 +620,21 @@ const QuoteDetail: React.FC = () => {
           className="px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 font-medium text-sm"
         >
           Delete
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={isDownloadingPdf}
+          className="px-4 py-2 border border-brand-gray-300 text-brand-gray-700 rounded-md hover:bg-brand-gray-50 font-medium text-sm flex items-center gap-2 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {isDownloadingPdf ? 'Downloading...' : 'Download PDF'}
+        </button>
+        <button
+          onClick={handleSendPdf}
+          className="px-4 py-2 border border-brand-gray-300 text-brand-gray-700 rounded-md hover:bg-brand-gray-50 font-medium text-sm flex items-center gap-2"
+        >
+          <Mail className="h-4 w-4" />
+          Send PDF
         </button>
       </div>
     </div>
@@ -907,6 +972,92 @@ const QuoteDetail: React.FC = () => {
         defaultName={clientName}
         onCreated={handleAssociationsCreated}
       />
+
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-brand-gray-900 flex items-center gap-2">
+                <Mail className="h-5 w-5 text-brand-cyan-600" />
+                Send Quote PDF
+              </h3>
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="text-brand-gray-400 hover:text-brand-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleSendEmailSubmit} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-brand-gray-700 block mb-1">
+                  Recipient Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  className="w-full rounded-md border border-brand-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:border-transparent"
+                  value={emailRecipient}
+                  onChange={(e) => setEmailRecipient(e.target.value)}
+                  placeholder="customer@example.com"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-brand-gray-700 block mb-1">
+                  Subject (optional)
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-md border border-brand-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:border-transparent"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Quote for your review"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-brand-gray-700 block mb-1">
+                  Message (optional)
+                </label>
+                <textarea
+                  rows={3}
+                  className="w-full rounded-md border border-brand-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 focus:border-transparent"
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  placeholder="Please find attached the quote for your upcoming project..."
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailModal(false)}
+                  className="flex-1 px-4 py-2 border border-brand-gray-300 text-brand-gray-700 rounded-md hover:bg-brand-gray-50 font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingEmail}
+                  className="flex-1 px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 font-medium text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <SpinnerIcon className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4" />
+                      Send
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

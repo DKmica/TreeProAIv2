@@ -1,6 +1,4 @@
 import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation } from '../types';
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult } from '../types';
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -288,9 +286,53 @@ export const quoteService = {
   getConversionAnalytics: async (): Promise<any> => {
     const response = await apiFetch<{ success: boolean; data: any }>('analytics/conversions');
     return response.data;
-  }
+  },
+  downloadPdf: async (id: string): Promise<void> => {
+    const response = await fetch(`/api/quotes/${id}/pdf`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download PDF');
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Quote-${id.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  sendPdf: async (id: string, email: string, subject?: string, message?: string): Promise<{ success: boolean }> => {
+    return apiFetch(`quotes/${id}/send-pdf`, {
+      method: 'POST',
+      body: JSON.stringify({ email, subject, message }),
+    });
+  },
 };
-export const jobService = createApiService<Job>('jobs');
+export const jobService = {
+  ...createApiService<Job>('jobs'),
+  downloadPdf: async (id: string): Promise<void> => {
+    const response = await fetch(`/api/jobs/${id}/pdf`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download PDF');
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `WorkOrder-${id.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  sendPdf: async (id: string, email: string, subject?: string, message?: string): Promise<{ success: boolean }> => {
+    return apiFetch(`jobs/${id}/send-pdf`, {
+      method: 'POST',
+      body: JSON.stringify({ email, subject, message }),
+    });
+  },
+};
 export const invoiceService = {
   getAll: async (): Promise<Invoice[]> => {
     const response = await apiFetch<{ success: boolean; data: Invoice[] }>('invoices');
@@ -304,6 +346,27 @@ export const invoiceService = {
     apiFetch(`invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(paymentData) }),
   generatePaymentLink: (invoiceId: string): Promise<{ success: boolean; paymentLink: string }> =>
     apiFetch(`invoices/${invoiceId}/payment-link`, { method: 'POST' }),
+  downloadPdf: async (id: string): Promise<void> => {
+    const response = await fetch(`/api/invoices/${id}/pdf`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download PDF');
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Invoice-${id.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  sendPdf: async (id: string, email: string, subject?: string, message?: string): Promise<{ success: boolean }> => {
+    return apiFetch(`invoices/${id}/send-pdf`, {
+      method: 'POST',
+      body: JSON.stringify({ email, subject, message }),
+    });
+  },
 };
 export const employeeService = createApiService<Employee>('employees');
 export const equipmentService = createApiService<Equipment>('equipment');
@@ -534,6 +597,27 @@ export const formService = {
   seedTemplates: async (): Promise<{ inserted: FormTemplate[]; skipped: string[]; message: string }> => {
     const response = await apiFetch<{ success: boolean; data: { inserted: FormTemplate[]; skipped: string[] }; message: string }>('form-templates/seed', { method: 'POST' });
     return { inserted: response.data?.inserted ?? [], skipped: response.data?.skipped ?? [], message: response.message || '' };
+  },
+  downloadSubmissionPdf: async (jobFormId: string): Promise<void> => {
+    const response = await fetch(`/api/form-submissions/${jobFormId}/pdf`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error('Failed to download PDF');
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Form-${jobFormId.slice(0, 8)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+  sendSubmissionPdf: async (jobFormId: string, email: string, subject?: string, message?: string): Promise<{ success: boolean }> => {
+    return apiFetch(`form-submissions/${jobFormId}/send-pdf`, {
+      method: 'POST',
+      body: JSON.stringify({ email, subject, message }),
+    });
   },
 };
 

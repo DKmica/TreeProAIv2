@@ -135,7 +135,7 @@ const formatAddress = (data) => {
 };
 
 const sendEmail = async (config, context) => {
-  const { template_id, subject, body, to, cc, bcc } = config;
+  const { template_id, subject, body, to, cc, bcc, attachments } = config;
 
   const variables = await buildVariablesFromContext(context);
 
@@ -174,6 +174,9 @@ const sendEmail = async (config, context) => {
     console.log(`  To: ${recipient}`);
     console.log(`  Subject: ${emailSubject}`);
     console.log(`  Body preview: ${emailBodyText?.substring(0, 100)}...`);
+    if (attachments && attachments.length > 0) {
+      console.log(`  Attachments: ${attachments.map(a => a.filename).join(', ')}`);
+    }
     
     return {
       success: true,
@@ -195,6 +198,15 @@ const sendEmail = async (config, context) => {
 
     if (cc) msg.cc = cc;
     if (bcc) msg.bcc = bcc;
+    
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      msg.attachments = attachments.map(att => ({
+        content: att.content,
+        filename: att.filename,
+        type: att.type || 'application/pdf',
+        disposition: att.disposition || 'attachment'
+      }));
+    }
 
     await sendgridClient.send(msg);
 

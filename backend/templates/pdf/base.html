@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - TreePro AI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #1a1a2e;
+      background: #ffffff;
+    }
+
+    .document {
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 24px;
+      border-bottom: 3px solid #00c2ff;
+      margin-bottom: 32px;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+    }
+
+    .company-info h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .company-info p {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .document-meta {
+      text-align: right;
+    }
+
+    .document-type {
+      font-size: 28px;
+      font-weight: 700;
+      color: #00c2ff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .document-number {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .document-date {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .content {
+      min-height: 400px;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #00c2ff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .info-box {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 4px solid #00c2ff;
+    }
+
+    .info-box h3 {
+      font-size: 10px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      font-size: 12px;
+      color: #1a1a2e;
+      margin-bottom: 2px;
+    }
+
+    .info-box .name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+
+    th {
+      background: #00c2ff;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    th:last-child {
+      text-align: right;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 12px;
+    }
+
+    td:last-child {
+      text-align: right;
+    }
+
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .totals-box {
+      width: 280px;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 12px;
+    }
+
+    .totals-row.subtotal {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .totals-row.grand-total {
+      font-size: 16px;
+      font-weight: 700;
+      color: #00c2ff;
+      border-top: 2px solid #00c2ff;
+      margin-top: 8px;
+      padding-top: 12px;
+    }
+
+    .notes-section {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 24px;
+    }
+
+    .notes-section h4 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 8px;
+    }
+
+    .notes-section p {
+      font-size: 11px;
+      color: #78350f;
+      white-space: pre-wrap;
+    }
+
+    .terms-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .terms-section h4 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .terms-section p {
+      font-size: 10px;
+      color: #6b7280;
+      white-space: pre-wrap;
+    }
+
+    .signature-section {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .signature-box {
+      border-top: 2px solid #1a1a2e;
+      padding-top: 8px;
+    }
+
+    .signature-box p {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: #9ca3af;
+    }
+
+    .footer-left {
+      display: flex;
+      gap: 16px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-badge.draft { background: #e5e7eb; color: #4b5563; }
+    .status-badge.sent { background: #dbeafe; color: #1d4ed8; }
+    .status-badge.accepted { background: #d1fae5; color: #059669; }
+    .status-badge.approved { background: #d1fae5; color: #059669; }
+    .status-badge.paid { background: #d1fae5; color: #059669; }
+    .status-badge.rejected { background: #fee2e2; color: #dc2626; }
+    .status-badge.overdue { background: #fee2e2; color: #dc2626; }
+    .status-badge.scheduled { background: #fef3c7; color: #d97706; }
+    .status-badge.in_progress { background: #dbeafe; color: #1d4ed8; }
+    .status-badge.completed { background: #d1fae5; color: #059669; }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      .document {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="document">
+    {{content}}
+  </div>
+</body>
+</html>

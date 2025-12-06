@@ -9,6 +9,7 @@ import InvoiceEditor from '../components/InvoiceEditor';
 import PaymentRecorder from '../components/PaymentRecorder';
 import InvoiceTemplate from '../components/InvoiceTemplate';
 import StatusBadge from '../components/StatusBadge';
+import { Download, Mail } from 'lucide-react';
 
 type StatusFilter = 'All' | 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
 
@@ -29,6 +30,14 @@ const Invoices: React.FC<InvoicesProps> = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | undefined>();
   const [paymentPreset, setPaymentPreset] = useState<number | undefined>();
   const [isGeneratingLink, setIsGeneratingLink] = useState<string | null>(null);
+  
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailModalInvoice, setEmailModalInvoice] = useState<Invoice | undefined>();
+  const [emailRecipient, setEmailRecipient] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [isSendingPdf, setIsSendingPdf] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState<string | null>(null);
 
   const fetchInvoices = async () => {
     try {
@@ -282,6 +291,62 @@ const Invoices: React.FC<InvoicesProps> = () => {
     }
   };
 
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    try {
+      setIsDownloadingPdf(invoice.id);
+      await invoiceService.downloadPdf(invoice.id);
+    } catch (error: any) {
+      console.error('Error downloading PDF:', error);
+      alert(error.message || 'Failed to download PDF');
+    } finally {
+      setIsDownloadingPdf(null);
+    }
+  };
+
+  const handleSendPdf = (invoice: Invoice) => {
+    setEmailModalInvoice(invoice);
+    setEmailRecipient(invoice.customerEmail || '');
+    setEmailSubject(`Invoice ${invoice.invoiceNumber || invoice.id}`);
+    setEmailMessage('');
+    setShowEmailModal(true);
+  };
+
+  const handleSendPdfSubmit = async () => {
+    if (!emailModalInvoice || !emailRecipient) {
+      alert('Please enter a recipient email address');
+      return;
+    }
+    
+    try {
+      setIsSendingPdf(true);
+      await invoiceService.sendPdf(
+        emailModalInvoice.id,
+        emailRecipient,
+        emailSubject || undefined,
+        emailMessage || undefined
+      );
+      alert('Invoice PDF sent successfully');
+      setShowEmailModal(false);
+      setEmailModalInvoice(undefined);
+      setEmailRecipient('');
+      setEmailSubject('');
+      setEmailMessage('');
+    } catch (error: any) {
+      console.error('Error sending PDF:', error);
+      alert(error.message || 'Failed to send PDF');
+    } finally {
+      setIsSendingPdf(false);
+    }
+  };
+
+  const handleCloseEmailModal = () => {
+    setShowEmailModal(false);
+    setEmailModalInvoice(undefined);
+    setEmailRecipient('');
+    setEmailSubject('');
+    setEmailMessage('');
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -466,6 +531,25 @@ const Invoices: React.FC<InvoicesProps> = () => {
                                 Edit
                               </button>
 
+                              <button
+                                onClick={() => handleDownloadPdf(invoice)}
+                                disabled={isDownloadingPdf === invoice.id}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-60"
+                                title="Download PDF"
+                              >
+                                <Download className="h-4 w-4" />
+                                {isDownloadingPdf === invoice.id ? 'Downloading...' : 'PDF'}
+                              </button>
+
+                              <button
+                                onClick={() => handleSendPdf(invoice)}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                title="Send PDF via Email"
+                              >
+                                <Mail className="h-4 w-4" />
+                                Email
+                              </button>
+
                               {displayStatus !== 'Paid' && displayStatus !== 'Void' && (
                                 <button
                                   onClick={() => handleRecordPayment(invoice)}
@@ -607,6 +691,21 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   >
                     Edit
                   </button>
+                  <button
+                    onClick={() => handleDownloadPdf(invoice)}
+                    disabled={isDownloadingPdf === invoice.id}
+                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium disabled:opacity-60"
+                  >
+                    <Download className="h-4 w-4" />
+                    {isDownloadingPdf === invoice.id ? 'Downloading...' : 'PDF'}
+                  </button>
+                  <button
+                    onClick={() => handleSendPdf(invoice)}
+                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                  >
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </button>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -694,6 +793,107 @@ const Invoices: React.FC<InvoicesProps> = () => {
             invoice={selectedInvoice}
           />
         </>
+      )}
+
+      {showEmailModal && emailModalInvoice && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div 
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              onClick={handleCloseEmailModal}
+            />
+            <span className="hidden sm:inline-block sm:h-screen sm:align-middle">&#8203;</span>
+            <div className="relative inline-block transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle">
+              <div>
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                  <Mail className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="mt-3 text-center sm:mt-5">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                    Send Invoice PDF
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Send invoice {emailModalInvoice.invoiceNumber || emailModalInvoice.id} to the recipient via email.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-5 space-y-4">
+                <div>
+                  <label htmlFor="emailRecipient" className="block text-sm font-medium text-gray-700">
+                    Recipient Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    id="emailRecipient"
+                    value={emailRecipient}
+                    onChange={(e) => setEmailRecipient(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    placeholder="customer@example.com"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="emailSubject" className="block text-sm font-medium text-gray-700">
+                    Subject (optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="emailSubject"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    placeholder="Invoice from Your Company"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="emailMessage" className="block text-sm font-medium text-gray-700">
+                    Message (optional)
+                  </label>
+                  <textarea
+                    id="emailMessage"
+                    value={emailMessage}
+                    onChange={(e) => setEmailMessage(e.target.value)}
+                    rows={3}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    placeholder="Please find attached the invoice for your recent service..."
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={handleSendPdfSubmit}
+                  disabled={isSendingPdf || !emailRecipient}
+                  className="inline-flex w-full justify-center rounded-md border border-transparent bg-brand-green-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed sm:col-start-2 sm:text-sm"
+                >
+                  {isSendingPdf ? (
+                    <>
+                      <SpinnerIcon className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Email
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseEmailModal}
+                  disabled={isSendingPdf}
+                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:opacity-50 sm:col-start-1 sm:mt-0 sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

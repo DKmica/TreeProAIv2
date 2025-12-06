@@ -5,6 +5,7 @@ integrations = ["stripe:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
+packages = ["glib", "nspr", "nss", "dbus", "at-spi2-atk", "cups", "xorg.libxcb", "libxkbcommon", "at-spi2-core", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "mesa", "cairo", "pango", "alsa-lib"]
 
 [workflows]
 runButton = "Project"
@@ -52,10 +53,6 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 39447
-externalPort = 3000
 
 
 [deployment]

@@ -8,6 +8,36 @@ TreePro AI is a comprehensive, AI-powered business management platform designed 
 
 ## Recent Changes
 
+### December 2024 - PDF Download and Email Feature
+
+**New Feature: PDF Generation and Delivery**
+All quotes, invoices, work orders, and form submissions can now be downloaded as PDFs or sent via email.
+
+**Key Components:**
+- `backend/services/pdfService.js` - PDF generation using pdfmake library
+- `backend/routes/pdf.js` - REST endpoints for download and email delivery
+- Updated frontend pages with Download/Send PDF buttons
+
+**API Endpoints:**
+- `GET /api/quotes/:id/pdf` - Download quote as PDF
+- `GET /api/invoices/:id/pdf` - Download invoice as PDF
+- `GET /api/jobs/:id/pdf` - Download work order as PDF
+- `GET /api/form-submissions/:id/pdf` - Download form submission as PDF
+- `POST /api/{type}/:id/send-pdf` - Email PDF to customer (accepts email, subject, message)
+
+**Features:**
+1. Professional TreePro AI branded PDFs with cyan accent color
+2. Clean tables for line items with alternating row colors
+3. Email modal for sending PDFs to customers
+4. Pre-filled email fields (recipient, subject)
+5. Works with SendGrid integration (when configured)
+
+**Frontend Updates:**
+- `pages/QuoteDetail.tsx` - Download PDF and Send PDF buttons
+- `pages/Invoices.tsx` - PDF download/email in invoice row actions
+- `pages/Jobs.tsx` - Work order PDF download/email
+- `components/JobFormSubmission.tsx` - Form PDF for completed submissions
+
 ### December 2024 - Form Templates Sample Seeding
 
 **New Feature: Sample Form Templates**
