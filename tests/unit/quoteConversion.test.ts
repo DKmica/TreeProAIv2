@@ -1,3 +1,15 @@
+/**
+ * Quote Conversion - Specification Tests
+ * 
+ * NOTE: These tests define the expected behavior for quote-to-job conversion.
+ * The conversion logic is currently implemented inline in the routes/jobs.js file
+ * rather than as a separate service. These tests serve as specification tests
+ * that document the expected conversion rules for Phase 1.
+ * 
+ * TODO: In a future phase, extract the conversion logic from routes/jobs.js
+ * into a dedicated service (e.g., backend/services/quoting/conversionService.js)
+ * and update these tests to import from that service.
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 interface QuoteLineItem {

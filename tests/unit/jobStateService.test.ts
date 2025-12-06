@@ -1,49 +1,14 @@
 import { describe, it, expect } from 'vitest';
 
-const STATE_TRANSITION_MATRIX: Record<string, string[]> = {
-  draft: ['needs_permit', 'waiting_on_client', 'scheduled', 'cancelled'],
-  needs_permit: ['waiting_on_client', 'scheduled', 'cancelled'],
-  waiting_on_client: ['scheduled', 'cancelled'],
-  scheduled: ['en_route', 'in_progress', 'weather_hold', 'cancelled'],
-  en_route: ['on_site', 'scheduled', 'weather_hold', 'cancelled'],
-  on_site: ['in_progress', 'scheduled', 'weather_hold', 'cancelled'],
-  weather_hold: ['scheduled', 'cancelled'],
-  in_progress: ['completed', 'weather_hold', 'cancelled'],
-  completed: ['invoiced'],
-  invoiced: ['paid', 'completed'],
-  paid: [],
-  cancelled: []
-};
-
-const STATE_NAMES: Record<string, string> = {
-  draft: 'Draft',
-  needs_permit: 'Needs Permit',
-  waiting_on_client: 'Waiting on Client',
-  scheduled: 'Scheduled',
-  en_route: 'En Route',
-  on_site: 'On Site',
-  weather_hold: 'Weather Hold',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  invoiced: 'Invoiced',
-  paid: 'Paid',
-  cancelled: 'Cancelled'
-};
+const { 
+  STATE_TRANSITION_MATRIX,
+  STATE_NAMES,
+  isTransitionAllowed,
+  getAllowedTransitions
+} = require('../../backend/services/jobStateService');
 
 const ALL_STATES = Object.keys(STATE_TRANSITION_MATRIX);
 const TERMINAL_STATES = ['paid', 'cancelled'];
-
-function isTransitionAllowed(fromState: string, toState: string): boolean {
-  const allowedTransitions = STATE_TRANSITION_MATRIX[fromState];
-  if (!allowedTransitions) {
-    return false;
-  }
-  return allowedTransitions.includes(toState);
-}
-
-function getAllowedTransitions(fromState: string): string[] {
-  return STATE_TRANSITION_MATRIX[fromState] || [];
-}
 
 describe('JobStateService', () => {
   describe('STATE_TRANSITION_MATRIX', () => {

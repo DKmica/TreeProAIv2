@@ -48,7 +48,7 @@ const initializePool = () => {
     queryImpl = (text, params) => safeQuery(text, params);
     getClientImpl = () => pool.connect();
   } else {
-    const { createInMemoryDatabase } = require('../../../inMemoryDb');
+    const { createInMemoryDatabase } = require('../../../../inMemoryDb');
     const inMemory = createInMemoryDatabase();
     queryImpl = (text, params) => inMemory.query(text, params);
     getClientImpl = () => {
