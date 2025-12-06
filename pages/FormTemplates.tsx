@@ -24,6 +24,8 @@ const FormTemplates: React.FC = () => {
   const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedMessage, setSeedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -95,6 +97,22 @@ const FormTemplates: React.FC = () => {
     await fetchTemplates();
   };
 
+  const handleSeedTemplates = async () => {
+    setIsSeeding(true);
+    setSeedMessage(null);
+    try {
+      const result = await formService.seedTemplates();
+      setSeedMessage(result.message);
+      await fetchTemplates();
+      setTimeout(() => setSeedMessage(null), 5000);
+    } catch (err: any) {
+      console.error('Error seeding templates:', err);
+      setSeedMessage(err.message || 'Failed to load sample templates');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
   const categories = ['all', 'safety', 'inspection', 'equipment', 'approval', 'completion', 'custom'];
 
   if (isLoading) {
@@ -123,16 +141,38 @@ const FormTemplates: React.FC = () => {
           </h1>
           <p className="text-gray-400 mt-2">Manage job form templates for inspections, approvals, and documentation</p>
         </div>
-        <button
-          onClick={handleCreateNew}
-          className="px-6 py-3 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors flex items-center gap-2 shadow-lg"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Create New Template
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleSeedTemplates}
+            disabled={isSeeding}
+            className="px-4 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-lg disabled:opacity-50"
+          >
+            {isSeeding ? (
+              <SpinnerIcon className="h-5 w-5" />
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            )}
+            Load Sample Templates
+          </button>
+          <button
+            onClick={handleCreateNew}
+            className="px-6 py-3 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors flex items-center gap-2 shadow-lg"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create New Template
+          </button>
+        </div>
       </div>
+
+      {seedMessage && (
+        <div className={`mb-4 px-4 py-3 rounded-md ${seedMessage.includes('Failed') ? 'bg-red-900/30 border border-red-500 text-red-200' : 'bg-green-900/30 border border-green-500 text-green-200'}`}>
+          {seedMessage}
+        </div>
+      )}
 
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
@@ -170,15 +210,31 @@ const FormTemplates: React.FC = () => {
           <p className="text-gray-500 mb-6">
             {searchQuery || selectedCategory !== 'all'
               ? 'Try adjusting your search or category filter'
-              : 'Get started by creating your first form template'}
+              : 'Get started by loading sample templates or creating your own'}
           </p>
           {!searchQuery && selectedCategory === 'all' && (
-            <button
-              onClick={handleCreateNew}
-              className="px-6 py-3 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
-            >
-              Create New Template
-            </button>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={handleSeedTemplates}
+                disabled={isSeeding}
+                className="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                {isSeeding ? (
+                  <SpinnerIcon className="h-5 w-5" />
+                ) : (
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                )}
+                Load Sample Templates
+              </button>
+              <button
+                onClick={handleCreateNew}
+                className="px-6 py-3 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+              >
+                Create New Template
+              </button>
+            </div>
           )}
         </div>
       ) : (

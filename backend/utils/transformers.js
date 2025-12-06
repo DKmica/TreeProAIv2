@@ -726,6 +726,7 @@ const transformRow = (row, tableName) => {
   if (tableName === 'form_templates') {
     if (row.form_type !== undefined) {
       transformed.formType = row.form_type;
+      transformed.category = row.form_type;
       delete transformed.form_type;
     }
     if (row.is_active !== undefined) {

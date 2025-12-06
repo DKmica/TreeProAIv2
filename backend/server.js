@@ -957,6 +957,7 @@ const transformRow = (row, tableName) => {
   if (tableName === 'form_templates') {
     if (row.form_type !== undefined) {
       transformed.formType = row.form_type;
+      transformed.category = row.form_type;
       delete transformed.form_type;
     }
     if (row.is_active !== undefined) {
@@ -6650,6 +6651,167 @@ apiRouter.delete('/form-templates/:id', async (req, res) => {
     res.json({
       success: true,
       message: 'Form template deleted successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/form-templates/seed - Seed sample form templates
+apiRouter.post('/form-templates/seed', async (req, res) => {
+  try {
+    const sampleTemplates = [
+      {
+        name: 'Pre-Job Safety Checklist',
+        description: 'Mandatory safety checklist to be completed before starting any tree work',
+        form_type: 'safety',
+        fields: [
+          { id: 'ppe_check', type: 'checkbox', label: 'All crew members wearing proper PPE (helmet, gloves, safety glasses, boots)', required: true },
+          { id: 'equipment_inspection', type: 'checkbox', label: 'All equipment inspected and in safe working condition', required: true },
+          { id: 'drop_zone', type: 'checkbox', label: 'Drop zone clearly marked and secured', required: true },
+          { id: 'traffic_control', type: 'checkbox', label: 'Traffic control measures in place (if applicable)', required: false },
+          { id: 'power_lines', type: 'select', label: 'Power line proximity status', required: true, options: ['No power lines nearby', 'Power lines present - keeping safe distance', 'Power company notified'] },
+          { id: 'weather_conditions', type: 'select', label: 'Weather conditions', required: true, options: ['Clear and safe', 'Marginal - monitoring', 'Unsafe - work postponed'] },
+          { id: 'emergency_plan', type: 'checkbox', label: 'Emergency action plan reviewed with crew', required: true },
+          { id: 'first_aid_kit', type: 'checkbox', label: 'First aid kit accessible on site', required: true },
+          { id: 'additional_hazards', type: 'textarea', label: 'Additional hazards identified', required: false },
+          { id: 'crew_leader_name', type: 'text', label: 'Crew Leader Name', required: true },
+          { id: 'checklist_date', type: 'date', label: 'Date', required: true }
+        ],
+        require_signature: true,
+        is_active: true
+      },
+      {
+        name: 'Tree Removal Inspection',
+        description: 'Detailed inspection form for tree removal assessment and documentation',
+        form_type: 'inspection',
+        fields: [
+          { id: 'tree_species', type: 'text', label: 'Tree Species', required: true },
+          { id: 'tree_height', type: 'number', label: 'Estimated Height (feet)', required: true },
+          { id: 'trunk_diameter', type: 'number', label: 'Trunk Diameter (inches)', required: true },
+          { id: 'tree_health', type: 'select', label: 'Tree Health Assessment', required: true, options: ['Healthy', 'Declining', 'Dead', 'Hazardous'] },
+          { id: 'decay_present', type: 'checkbox', label: 'Signs of decay or rot present', required: false },
+          { id: 'structural_defects', type: 'textarea', label: 'Structural defects noted', required: false },
+          { id: 'obstacles', type: 'textarea', label: 'Nearby obstacles (buildings, fences, utilities)', required: true },
+          { id: 'access_notes', type: 'textarea', label: 'Site access notes', required: false },
+          { id: 'recommended_equipment', type: 'textarea', label: 'Recommended equipment for removal', required: true },
+          { id: 'crew_size', type: 'number', label: 'Recommended crew size', required: true },
+          { id: 'estimated_duration', type: 'number', label: 'Estimated duration (hours)', required: true },
+          { id: 'special_precautions', type: 'textarea', label: 'Special precautions required', required: false },
+          { id: 'inspector_name', type: 'text', label: 'Inspector Name', required: true },
+          { id: 'inspection_date', type: 'date', label: 'Inspection Date', required: true }
+        ],
+        require_signature: true,
+        require_photos: true,
+        min_photos: 3,
+        is_active: true
+      },
+      {
+        name: 'Equipment Check',
+        description: 'Daily equipment inspection and maintenance check',
+        form_type: 'equipment',
+        fields: [
+          { id: 'equipment_type', type: 'select', label: 'Equipment Type', required: true, options: ['Chainsaw', 'Chipper', 'Bucket Truck', 'Stump Grinder', 'Climbing Gear', 'Other'] },
+          { id: 'equipment_id', type: 'text', label: 'Equipment ID/Serial Number', required: true },
+          { id: 'visual_inspection', type: 'checkbox', label: 'Visual inspection completed - no visible damage', required: true },
+          { id: 'fluid_levels', type: 'checkbox', label: 'Fluid levels checked and adequate', required: true },
+          { id: 'safety_features', type: 'checkbox', label: 'All safety features functional', required: true },
+          { id: 'blade_chain_condition', type: 'select', label: 'Blade/Chain condition', required: true, options: ['Good - sharp', 'Acceptable', 'Needs sharpening', 'Needs replacement'] },
+          { id: 'operational_test', type: 'checkbox', label: 'Operational test passed', required: true },
+          { id: 'maintenance_needed', type: 'checkbox', label: 'Maintenance required', required: false },
+          { id: 'maintenance_notes', type: 'textarea', label: 'Maintenance notes/issues identified', required: false },
+          { id: 'hour_meter_reading', type: 'number', label: 'Hour meter reading', required: false },
+          { id: 'inspector_name', type: 'text', label: 'Inspector Name', required: true },
+          { id: 'inspection_date', type: 'date', label: 'Inspection Date', required: true }
+        ],
+        require_signature: true,
+        is_active: true
+      },
+      {
+        name: 'Customer Approval Form',
+        description: 'Customer sign-off and approval documentation for completed work',
+        form_type: 'approval',
+        fields: [
+          { id: 'customer_name', type: 'text', label: 'Customer Name', required: true },
+          { id: 'work_completed', type: 'textarea', label: 'Work completed description', required: true },
+          { id: 'customer_satisfaction', type: 'select', label: 'Customer satisfaction level', required: true, options: ['Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very Dissatisfied'] },
+          { id: 'work_quality', type: 'checkbox', label: 'Work completed to customer satisfaction', required: true },
+          { id: 'cleanup_complete', type: 'checkbox', label: 'Site cleanup completed', required: true },
+          { id: 'debris_removed', type: 'checkbox', label: 'All debris removed from property', required: true },
+          { id: 'property_condition', type: 'checkbox', label: 'Property left in good condition', required: true },
+          { id: 'additional_work_requested', type: 'textarea', label: 'Additional work requested by customer', required: false },
+          { id: 'customer_comments', type: 'textarea', label: 'Customer comments or concerns', required: false },
+          { id: 'crew_leader_name', type: 'text', label: 'Crew Leader Name', required: true },
+          { id: 'completion_date', type: 'date', label: 'Completion Date', required: true }
+        ],
+        require_signature: true,
+        require_photos: true,
+        min_photos: 2,
+        is_active: true
+      },
+      {
+        name: 'Job Completion Checklist',
+        description: 'Internal checklist for job wrap-up and quality assurance',
+        form_type: 'completion',
+        fields: [
+          { id: 'all_work_completed', type: 'checkbox', label: 'All work items from quote completed', required: true },
+          { id: 'stumps_ground', type: 'checkbox', label: 'Stumps ground (if applicable)', required: false },
+          { id: 'wood_hauled', type: 'checkbox', label: 'Wood hauled away or stacked as requested', required: true },
+          { id: 'debris_removed', type: 'checkbox', label: 'All debris and branches removed', required: true },
+          { id: 'site_raked', type: 'checkbox', label: 'Work area raked and cleaned', required: true },
+          { id: 'equipment_removed', type: 'checkbox', label: 'All equipment removed from site', required: true },
+          { id: 'no_property_damage', type: 'checkbox', label: 'No damage to customer property', required: true },
+          { id: 'damage_notes', type: 'textarea', label: 'Property damage notes (if any)', required: false },
+          { id: 'safety_incidents', type: 'checkbox', label: 'Any safety incidents occurred', required: false },
+          { id: 'incident_details', type: 'textarea', label: 'Safety incident details', required: false },
+          { id: 'additional_services_sold', type: 'textarea', label: 'Additional services sold on site', required: false },
+          { id: 'crew_leader_name', type: 'text', label: 'Crew Leader Name', required: true },
+          { id: 'completion_date', type: 'date', label: 'Completion Date', required: true }
+        ],
+        require_signature: true,
+        require_photos: true,
+        is_active: true
+      }
+    ];
+    
+    const inserted = [];
+    const skipped = [];
+    
+    for (const template of sampleTemplates) {
+      const { rows: existing } = await db.query(
+        'SELECT id FROM form_templates WHERE name = $1 AND deleted_at IS NULL',
+        [template.name]
+      );
+      
+      if (existing.length > 0) {
+        skipped.push(template.name);
+        continue;
+      }
+      
+      const { rows } = await db.query(
+        `INSERT INTO form_templates (
+          name, description, form_type, fields, require_signature, require_photos, min_photos, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING *`,
+        [
+          template.name,
+          template.description,
+          template.form_type,
+          JSON.stringify(template.fields),
+          template.require_signature || false,
+          template.require_photos || false,
+          template.min_photos || null,
+          template.is_active
+        ]
+      );
+      
+      inserted.push(transformRow(rows[0], 'form_templates'));
+    }
+    
+    res.json({
+      success: true,
+      data: { inserted, skipped },
+      message: `Seeded ${inserted.length} templates, ${skipped.length} already existed`
     });
   } catch (err) {
     handleError(res, err);

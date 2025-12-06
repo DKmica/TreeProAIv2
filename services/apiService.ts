@@ -531,6 +531,10 @@ export const formService = {
     apiFetch(`job-forms/${id}/complete`, { method: 'PUT' }),
   deleteJobForm: (id: string): Promise<void> =>
     apiFetch<void>(`job-forms/${id}`, { method: 'DELETE' }),
+  seedTemplates: async (): Promise<{ inserted: FormTemplate[]; skipped: string[]; message: string }> => {
+    const response = await apiFetch<{ success: boolean; data: { inserted: FormTemplate[]; skipped: string[] }; message: string }>('form-templates/seed', { method: 'POST' });
+    return { inserted: response.data?.inserted ?? [], skipped: response.data?.skipped ?? [], message: response.message || '' };
+  },
 };
 
 export const operationsService = {
