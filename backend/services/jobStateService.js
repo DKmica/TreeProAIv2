@@ -834,6 +834,76 @@ async function getJob(jobId) {
 }
 
 /**
+ * Get job by ID with complete related entity data for event enrichment
+ * Includes client info, property info, and quote pricing data
+ * @param {string} jobId - Job UUID
+ * @returns {Object|null} - Enriched job object or null if not found
+ */
+async function getJobWithRelations(jobId) {
+  const { rows } = await db.query(`
+    SELECT 
+      j.*,
+      -- Client information
+      c.first_name AS client_first_name,
+      c.last_name AS client_last_name,
+      c.company_name AS client_company_name,
+      c.primary_email AS client_email,
+      c.primary_phone AS client_phone,
+      c.client_type,
+      c.client_category,
+      c.stripe_customer_id,
+      -- Property information
+      p.property_name,
+      p.address_line1 AS property_address,
+      p.city AS property_city,
+      p.state AS property_state,
+      p.zip_code AS property_zip,
+      p.lat AS property_lat,
+      p.lon AS property_lon,
+      p.access_instructions AS property_access_instructions,
+      -- Quote pricing information
+      q.total_amount AS quote_total_amount,
+      q.grand_total AS quote_grand_total,
+      q.discount_amount AS quote_discount_amount,
+      q.tax_amount AS quote_tax_amount,
+      q.line_items AS quote_line_items
+    FROM jobs j
+    LEFT JOIN clients c ON j.client_id = c.id
+    LEFT JOIN properties p ON j.property_id = p.id
+    LEFT JOIN quotes q ON j.quote_id = q.id
+    WHERE j.id = $1
+  `, [jobId]);
+  
+  if (rows.length === 0) {
+    return null;
+  }
+  
+  const job = rows[0];
+  
+  // Compute derived fields for convenience
+  const enrichedJob = {
+    ...job,
+    // Ensure customer_name is populated
+    customer_name: job.customer_name || 
+      (job.client_company_name || 
+        [job.client_first_name, job.client_last_name].filter(Boolean).join(' ')) || 
+      'Unknown',
+    // Price/total_amount for workflows (use quote grand_total or total_amount)
+    price: parseFloat(job.quote_grand_total) || parseFloat(job.quote_total_amount) || 0,
+    total_amount: parseFloat(job.quote_grand_total) || parseFloat(job.quote_total_amount) || 0,
+    // Full property address string
+    full_property_address: [
+      job.property_address,
+      job.property_city,
+      job.property_state,
+      job.property_zip
+    ].filter(Boolean).join(', ') || null
+  };
+  
+  return enrichedJob;
+}
+
+/**
  * Validate state transition
  * @param {Object} job - Current job object
  * @param {string} toState - Desired state
@@ -1009,13 +1079,23 @@ async function transitionJobState(jobId, toState, options = {}) {
     const transitionData = { jobId, fromState, toState, changedBy, reason, notes };
     await executeAutomatedTriggers(updatedJob, toState, transitionData);
     
-    // Emit business event for automation engine
+    // Emit business event for automation engine with complete entity data
     const eventType = getEventTypeForState(toState);
     if (eventType) {
       try {
+        // Fetch enriched job data with client/property/quote relations for downstream workflows
+        const enrichedJob = await getJobWithRelations(jobId);
+        
         await emitBusinessEvent(eventType, {
           id: jobId,
-          ...updatedJob,
+          ...enrichedJob,
+          // Ensure critical fields are present for workflows
+          customer_name: enrichedJob?.customer_name || updatedJob.customer_name || 'Unknown',
+          price: enrichedJob?.price || enrichedJob?.total_amount || 0,
+          total_amount: enrichedJob?.total_amount || 0,
+          client_id: enrichedJob?.client_id || updatedJob.client_id,
+          property_id: enrichedJob?.property_id || updatedJob.property_id,
+          // Include transition context
           transition: {
             from: fromState,
             to: toState,
@@ -1024,6 +1104,8 @@ async function transitionJobState(jobId, toState, options = {}) {
             notes
           }
         });
+        
+        console.log(`📤 [State Machine] Emitted ${eventType} event for job ${jobId}`);
       } catch (eventError) {
         console.error(`[State Machine] Failed to emit business event:`, eventError.message);
         // Don't fail the transition if event emission fails
