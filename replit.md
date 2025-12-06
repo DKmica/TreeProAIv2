@@ -180,3 +180,43 @@ The application supports modern web standards, including ES2022, CSS Grid/Flexbo
 - `components/crew/VoiceNotes.tsx` - New voice-to-text component
 
 **Test Status:** 55 tests passing (7 test files)
+
+### December 2024 - Phase 4: Core Field Operations
+
+**Status:** Complete (Pre-existing Implementation)
+
+**Job Status Flow:**
+- Backend job state service already includes full status flow: DRAFT → NEEDS_PERMIT → WAITING_ON_CLIENT → SCHEDULED → EN_ROUTE → ON_SITE → WEATHER_HOLD → IN_PROGRESS → COMPLETED → INVOICED → PAID → CANCELLED
+- State transition matrix in `backend/services/jobStateService.js` with STATE_NAMES for display
+- Frontend types.ts includes all status values in Job interface
+
+**Equipment Usage Tracking:**
+- Database table `equipment_usage` tracks: equipment_id, job_id, used_by, start_time, end_time, hours_used, notes
+- API endpoints in `backend/routes/equipment.js` for CRUD operations
+- TypeScript type `EquipmentUsage` in types.ts
+
+**Equipment Maintenance Tracking:**
+- Database table `equipment_maintenance` tracks: scheduled_date, actual_date, maintenance_type, cost, status, next_due_date
+- Maintenance types: 'scheduled', 'repair', 'inspection'
+- Status values: 'pending', 'completed', 'overdue'
+- GET `/api/equipment/maintenance-due` endpoint for maintenance alerts
+- TypeScript type `EquipmentMaintenance` in types.ts
+
+**Time Tracking System:**
+- Database table `time_entries` with full approval workflow
+- Backend endpoints: clock-in, clock-out, approve, reject
+- TimeEntry type includes GPS coordinates, photos, break tracking, approval status
+- Mobile clock-in/out in `pages/crew/CrewJobDetail.tsx` with GPS capture
+- Admin timesheet approval in `pages/TimeTracking.tsx` with 4 tabs: Clock, Entries, Approval, Timesheets
+- TimesheetApproval component in `src/components/TimesheetApproval.tsx`
+
+**Key Files:**
+- `backend/migrations/018_equipment_tracking.sql` - Equipment usage and maintenance tables
+- `backend/routes/equipment.js` - Equipment API with usage and maintenance endpoints
+- `backend/services/jobStateService.js` - Job state machine with full transition matrix
+- `pages/TimeTracking.tsx` - Admin time tracking dashboard
+- `pages/crew/CrewJobDetail.tsx` - Mobile clock-in/out with GPS
+- `src/components/TimesheetApproval.tsx` - Approval/rejection UI component
+- `src/components/ClockInOut.tsx` - Clock in/out interface
+
+**Test Status:** 55 tests passing (7 test files)
