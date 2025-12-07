@@ -79,9 +79,12 @@ async function setupAuth(app) {
   const config = await getOidcConfig();
 
   const verify = async (tokens, verified) => {
-    const user = {};
+    const claims = tokens.claims();
+    const user = {
+      id: claims.sub,
+    };
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    await upsertUser(claims);
     verified(null, user);
   };
 
