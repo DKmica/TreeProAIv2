@@ -213,6 +213,18 @@ const transformRow = (row, tableName) => {
       transformed.customerName = row.customer_name;
       delete transformed.customer_name;
     }
+    if (row.customer_phone !== undefined) {
+      transformed.customerPhone = row.customer_phone;
+      delete transformed.customer_phone;
+    }
+    if (row.customer_email !== undefined) {
+      transformed.customerEmail = row.customer_email;
+      delete transformed.customer_email;
+    }
+    if (row.customer_address !== undefined) {
+      transformed.customerAddress = row.customer_address;
+      delete transformed.customer_address;
+    }
     if (row.scheduled_date !== undefined) {
       transformed.scheduledDate = row.scheduled_date;
       delete transformed.scheduled_date;

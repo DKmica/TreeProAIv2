@@ -5317,6 +5317,49 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
         });
       }
 
+      // Fetch client info for customer contact details
+      let customerPhone = null;
+      let customerEmail = null;
+      let customerAddress = null;
+      
+      if (quote.client_id) {
+        const { rows: clientRows } = await db.query(
+          `SELECT primary_phone, primary_email, 
+                  billing_address_line1, billing_city, billing_state, billing_zip_code
+           FROM clients WHERE id = $1`,
+          [quote.client_id]
+        );
+        if (clientRows.length > 0) {
+          const client = clientRows[0];
+          customerPhone = client.primary_phone || null;
+          customerEmail = client.primary_email || null;
+          // Build full address from billing address fields
+          const addressParts = [
+            client.billing_address_line1,
+            client.billing_city,
+            client.billing_state,
+            client.billing_zip_code
+          ].filter(Boolean);
+          customerAddress = addressParts.length > 0 ? addressParts.join(', ') : null;
+        }
+      }
+      
+      // If property exists, use property address for job location
+      let jobLocation = quote.job_location;
+      if (quote.property_id) {
+        const { rows: propRows } = await db.query(
+          `SELECT address_line1, city, state, zip_code FROM properties WHERE id = $1`,
+          [quote.property_id]
+        );
+        if (propRows.length > 0) {
+          const prop = propRows[0];
+          const propAddressParts = [prop.address_line1, prop.city, prop.state, prop.zip_code].filter(Boolean);
+          if (propAddressParts.length > 0) {
+            jobLocation = propAddressParts.join(', ');
+          }
+        }
+      }
+
       const templateMatch = await automationService.matchTemplateForQuote(quote, db);
       const matchedTemplate = templateMatch?.template;
 
@@ -5333,13 +5376,14 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
       const insertJobQuery = `
         INSERT INTO jobs (
           id, client_id, property_id, quote_id, job_number, status,
-          customer_name, job_location, special_instructions,
+          customer_name, customer_phone, customer_email, customer_address,
+          job_location, special_instructions,
           price, line_items, created_at,
           equipment_needed, estimated_hours, required_crew_size, job_template_id,
           completion_checklist, jha_required
         ) VALUES (
-          $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, NOW(),
-          $11, $12, $13, $14, $15, $16
+          $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, $11, $12, $13, NOW(),
+          $14, $15, $16, $17, $18, $19
         ) RETURNING *
       `;
 
@@ -5350,7 +5394,10 @@ apiRouter.post('/quotes/:id/convert-to-job', async (req, res) => {
         sanitizedId,
         jobNumber,
         quote.customer_name || 'Unknown',
-        quote.job_location || null,
+        customerPhone,
+        customerEmail,
+        customerAddress,
+        jobLocation || null,
         quote.special_instructions || null,
         quote.grand_total || quote.price || 0,
         quote.line_items || '[]',
