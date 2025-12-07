@@ -63,9 +63,6 @@ const CRM: React.FC = () => {
       try {
         const data = await segmentService.getAll();
         setSegments(data);
-        if (data.length && !activeSegmentId) {
-          setActiveSegmentId(data[0].id);
-        }
       } catch (err) {
         console.error('Error loading segments', err);
       } finally {
@@ -822,10 +819,18 @@ const CRM: React.FC = () => {
             <span className="text-xs text-brand-gray-500">{segments.length} total</span>
           </div>
           <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
+            {activeSegmentId && (
+              <button
+                onClick={() => setActiveSegmentId(null)}
+                className="w-full text-left rounded-md border border-brand-gray-300 bg-brand-gray-50 px-3 py-2 text-sm text-brand-gray-700 hover:bg-brand-gray-100 transition"
+              >
+                Clear segment filter
+              </button>
+            )}
             {segments.map((segment) => (
               <button
                 key={segment.id}
-                onClick={() => setActiveSegmentId(segment.id)}
+                onClick={() => setActiveSegmentId(activeSegmentId === segment.id ? null : segment.id)}
                 className={`w-full text-left rounded-md border px-3 py-2 transition ${activeSegmentId === segment.id
                   ? 'border-brand-cyan-500 bg-brand-cyan-50'
                   : 'border-brand-gray-200 hover:border-brand-gray-300'
