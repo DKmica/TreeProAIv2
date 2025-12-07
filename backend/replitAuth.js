@@ -107,28 +107,36 @@ async function setupAuth(app) {
   passport.serializeUser((user, cb) => cb(null, user));
   passport.deserializeUser((user, cb) => cb(null, user));
 
+  const getEffectiveHost = (req) => {
+    return req.headers['x-forwarded-host'] || req.hostname;
+  };
+
   app.get('/api/login', (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const host = getEffectiveHost(req);
+    ensureStrategy(host);
+    passport.authenticate(`replitauth:${host}`, {
       prompt: 'login consent',
       scope: ['openid', 'email', 'profile', 'offline_access'],
     })(req, res, next);
   });
 
   app.get('/api/callback', (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const host = getEffectiveHost(req);
+    ensureStrategy(host);
+    passport.authenticate(`replitauth:${host}`, {
       successReturnToOrRedirect: '/',
       failureRedirect: '/api/login',
     })(req, res, next);
   });
 
   app.get('/api/logout', (req, res) => {
+    const host = getEffectiveHost(req);
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
     req.logout(() => {
       res.redirect(
         buildEndSessionUrl(config, {
           client_id: process.env.REPL_ID,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+          post_logout_redirect_uri: `${protocol}://${host}`,
         }).href
       );
     });
