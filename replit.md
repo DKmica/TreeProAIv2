@@ -16,7 +16,7 @@ The frontend uses React 19 with TypeScript, Vite 6.4.1, and React Router DOM v6.
 
 ### Backend Architecture
 
-The backend is built with Node.js and Express.js, providing a RESTful API on port 3001 with CORS enabled. Authentication is token-based using `express-session` with a PostgreSQL store and a comprehensive RBAC system for granular access control and audit logging. The API has a modular route structure with centralized error handling and UUID-based resource identifiers. Business logic is isolated using a service layer pattern, which includes a job state machine, a template system, and an automation engine. Key services encompass RAG, vector store, job lifecycle management, and payment integration. The backend also supports equipment usage and maintenance tracking, and a time tracking system with GPS capture and an approval workflow.
+The backend is built with Node.js and Express.js, providing a RESTful API on port 3001 with CORS enabled. Authentication uses Replit Auth (OpenID Connect) with `express-session` backed by PostgreSQL (`connect-pg-simple`) and `passport.js` for OAuth handling. Users can sign in via Google, GitHub, X, Apple, or email/password. A comprehensive RBAC system provides granular access control and audit logging. The API has a modular route structure with centralized error handling and UUID-based resource identifiers. Business logic is isolated using a service layer pattern, which includes a job state machine, a template system, and an automation engine. Key services encompass RAG, vector store, job lifecycle management, and payment integration. The backend also supports equipment usage and maintenance tracking, and a time tracking system with GPS capture and an approval workflow.
 
 ### Database Design
 
