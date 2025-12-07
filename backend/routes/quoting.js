@@ -222,12 +222,12 @@ router.get('/quotes/:quoteId/signature', isAuthenticated, async (req, res) => {
   }
 });
 
-router.post('/quotes/:quoteId/convert-to-job', isAuthenticated, async (req, res) => {
+router.post('/quotes/:quoteId/convert-to-job', isAuthenticated, async (req, res, next) => {
   try {
     const { jobId, selectedOptionId, notes } = req.body;
     
     if (!jobId) {
-      throw badRequestError('jobId is required');
+      return next();
     }
     
     const result = await quoting.conversionAnalyticsService.trackConversion(
