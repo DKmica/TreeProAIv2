@@ -26,6 +26,22 @@ PostgreSQL 14+ is the primary database, utilizing `node-postgres` with connectio
 
 Google Gemini (`@google/genai` v1.27.0) is the primary AI provider, using `gemini-2.0-flash` for chat and `text-embedding-004` for vector embeddings. AI features include an AI Tree Estimator, a RAG system for context-aware AI, a voice interface, a built-in arborist knowledge base, and AI-driven workflow automation. Vector embeddings are stored in ChromaDB, and context injection is dynamic based on user workflow.
 
+#### AI Module Architecture (Phase 9)
+
+The backend AI module (`backend/src/modules/ai/`) provides enhanced AI capabilities:
+
+- **Estimator Service** (`estimatorService.js`): Logs AI tree estimates with operator feedback tracking (accurate/too_high/too_low), training data export for model improvement, and accuracy metrics dashboard support.
+- **Assistant Service** (`assistantService.js`): ProBot intent detection for natural language business queries including "jobs tomorrow", "revenue last month", "overdue invoices", and "crew availability". Uses Gemini to generate conversational responses enriched with real-time database context.
+- **Scheduling Helper** (`schedulingHelper.js`): AI-powered job duration prediction based on historical data with rule-based fallback, crew conflict detection using JSONB array overlaps, and optimal crew assignment recommendations using certifications and performance metrics.
+
+#### AI API Endpoints
+
+- `/api/ai/estimates/*`: Create, log feedback, export training data, view stats
+- `/api/ai/assistant/*`: Natural language chat, specific intent queries (jobs/revenue/invoices/availability)
+- `/api/ai/scheduling/*`: Duration prediction, conflict detection, crew suggestions, daily scheduling insights
+
+Database tables: `ai_estimate_logs` (estimation history), `job_duration_history` (actual vs predicted tracking).
+
 ### Testing Strategy
 
 Unit and integration testing are performed with Vitest and React Testing Library, providing coverage reporting. End-to-end testing uses Playwright for browser automation, configured for Chromium with screenshot and video capture on failures, and HTML reporting.

@@ -142,20 +142,21 @@ async function detectSchedulingConflicts(proposedJob) {
 
   if (crewMembers.length > 0) {
     const crewConflicts = await db.query(`
-      SELECT j.id, j.description, j.scheduled_date, j.start_time, j.end_time,
+      SELECT j.id, j.special_instructions as description, j.scheduled_date, 
+             TO_CHAR(j.work_start_time, 'HH24:MI') as start_time, 
+             TO_CHAR(j.work_end_time, 'HH24:MI') as end_time,
              j.assigned_crew,
-             c.first_name || ' ' || c.last_name as customer_name
+             COALESCE(j.customer_name, c.first_name || ' ' || c.last_name) as customer_name
       FROM jobs j
       LEFT JOIN clients c ON j.client_id = c.id
       WHERE j.scheduled_date = $1
         AND j.status NOT IN ('Cancelled', 'Completed')
-        AND j.deleted_at IS NULL
-        AND j.assigned_crew && $2::text[]
+        AND j.assigned_crew ?| $2::text[]
     `, [scheduledDate, crewMembers]);
 
     for (const job of crewConflicts.rows) {
       if (hasTimeOverlap(startTime, endTime, job.start_time, job.end_time)) {
-        const overlappingCrew = job.assigned_crew.filter((m) => 
+        const overlappingCrew = (job.assigned_crew || []).filter((m) => 
           crewMembers.some(cm => cm.toLowerCase() === m.toLowerCase())
         );
         conflicts.push({
@@ -175,7 +176,7 @@ async function detectSchedulingConflicts(proposedJob) {
     const equipmentConflicts = await db.query(`
       SELECT eu.equipment_id, eu.job_id, eu.start_time, eu.end_time,
              e.name as equipment_name,
-             j.description as job_description
+             j.special_instructions as job_description
       FROM equipment_usage eu
       JOIN equipment e ON eu.equipment_id = e.id
       JOIN jobs j ON eu.job_id = j.id
@@ -204,7 +205,6 @@ async function detectSchedulingConflicts(proposedJob) {
     FROM jobs
     WHERE scheduled_date = $1
       AND status NOT IN ('Cancelled', 'Completed')
-      AND deleted_at IS NULL
   `, [scheduledDate]);
 
   const jobCount = parseInt(jobCountResult.rows[0].job_count);
@@ -221,6 +221,7 @@ async function detectSchedulingConflicts(proposedJob) {
 }
 
 function hasTimeOverlap(start1, end1, start2, end2) {
+  if (!start1 && !start2) return true;
   if (!start1 || !start2) return true;
   
   const s1 = timeToMinutes(start1);
@@ -228,13 +229,29 @@ function hasTimeOverlap(start1, end1, start2, end2) {
   const s2 = timeToMinutes(start2);
   const e2 = end2 ? timeToMinutes(end2) : s2 + 240;
   
+  if (isNaN(s1) || isNaN(e1) || isNaN(s2) || isNaN(e2)) {
+    return true;
+  }
+  
   return s1 < e2 && s2 < e1;
 }
 
 function timeToMinutes(timeStr) {
   if (!timeStr) return 0;
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  return hours * 60 + (minutes || 0);
+  
+  if (typeof timeStr === 'string' && timeStr.includes('T')) {
+    const date = new Date(timeStr);
+    if (!isNaN(date.getTime())) {
+      return date.getHours() * 60 + date.getMinutes();
+    }
+  }
+  
+  if (typeof timeStr === 'string' && /^\d{1,2}:\d{2}/.test(timeStr)) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + (minutes || 0);
+  }
+  
+  return NaN;
 }
 
 async function suggestOptimalCrew(jobDetails) {
@@ -248,34 +265,57 @@ async function suggestOptimalCrew(jobDetails) {
     preferredCrewSize = 3
   } = jobDetails;
 
-  const availableEmployees = await db.query(`
-    SELECT e.id, e.name, e.job_title, e.crew, e.skills, e.certifications,
-           e.pay_rate, e.performance_rating
+  const allEmployees = await db.query(`
+    SELECT e.id, e.name, e.job_title, e.certifications, e.pay_rate, e.performance_metrics
     FROM employees e
-    WHERE e.status = 'Active'
-      AND e.deleted_at IS NULL
-      AND e.id NOT IN (
-        SELECT unnest(j.assigned_crew_ids)
-        FROM jobs j
-        WHERE j.scheduled_date = $1
-          AND j.status NOT IN ('Cancelled', 'Completed')
-          AND j.deleted_at IS NULL
-          AND (
-            ($2::time IS NULL OR j.start_time IS NULL) OR
-            (j.start_time < COALESCE($3::time, j.start_time + interval '4 hours') AND 
-             COALESCE(j.end_time, j.start_time + interval '4 hours') > $2::time)
-          )
-      )
-    ORDER BY e.performance_rating DESC NULLS LAST, e.pay_rate ASC
-  `, [scheduledDate, startTime, endTime]);
+    ORDER BY e.pay_rate ASC
+  `);
 
-  const employees = availableEmployees.rows;
+  const scheduledJobs = await db.query(`
+    SELECT jsonb_array_elements_text(j.assigned_crew) as crew_name,
+           TO_CHAR(j.work_start_time, 'HH24:MI') as job_start,
+           TO_CHAR(j.work_end_time, 'HH24:MI') as job_end
+    FROM jobs j
+    WHERE j.scheduled_date = $1
+      AND j.status NOT IN ('Cancelled', 'Completed')
+      AND j.assigned_crew IS NOT NULL
+      AND jsonb_typeof(j.assigned_crew) = 'array'
+  `, [scheduledDate]);
+
+  const busyEmployees = new Map();
+  for (const row of scheduledJobs.rows) {
+    const name = row.crew_name?.toLowerCase();
+    if (name) {
+      if (!busyEmployees.has(name)) {
+        busyEmployees.set(name, []);
+      }
+      busyEmployees.get(name).push({ start: row.job_start, end: row.job_end });
+    }
+  }
+
+  const employees = allEmployees.rows.filter(emp => {
+    const empName = emp.name?.toLowerCase();
+    if (!busyEmployees.has(empName)) {
+      return true;
+    }
+    const schedules = busyEmployees.get(empName);
+    for (const schedule of schedules) {
+      if (!schedule.start && !schedule.end) {
+        return false;
+      }
+      if (hasTimeOverlap(startTime, endTime, schedule.start, schedule.end)) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   const scored = employees.map(emp => {
     let score = 50;
 
-    if (emp.performance_rating) {
-      score += emp.performance_rating * 10;
+    const perfMetrics = emp.performance_metrics || {};
+    if (perfMetrics.rating) {
+      score += perfMetrics.rating * 10;
     }
 
     const jobTitleLower = (emp.job_title || '').toLowerCase();
@@ -286,9 +326,9 @@ async function suggestOptimalCrew(jobDetails) {
       score += 15;
     }
 
-    const empSkills = emp.skills || [];
+    const certifications = emp.certifications || [];
     for (const skill of requiredSkills) {
-      if (empSkills.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
+      if (certifications.some(c => (c.name || c || '').toLowerCase().includes(skill.toLowerCase()))) {
         score += 10;
       }
     }
@@ -302,9 +342,10 @@ async function suggestOptimalCrew(jobDetails) {
   const alternates = scored.slice(preferredCrewSize, preferredCrewSize + 2);
 
   let needsCertifiedArborist = hazardLevel === 'High' || hazardLevel === 'Critical';
-  const hasCertified = recommended.some(e => 
-    (e.certifications || []).some(c => c.toLowerCase().includes('arborist'))
-  );
+  const hasCertified = recommended.some(e => {
+    const certs = e.certifications || [];
+    return certs.some(c => (c.name || c || '').toLowerCase().includes('arborist'));
+  });
 
   const warnings = [];
   if (needsCertifiedArborist && !hasCertified) {
@@ -359,16 +400,15 @@ async function logJobDuration(jobId, durationData) {
 async function getSchedulingSuggestions(dateStr) {
   const jobs = await db.query(`
     SELECT j.*, 
-           c.first_name || ' ' || c.last_name as customer_name,
+           COALESCE(j.customer_name, c.first_name || ' ' || c.last_name) as customer_name,
            p.address_line1, p.city, p.state, p.zip_code,
-           p.latitude, p.longitude
+           p.lat, p.lon
     FROM jobs j
     LEFT JOIN clients c ON j.client_id = c.id
     LEFT JOIN properties p ON j.property_id = p.id
     WHERE j.scheduled_date = $1
       AND j.status NOT IN ('Cancelled', 'Completed')
-      AND j.deleted_at IS NULL
-    ORDER BY j.start_time NULLS LAST
+    ORDER BY j.work_start_time NULLS LAST
   `, [dateStr]);
 
   const suggestions = [];
@@ -377,17 +417,17 @@ async function getSchedulingSuggestions(dateStr) {
     if (!job.assigned_crew || job.assigned_crew.length === 0) {
       const crewSuggestion = await suggestOptimalCrew({
         scheduledDate: dateStr,
-        startTime: job.start_time,
-        endTime: job.end_time,
-        serviceType: job.service_type || 'tree_removal',
-        hazardLevel: 'Medium'
+        startTime: job.work_start_time,
+        endTime: job.work_end_time,
+        serviceType: 'tree_removal',
+        hazardLevel: job.risk_level || 'Medium'
       });
       
       if (crewSuggestion.recommended.length > 0) {
         suggestions.push({
           type: 'crew_assignment',
           jobId: job.id,
-          jobDescription: job.description,
+          jobDescription: job.special_instructions,
           customer: job.customer_name,
           suggestedCrew: crewSuggestion.recommended.map(e => e.name)
         });
@@ -395,9 +435,9 @@ async function getSchedulingSuggestions(dateStr) {
     }
 
     const durationPrediction = await predictJobDuration({
-      serviceType: job.service_type || 'tree_removal',
-      treeHeightFeet: job.tree_height,
-      trunkDiameterInches: job.trunk_diameter,
+      serviceType: 'tree_removal',
+      treeHeightFeet: null,
+      trunkDiameterInches: null,
       crewSize: (job.assigned_crew || []).length || 3
     });
 
@@ -405,7 +445,7 @@ async function getSchedulingSuggestions(dateStr) {
       suggestions.push({
         type: 'duration_estimate',
         jobId: job.id,
-        jobDescription: job.description,
+        jobDescription: job.special_instructions,
         estimatedHours: durationPrediction.estimatedHours,
         confidence: durationPrediction.confidence,
         range: durationPrediction.confidenceRange
