@@ -67,6 +67,16 @@ async function upsertUser(claims) {
       `INSERT INTO users (id, email, first_name, last_name, profile_image_url, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`,
       [userId, email, firstName, lastName, profileImageUrl]
     );
+    
+    // Assign default 'owner' role to new users (first user becomes owner)
+    const existingRoles = await db.query(
+      'SELECT COUNT(*) as count FROM user_roles'
+    );
+    const defaultRole = existingRoles.rows[0].count === '0' ? 'owner' : 'crew_member';
+    await db.query(
+      `INSERT INTO user_roles (user_id, role) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [userId, defaultRole]
+    );
   }
 }
 
