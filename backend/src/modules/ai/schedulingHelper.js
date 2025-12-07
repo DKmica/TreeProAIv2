@@ -3,19 +3,18 @@ const db = require('../../modules/core/db');
 async function getHistoricalDurationData() {
   const result = await db.query(`
     SELECT 
-      service_type,
-      tree_height_range,
-      trunk_diameter_range,
-      hazard_level,
+      job_type,
+      tree_sizes,
+      difficulty_rating,
       crew_size,
-      AVG(actual_duration_hours) as avg_duration,
-      STDDEV(actual_duration_hours) as duration_stddev,
+      AVG(actual_hours) as avg_duration,
+      STDDEV(actual_hours) as duration_stddev,
       COUNT(*) as sample_count
     FROM job_duration_history
-    WHERE actual_duration_hours IS NOT NULL
-    GROUP BY service_type, tree_height_range, trunk_diameter_range, hazard_level, crew_size
+    WHERE actual_hours IS NOT NULL
+    GROUP BY job_type, tree_sizes, difficulty_rating, crew_size
     HAVING COUNT(*) >= 3
-    ORDER BY service_type, crew_size
+    ORDER BY job_type, crew_size
   `);
   return result.rows;
 }
@@ -34,15 +33,13 @@ async function predictJobDuration(jobDetails) {
 
   const historical = await db.query(`
     SELECT 
-      AVG(actual_duration_hours) as avg_duration,
-      STDDEV(actual_duration_hours) as duration_stddev,
+      AVG(actual_hours) as avg_duration,
+      STDDEV(actual_hours) as duration_stddev,
       COUNT(*) as sample_count
     FROM job_duration_history
-    WHERE service_type = $1
-      AND (tree_height_range = $2 OR tree_height_range IS NULL)
-      AND (trunk_diameter_range = $3 OR trunk_diameter_range IS NULL)
-      AND (hazard_level = $4 OR hazard_level IS NULL)
-  `, [serviceType, heightRange, diameterRange, hazardLevel]);
+    WHERE job_type = $1
+      AND crew_size = $2
+  `, [serviceType, crewSize]);
 
   if (historical.rows[0]?.sample_count >= 3) {
     const avgDuration = parseFloat(historical.rows[0].avg_duration);
@@ -328,33 +325,32 @@ async function suggestOptimalCrew(jobDetails) {
 
 async function logJobDuration(jobId, durationData) {
   const {
-    treeSpecies,
     treeCount,
     serviceType,
-    treeHeightRange,
-    trunkDiameterRange,
-    hazardLevel,
+    treeSizes,
+    difficultyRating,
     crewSize,
-    estimatedDurationHours,
-    actualDurationHours,
+    estimatedHours,
+    actualHours,
     weatherConditions,
-    accessDifficulty,
     notes
   } = durationData;
 
+  const variancePercentage = estimatedHours && actualHours 
+    ? Math.round(((actualHours - estimatedHours) / estimatedHours) * 100)
+    : null;
+
   const result = await db.query(`
     INSERT INTO job_duration_history (
-      job_id, tree_species, tree_count, service_type,
-      tree_height_range, trunk_diameter_range, hazard_level, crew_size,
-      estimated_duration_hours, actual_duration_hours,
-      weather_conditions, access_difficulty, notes
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      job_id, tree_count, job_type, tree_sizes,
+      difficulty_rating, crew_size, estimated_hours, actual_hours,
+      variance_percentage, weather_conditions, notes
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *
   `, [
-    jobId, treeSpecies, treeCount, serviceType,
-    treeHeightRange, trunkDiameterRange, hazardLevel, crewSize,
-    estimatedDurationHours, actualDurationHours,
-    weatherConditions, accessDifficulty, notes
+    jobId, treeCount, serviceType, treeSizes,
+    difficultyRating, crewSize, estimatedHours, actualHours,
+    variancePercentage, weatherConditions, notes
   ]);
 
   return result.rows[0];

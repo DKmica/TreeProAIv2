@@ -12,7 +12,7 @@ if (GEMINI_API_KEY) {
 async function getJobsForDateRange(startDate, endDate) {
   const result = await db.query(`
     SELECT j.*, 
-           c.first_name || ' ' || c.last_name as customer_name,
+           COALESCE(j.customer_name, c.first_name || ' ' || c.last_name) as customer_name,
            c.primary_phone as customer_phone,
            p.address_line1 as property_address,
            p.city as property_city
@@ -21,8 +21,7 @@ async function getJobsForDateRange(startDate, endDate) {
     LEFT JOIN properties p ON j.property_id = p.id
     WHERE j.scheduled_date >= $1 AND j.scheduled_date <= $2
       AND j.status NOT IN ('Cancelled', 'Completed')
-      AND j.deleted_at IS NULL
-    ORDER BY j.scheduled_date, j.start_time
+    ORDER BY j.scheduled_date, j.work_start_time
   `, [startDate, endDate]);
   return result.rows;
 }
@@ -42,12 +41,12 @@ async function getRevenueForPeriod(startDate, endDate) {
   const result = await db.query(`
     SELECT 
       COUNT(*) as job_count,
-      SUM(COALESCE(j.total_cost, 0)) as total_revenue,
-      SUM(CASE WHEN j.status = 'Completed' THEN COALESCE(j.total_cost, 0) ELSE 0 END) as completed_revenue,
-      SUM(CASE WHEN j.status IN ('Scheduled', 'In Progress') THEN COALESCE(j.total_cost, 0) ELSE 0 END) as pending_revenue
+      SUM(COALESCE(i.grand_total, i.total_amount, i.amount, 0)) as total_revenue,
+      SUM(CASE WHEN j.status = 'Completed' THEN COALESCE(i.grand_total, i.total_amount, i.amount, 0) ELSE 0 END) as completed_revenue,
+      SUM(CASE WHEN j.status IN ('Scheduled', 'In Progress') THEN COALESCE(i.grand_total, i.total_amount, i.amount, 0) ELSE 0 END) as pending_revenue
     FROM jobs j
+    LEFT JOIN invoices i ON j.invoice_id = i.id
     WHERE j.created_at >= $1 AND j.created_at <= $2
-      AND j.deleted_at IS NULL
   `, [startDate, endDate]);
   return result.rows[0];
 }
@@ -69,7 +68,6 @@ async function getRevenueLastMonth() {
       SUM(COALESCE(amount_paid, 0)) as paid_amount
     FROM invoices
     WHERE created_at >= $1 AND created_at <= $2
-      AND deleted_at IS NULL
   `, [firstDayLastMonth.toISOString().split('T')[0], lastDayLastMonth.toISOString().split('T')[0]]);
 
   return {
@@ -87,30 +85,28 @@ async function getOverdueInvoices(daysOverdue = 30) {
   cutoffDate.setDate(cutoffDate.getDate() - daysOverdue);
 
   const result = await db.query(`
-    SELECT i.*, 
-           c.first_name || ' ' || c.last_name as customer_name,
-           c.primary_email as customer_email,
-           c.primary_phone as customer_phone,
-           EXTRACT(DAY FROM NOW() - i.due_date) as days_overdue
+    SELECT i.id, i.invoice_number, i.status, i.due_date, i.amount_due, i.grand_total, i.total_amount,
+           COALESCE(i.customer_name, c.first_name || ' ' || c.last_name) as customer_name,
+           COALESCE(i.customer_email, c.primary_email) as customer_email,
+           COALESCE(i.customer_phone, c.primary_phone) as customer_phone,
+           EXTRACT(DAY FROM NOW() - i.due_date::timestamp) as days_overdue
     FROM invoices i
     LEFT JOIN clients c ON i.client_id = c.id
-    WHERE i.status NOT IN ('Paid', 'Cancelled', 'Draft')
-      AND i.due_date < NOW()
-      AND i.due_date <= $1
-      AND i.deleted_at IS NULL
+    WHERE i.status NOT IN ('Paid', 'Cancelled', 'Draft', 'paid', 'cancelled', 'draft')
+      AND i.due_date::date < CURRENT_DATE
+      AND i.due_date::date <= $1::date
     ORDER BY i.due_date ASC
-  `, [cutoffDate.toISOString()]);
+  `, [cutoffDate.toISOString().split('T')[0]]);
 
   const summary = await db.query(`
     SELECT 
       COUNT(*) as count,
       SUM(COALESCE(amount_due, grand_total, total_amount, amount, 0)) as total_outstanding
     FROM invoices
-    WHERE status NOT IN ('Paid', 'Cancelled', 'Draft')
-      AND due_date < NOW()
-      AND due_date <= $1
-      AND deleted_at IS NULL
-  `, [cutoffDate.toISOString()]);
+    WHERE status NOT IN ('Paid', 'Cancelled', 'Draft', 'paid', 'cancelled', 'draft')
+      AND due_date::date < CURRENT_DATE
+      AND due_date::date <= $1::date
+  `, [cutoffDate.toISOString().split('T')[0]]);
 
   return {
     invoices: result.rows,
@@ -120,21 +116,18 @@ async function getOverdueInvoices(daysOverdue = 30) {
 
 async function getEmployeeAvailability(dateStr) {
   const employees = await db.query(`
-    SELECT id, name, job_title, crew, phone, email, status
+    SELECT id, name, job_title, phone
     FROM employees
-    WHERE status = 'Active'
-      AND deleted_at IS NULL
     ORDER BY name
   `);
 
   const scheduledJobs = await db.query(`
-    SELECT j.assigned_crew, j.scheduled_date, j.start_time, j.end_time,
-           j.description, c.first_name || ' ' || c.last_name as customer_name
+    SELECT j.assigned_crew, j.scheduled_date, j.work_start_time as start_time, j.work_end_time as end_time,
+           j.special_instructions as description, COALESCE(j.customer_name, c.first_name || ' ' || c.last_name) as customer_name
     FROM jobs j
     LEFT JOIN clients c ON j.client_id = c.id
     WHERE j.scheduled_date = $1
       AND j.status NOT IN ('Cancelled', 'Completed')
-      AND j.deleted_at IS NULL
   `, [dateStr]);
 
   const busyEmployees = new Set();
