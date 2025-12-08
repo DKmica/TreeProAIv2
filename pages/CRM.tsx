@@ -1416,46 +1416,66 @@ const CRM: React.FC = () => {
                         <h3 className="text-lg font-semibold text-brand-gray-900">
                           {quote.quoteNumber || quote.id}
                         </h3>
-                        <p className="mt-1 text-sm text-brand-gray-600">{quote.customerName || 'Unknown Customer'}</p>
+                        <p className="mt-1 text-sm font-medium text-brand-gray-700">{quote.customerName || 'Unknown Customer'}</p>
                       </div>
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getQuoteStatusColor(quote.status)}`}>
                         {quote.status}
                       </span>
                     </div>
 
-                    <div className="mt-4">
-                      <div className="text-2xl font-bold text-brand-gray-900">
-                        {formatCurrency(quote.grandTotal || quote.totalAmount || 0)}
+                    {(quote.jobLocation || quote.property?.fullAddress || quote.customerDetails?.addressLine1) && (
+                      <div className="mt-3 flex items-start gap-2 text-sm text-brand-gray-600">
+                        <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-brand-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>{quote.jobLocation || quote.property?.fullAddress || 
+                          [quote.customerDetails?.addressLine1, quote.customerDetails?.city, quote.customerDetails?.state].filter(Boolean).join(', ')
+                        }</span>
+                      </div>
+                    )}
+
+                    {quote.lineItems && quote.lineItems.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-brand-gray-500 uppercase mb-1">Work</p>
+                        <div className="space-y-1">
+                          {quote.lineItems.slice(0, 3).map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-sm">
+                              <span className="text-brand-gray-700 truncate flex-1 mr-2">{item.description}</span>
+                              <span className="text-brand-gray-900 font-medium">{formatCurrency(item.price)}</span>
+                            </div>
+                          ))}
+                          {quote.lineItems.length > 3 && (
+                            <p className="text-xs text-brand-gray-500">+{quote.lineItems.length - 3} more items</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4 pt-3 border-t border-brand-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-brand-gray-600">Total</span>
+                        <span className="text-xl font-bold text-brand-gray-900">
+                          {formatCurrency(quote.grandTotal || quote.totalAmount || 0)}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-3 space-y-1">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-brand-gray-600">Created:</span>
-                        <span className="font-medium text-brand-gray-900">{formatDate(quote.createdAt)}</span>
+                        <span className="text-brand-gray-900">{formatDate(quote.createdAt)}</span>
                       </div>
                       {quote.validUntil && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-brand-gray-600">Expires:</span>
-                          <span className="font-medium text-brand-gray-900">{formatDate(quote.validUntil)}</span>
-                        </div>
-                      )}
-                      {quote.approvalStatus && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-brand-gray-600">Approval:</span>
-                          <span className={`font-medium ${
-                            quote.approvalStatus === 'approved' ? 'text-green-600' :
-                            quote.approvalStatus === 'rejected' ? 'text-red-600' :
-                            'text-yellow-600'
-                          }`}>
-                            {quote.approvalStatus}
-                          </span>
+                          <span className="text-brand-gray-900">{formatDate(quote.validUntil)}</span>
                         </div>
                       )}
                     </div>
 
                     {quote.tags && quote.tags.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {quote.tags.slice(0, 2).map((tag) => (
                           <span
                             key={tag.id}
@@ -1474,12 +1494,6 @@ const CRM: React.FC = () => {
                     )}
 
                     <div className="mt-4 pt-4 border-t border-brand-gray-100 flex gap-2">
-                      <button
-                        onClick={() => handleQuoteView(quote.id)}
-                        className="flex-1 text-sm font-medium text-brand-cyan-600 hover:text-brand-cyan-700 py-2 px-3 border border-brand-cyan-600 rounded-md hover:bg-brand-cyan-50"
-                      >
-                        View
-                      </button>
                       <button
                         onClick={() => handleQuoteEdit(quote.id)}
                         className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
