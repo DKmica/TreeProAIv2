@@ -151,49 +151,43 @@ const JobForm: React.FC<{
         setErrors({});
     }, [initialData, quotes]);
 
-    const prevQuoteIdRef = React.useRef<string | undefined>(initialData?.quoteId);
+    const [lastFetchedQuoteId, setLastFetchedQuoteId] = React.useState<string>('');
     
     useEffect(() => {
         const fetchClientContact = async () => {
-            const prevQuoteId = prevQuoteIdRef.current;
-            prevQuoteIdRef.current = formData.quoteId;
-            
-            if (!formData.quoteId) {
-                if (prevQuoteId && prevQuoteId !== formData.quoteId) {
-                    setFormData(prev => ({ ...prev, customerPhone: '', customerEmail: '', customerAddress: '' }));
-                }
-                return;
-            }
-            
-            if (formData.quoteId === prevQuoteId && (formData.customerPhone || formData.customerEmail)) {
+            if (!formData.quoteId || formData.quoteId === lastFetchedQuoteId || quotes.length === 0) {
                 return;
             }
             
             const selectedQuote = quotes.find(q => q.id === formData.quoteId);
-            if (selectedQuote?.clientId) {
-                try {
-                    const response = await fetch(`/api/clients/${selectedQuote.clientId}`);
-                    if (response.ok) {
-                        const client = await response.json();
-                        setFormData(prev => ({
-                            ...prev,
-                            customerPhone: client.primaryPhone || client.primary_phone || '',
-                            customerEmail: client.primaryEmail || client.primary_email || '',
-                            customerAddress: [
-                                client.billingAddressLine1 || client.billing_address_line1,
-                                client.billingCity || client.billing_city,
-                                client.billingState || client.billing_state,
-                                client.billingZipCode || client.billing_zip_code
-                            ].filter(Boolean).join(', ') || ''
-                        }));
-                    }
-                } catch (e) {
-                    console.error('Failed to fetch client contact info:', e);
-                }
+            if (!selectedQuote?.clientId) {
+                console.log('No clientId found for quote:', formData.quoteId, 'selectedQuote:', selectedQuote);
+                return;
+            }
+            
+            try {
+                const client = await api.clientService.getById(selectedQuote.clientId);
+                const phone = client.primaryPhone || '';
+                const email = client.primaryEmail || '';
+                const address = [
+                    client.billingAddressLine1,
+                    client.billingCity,
+                    client.billingState,
+                    client.billingZip
+                ].filter(Boolean).join(', ') || '';
+                setFormData(prev => ({
+                    ...prev,
+                    customerPhone: phone,
+                    customerEmail: email,
+                    customerAddress: address
+                }));
+                setLastFetchedQuoteId(formData.quoteId);
+            } catch (e) {
+                console.error('Failed to fetch client contact info:', e);
             }
         };
         fetchClientContact();
-    }, [formData.quoteId, quotes]);
+    }, [formData.quoteId, quotes, lastFetchedQuoteId]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
