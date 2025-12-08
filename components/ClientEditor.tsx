@@ -27,8 +27,6 @@ interface FormData {
   billingCountry: string;
   status: 'active' | 'inactive';
   notes: string;
-  saveAddressAsProperty: boolean;
-  markAsBillingProperty: boolean;
 }
 
 interface FormErrors {
@@ -58,8 +56,6 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
     billingCountry: 'USA',
     status: 'active',
     notes: '',
-    saveAddressAsProperty: true,
-    markAsBillingProperty: true,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -85,8 +81,6 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
         billingCountry: client.billingCountry || 'USA',
         status: client.status,
         notes: client.notes || '',
-        saveAddressAsProperty: true,
-        markAsBillingProperty: true,
       });
     } else {
       setFormData({
@@ -106,8 +100,6 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
         billingCountry: 'USA',
         status: 'active',
         notes: '',
-        saveAddressAsProperty: true,
-        markAsBillingProperty: true,
       });
     }
     setErrors({});
@@ -182,7 +174,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
     setApiError(null);
 
     try {
-      const clientData: Partial<Client> & { saveAddressAsProperty?: boolean; markAsBillingProperty?: boolean } = {
+      const clientData: Partial<Client> = {
         clientType: formData.clientType,
         companyName: formData.isCompany ? formData.companyName : undefined,
         industry: formData.isCompany ? formData.industry || undefined : undefined,
@@ -201,8 +193,6 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
         paymentTerms: 'Net 30',
         taxExempt: false,
         lifetimeValue: 0,
-        saveAddressAsProperty: formData.saveAddressAsProperty,
-        markAsBillingProperty: formData.markAsBillingProperty,
       };
 
       let savedClient: Client;
@@ -423,32 +413,6 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
 
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Billing Address</h3>
-              
-              <div className="mb-4 space-y-2">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="saveAddressAsProperty"
-                    checked={formData.saveAddressAsProperty}
-                    onChange={handleChange}
-                    disabled={!formData.billingAddressLine1}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded disabled:opacity-50"
-                  />
-                  <span className="text-gray-200">Save address as service property</span>
-                </label>
-                {formData.saveAddressAsProperty && (
-                  <label className="flex items-center cursor-pointer ml-6">
-                    <input
-                      type="checkbox"
-                      name="markAsBillingProperty"
-                      checked={formData.markAsBillingProperty}
-                      onChange={handleChange}
-                      className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
-                    />
-                    <span className="text-gray-200 text-sm">Use as primary/billing property</span>
-                  </label>
-                )}
-              </div>
               
               <div className="space-y-4">
                 <div>

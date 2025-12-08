@@ -40,10 +40,10 @@ export const parsePhone = (formatted: string): string => {
   return formatted.replace(/\D/g, '');
 };
 
-// Parse equipment input - split by comma and/or spaces
+// Parse equipment input - split by comma only, allowing spaces within items
 export const parseEquipment = (input: string): string[] => {
   return input
-    .split(/[,\s]+/)
+    .split(',')
     .map(item => item.trim())
     .filter(item => item.length > 0);
 };

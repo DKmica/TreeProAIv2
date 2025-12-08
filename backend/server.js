@@ -1423,6 +1423,102 @@ const transformToDb = (data, tableName) => {
       transformed.jha_required = data.jhaRequired;
       delete transformed.jhaRequired;
     }
+    if (data.customerPhone !== undefined) {
+      transformed.customer_phone = data.customerPhone;
+      delete transformed.customerPhone;
+    }
+    if (data.customerEmail !== undefined) {
+      transformed.customer_email = data.customerEmail;
+      delete transformed.customerEmail;
+    }
+    if (data.customerAddress !== undefined) {
+      transformed.customer_address = data.customerAddress;
+      delete transformed.customerAddress;
+    }
+    if (data.clientId !== undefined) {
+      transformed.client_id = data.clientId;
+      delete transformed.clientId;
+    }
+    if (data.propertyId !== undefined) {
+      transformed.property_id = data.propertyId;
+      delete transformed.propertyId;
+    }
+    if (data.workStartTime !== undefined) {
+      transformed.work_start_time = data.workStartTime;
+      delete transformed.workStartTime;
+    }
+    if (data.workEndTime !== undefined) {
+      transformed.work_end_time = data.workEndTime;
+      delete transformed.workEndTime;
+    }
+    if (data.invoiceId !== undefined) {
+      transformed.invoice_id = data.invoiceId;
+      delete transformed.invoiceId;
+    }
+    if (data.jobNumber !== undefined) {
+      transformed.job_number = data.jobNumber;
+      delete transformed.jobNumber;
+    }
+    if (data.predictedDurationHours !== undefined) {
+      transformed.predicted_duration_hours = data.predictedDurationHours;
+      delete transformed.predictedDurationHours;
+    }
+    if (data.permitRequired !== undefined) {
+      transformed.permit_required = data.permitRequired;
+      delete transformed.permitRequired;
+    }
+    if (data.permitStatus !== undefined) {
+      transformed.permit_status = data.permitStatus;
+      delete transformed.permitStatus;
+    }
+    if (data.permitDetails !== undefined) {
+      transformed.permit_details = data.permitDetails;
+      delete transformed.permitDetails;
+    }
+    if (data.depositRequired !== undefined) {
+      transformed.deposit_required = data.depositRequired;
+      delete transformed.depositRequired;
+    }
+    if (data.depositStatus !== undefined) {
+      transformed.deposit_status = data.depositStatus;
+      delete transformed.depositStatus;
+    }
+    if (data.depositAmount !== undefined) {
+      transformed.deposit_amount = data.depositAmount;
+      delete transformed.depositAmount;
+    }
+    if (data.weatherHoldReason !== undefined) {
+      transformed.weather_hold_reason = data.weatherHoldReason;
+      delete transformed.weatherHoldReason;
+    }
+    if (data.activeHoldUntil !== undefined) {
+      transformed.active_hold_until = data.activeHoldUntil;
+      delete transformed.activeHoldUntil;
+    }
+    if (data.lastStateChangeAt !== undefined) {
+      transformed.last_state_change_at = data.lastStateChangeAt;
+      delete transformed.lastStateChangeAt;
+    }
+    if (data.completionChecklist !== undefined) {
+      transformed.completion_checklist = data.completionChecklist;
+      delete transformed.completionChecklist;
+    }
+    if (data.paymentReceivedAt !== undefined) {
+      transformed.payment_received_at = data.paymentReceivedAt;
+      delete transformed.paymentReceivedAt;
+    }
+    if (data.jhaAcknowledgedBy !== undefined) {
+      transformed.jha_acknowledged_by = data.jhaAcknowledgedBy;
+      delete transformed.jhaAcknowledgedBy;
+    }
+    if (data.jobLat !== undefined) {
+      transformed.job_lat = data.jobLat;
+      delete transformed.jobLat;
+    }
+    if (data.jobLon !== undefined) {
+      transformed.job_lon = data.jobLon;
+      delete transformed.jobLon;
+    }
   }
   
   // Transform pay_periods fields
