@@ -15,7 +15,11 @@ backend/node_modules
 dist
 dist-ssr
 build
+dev-dist
 backend/public
+
+# Attached assets (planning screenshots, generated images)
+attached_assets
 
 # Vite cache
 .vite
