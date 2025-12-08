@@ -154,7 +154,7 @@ const JobForm: React.FC<{
     const [lastFetchedQuoteId, setLastFetchedQuoteId] = React.useState<string>('');
     
     useEffect(() => {
-        const fetchClientContact = async () => {
+        const fetchQuoteDetails = async () => {
             if (!formData.quoteId || formData.quoteId === lastFetchedQuoteId || quotes.length === 0) {
                 return;
             }
@@ -166,6 +166,7 @@ const JobForm: React.FC<{
             }
             
             try {
+                // Fetch client for customer contact info
                 const client = await api.clientService.getById(selectedQuote.clientId);
                 const phone = client.primaryPhone || '';
                 const email = client.primaryEmail || '';
@@ -173,20 +174,34 @@ const JobForm: React.FC<{
                     client.billingAddressLine1,
                     client.billingCity,
                     client.billingState,
-                    client.billingZip
+                    (client as any).billingZipCode || client.billingZip
                 ].filter(Boolean).join(', ') || '';
+                
                 setFormData(prev => ({
                     ...prev,
                     customerPhone: phone,
                     customerEmail: email,
                     customerAddress: address
                 }));
+                
+                // Fetch property for job location
+                if (selectedQuote.propertyId) {
+                    const property = await api.propertyService.getById(selectedQuote.propertyId);
+                    setJobLocationData({
+                        addressLine1: property.addressLine1 || '',
+                        addressLine2: property.addressLine2 || '',
+                        city: property.city || '',
+                        state: property.state || '',
+                        zipCode: property.zipCode || '',
+                    });
+                }
+                
                 setLastFetchedQuoteId(formData.quoteId);
             } catch (e) {
-                console.error('Failed to fetch client contact info:', e);
+                console.error('Failed to fetch quote details:', e);
             }
         };
-        fetchClientContact();
+        fetchQuoteDetails();
     }, [formData.quoteId, quotes, lastFetchedQuoteId]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
