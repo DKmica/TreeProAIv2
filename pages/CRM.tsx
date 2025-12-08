@@ -600,6 +600,32 @@ const CRM: React.FC = () => {
     }
   };
 
+  const handleDeleteLead = async (lead: Lead) => {
+    if (window.confirm(`Are you sure you want to delete lead "${lead.customer?.name || lead.id}"? This action cannot be undone.`)) {
+      try {
+        await leadService.remove(lead.id);
+        setLeads(prev => prev.filter(l => l.id !== lead.id));
+        alert('Lead deleted successfully');
+      } catch (error: any) {
+        console.error('Error deleting lead:', error);
+        alert('Failed to delete lead: ' + error.message);
+      }
+    }
+  };
+
+  const handleDeleteQuote = async (quote: Quote) => {
+    if (window.confirm(`Are you sure you want to delete quote ${quote.quoteNumber || quote.id}? This action cannot be undone.`)) {
+      try {
+        await quoteService.remove(quote.id);
+        setQuotes(prev => prev.filter(q => q.id !== quote.id));
+        alert('Quote deleted successfully');
+      } catch (error: any) {
+        console.error('Error deleting quote:', error);
+        alert('Failed to delete quote: ' + error.message);
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -1233,6 +1259,12 @@ const CRM: React.FC = () => {
                             >
                               Convert
                             </button>
+                            <button
+                              onClick={() => handleDeleteLead(lead)}
+                              className="rounded-md border border-red-200 bg-white px-3 py-2 text-xs font-medium text-red-600 hover:border-red-300 hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
                       ))
@@ -1332,6 +1364,12 @@ const CRM: React.FC = () => {
                         className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
                       >
                         Convert to Quote
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLead(lead)}
+                        className="text-sm font-medium text-red-600 hover:text-red-700 py-2 px-3 border border-red-300 rounded-md hover:bg-red-50"
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -1447,6 +1485,12 @@ const CRM: React.FC = () => {
                         className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteQuote(quote)}
+                        className="text-sm font-medium text-red-600 hover:text-red-700 py-2 px-3 border border-red-300 rounded-md hover:bg-red-50"
+                      >
+                        Delete
                       </button>
                     </div>
                   </div>
