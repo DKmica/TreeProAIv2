@@ -120,6 +120,10 @@ export const clientService = {
 };
 export const propertyService = {
   ...createApiService<Property>('properties'),
+  getById: async (id: string): Promise<Property> => {
+    const response = await apiFetch<{ success: boolean; data: Property }>(`properties/${id}`);
+    return response.data;
+  },
   createForClient: (clientId: string, data: Partial<Omit<Property, 'id'>>): Promise<Property> => 
     apiFetch(`clients/${clientId}/properties`, { method: 'POST', body: JSON.stringify(data) }),
 };
