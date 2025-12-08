@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Quote, Client, Property, LineItem, AITreeEstimate, CustomerDetailsInput } from '../types';
 import { quoteService, clientService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 import PlusCircleIcon from './icons/PlusCircleIcon';
+import FormCombobox, { ComboboxOption } from './ui/FormCombobox';
 
 interface QuoteEditorProps {
   isOpen: boolean;
@@ -313,6 +314,14 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
     }
   };
 
+  const clientOptions: ComboboxOption[] = useMemo(() => 
+    clients.map(client => ({
+      value: client.id,
+      label: client.companyName || `${client.firstName} ${client.lastName}`.trim(),
+      description: client.primaryEmail || client.primaryPhone || undefined
+    })),
+  [clients]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -496,29 +505,22 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
 
             {customerMode === 'existing' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="clientId" className="block text-sm font-medium text-gray-300 mb-1">
-                    Select Client <span className="text-red-400">*</span>
-                  </label>
-                  <select
-                    id="clientId"
-                    name="clientId"
-                    value={formData.clientId}
-                    onChange={handleChange}
-                    disabled={loadingClients}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
-                  >
-                    <option value="">Select a client...</option>
-                    {clients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.companyName || `${client.firstName} ${client.lastName}`}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.clientId && (
-                    <p className="mt-1 text-sm text-red-400">{errors.clientId}</p>
-                  )}
-                </div>
+                <FormCombobox
+                  label="Select Client"
+                  required
+                  placeholder="Search for a client..."
+                  options={clientOptions}
+                  value={formData.clientId}
+                  onChange={(value) => {
+                    handleChange({ target: { name: 'clientId', value } } as React.ChangeEvent<HTMLInputElement>);
+                  }}
+                  loading={loadingClients}
+                  disabled={loadingClients}
+                  error={errors.clientId}
+                  searchable
+                  clearable
+                  emptyMessage="No clients found"
+                />
 
                 <div>
                   <label htmlFor="propertyId" className="block text-sm font-medium text-gray-300 mb-1">
