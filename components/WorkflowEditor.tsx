@@ -277,7 +277,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, template_id: e.target.value } 
                 })}
                 placeholder="e.g., job_completion_email"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
             <div>
@@ -289,7 +289,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, recipient_field: e.target.value } 
                 })}
                 placeholder="e.g., client.email"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
           </div>
@@ -307,7 +307,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, template_id: e.target.value } 
                 })}
                 placeholder="e.g., job_reminder_sms"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
             <div>
@@ -319,7 +319,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, phone_field: e.target.value } 
                 })}
                 placeholder="e.g., client.phone"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
           </div>
@@ -337,7 +337,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, title: e.target.value } 
                 })}
                 placeholder="e.g., Follow up with customer"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
             <div>
@@ -349,7 +349,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, assign_to: e.target.value } 
                 })}
                 placeholder="Leave empty for auto-assign"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
             <div>
@@ -361,7 +361,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, due_in_days: parseInt(e.target.value) || 1 } 
                 })}
                 min="1"
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
           </div>
@@ -379,7 +379,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                   config: { ...action.config, url: e.target.value } 
                 })}
                 placeholder="https://..."
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="input-light"
               />
             </div>
             <div>
@@ -389,7 +389,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                 onChange={(e) => updateAction(index, { 
                   config: { ...action.config, method: e.target.value } 
                 })}
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500 bg-white text-gray-900"
+                className="select-light"
               >
                 <option value="POST" className="text-gray-900 bg-white">POST</option>
                 <option value="GET" className="text-gray-900 bg-white">GET</option>
@@ -459,7 +459,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="e.g., Send thank you email after job completion"
-                      className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                      className="input-light"
                       required
                     />
                   </div>
@@ -473,7 +473,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Describe what this workflow does..."
                       rows={2}
-                      className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                      className="textarea-light"
                     />
                   </div>
 
@@ -489,7 +489,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         max_executions_per_day: parseInt(e.target.value) || 100 
                       }))}
                       min="1"
-                      className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                      className="input-light"
                     />
                   </div>
 
@@ -505,7 +505,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                         cooldown_minutes: parseInt(e.target.value) || 0 
                       }))}
                       min="0"
-                      className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                      className="input-light"
                     />
                   </div>
                 </div>
@@ -585,7 +585,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                 <select
                                   value={trigger.trigger_type}
                                   onChange={(e) => updateTrigger(index, { trigger_type: e.target.value })}
-                                  className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500 bg-white text-gray-900"
+                                  className="select-light"
                                 >
                                   {TRIGGER_TYPES.map(type => (
                                     <option key={type.value} value={type.value} className="text-gray-900 bg-white">
@@ -625,14 +625,14 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                           value={condition.field}
                                           onChange={(e) => updateCondition(index, condIndex, { field: e.target.value })}
                                           placeholder="Field (e.g., status)"
-                                          className="flex-1 px-2 py-1.5 text-sm border border-brand-gray-300 rounded-md"
+                                          className="flex-1 px-2 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20"
                                         />
                                         <select
                                           value={condition.operator}
                                           onChange={(e) => updateCondition(index, condIndex, { 
                                             operator: e.target.value as TriggerCondition['operator'] 
                                           })}
-                                          className="px-2 py-1.5 text-sm border border-brand-gray-300 rounded-md bg-white text-gray-900"
+                                          className="px-2 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20"
                                         >
                                           {CONDITION_OPERATORS.map(op => (
                                             <option key={op.value} value={op.value} className="text-gray-900 bg-white">{op.label}</option>
@@ -643,7 +643,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                           value={String(condition.value)}
                                           onChange={(e) => updateCondition(index, condIndex, { value: e.target.value })}
                                           placeholder="Value"
-                                          className="flex-1 px-2 py-1.5 text-sm border border-brand-gray-300 rounded-md"
+                                          className="flex-1 px-2 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20"
                                         />
                                         <button
                                           type="button"
@@ -743,7 +743,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                     action_type: e.target.value,
                                     config: {} 
                                   })}
-                                  className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500 bg-white text-gray-900"
+                                  className="select-light"
                                 >
                                   {ACTION_TYPES.map(type => (
                                     <option key={type.value} value={type.value} className="text-gray-900 bg-white">
@@ -768,7 +768,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                       delay_minutes: parseInt(e.target.value) || 0 
                                     })}
                                     min="0"
-                                    className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                                    className="input-light"
                                   />
                                 </div>
                                 <div className="flex items-center">

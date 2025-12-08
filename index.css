@@ -77,6 +77,29 @@
            transition-all duration-200;
   }
 
+  .input-light {
+    @apply w-full px-3 py-2.5 text-sm text-gray-900 bg-white 
+           border border-gray-300 rounded-lg 
+           placeholder-gray-400
+           focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20
+           transition-all duration-200;
+  }
+
+  .select-light {
+    @apply w-full px-3 py-2.5 text-sm text-gray-900 bg-white 
+           border border-gray-300 rounded-lg 
+           focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20
+           transition-all duration-200 appearance-none cursor-pointer;
+  }
+
+  .textarea-light {
+    @apply w-full px-3 py-2.5 text-sm text-gray-900 bg-white 
+           border border-gray-300 rounded-lg 
+           placeholder-gray-400
+           focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20
+           transition-all duration-200 resize-none;
+  }
+
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5
            bg-gradient-to-r from-brand-cyan-600 to-brand-cyan-500 
