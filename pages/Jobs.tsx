@@ -628,10 +628,6 @@ const JobForm: React.FC<{
                             <option>Cancelled</option>
                         </select>
                     </div>
-                     <div className="sm:col-span-3">
-                        <label htmlFor="stumpGrindingPrice" className="block text-sm font-medium leading-6 text-gray-300">Stump Grinding Price</label>
-                        <input type="number" name="stumpGrindingPrice" id="stumpGrindingPrice" value={formData.stumpGrindingPrice} onChange={e => setFormData(prev => ({...prev, stumpGrindingPrice: e.target.value }))} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" placeholder=" " />
-                    </div>
                     
                     <div className="col-span-full">
                         <h3 className="text-md font-semibold text-white mb-3">Job Location</h3>
