@@ -18,7 +18,8 @@ The frontend uses React 19 with TypeScript, Vite 6.4.1, and React Router DOM v6.
 
 - **Light-themed form utilities**: CSS utility classes `.input-light`, `.select-light`, `.textarea-light` in `index.css` provide consistent styling for inputs in light modal contexts with explicit text colors for visibility.
 - **FormCombobox component**: Reusable searchable dropdown (`components/ui/FormCombobox.tsx`) with light/dark variants, keyboard navigation, clear button, and responsive mobile height (`max-h-[min(320px,50vh)]`).
-- **Quote cards**: CRM quote cards display inline details (job location, selected line items with quantity, formatted pricing) with clickable card body to open QuoteViewer for full details.
+- **Quote cards**: CRM quote cards display inline details (job location from property.address/city/state, selected line items with quantity, formatted pricing) with clickable card body to open QuoteEditor directly.
+- **Lead cards**: CRM lead cards are clickable to open LeadEditor directly, with action buttons (Edit, Convert, Delete) using stopPropagation to prevent bubbling.
 - **Customer search**: QuoteEditor and LeadEditor use FormCombobox for searchable customer selection instead of basic dropdowns.
 
 ### Backend Architecture
