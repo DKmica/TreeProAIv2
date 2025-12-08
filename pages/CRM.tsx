@@ -1410,7 +1410,10 @@ const CRM: React.FC = () => {
                   key={quote.id}
                   className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200"
                 >
-                  <div className="p-6">
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
+                    onClick={() => handleQuoteView(quote.id)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-brand-gray-900">
@@ -1492,21 +1495,21 @@ const CRM: React.FC = () => {
                         )}
                       </div>
                     )}
+                  </div>
 
-                    <div className="mt-4 pt-4 border-t border-brand-gray-100 flex gap-2">
-                      <button
-                        onClick={() => handleQuoteEdit(quote.id)}
-                        className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteQuote(quote)}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 py-2 px-3 border border-red-300 rounded-md hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  <div className="px-6 pb-6 pt-4 border-t border-brand-gray-100 flex gap-2">
+                    <button
+                      onClick={() => handleQuoteEdit(quote.id)}
+                      className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteQuote(quote)}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 py-2 px-3 border border-red-300 rounded-md hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}

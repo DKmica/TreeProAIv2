@@ -29,6 +29,7 @@ interface FormComboboxProps {
   emptyMessage?: string;
   className?: string;
   name?: string;
+  variant?: 'dark' | 'light';
 }
 
 const FormCombobox: React.FC<FormComboboxProps> = ({
@@ -51,7 +52,9 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
   emptyMessage = 'No options found',
   className = '',
   name,
+  variant = 'dark',
 }) => {
+  const isLight = variant === 'light';
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -173,7 +176,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
       {label && (
         <label 
           htmlFor={inputId}
-          className="block text-sm font-medium text-brand-gray-200 mb-1.5"
+          className={`block text-sm font-medium mb-1.5 ${isLight ? 'text-gray-700' : 'text-brand-gray-200'}`}
         >
           {label}
           {required && <span className="text-red-400 ml-1">*</span>}
@@ -183,14 +186,17 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
       <div
         className={`
           relative flex items-center
-          bg-brand-gray-800 border rounded-lg
+          ${isLight ? 'bg-white border-gray-300' : 'bg-brand-gray-800 border-brand-gray-600'}
+          border rounded-lg
           transition-all duration-200
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           ${error 
             ? 'border-red-500 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-500/30' 
             : isOpen
               ? 'border-brand-cyan-500 ring-2 ring-brand-cyan-500/30'
-              : 'border-brand-gray-600 hover:border-brand-gray-500'
+              : isLight
+                ? 'hover:border-gray-400'
+                : 'hover:border-brand-gray-500'
           }
         `}
         onClick={() => !disabled && setIsOpen(true)}
@@ -206,7 +212,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={selectedOption ? '' : placeholder}
             disabled={disabled}
-            className="flex-1 px-3 py-2.5 text-sm bg-transparent text-white placeholder-brand-gray-500 outline-none"
+            className={`flex-1 px-3 py-2.5 text-sm bg-transparent outline-none ${isLight ? 'text-gray-900 placeholder-gray-400' : 'text-white placeholder-brand-gray-500'}`}
             role="combobox"
             aria-expanded={isOpen}
             aria-controls={`${inputId}-listbox`}
@@ -219,9 +225,9 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
         ) : (
           <div className="flex-1 px-3 py-2.5 text-sm">
             {selectedOption ? (
-              <span className="text-white">{selectedOption.label}</span>
+              <span className={isLight ? 'text-gray-900' : 'text-white'}>{selectedOption.label}</span>
             ) : (
-              <span className="text-brand-gray-500">{placeholder}</span>
+              <span className={isLight ? 'text-gray-400' : 'text-brand-gray-500'}>{placeholder}</span>
             )}
           </div>
         )}
@@ -238,7 +244,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
             <button
               type="button"
               onClick={handleClear}
-              className="p-1 text-brand-gray-400 hover:text-white transition-colors"
+              className={`p-1 transition-colors ${isLight ? 'text-gray-400 hover:text-gray-700' : 'text-brand-gray-400 hover:text-white'}`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -262,14 +268,14 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
           ref={listRef}
           id={`${inputId}-listbox`}
           role="listbox"
-          className="absolute z-50 w-full mt-1 py-1 bg-brand-gray-900 border border-brand-gray-700 rounded-lg shadow-xl max-h-60 overflow-auto"
+          className={`absolute z-50 w-full mt-1 py-1 rounded-lg shadow-xl max-h-60 overflow-auto ${isLight ? 'bg-white border border-gray-200' : 'bg-brand-gray-900 border border-brand-gray-700'}`}
         >
           {(() => {
             let optionIndex = 0;
             return (Object.entries(groupedOptions) as [string, ComboboxOption[]][]).map(([group, groupOptions]) => (
               <React.Fragment key={group || 'default'}>
                 {group && groupBy && (
-                  <li className="px-3 py-1.5 text-xs font-semibold text-brand-gray-400 uppercase tracking-wider" role="presentation">
+                  <li className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-gray-500' : 'text-brand-gray-400'}`} role="presentation">
                     {group}
                   </li>
                 )}
@@ -288,8 +294,11 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
                       className={`
                         px-3 py-2 cursor-pointer transition-colors
                         ${option.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        ${isHighlighted ? 'bg-brand-gray-800' : ''}
-                        ${isSelected ? 'bg-brand-cyan-500/20 text-brand-cyan-300' : 'text-white hover:bg-brand-gray-800'}
+                        ${isHighlighted ? (isLight ? 'bg-gray-100' : 'bg-brand-gray-800') : ''}
+                        ${isSelected 
+                          ? (isLight ? 'bg-cyan-50 text-cyan-700' : 'bg-brand-cyan-500/20 text-brand-cyan-300') 
+                          : (isLight ? 'text-gray-900 hover:bg-gray-100' : 'text-white hover:bg-brand-gray-800')
+                        }
                       `}
                     >
                       <div className="flex items-center gap-2">
@@ -297,7 +306,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium truncate">{option.label}</div>
                           {option.description && (
-                            <div className="text-xs text-brand-gray-400 truncate">{option.description}</div>
+                            <div className={`text-xs truncate ${isLight ? 'text-gray-500' : 'text-brand-gray-400'}`}>{option.description}</div>
                           )}
                         </div>
                         {isSelected && (
@@ -328,7 +337,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
                   Create "{query}"
                 </button>
               ) : (
-                <span className="text-sm text-brand-gray-500">{emptyMessage}</span>
+                <span className={`text-sm ${isLight ? 'text-gray-500' : 'text-brand-gray-500'}`}>{emptyMessage}</span>
               )}
             </li>
           )}
@@ -345,7 +354,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
       )}
 
       {hint && !error && (
-        <p className="mt-1.5 text-sm text-brand-gray-400">{hint}</p>
+        <p className={`mt-1.5 text-sm ${isLight ? 'text-gray-500' : 'text-brand-gray-400'}`}>{hint}</p>
       )}
     </div>
   );

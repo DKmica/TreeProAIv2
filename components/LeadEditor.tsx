@@ -428,6 +428,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, lead }
                 searchable
                 clearable
                 emptyMessage="No clients found"
+                variant="light"
               />
             ) : (
               <div className="space-y-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">

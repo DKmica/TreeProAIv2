@@ -520,6 +520,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   searchable
                   clearable
                   emptyMessage="No clients found"
+                  variant="light"
                 />
 
                 <div>
