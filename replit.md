@@ -39,7 +39,7 @@ Google Gemini (`@google/genai` v1.27.0) is the primary AI provider, using `gemin
 The backend AI module (`backend/src/modules/ai/`) provides enhanced AI capabilities:
 
 - **Estimator Service** (`estimatorService.js`): Logs AI tree estimates with operator feedback tracking (accurate/too_high/too_low), training data export for model improvement, and accuracy metrics dashboard support.
-- **Assistant Service** (`assistantService.js`): ProBot intent detection for natural language business queries including "jobs tomorrow", "revenue last month", "overdue invoices", and "crew availability". Uses Gemini to generate conversational responses enriched with real-time database context.
+- **Assistant Service** (`assistantService.js`): ProBot intent detection for 13+ natural language business query intents including "jobs tomorrow", "revenue last month", "overdue invoices", "crew availability", "exception queue status", "time tracking approvals", "client properties/contacts", "marketing campaign status", "crew schedule conflicts", and "AI estimator accuracy". Uses Gemini to generate conversational responses enriched with real-time database context.
 - **Scheduling Helper** (`schedulingHelper.js`): AI-powered job duration prediction based on historical data with rule-based fallback, crew conflict detection using JSONB array overlaps, and optimal crew assignment recommendations using certifications and performance metrics.
 
 #### AI API Endpoints
