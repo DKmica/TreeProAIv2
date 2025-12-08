@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR,
     last_name VARCHAR,
     profile_image_url VARCHAR,
+    password_hash TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

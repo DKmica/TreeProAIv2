@@ -17,8 +17,9 @@ interface AuthContextType {
   userEmail: string | null;
   userRole: string | null;
   userName: string | null;
-  login: () => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (options: { email: string; password: string; firstName?: string; lastName?: string }) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,12 +56,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkAuth();
   }, []);
 
-  const login = () => {
-    window.location.href = '/api/login';
+  const login = async (email: string, password: string) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      setUser(userData);
+      setIsAuthenticated(true);
+      return true;
+    }
+
+    return false;
   };
 
-  const logout = () => {
-    window.location.href = '/api/logout';
+  const signup = async ({ email, password, firstName, lastName }: { email: string; password: string; firstName?: string; lastName?: string }) => {
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password, firstName, lastName })
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      setUser(userData);
+      setIsAuthenticated(true);
+      return true;
+    }
+
+    return false;
+  };
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
   const userName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'User' : null;
@@ -68,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const userRole = 'owner';
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, userEmail, userRole, userName, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, userEmail, userRole, userName, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
