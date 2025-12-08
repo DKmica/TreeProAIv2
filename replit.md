@@ -14,6 +14,13 @@ Preferred communication style: Simple, everyday language.
 
 The frontend uses React 19 with TypeScript, Vite 6.4.1, and React Router DOM v6.30.1. State management is handled with React hooks, Context API, and TanStack Query v5.90.10. Styling is managed with TailwindCSS 3.4.18, a custom design system with a brand color palette, and Lucide React icons, following a mobile-first responsive design with a dark theme. Key design patterns include protected routes, lazy loading, error boundaries, toast notifications, and a command palette. PWA features with offline support and IndexedDB persistence are implemented for field crews, including a custom offline indicator and sync functionality.
 
+#### UI/UX Design Patterns
+
+- **Light-themed form utilities**: CSS utility classes `.input-light`, `.select-light`, `.textarea-light` in `index.css` provide consistent styling for inputs in light modal contexts with explicit text colors for visibility.
+- **FormCombobox component**: Reusable searchable dropdown (`components/ui/FormCombobox.tsx`) with light/dark variants, keyboard navigation, clear button, and responsive mobile height (`max-h-[min(320px,50vh)]`).
+- **Quote cards**: CRM quote cards display inline details (job location, selected line items with quantity, formatted pricing) with clickable card body to open QuoteViewer for full details.
+- **Customer search**: QuoteEditor and LeadEditor use FormCombobox for searchable customer selection instead of basic dropdowns.
+
 ### Backend Architecture
 
 The backend is built with Node.js and Express.js, providing a RESTful API on port 3001 with CORS enabled. Authentication uses Replit Auth (OpenID Connect) with `express-session` backed by PostgreSQL (`connect-pg-simple`) and `passport.js` for OAuth handling. Users can sign in via Google, GitHub, X, Apple, or email/password. A comprehensive RBAC system provides granular access control and audit logging. The API has a modular route structure with centralized error handling and UUID-based resource identifiers. Business logic is isolated using a service layer pattern, which includes a job state machine, a template system, and an automation engine. Key services encompass RAG, vector store, job lifecycle management, and payment integration. The backend also supports equipment usage and maintenance tracking, and a time tracking system with GPS capture and an approval workflow.
