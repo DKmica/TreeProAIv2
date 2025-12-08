@@ -104,12 +104,11 @@ const convertQuoteToJob = async (quoteId) => {
         id, client_id, property_id, quote_id, job_number, status,
         customer_name, customer_phone, customer_email, customer_address,
         job_location, special_instructions,
-        price, line_items, created_at,
-        equipment_needed, estimated_hours, required_crew_size, job_template_id,
-        completion_checklist, jha_required
+        equipment_needed, estimated_hours,
+        completion_checklist, jha_required, created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, $11, $12, $13, NOW(),
-        $14, $15, $16, $17, $18, $19
+        $1, $2, $3, $4, $5, 'Scheduled', $6, $7, $8, $9, $10, $11,
+        $12, $13, $14, $15, NOW()
       ) RETURNING *
     `;
 
@@ -125,12 +124,8 @@ const convertQuoteToJob = async (quoteId) => {
       customerAddress,
       jobLocation || null,
       quote.special_instructions || null,
-      quote.grand_total || quote.price || 0,
-      quote.line_items || '[]',
       equipmentNeeded,
       matchedTemplate?.default_duration_hours || null,
-      matchedTemplate?.default_crew_size || null,
-      matchedTemplate?.id || null,
       completionChecklist,
       matchedTemplate?.jha_required || false
     ]);

@@ -393,6 +393,9 @@ export interface Job {
   id: string;
   quoteId?: string;
   customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerAddress?: string;
   status: 'Unscheduled' | 'Scheduled' | 'En Route' | 'On Site' | 'In Progress' | 'Completed' | 'Cancelled';
   scheduledDate?: string;
   arrivalEtaMinutes?: number;

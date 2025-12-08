@@ -61,6 +61,9 @@ const JobForm: React.FC<{
         id: initialData?.id || '',
         quoteId: initialData?.quoteId || (availableQuotes.length > 0 ? availableQuotes[0].id : ''),
         customerName: initialData?.customerName || (availableQuotes.length > 0 ? availableQuotes[0].customerName : ''),
+        customerPhone: initialData?.customerPhone || '',
+        customerEmail: initialData?.customerEmail || '',
+        customerAddress: initialData?.customerAddress || '',
         scheduledDate: initialData?.scheduledDate || '',
         status: initialData?.status || ('Unscheduled' as Job['status']),
         assignedCrew: initialData?.assignedCrew || [],
@@ -100,6 +103,9 @@ const JobForm: React.FC<{
                 id: initialData.id,
                 quoteId: initialData.quoteId,
                 customerName: initialData.customerName,
+                customerPhone: initialData.customerPhone || '',
+                customerEmail: initialData.customerEmail || '',
+                customerAddress: initialData.customerAddress || '',
                 scheduledDate: initialData.scheduledDate,
                 status: initialData.status,
                 assignedCrew: initialData.assignedCrew,
@@ -116,6 +122,9 @@ const JobForm: React.FC<{
                 id: '',
                 quoteId: defaultQuote?.id || '',
                 customerName: defaultQuote?.customerName || '',
+                customerPhone: '',
+                customerEmail: '',
+                customerAddress: '',
                 scheduledDate: '',
                 status: 'Unscheduled',
                 assignedCrew: [],
@@ -141,6 +150,50 @@ const JobForm: React.FC<{
         }
         setErrors({});
     }, [initialData, quotes]);
+
+    const prevQuoteIdRef = React.useRef<string | undefined>(initialData?.quoteId);
+    
+    useEffect(() => {
+        const fetchClientContact = async () => {
+            const prevQuoteId = prevQuoteIdRef.current;
+            prevQuoteIdRef.current = formData.quoteId;
+            
+            if (!formData.quoteId) {
+                if (prevQuoteId && prevQuoteId !== formData.quoteId) {
+                    setFormData(prev => ({ ...prev, customerPhone: '', customerEmail: '', customerAddress: '' }));
+                }
+                return;
+            }
+            
+            if (formData.quoteId === prevQuoteId && (formData.customerPhone || formData.customerEmail)) {
+                return;
+            }
+            
+            const selectedQuote = quotes.find(q => q.id === formData.quoteId);
+            if (selectedQuote?.clientId) {
+                try {
+                    const response = await fetch(`/api/clients/${selectedQuote.clientId}`);
+                    if (response.ok) {
+                        const client = await response.json();
+                        setFormData(prev => ({
+                            ...prev,
+                            customerPhone: client.primaryPhone || client.primary_phone || '',
+                            customerEmail: client.primaryEmail || client.primary_email || '',
+                            customerAddress: [
+                                client.billingAddressLine1 || client.billing_address_line1,
+                                client.billingCity || client.billing_city,
+                                client.billingState || client.billing_state,
+                                client.billingZipCode || client.billing_zip_code
+                            ].filter(Boolean).join(', ') || ''
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch client contact info:', e);
+                }
+            }
+        };
+        fetchClientContact();
+    }, [formData.quoteId, quotes]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -365,6 +418,18 @@ const JobForm: React.FC<{
                             <div className="sm:col-span-3">
                                 <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-gray-300">Customer</label>
                                 <input type="text" name="customerName" id="customerName" value={formData.customerName} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-0 sm:text-sm sm:leading-6" />
+                            </div>
+                            <div className="sm:col-span-3">
+                                <label className="block text-sm font-medium leading-6 text-gray-300">Customer Phone</label>
+                                <input type="text" value={formData.customerPhone} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-700 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
+                            </div>
+                            <div className="sm:col-span-3">
+                                <label className="block text-sm font-medium leading-6 text-gray-300">Customer Email</label>
+                                <input type="text" value={formData.customerEmail} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-700 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
+                            </div>
+                            <div className="sm:col-span-6">
+                                <label className="block text-sm font-medium leading-6 text-gray-300">Customer Address</label>
+                                <input type="text" value={formData.customerAddress} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-700 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
                             </div>
                         </>
                     ) : (
