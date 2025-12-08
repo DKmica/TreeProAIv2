@@ -15,6 +15,10 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen, onOpenComm
   const { logout } = useAuth();
   const profileRef = useRef<HTMLDivElement>(null);
 
+  const handleLogout = () => {
+    void logout();
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -151,8 +155,8 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen, onOpenComm
                 </div>
                 
                 <div className="border-t border-brand-gray-700 py-1">
-                  <button 
-                    onClick={logout} 
+                  <button
+                    onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:bg-brand-gray-700 hover:text-red-300 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

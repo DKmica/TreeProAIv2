@@ -1,11 +1,15 @@
 const express = require('express');
-const { isAuthenticated, getUser } = require('../auth');
+const { isAuthenticated, getUser, login, signup, logout } = require('../auth');
 
 const router = express.Router();
 
+router.post('/auth/login', login);
+router.post('/auth/signup', signup);
+router.post('/auth/logout', logout);
+
 router.get('/auth/user', isAuthenticated, async (req, res) => {
   try {
-    const userId = req.user.claims?.sub || req.user.id;
+    const userId = req.user.id;
     
     if (!userId) {
       return res.status(401).json({ message: 'Not authenticated' });
