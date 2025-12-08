@@ -100,8 +100,8 @@ const ThreeDayView: React.FC<ThreeDayViewProps> = ({
                           <p className="font-bold text-brand-green-800">{job.id}</p>
                           <p className="text-brand-green-700 text-sm mt-1">{job.customerName}</p>
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-2 ${
-                            job.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                            job.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                            job.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            job.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
                             {job.status}
@@ -185,8 +185,8 @@ const ThreeDayView: React.FC<ThreeDayViewProps> = ({
                           <p className="text-brand-green-700 text-sm mt-1">{job.customerName}</p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              job.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                              job.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                              job.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                              job.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
                               {job.status}

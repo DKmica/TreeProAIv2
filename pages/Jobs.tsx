@@ -65,7 +65,7 @@ const JobForm: React.FC<{
         customerEmail: initialData?.customerEmail || '',
         customerAddress: initialData?.customerAddress || '',
         scheduledDate: initialData?.scheduledDate || '',
-        status: initialData?.status || ('Unscheduled' as Job['status']),
+        status: initialData?.status || ('draft' as Job['status']),
         assignedCrew: initialData?.assignedCrew || [],
         jobLocation: initialData?.jobLocation || '',
         specialInstructions: initialData?.specialInstructions || '',
@@ -124,7 +124,7 @@ const JobForm: React.FC<{
                 customerEmail: '',
                 customerAddress: '',
                 scheduledDate: '',
-                status: 'Unscheduled',
+                status: 'draft',
                 assignedCrew: [],
                 jobLocation: '',
                 specialInstructions: '',
@@ -616,11 +616,18 @@ const JobForm: React.FC<{
                     <div className="sm:col-span-3">
                         <label htmlFor="status" className="block text-sm font-medium leading-6 text-gray-300">Status</label>
                         <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6">
-                            <option>Unscheduled</option>
-                            <option>Scheduled</option>
-                            <option>In Progress</option>
-                            <option>Completed</option>
-                            <option>Cancelled</option>
+                            <option value="draft">Draft</option>
+                            <option value="needs_permit">Needs Permit</option>
+                            <option value="waiting_on_client">Waiting on Client</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="en_route">En Route</option>
+                            <option value="on_site">On Site</option>
+                            <option value="weather_hold">Weather Hold</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="invoiced">Invoiced</option>
+                            <option value="paid">Paid</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
                     
@@ -729,7 +736,7 @@ const Jobs: React.FC = () => {
 
   useEffect(() => {
     const warnings = jobs
-      .filter(job => job.status === 'Completed' && !invoices.some(inv => inv.jobId === job.id))
+      .filter(job => job.status === 'completed' && !invoices.some(inv => inv.jobId === job.id))
       .map(job => `Job ${job.jobNumber || job.id.slice(0, 8)} is completed with no invoice.`);
     setLinkageWarnings(warnings);
   }, [jobs, invoices]);
@@ -889,7 +896,7 @@ const Jobs: React.FC = () => {
 
       let updatePayload: Partial<Job> = { status: newStatus };
 
-      if (newStatus === 'Completed' && !job.costs) {
+      if (newStatus === 'completed' && !job.costs) {
         let laborCost = 0;
         if (job.workStartedAt && job.workEndedAt && job.assignedCrew.length > 0) {
           const startTime = new Date(job.workStartedAt).getTime();
@@ -1085,7 +1092,7 @@ const Jobs: React.FC = () => {
                 <tbody className="divide-y divide-brand-gray-200 bg-white">
                   {filteredJobs.map((job) => {
                       const isInvoiceCreated = invoices.some(inv => inv.jobId === job.id);
-                      const canCreateInvoice = !isInvoiceCreated && job.status === 'Completed';
+                      const canCreateInvoice = !isInvoiceCreated && job.status === 'completed';
                       const portalUrl = `#/portal/job/${job.id}`;
                       return (
                         <tr key={job.id}>
@@ -1119,7 +1126,7 @@ const Jobs: React.FC = () => {
                                 type="button" 
                                 onClick={() => handleCreateInvoice(job)}
                                 disabled={!canCreateInvoice}
-                                title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'Completed' ? "Job must be completed" : "Create Invoice"}
+                                title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'completed' ? "Job must be completed" : "Create Invoice"}
                                 className="ml-2 rounded bg-brand-green-50 px-2 py-1 text-xs font-semibold text-brand-green-600 shadow-sm hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed">
                                 Invoice
                             </button>
@@ -1154,7 +1161,7 @@ const Jobs: React.FC = () => {
       <div className="mt-4 lg:hidden space-y-4">
         {filteredJobs.map((job) => {
           const isInvoiceCreated = invoices.some(inv => inv.jobId === job.id);
-          const canCreateInvoice = !isInvoiceCreated && job.status === 'Completed';
+          const canCreateInvoice = !isInvoiceCreated && job.status === 'completed';
           const portalUrl = `#/portal/job/${job.id}`;
           return (
             <div key={job.id} className="bg-white rounded-lg shadow p-4 space-y-3">
@@ -1216,7 +1223,7 @@ const Jobs: React.FC = () => {
                   type="button" 
                   onClick={() => handleCreateInvoice(job)}
                   disabled={!canCreateInvoice}
-                  title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'Completed' ? "Job must be completed" : "Create Invoice"}
+                  title={isInvoiceCreated ? "Invoice already exists" : job.status !== 'completed' ? "Job must be completed" : "Create Invoice"}
                   className="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-brand-green-50 text-brand-green-600 hover:bg-brand-green-100 disabled:bg-brand-gray-100 disabled:text-brand-gray-400 disabled:cursor-not-allowed"
                 >
                   Invoice

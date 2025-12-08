@@ -132,7 +132,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
         const newMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
 
         // Add Job Markers
-        const activeJobs = jobs.filter(job => job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress');
+        const activeJobs = jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress');
         activeJobs.forEach(job => {
             const customer = customers.find(c => c.name === job.customerName);
             if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
@@ -142,9 +142,9 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
 
             const getStatusColor = (status: string) => {
                 switch(status) {
-                    case 'In Progress': return '#1d4ed8';
-                    case 'En Route': return '#0284c7';
-                    case 'On Site': return '#ea580c';
+                    case 'in_progress': return '#1d4ed8';
+                    case 'en_route': return '#0284c7';
+                    case 'on_site': return '#ea580c';
                     default: return '#16a34a';
                 }
             };

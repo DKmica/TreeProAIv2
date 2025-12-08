@@ -226,7 +226,7 @@ const CrewJobDetail: React.FC = () => {
         if (!mergedJob?.workStartedAt) {
             submitJobUpdate({
                 workStartedAt: new Date().toISOString(),
-                status: 'In Progress',
+                status: 'in_progress',
                 clockInCoordinates: location
             }, 'clock_event', 'Clock in recorded');
         } else if (!mergedJob.workEndedAt) {
@@ -306,7 +306,7 @@ const CrewJobDetail: React.FC = () => {
 
   const handleMarkComplete = () => {
     if (window.confirm('Are you sure you want to mark this job as complete?')) {
-      submitJobUpdate({ status: 'Completed', workEndedAt: mergedJob?.workEndedAt || new Date().toISOString() }, 'status_update', 'Job marked complete');
+      submitJobUpdate({ status: 'completed', workEndedAt: mergedJob?.workEndedAt || new Date().toISOString() }, 'status_update', 'Job marked complete');
       navigate('/crew');
     }
   };
@@ -722,7 +722,7 @@ const CrewJobDetail: React.FC = () => {
                 Upload Photos
             </button>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} multiple accept="image/*" capture="environment" className="hidden" />
-            <button onClick={handleMarkComplete} disabled={mergedJob?.status === 'Completed'} className="flex items-center justify-center p-4 bg-brand-green-600 text-white font-bold rounded-lg shadow-md hover:bg-brand-green-700 transition-transform active:scale-95 disabled:bg-brand-gray-400 disabled:cursor-not-allowed">
+            <button onClick={handleMarkComplete} disabled={mergedJob?.status === 'completed'} className="flex items-center justify-center p-4 bg-brand-green-600 text-white font-bold rounded-lg shadow-md hover:bg-brand-green-700 transition-transform active:scale-95 disabled:bg-brand-gray-400 disabled:cursor-not-allowed">
                 <CheckCircleIcon className="w-6 h-6 mr-2" />
                 Mark as Complete
             </button>

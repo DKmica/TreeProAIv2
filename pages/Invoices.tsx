@@ -206,7 +206,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
         propertyId: invoice.propertyId,
         customerName: invoice.customerName,
         quoteId: undefined,
-        status: 'Unscheduled',
+        status: 'draft',
         assignedCrew: [],
         jobNumber: invoice.invoiceNumber ? `JOB-${invoice.invoiceNumber}` : undefined,
       });

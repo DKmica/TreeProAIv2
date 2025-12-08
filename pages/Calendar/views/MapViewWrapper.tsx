@@ -23,7 +23,7 @@ const MapViewWrapper: React.FC<MapViewWrapperProps> = ({
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const scheduledJobs = filteredJobs.filter(job =>
-    job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress'
+    job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress'
   );
 
   const dispatcherPrefill = useMemo(() => {

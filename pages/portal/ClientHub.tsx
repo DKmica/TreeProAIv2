@@ -38,10 +38,10 @@ const buildCustomerFilter = (clientId?: string, clientName?: string) => {
 
 const determineEtaCopy = (job: Job | undefined) => {
   if (!job) return 'No visits scheduled yet.';
-  if (job.status === 'Completed') return 'Work completed – thank you for partnering with us!';
-  if (job.status === 'Cancelled') return 'This visit was cancelled. Reach out if you need to reschedule.';
-  if (job.status === 'In Progress') return 'Our crew is on-site completing your work now.';
-  if (job.status === 'Scheduled' && job.scheduledDate) {
+  if (job.status === 'completed') return 'Work completed – thank you for partnering with us!';
+  if (job.status === 'cancelled') return 'This visit was cancelled. Reach out if you need to reschedule.';
+  if (job.status === 'in_progress') return 'Our crew is on-site completing your work now.';
+  if (job.status === 'scheduled' && job.scheduledDate) {
     const dateStr = new Date(job.scheduledDate).toLocaleString();
     if (job.arrivalEtaMinutes) {
       return `Our crew is en route. Estimated arrival in ${job.arrivalEtaMinutes} minutes (scheduled ${dateStr}).`;
@@ -93,7 +93,7 @@ const ClientHub: React.FC = () => {
   const unpaidInvoices = clientInvoices.filter(inv => inv.status !== 'Paid');
 
   const upcomingJob = useMemo(() => {
-    const upcomingStatuses: Job['status'][] = ['Scheduled', 'In Progress'];
+    const upcomingStatuses: Job['status'][] = ['scheduled', 'in_progress'];
     return clientJobs
       .filter(job => upcomingStatuses.includes(job.status))
       .sort((a, b) => new Date(a.scheduledDate || 0).getTime() - new Date(b.scheduledDate || 0).getTime())[0];

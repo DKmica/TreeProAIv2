@@ -48,10 +48,10 @@ const CrewDashboard: React.FC = () => {
     return jobs.filter(job =>
       job.scheduledDate === today &&
       job.assignedCrew.includes(currentUserId) &&
-      job.status !== 'Completed' &&
-      job.status !== 'Cancelled'
+      job.status !== 'completed' &&
+      job.status !== 'cancelled'
     ).sort((a, b) => {
-      const activeStatuses = ['In Progress', 'On Site', 'En Route'];
+      const activeStatuses = ['in_progress', 'on_site', 'en_route'];
       const aActive = activeStatuses.includes(a.status);
       const bActive = activeStatuses.includes(b.status);
       if (aActive && !bActive) return -1;
@@ -140,7 +140,7 @@ const CrewDashboard: React.FC = () => {
 
       const ordered: typeof jobsWithCoords = [];
       const remaining = [...jobsWithCoords];
-      let current = remaining.find(item => ['In Progress', 'On Site', 'En Route'].includes(item.job.status)) || remaining[0];
+      let current = remaining.find(item => ['in_progress', 'on_site', 'en_route'].includes(item.job.status)) || remaining[0];
       ordered.push(current);
       remaining.splice(remaining.indexOf(current), 1);
 
@@ -195,9 +195,9 @@ const CrewDashboard: React.FC = () => {
 
   const getStatusClasses = (status: Job['status']) => {
     switch (status) {
-      case 'In Progress':
+      case 'in_progress':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'Scheduled':
+      case 'scheduled':
         return 'bg-blue-100 text-blue-800 border-blue-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';

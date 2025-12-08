@@ -13,7 +13,7 @@ const Profitability: React.FC = () => {
 
     const isLoading = jobsLoading || quotesLoading;
 
-    const completedJobsWithCosts = jobs.filter(job => job.status === 'Completed' && job.costs);
+    const completedJobsWithCosts = jobs.filter(job => job.status === 'completed' && job.costs);
 
     const profitabilityData = completedJobsWithCosts.map(job => {
         const quote = quotes.find(q => q.id === job.quoteId);

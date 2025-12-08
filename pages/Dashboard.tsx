@@ -27,7 +27,7 @@ const Dashboard: React.FC = () => {
     const isLoading = jobsLoading || employeesLoading || customersLoading || leadsLoading || quotesLoading;
 
     const activeJobs = useMemo(() => 
-        jobs.filter(job => job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress')
+        jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress')
             .sort((a, b) => (a.scheduledDate || '').localeCompare(b.scheduledDate || '')), 
         [jobs]
     );
@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
     );
 
     const activeJobsCount = useMemo(() => 
-        jobs.filter(job => job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress').length,
+        jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress').length,
         [jobs]
     );
 
@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
         
         return jobs
             .filter(job => {
-                if (job.status !== 'Completed' || !job.workEndedAt) return false;
+                if (job.status !== 'completed' || !job.workEndedAt) return false;
                 const completedDate = new Date(job.workEndedAt);
                 return completedDate.getMonth() === currentMonth && completedDate.getFullYear() === currentYear;
             })
@@ -102,16 +102,16 @@ const Dashboard: React.FC = () => {
 
     const getStatusColor = (status: Job['status']) => {
         switch (status) {
-            case 'Scheduled': return 'text-blue-800';
-            case 'In Progress': return 'text-yellow-800';
+            case 'scheduled': return 'text-blue-800';
+            case 'in_progress': return 'text-yellow-800';
             default: return 'text-gray-800';
         }
     }
 
     const getStatusBgColor = (status: Job['status']) => {
         switch (status) {
-            case 'Scheduled': return 'bg-blue-100';
-            case 'In Progress': return 'bg-yellow-100';
+            case 'scheduled': return 'bg-blue-100';
+            case 'in_progress': return 'bg-yellow-100';
             default: return 'bg-gray-100';
         }
     }

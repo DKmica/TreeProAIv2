@@ -37,7 +37,7 @@ const ModifyScheduleModal: React.FC<{
         onSave({
             quoteId: suggestion.quoteId,
             customerName: suggestion.customerName,
-            status: 'Scheduled',
+            status: 'scheduled',
             scheduledDate,
             assignedCrew: selectedCrew,
         });
@@ -149,7 +149,7 @@ const AICore: React.FC = () => {
             await api.jobService.create({
                 quoteId: suggestion.quoteId,
                 customerName: suggestion.customerName,
-                status: 'Scheduled',
+                status: 'scheduled',
                 scheduledDate: suggestion.suggestedDate,
                 assignedCrew: crewIds,
                 jobNumber: `JOB-${Date.now()}`,

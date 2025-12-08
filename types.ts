@@ -396,7 +396,7 @@ export interface Job {
   customerPhone?: string;
   customerEmail?: string;
   customerAddress?: string;
-  status: 'Unscheduled' | 'Scheduled' | 'En Route' | 'On Site' | 'In Progress' | 'Completed' | 'Cancelled';
+  status: 'draft' | 'needs_permit' | 'waiting_on_client' | 'scheduled' | 'en_route' | 'on_site' | 'weather_hold' | 'in_progress' | 'completed' | 'invoiced' | 'paid' | 'cancelled';
   scheduledDate?: string;
   arrivalEtaMinutes?: number;
   etaWindowStart?: string;

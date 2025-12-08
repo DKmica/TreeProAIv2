@@ -95,14 +95,14 @@ const JobStatusPortal: React.FC = () => {
   
   const getNextStepMessage = () => {
       switch (job.status) {
-          case 'Unscheduled':
-          case 'Scheduled':
+          case 'draft':
+          case 'scheduled':
               return `Your job is scheduled for ${new Date(job.scheduledDate).toLocaleDateString()}. Our crew will arrive on-site soon.`;
-          case 'In Progress':
+          case 'in_progress':
               return "Our crew is currently on-site performing the work. We'll notify you upon completion.";
-          case 'Completed':
+          case 'completed':
               return "Your job is complete! Thank you for choosing us. An invoice will be sent to you shortly.";
-          case 'Cancelled':
+          case 'cancelled':
               return "This job has been cancelled.";
           default:
               return "We are preparing to schedule your job. We will notify you once a date is confirmed.";

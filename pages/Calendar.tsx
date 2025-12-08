@@ -71,7 +71,7 @@ const Calendar: React.FC = () => {
     }, []);
 
     const schedulableJobs = useMemo(() => {
-        return jobs.filter(job => job.status === 'Unscheduled' || job.status === 'Scheduled' || job.status === 'En Route' || job.status === 'On Site' || job.status === 'In Progress')
+        return jobs.filter(job => job.status === 'draft' || job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress')
             .sort((a, b) => a.id.localeCompare(b.id));
     }, [jobs]);
 
@@ -367,7 +367,7 @@ const Calendar: React.FC = () => {
 
     const handleSyncCalendar = async () => {
         setIsSyncing(true);
-        const jobsToSync = jobs.filter(j => j.status === 'Scheduled' && j.scheduledDate);
+        const jobsToSync = jobs.filter(j => j.status === 'scheduled' && j.scheduledDate);
         try {
             const result = await syncJobsToGoogleCalendar(jobsToSync);
             alert(`Successfully synced ${result.eventsCreated} jobs to Google Calendar.`);
@@ -423,7 +423,7 @@ const Calendar: React.FC = () => {
         const newScheduledDate = date.toISOString().split('T')[0];
 
         try {
-            await api.jobService.update(jobId, { scheduledDate: newScheduledDate, status: 'Scheduled' });
+            await api.jobService.update(jobId, { scheduledDate: newScheduledDate, status: 'scheduled' });
             refetchJobs();
         } catch (error) {
             console.error('Failed to update job:', error);
@@ -432,9 +432,9 @@ const Calendar: React.FC = () => {
     
     const getStatusColor = (status: Job['status']) => {
         switch (status) {
-            case 'Scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'In Progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'Unscheduled': return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'in_progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'draft': return 'bg-gray-100 text-gray-800 border-gray-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
@@ -498,7 +498,7 @@ const Calendar: React.FC = () => {
 
     const handleJobDrop = async (jobId: string, newDate: string) => {
         try {
-            await api.jobService.update(jobId, { scheduledDate: newDate, status: 'Scheduled' });
+            await api.jobService.update(jobId, { scheduledDate: newDate, status: 'scheduled' });
             refetchJobs();
         } catch (error) {
             console.error('Failed to update job:', error);

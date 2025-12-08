@@ -60,8 +60,8 @@ const RoutePlanDrawer: React.FC<RoutePlanDrawerProps> = ({
   };
 
   const getStopBadge = (stop: RouteStop) => {
-    if (stop.status === 'In Progress') return 'bg-blue-100 text-blue-800';
-    if (stop.status === 'Scheduled') return 'bg-green-100 text-green-800';
+    if (stop.status === 'in_progress') return 'bg-blue-100 text-blue-800';
+    if (stop.status === 'scheduled') return 'bg-green-100 text-green-800';
     return 'bg-amber-100 text-amber-800';
   };
 
