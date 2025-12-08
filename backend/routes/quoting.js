@@ -2,6 +2,7 @@ const express = require('express');
 const { handleError, notFoundError, badRequestError } = require('../utils/errors');
 const { isAuthenticated, requirePermission, RESOURCES, ACTIONS } = require('../auth');
 const quoting = require('../services/quoting');
+const { convertQuoteToJob } = require('../services/quoting/jobConversionService');
 
 const router = express.Router();
 
@@ -222,21 +223,26 @@ router.get('/quotes/:quoteId/signature', isAuthenticated, async (req, res) => {
   }
 });
 
-router.post('/quotes/:quoteId/convert-to-job', isAuthenticated, async (req, res, next) => {
+router.post('/quotes/:quoteId/convert-to-job', isAuthenticated, async (req, res) => {
   try {
     const { jobId, selectedOptionId, notes } = req.body;
     
-    if (!jobId) {
-      return next();
+    if (jobId) {
+      const result = await quoting.conversionAnalyticsService.trackConversion(
+        req.params.quoteId,
+        jobId,
+        { selectedOptionId, notes, conversionSource: 'manual' }
+      );
+      return res.json({ success: true, data: result });
     }
     
-    const result = await quoting.conversionAnalyticsService.trackConversion(
-      req.params.quoteId,
-      jobId,
-      { selectedOptionId, notes, conversionSource: 'manual' }
-    );
+    const job = await convertQuoteToJob(req.params.quoteId);
     
-    res.json({ success: true, data: result });
+    res.status(201).json({
+      success: true,
+      data: job,
+      message: 'Quote successfully converted to job'
+    });
   } catch (err) {
     handleError(res, err);
   }
