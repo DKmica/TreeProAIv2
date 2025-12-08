@@ -95,6 +95,9 @@ const JobForm: React.FC<{
         zipCode: '',
     });
     const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [equipmentText, setEquipmentText] = useState<string>(
+        initialData?.equipmentNeeded?.join(', ') || ''
+    );
 
     useEffect(() => {
         if (initialData) {
@@ -113,6 +116,7 @@ const JobForm: React.FC<{
                 equipmentNeeded: initialData.equipmentNeeded || [],
                 estimatedHours: initialData.estimatedHours || 0,
             });
+            setEquipmentText(initialData.equipmentNeeded?.join(', ') || '');
             setCustomerMode(initialData.quoteId ? 'existing' : 'new');
         } else {
             const defaultQuote = availableQuotes.length > 0 ? availableQuotes[0] : null;
@@ -131,6 +135,7 @@ const JobForm: React.FC<{
                 equipmentNeeded: [],
                 estimatedHours: 0,
             });
+            setEquipmentText('');
             setCustomerMode('existing');
             setNewCustomerData({
                 companyName: '',
@@ -361,6 +366,7 @@ const JobForm: React.FC<{
             const jobData: Partial<Job> & { customerDetails?: CustomerDetailsInput } = {
                 ...formData,
                 customerName,
+                equipmentNeeded: parseEquipment(equipmentText),
             };
 
             if (clientId) {
@@ -662,7 +668,7 @@ const JobForm: React.FC<{
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="equipmentNeeded" className="block text-sm font-medium leading-6 text-gray-300">Equipment Needed</label>
-                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={formData.equipmentNeeded.join(', ')} onChange={e => setFormData(prev => ({...prev, equipmentNeeded: parseEquipment(e.target.value) }))} placeholder="e.g. Chainsaw Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={equipmentText} onChange={e => setEquipmentText(e.target.value)} onBlur={e => setFormData(prev => ({...prev, equipmentNeeded: parseEquipment(e.target.value) }))} placeholder="e.g. Chainsaw, Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="col-span-full">
                         <label htmlFor="specialInstructions" className="block text-sm font-medium leading-6 text-gray-300">Special Instructions / Notes</label>
