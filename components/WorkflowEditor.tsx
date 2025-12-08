@@ -389,11 +389,11 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                 onChange={(e) => updateAction(index, { 
                   config: { ...action.config, method: e.target.value } 
                 })}
-                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500 bg-white text-gray-900"
               >
-                <option value="POST">POST</option>
-                <option value="GET">GET</option>
-                <option value="PUT">PUT</option>
+                <option value="POST" className="text-gray-900 bg-white">POST</option>
+                <option value="GET" className="text-gray-900 bg-white">GET</option>
+                <option value="PUT" className="text-gray-900 bg-white">PUT</option>
               </select>
             </div>
           </div>
@@ -585,10 +585,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                 <select
                                   value={trigger.trigger_type}
                                   onChange={(e) => updateTrigger(index, { trigger_type: e.target.value })}
-                                  className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                                  className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500 bg-white text-gray-900"
                                 >
                                   {TRIGGER_TYPES.map(type => (
-                                    <option key={type.value} value={type.value}>
+                                    <option key={type.value} value={type.value} className="text-gray-900 bg-white">
                                       {type.label}
                                     </option>
                                   ))}
@@ -632,10 +632,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                           onChange={(e) => updateCondition(index, condIndex, { 
                                             operator: e.target.value as TriggerCondition['operator'] 
                                           })}
-                                          className="px-2 py-1.5 text-sm border border-brand-gray-300 rounded-md"
+                                          className="px-2 py-1.5 text-sm border border-brand-gray-300 rounded-md bg-white text-gray-900"
                                         >
                                           {CONDITION_OPERATORS.map(op => (
-                                            <option key={op.value} value={op.value}>{op.label}</option>
+                                            <option key={op.value} value={op.value} className="text-gray-900 bg-white">{op.label}</option>
                                           ))}
                                         </select>
                                         <input
@@ -743,10 +743,10 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                     action_type: e.target.value,
                                     config: {} 
                                   })}
-                                  className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500"
+                                  className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:ring-2 focus:ring-brand-cyan-500 bg-white text-gray-900"
                                 >
                                   {ACTION_TYPES.map(type => (
-                                    <option key={type.value} value={type.value}>
+                                    <option key={type.value} value={type.value} className="text-gray-900 bg-white">
                                       {type.label}
                                     </option>
                                   ))}

@@ -316,6 +316,8 @@ export const TRIGGER_TYPES = [
   { value: 'quote_sent', label: 'Quote Sent', description: 'Fires when a quote is sent to a customer' },
   { value: 'quote_approved', label: 'Quote Approved', description: 'Fires when a customer approves a quote' },
   { value: 'quote_declined', label: 'Quote Declined', description: 'Fires when a customer declines a quote' },
+  { value: 'lead_converted', label: 'Lead Converted to Quote', description: 'Fires when a lead is converted to a quote' },
+  { value: 'quote_converted', label: 'Quote Converted to Job', description: 'Fires when a quote is converted to a job' },
   { value: 'job_created', label: 'Job Created', description: 'Fires when a new job is created' },
   { value: 'job_scheduled', label: 'Job Scheduled', description: 'Fires when a job is scheduled' },
   { value: 'job_started', label: 'Job Started', description: 'Fires when a job is started' },
@@ -337,6 +339,7 @@ export const ACTION_TYPES = [
   { value: 'update_entity', label: 'Update Entity', description: 'Update a field on the entity' },
   { value: 'create_invoice', label: 'Create Invoice', description: 'Generate an invoice from a job' },
   { value: 'create_job', label: 'Create Job', description: 'Create a job from a quote' },
+  { value: 'delete_source', label: 'Delete Source Record', description: 'Delete the triggering entity (e.g., delete lead after converting to quote)' },
   { value: 'send_notification', label: 'Send Notification', description: 'Send an in-app notification' },
   { value: 'webhook', label: 'Call Webhook', description: 'Call an external webhook URL' },
   { value: 'delay', label: 'Wait/Delay', description: 'Wait for a specified time before next action' }

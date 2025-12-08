@@ -104,6 +104,106 @@ const ACTION_HANDLERS = {
     };
   },
 
+  delete_source: async (config, context) => {
+    const entityType = context.entityType;
+    const entityId = context.entityId || context.entityData?.id;
+    
+    if (!entityId) {
+      console.log('[Action:delete_source] Skipping - no entity ID in context');
+      return { success: false, action: 'delete_source', reason: 'No entity ID found in context' };
+    }
+    
+    if (!entityType) {
+      console.log('[Action:delete_source] Skipping - no entity type in context');
+      return { success: false, action: 'delete_source', reason: 'No entity type found in context' };
+    }
+    
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(entityId)) {
+      console.log('[Action:delete_source] Invalid entity ID format');
+      return { success: false, action: 'delete_source', reason: 'Invalid entity ID format' };
+    }
+    
+    const normalizedType = entityType.toLowerCase().trim();
+    
+    try {
+      let result;
+      
+      switch (normalizedType) {
+        case 'lead':
+        case 'leads':
+          console.log(`[Action:delete_source] Soft-deleting lead with ID: ${entityId}`);
+          result = await db.query(
+            'UPDATE leads SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
+            [entityId]
+          );
+          break;
+          
+        case 'quote':
+        case 'quotes':
+          console.log(`[Action:delete_source] Soft-deleting quote with ID: ${entityId}`);
+          result = await db.query(
+            'UPDATE quotes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
+            [entityId]
+          );
+          break;
+          
+        case 'job':
+        case 'jobs':
+          console.log(`[Action:delete_source] Soft-deleting job with ID: ${entityId}`);
+          result = await db.query(
+            'UPDATE jobs SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
+            [entityId]
+          );
+          break;
+          
+        case 'invoice':
+        case 'invoices':
+          console.log(`[Action:delete_source] Soft-deleting invoice with ID: ${entityId}`);
+          result = await db.query(
+            'UPDATE invoices SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
+            [entityId]
+          );
+          break;
+          
+        default:
+          console.log(`[Action:delete_source] Unsupported entity type: ${entityType}`);
+          return { success: false, action: 'delete_source', reason: `Unsupported entity type: ${entityType}` };
+      }
+      
+      if (result.rowCount === 0) {
+        console.log(`[Action:delete_source] Entity ${entityId} not found or already deleted`);
+        return {
+          success: false,
+          action: 'delete_source',
+          entityType: normalizedType,
+          entityId,
+          reason: 'Entity not found or already deleted'
+        };
+      }
+      
+      console.log(`[Action:delete_source] Successfully deleted ${normalizedType} ${entityId}`);
+      
+      return {
+        success: true,
+        action: 'delete_source',
+        entityType: normalizedType,
+        entityId,
+        message: `${normalizedType} deleted successfully`
+      };
+    } catch (error) {
+      console.error(`[Action:delete_source] Error deleting ${normalizedType}:`, error.message);
+      return {
+        success: false,
+        action: 'delete_source',
+        entityType: normalizedType,
+        entityId,
+        reason: 'Database error',
+        error: error.message
+      };
+    }
+  },
+
   create_invoice: async (config, context) => {
     const { due_in_days = 30 } = config;
     const job = context.entityData;
