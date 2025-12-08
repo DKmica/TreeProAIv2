@@ -1442,14 +1442,14 @@ const CRM: React.FC = () => {
                       <div className="mt-3">
                         <p className="text-xs font-medium text-brand-gray-500 uppercase mb-1">Work</p>
                         <div className="space-y-1">
-                          {quote.lineItems.slice(0, 3).map((item, idx) => (
+                          {quote.lineItems.filter(item => item.selected !== false).slice(0, 3).map((item, idx) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
-                              <span className="text-brand-gray-700 truncate flex-1 mr-2">{item.description}</span>
+                              <span className="text-brand-gray-700 truncate flex-1 mr-2">{item.quantity > 1 ? `${item.quantity}x ` : ''}{item.description}</span>
                               <span className="text-brand-gray-900 font-medium">{formatCurrency(item.price)}</span>
                             </div>
                           ))}
-                          {quote.lineItems.length > 3 && (
-                            <p className="text-xs text-brand-gray-500">+{quote.lineItems.length - 3} more items</p>
+                          {quote.lineItems.filter(item => item.selected !== false).length > 3 && (
+                            <p className="text-xs text-brand-gray-500">+{quote.lineItems.filter(item => item.selected !== false).length - 3} more items</p>
                           )}
                         </div>
                       </div>

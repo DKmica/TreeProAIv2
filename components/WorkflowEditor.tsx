@@ -625,14 +625,14 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                           value={condition.field}
                                           onChange={(e) => updateCondition(index, condIndex, { field: e.target.value })}
                                           placeholder="Field (e.g., status)"
-                                          className="flex-1 px-2 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20"
+                                          className="input-light flex-1 !py-1.5 text-sm"
                                         />
                                         <select
                                           value={condition.operator}
                                           onChange={(e) => updateCondition(index, condIndex, { 
                                             operator: e.target.value as TriggerCondition['operator'] 
                                           })}
-                                          className="px-2 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20"
+                                          className="select-light !py-1.5 text-sm"
                                         >
                                           {CONDITION_OPERATORS.map(op => (
                                             <option key={op.value} value={op.value} className="text-gray-900 bg-white">{op.label}</option>
@@ -643,7 +643,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                           value={String(condition.value)}
                                           onChange={(e) => updateCondition(index, condIndex, { value: e.target.value })}
                                           placeholder="Value"
-                                          className="flex-1 px-2 py-1.5 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20"
+                                          className="input-light flex-1 !py-1.5 text-sm"
                                         />
                                         <button
                                           type="button"

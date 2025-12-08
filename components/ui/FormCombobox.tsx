@@ -268,7 +268,7 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
           ref={listRef}
           id={`${inputId}-listbox`}
           role="listbox"
-          className={`absolute z-50 w-full mt-1 py-1 rounded-lg shadow-xl max-h-60 overflow-auto ${isLight ? 'bg-white border border-gray-200' : 'bg-brand-gray-900 border border-brand-gray-700'}`}
+          className={`absolute z-50 w-full mt-1 py-1 rounded-lg shadow-xl max-h-[min(320px,50vh)] overflow-auto ${isLight ? 'bg-white border border-gray-200' : 'bg-brand-gray-900 border border-brand-gray-700'}`}
         >
           {(() => {
             let optionIndex = 0;
