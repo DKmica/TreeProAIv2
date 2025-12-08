@@ -68,6 +68,34 @@ async function upsertUser(claims) {
       [userId, email, firstName, lastName, profileImageUrl]
     );
     
+    // Check if there's a pre-registered user with this email (for role inheritance)
+    if (email) {
+      const preRegistered = await db.query(
+        'SELECT ur.role FROM user_roles ur JOIN users u ON ur.user_id = u.id WHERE u.email = $1 AND u.id != $2',
+        [email, userId]
+      );
+      
+      if (preRegistered.rows.length > 0) {
+        // Copy pre-registered roles to this user
+        for (const row of preRegistered.rows) {
+          await db.query(
+            `INSERT INTO user_roles (user_id, role) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [userId, row.role]
+          );
+        }
+        // Clean up pre-registered placeholder user and their roles
+        await db.query(
+          'DELETE FROM user_roles WHERE user_id IN (SELECT id FROM users WHERE email = $1 AND id != $2)',
+          [email, userId]
+        );
+        await db.query(
+          'DELETE FROM users WHERE email = $1 AND id != $2',
+          [email, userId]
+        );
+        return; // Roles inherited, don't assign default
+      }
+    }
+    
     // Assign default 'owner' role to new users (first user becomes owner)
     const existingRoles = await db.query(
       'SELECT COUNT(*) as count FROM user_roles'
