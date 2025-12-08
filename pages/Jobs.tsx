@@ -67,7 +67,6 @@ const JobForm: React.FC<{
         scheduledDate: initialData?.scheduledDate || '',
         status: initialData?.status || ('Unscheduled' as Job['status']),
         assignedCrew: initialData?.assignedCrew || [],
-        stumpGrindingPrice: initialData?.stumpGrindingPrice ? initialData.stumpGrindingPrice.toString() : '',
         jobLocation: initialData?.jobLocation || '',
         specialInstructions: initialData?.specialInstructions || '',
         equipmentNeeded: initialData?.equipmentNeeded || [],
@@ -109,7 +108,6 @@ const JobForm: React.FC<{
                 scheduledDate: initialData.scheduledDate,
                 status: initialData.status,
                 assignedCrew: initialData.assignedCrew,
-                stumpGrindingPrice: initialData.stumpGrindingPrice || 0,
                 jobLocation: initialData.jobLocation || '',
                 specialInstructions: initialData.specialInstructions || '',
                 equipmentNeeded: initialData.equipmentNeeded || [],
@@ -128,7 +126,6 @@ const JobForm: React.FC<{
                 scheduledDate: '',
                 status: 'Unscheduled',
                 assignedCrew: [],
-                stumpGrindingPrice: defaultQuote?.stumpGrindingPrice || 0,
                 jobLocation: '',
                 specialInstructions: '',
                 equipmentNeeded: [],
@@ -212,7 +209,6 @@ const JobForm: React.FC<{
                 ...prev,
                 quoteId: selectedQuote ? selectedQuote.id : '',
                 customerName: selectedQuote ? selectedQuote.customerName : '',
-                stumpGrindingPrice: selectedQuote ? selectedQuote.stumpGrindingPrice : 0,
             }));
             // Extract address from quote's property if available
             if (selectedQuote?.property) {
@@ -274,8 +270,7 @@ const JobForm: React.FC<{
             setFormData(prev => ({ 
                 ...prev, 
                 quoteId: '', 
-                customerName: '',
-                stumpGrindingPrice: 0
+                customerName: ''
             }));
         }
     };

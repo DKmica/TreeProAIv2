@@ -1214,6 +1214,61 @@ const functionDeclarations: FunctionDeclaration[] = [
       },
       required: ['jobId', 'message']
     }
+  },
+  {
+    name: 'getExceptionQueue',
+    description: 'Retrieve pending items requiring attention (pending approvals, overdue invoices, exceptions).'
+  },
+  {
+    name: 'getTimeTrackingStatus',
+    description: 'Get current time tracking status showing clocked-in employees and pending approvals.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        date: { type: Type.STRING, description: 'Optional date in YYYY-MM-DD format (defaults to today)' }
+      }
+    }
+  },
+  {
+    name: 'getClientProperties',
+    description: 'Retrieve all properties associated with a customer.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        customerName: { type: Type.STRING, description: 'Name of the customer to get properties for' }
+      },
+      required: ['customerName']
+    }
+  },
+  {
+    name: 'getClientContacts',
+    description: 'Retrieve all contacts associated with a customer.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        customerName: { type: Type.STRING, description: 'Name of the customer to get contacts for' }
+      },
+      required: ['customerName']
+    }
+  },
+  {
+    name: 'getMarketingStatus',
+    description: 'Get status of marketing campaigns and email sequences.'
+  },
+  {
+    name: 'getCrewSchedule',
+    description: 'View crew schedule and workload for this week.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        startDate: { type: Type.STRING, description: 'Start date in YYYY-MM-DD format (defaults to start of current week)' },
+        endDate: { type: Type.STRING, description: 'End date in YYYY-MM-DD format (defaults to end of current week)' }
+      }
+    }
+  },
+  {
+    name: 'getEstimatorAccuracy',
+    description: 'View accuracy statistics for AI tree estimates based on operator feedback.'
   }
 ];
 
@@ -1307,14 +1362,18 @@ ${ARBORIST_KNOWLEDGE}
 
 # Function Calling
 
-When the user asks you to do something actionable (create, update, navigate, etc.), use the appropriate function call. You have access to 30+ functions covering:
+When the user asks you to do something actionable (create, update, navigate, etc.), use the appropriate function call. You have access to 60+ functions covering:
 - Navigation (navigateTo, openRecord)
 - Customer/Lead management (createCustomer, createLead, updateLeadStatus, etc.)
 - Quote/Job management (createQuote, convertQuoteToJob, updateJobStatus, etc.)
-- Financial operations (getRevenueForPeriod, generateInvoice, etc.)
-- Employee/Payroll (trackTime, processPayroll, getPayrollSummary, etc.)
-- Equipment (scheduleMaintenance, assignEquipment, etc.)
-- Analytics (getBusinessMetrics, getLeadConversionRate, etc.)
+- Financial operations (getRevenueForPeriod, generateInvoice, getOutstandingInvoices, etc.)
+- Employee/Payroll (trackTime, processPayroll, getPayrollSummary, getTimeTrackingStatus, etc.)
+- Equipment (scheduleMaintenance, assignEquipment, getAvailableEquipment, etc.)
+- Analytics (getBusinessMetrics, getLeadConversionRate, getEstimatorAccuracy, etc.)
+- Client data (getClientProperties, getClientContacts)
+- Crew management (getCrewSchedule, assignCrewToJob, getCrewUtilization, etc.)
+- Marketing (getMarketingStatus, createPromotionalCampaign, trackReferralSourceROI, etc.)
+- Exception management (getExceptionQueue - pending approvals, overdue items)
 - Help/Onboarding (startOnboarding, getFeatureHelp, suggestNextSteps)
 
 Remember: You are the intelligent assistant that makes TreePro AI feel magical and helpful!`;
@@ -2531,6 +2590,144 @@ async function executeFunctionCall(name: string, args: any): Promise<any> {
             method: 'SMS/Push Notification'
           }
         };
+
+      case 'getExceptionQueue':
+        try {
+          const exceptionResponse = await fetch('/api/ai/assistant/exception-queue');
+          if (!exceptionResponse.ok) {
+            return { success: false, message: 'Failed to fetch exception queue' };
+          }
+          const exceptionData = await exceptionResponse.json();
+          return {
+            success: true,
+            data: exceptionData.data || exceptionData,
+            message: `Retrieved ${(exceptionData.data?.items || exceptionData.items || []).length} pending items requiring attention.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching exception queue: ${error.message}` };
+        }
+
+      case 'getTimeTrackingStatus':
+        try {
+          const dateParam = args?.date ? `?date=${args.date}` : '';
+          const timeTrackingResponse = await fetch(`/api/ai/assistant/time-tracking${dateParam}`);
+          if (!timeTrackingResponse.ok) {
+            return { success: false, message: 'Failed to fetch time tracking status' };
+          }
+          const timeTrackingData = await timeTrackingResponse.json();
+          const statusData = timeTrackingData.data || timeTrackingData;
+          return {
+            success: true,
+            data: statusData,
+            clockedIn: statusData.clockedIn || [],
+            pendingApprovals: statusData.pendingApprovals || [],
+            message: `${(statusData.clockedIn || []).length} employees currently clocked in, ${(statusData.pendingApprovals || []).length} pending approvals.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching time tracking status: ${error.message}` };
+        }
+
+      case 'getClientProperties':
+        try {
+          const customerNameEncoded = encodeURIComponent(args.customerName);
+          const propertiesResponse = await fetch(`/api/ai/assistant/client-properties?customer=${customerNameEncoded}`);
+          if (!propertiesResponse.ok) {
+            return { success: false, message: `Failed to fetch properties for ${args.customerName}` };
+          }
+          const propertiesData = await propertiesResponse.json();
+          const properties = propertiesData.data || propertiesData.properties || [];
+          return {
+            success: true,
+            data: properties,
+            customerName: args.customerName,
+            count: properties.length,
+            message: `Found ${properties.length} properties for ${args.customerName}.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching client properties: ${error.message}` };
+        }
+
+      case 'getClientContacts':
+        try {
+          const contactCustomerEncoded = encodeURIComponent(args.customerName);
+          const contactsResponse = await fetch(`/api/ai/assistant/client-contacts?customer=${contactCustomerEncoded}`);
+          if (!contactsResponse.ok) {
+            return { success: false, message: `Failed to fetch contacts for ${args.customerName}` };
+          }
+          const contactsData = await contactsResponse.json();
+          const contacts = contactsData.data || contactsData.contacts || [];
+          return {
+            success: true,
+            data: contacts,
+            customerName: args.customerName,
+            count: contacts.length,
+            message: `Found ${contacts.length} contacts for ${args.customerName}.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching client contacts: ${error.message}` };
+        }
+
+      case 'getMarketingStatus':
+        try {
+          const marketingResponse = await fetch('/api/ai/assistant/marketing-status');
+          if (!marketingResponse.ok) {
+            return { success: false, message: 'Failed to fetch marketing status' };
+          }
+          const marketingData = await marketingResponse.json();
+          const statusInfo = marketingData.data || marketingData;
+          return {
+            success: true,
+            data: statusInfo,
+            campaigns: statusInfo.campaigns || [],
+            sequences: statusInfo.sequences || [],
+            message: `Marketing status: ${(statusInfo.campaigns || []).length} campaigns, ${(statusInfo.sequences || []).length} nurture sequences.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching marketing status: ${error.message}` };
+        }
+
+      case 'getCrewSchedule':
+        try {
+          const scheduleParams = new URLSearchParams();
+          if (args?.startDate) scheduleParams.set('startDate', args.startDate);
+          if (args?.endDate) scheduleParams.set('endDate', args.endDate);
+          const scheduleQuery = scheduleParams.toString() ? `?${scheduleParams.toString()}` : '';
+          const scheduleResponse = await fetch(`/api/ai/assistant/crew-schedule${scheduleQuery}`);
+          if (!scheduleResponse.ok) {
+            return { success: false, message: 'Failed to fetch crew schedule' };
+          }
+          const scheduleData = await scheduleResponse.json();
+          const schedule = scheduleData.data || scheduleData;
+          return {
+            success: true,
+            data: schedule,
+            crews: schedule.crews || [],
+            assignments: schedule.assignments || [],
+            message: `Crew schedule retrieved for ${args?.startDate || 'this week'} to ${args?.endDate || 'end of week'}. ${(schedule.crews || []).length} crews with ${(schedule.assignments || []).length} assignments.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching crew schedule: ${error.message}` };
+        }
+
+      case 'getEstimatorAccuracy':
+        try {
+          const accuracyResponse = await fetch('/api/ai/assistant/estimator-accuracy');
+          if (!accuracyResponse.ok) {
+            return { success: false, message: 'Failed to fetch estimator accuracy stats' };
+          }
+          const accuracyData = await accuracyResponse.json();
+          const stats = accuracyData.data || accuracyData;
+          return {
+            success: true,
+            data: stats,
+            totalEstimates: stats.totalEstimates || 0,
+            accuracyRate: stats.accuracyRate || 0,
+            feedback: stats.feedback || [],
+            message: `AI estimator accuracy: ${stats.accuracyRate || 0}% based on ${stats.totalEstimates || 0} estimates with operator feedback.`
+          };
+        } catch (error: any) {
+          return { success: false, message: `Error fetching estimator accuracy: ${error.message}` };
+        }
 
       default:
         return { success: false, message: `Unknown function: ${name}` };
