@@ -1280,13 +1280,17 @@ const CRM: React.FC = () => {
                   key={lead.id}
                   className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200"
                 >
-                  <div className="p-6">
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
+                    onClick={() => handleLeadEdit(lead.id)}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1">
                         <input
                           type="checkbox"
                           checked={selectedLeadIds.includes(lead.id)}
                           onChange={() => toggleLeadSelection(lead.id)}
+                          onClick={(e) => e.stopPropagation()}
                           className="mt-1 h-4 w-4 rounded border-brand-gray-300 text-brand-cyan-600 focus:ring-brand-cyan-500"
                         />
                         <div className="flex-1">
@@ -1351,27 +1355,27 @@ const CRM: React.FC = () => {
                         )}
                       </div>
                     )}
+                  </div>
 
-                    <div className="mt-4 pt-4 border-t border-brand-gray-100 flex gap-2">
-                      <button
-                        onClick={() => handleLeadEdit(lead.id)}
-                        className="flex-1 text-sm font-medium text-brand-cyan-600 hover:text-brand-cyan-700 py-2 px-3 border border-brand-cyan-600 rounded-md hover:bg-brand-cyan-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleConvertToQuote(lead.id)}
-                        className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
-                      >
-                        Convert to Quote
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLead(lead)}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 py-2 px-3 border border-red-300 rounded-md hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                  <div className="px-6 pb-6 pt-4 border-t border-brand-gray-100 flex gap-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleLeadEdit(lead.id); }}
+                      className="flex-1 text-sm font-medium text-brand-cyan-600 hover:text-brand-cyan-700 py-2 px-3 border border-brand-cyan-600 rounded-md hover:bg-brand-cyan-50"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleConvertToQuote(lead.id); }}
+                      className="flex-1 text-sm font-medium text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 py-2 px-3 rounded-md"
+                    >
+                      Convert to Quote
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteLead(lead); }}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 py-2 px-3 border border-red-300 rounded-md hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1412,7 +1416,7 @@ const CRM: React.FC = () => {
                 >
                   <div 
                     className="p-6 cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
-                    onClick={() => handleQuoteView(quote.id)}
+                    onClick={() => handleQuoteEdit(quote.id)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -1426,13 +1430,14 @@ const CRM: React.FC = () => {
                       </span>
                     </div>
 
-                    {(quote.jobLocation || quote.property?.fullAddress || quote.customerDetails?.addressLine1) && (
+                    {(quote.jobLocation || quote.property?.address || quote.customerDetails?.addressLine1) && (
                       <div className="mt-3 flex items-start gap-2 text-sm text-brand-gray-600">
                         <svg className="h-4 w-4 mt-0.5 flex-shrink-0 text-brand-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <span>{quote.jobLocation || quote.property?.fullAddress || 
+                        <span>{quote.jobLocation || 
+                          (quote.property?.address ? [quote.property.address, quote.property.city, quote.property.state].filter(Boolean).join(', ') : null) ||
                           [quote.customerDetails?.addressLine1, quote.customerDetails?.city, quote.customerDetails?.state].filter(Boolean).join(', ')
                         }</span>
                       </div>
