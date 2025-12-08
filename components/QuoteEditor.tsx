@@ -374,6 +374,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
       }
 
       const quoteData: Partial<Quote> & { customerDetails?: CustomerDetailsInput } = {
+        leadId: quote?.leadId,
         clientId: clientId || undefined,
         propertyId: formData.propertyId || undefined,
         customerName,

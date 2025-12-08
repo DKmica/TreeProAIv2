@@ -4923,6 +4923,8 @@ apiRouter.put('/quotes/:id', async (req, res) => {
     let paramIndex = 2;
 
     const sanitizedClientId = sanitizeUUID(quoteData.clientId) || existingQuote.client_id;
+    const sanitizedPropertyId = sanitizeUUID(quoteData.propertyId) || existingQuote.property_id;
+    const sanitizedLeadId = sanitizeUUID(quoteData.leadId) || existingQuote.lead_id;
     let associatedClientId = sanitizedClientId;
     let clientRecord = null;
 
@@ -4947,6 +4949,18 @@ apiRouter.put('/quotes/:id', async (req, res) => {
       paramIndex++;
     }
 
+    if (sanitizedPropertyId && sanitizedPropertyId !== existingQuote.property_id) {
+      updates.push(`property_id = $${paramIndex}`);
+      values.push(sanitizedPropertyId);
+      paramIndex++;
+    }
+
+    if (sanitizedLeadId && sanitizedLeadId !== existingQuote.lead_id) {
+      updates.push(`lead_id = $${paramIndex}`);
+      values.push(sanitizedLeadId);
+      paramIndex++;
+    }
+
     if (clientRecord) {
       const computedName = clientRecord.company_name || `${clientRecord.first_name || ''} ${clientRecord.last_name || ''}`.trim() || 'Unknown';
       updates.push(`customer_name = $${paramIndex}`);
@@ -4957,43 +4971,95 @@ apiRouter.put('/quotes/:id', async (req, res) => {
       values.push(quoteData.customerName);
       paramIndex++;
     }
-    
+
     if (quoteData.status !== undefined) {
       updates.push(`status = $${paramIndex}`);
       values.push(quoteData.status);
       paramIndex++;
     }
-    
+
+    const parsedLineItems = quoteData.lineItems !== undefined
+      ? quoteData.lineItems
+      : existingQuote.line_items || [];
+    const normalizedLineItems = Array.isArray(parsedLineItems)
+      ? parsedLineItems
+      : JSON.parse(parsedLineItems || '[]');
+
+    const discountPercentage = quoteData.discountPercentage !== undefined
+      ? quoteData.discountPercentage
+      : existingQuote.discount_percentage || 0;
+    const discountAmount = quoteData.discountAmount !== undefined
+      ? quoteData.discountAmount
+      : existingQuote.discount_amount || 0;
+    const taxRate = quoteData.taxRate !== undefined ? quoteData.taxRate : existingQuote.tax_rate || 0;
+
+    const totals = calculateQuoteTotals(normalizedLineItems, discountPercentage, discountAmount, taxRate);
+
     if (quoteData.lineItems !== undefined) {
-      const lineItems = quoteData.lineItems;
-      const discountPercentage = quoteData.discountPercentage || 0;
-      const discountAmount = quoteData.discountAmount || 0;
-      const taxRate = quoteData.taxRate || 0;
-      
-      const totals = calculateQuoteTotals(lineItems, discountPercentage, discountAmount, taxRate);
-      
       updates.push(`line_items = $${paramIndex}`);
-      values.push(JSON.stringify(lineItems));
+      values.push(JSON.stringify(normalizedLineItems));
       paramIndex++;
-      
+    }
+
+    if (quoteData.lineItems !== undefined || quoteData.discountPercentage !== undefined || quoteData.discountAmount !== undefined || quoteData.taxRate !== undefined) {
       updates.push(`total_amount = $${paramIndex}`);
       values.push(totals.totalAmount);
       paramIndex++;
-      
+
+      updates.push(`discount_amount = $${paramIndex}`);
+      values.push(totals.discountAmount);
+      paramIndex++;
+
+      updates.push(`discount_percentage = $${paramIndex}`);
+      values.push(discountPercentage);
+      paramIndex++;
+
+      updates.push(`tax_rate = $${paramIndex}`);
+      values.push(taxRate);
+      paramIndex++;
+
+      updates.push(`tax_amount = $${paramIndex}`);
+      values.push(totals.taxAmount);
+      paramIndex++;
+
       updates.push(`grand_total = $${paramIndex}`);
       values.push(totals.grandTotal);
       paramIndex++;
     }
-    
+
     if (quoteData.termsAndConditions !== undefined) {
       updates.push(`terms_and_conditions = $${paramIndex}`);
       values.push(quoteData.termsAndConditions);
       paramIndex++;
     }
-    
+
     if (quoteData.internalNotes !== undefined) {
       updates.push(`internal_notes = $${paramIndex}`);
       values.push(quoteData.internalNotes);
+      paramIndex++;
+    }
+
+    if (quoteData.validUntil !== undefined) {
+      updates.push(`valid_until = $${paramIndex}`);
+      values.push(quoteData.validUntil);
+      paramIndex++;
+    }
+
+    if (quoteData.paymentTerms !== undefined) {
+      updates.push(`payment_terms = $${paramIndex}`);
+      values.push(quoteData.paymentTerms);
+      paramIndex++;
+    }
+
+    if (quoteData.specialInstructions !== undefined) {
+      updates.push(`special_instructions = $${paramIndex}`);
+      values.push(quoteData.specialInstructions);
+      paramIndex++;
+    }
+
+    if (quoteData.depositAmount !== undefined) {
+      updates.push(`deposit_amount = $${paramIndex}`);
+      values.push(quoteData.depositAmount);
       paramIndex++;
     }
     
