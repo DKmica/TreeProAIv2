@@ -362,7 +362,7 @@ const convertInstanceToJob = async (seriesId, instanceId) => {
     ) VALUES (
       NULL,
       $1,
-      'Scheduled',
+      'scheduled',
       $2,
       $3,
       $4,

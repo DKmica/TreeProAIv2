@@ -150,7 +150,7 @@ async function detectSchedulingConflicts(proposedJob) {
       FROM jobs j
       LEFT JOIN clients c ON j.client_id = c.id
       WHERE j.scheduled_date = $1
-        AND j.status NOT IN ('Cancelled', 'Completed')
+        AND j.status NOT IN ('cancelled', 'completed')
         AND j.assigned_crew ?| $2::text[]
     `, [scheduledDate, crewMembers]);
 
@@ -182,7 +182,7 @@ async function detectSchedulingConflicts(proposedJob) {
       JOIN jobs j ON eu.job_id = j.id
       WHERE eu.usage_date = $1
         AND eu.equipment_id = ANY($2::uuid[])
-        AND j.status NOT IN ('Cancelled', 'Completed')
+        AND j.status NOT IN ('cancelled', 'completed')
     `, [scheduledDate, equipmentIds]);
 
     for (const usage of equipmentConflicts.rows) {
@@ -204,7 +204,7 @@ async function detectSchedulingConflicts(proposedJob) {
     SELECT COUNT(*) as job_count
     FROM jobs
     WHERE scheduled_date = $1
-      AND status NOT IN ('Cancelled', 'Completed')
+      AND status NOT IN ('cancelled', 'completed')
   `, [scheduledDate]);
 
   const jobCount = parseInt(jobCountResult.rows[0].job_count);

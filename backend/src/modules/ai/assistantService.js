@@ -20,7 +20,7 @@ async function getJobsForDateRange(startDate, endDate) {
     LEFT JOIN clients c ON j.client_id = c.id
     LEFT JOIN properties p ON j.property_id = p.id
     WHERE j.scheduled_date >= $1 AND j.scheduled_date <= $2
-      AND j.status NOT IN ('Cancelled', 'Completed')
+      AND j.status NOT IN ('cancelled', 'completed')
     ORDER BY j.scheduled_date, j.work_start_time
   `, [startDate, endDate]);
   return result.rows;
@@ -42,8 +42,8 @@ async function getRevenueForPeriod(startDate, endDate) {
     SELECT 
       COUNT(*) as job_count,
       SUM(COALESCE(i.grand_total, i.total_amount, i.amount, 0)) as total_revenue,
-      SUM(CASE WHEN j.status = 'Completed' THEN COALESCE(i.grand_total, i.total_amount, i.amount, 0) ELSE 0 END) as completed_revenue,
-      SUM(CASE WHEN j.status IN ('Scheduled', 'In Progress') THEN COALESCE(i.grand_total, i.total_amount, i.amount, 0) ELSE 0 END) as pending_revenue
+      SUM(CASE WHEN j.status = 'completed' THEN COALESCE(i.grand_total, i.total_amount, i.amount, 0) ELSE 0 END) as completed_revenue,
+      SUM(CASE WHEN j.status IN ('scheduled', 'in_progress') THEN COALESCE(i.grand_total, i.total_amount, i.amount, 0) ELSE 0 END) as pending_revenue
     FROM jobs j
     LEFT JOIN invoices i ON j.invoice_id = i.id
     WHERE j.created_at >= $1 AND j.created_at <= $2
@@ -127,7 +127,7 @@ async function getEmployeeAvailability(dateStr) {
     FROM jobs j
     LEFT JOIN clients c ON j.client_id = c.id
     WHERE j.scheduled_date = $1
-      AND j.status NOT IN ('Cancelled', 'Completed')
+      AND j.status NOT IN ('cancelled', 'completed')
   `, [dateStr]);
 
   const busyEmployees = new Set();
@@ -429,7 +429,7 @@ async function getCrewSchedule(startDate, endDate) {
     LEFT JOIN clients c ON j.client_id = c.id
     LEFT JOIN properties p ON j.property_id = p.id
     WHERE j.scheduled_date >= $1 AND j.scheduled_date <= $2
-      AND j.status NOT IN ('Cancelled', 'Completed')
+      AND j.status NOT IN ('cancelled', 'completed')
     ORDER BY j.scheduled_date, j.work_start_time
   `, [startDate, endDate]);
 

@@ -574,7 +574,7 @@ router.get('/scheduling/dispatcher/dashboard',
       FROM jobs j
       LEFT JOIN properties p ON j.property_id = p.id
       WHERE j.scheduled_date = $1 
-        AND j.status NOT IN ('Cancelled', 'Completed')
+        AND j.status NOT IN ('cancelled', 'completed')
       ORDER BY j.customer_name
     `, [targetDate]);
     
