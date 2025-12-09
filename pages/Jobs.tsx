@@ -16,7 +16,8 @@ import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 import AssociationModal from '../components/AssociationModal';
 import RecurringJobsPanel from '../components/RecurringJobsPanel';
-import { formatPhone, formatZip, formatState, parseEquipment, lookupZipCode } from '../utils/formatters';
+import { formatPhone, formatZip, parseEquipment, lookupZipCode } from '../utils/formatters';
+import StateSelect from '../components/ui/StateSelect';
 import { useJobsQuery, useQuotesQuery, useInvoicesQuery, useEmployeesQuery } from '../hooks/useDataQueries';
 
 
@@ -559,15 +560,18 @@ const JobForm: React.FC<{
 
                                 <div className="sm:col-span-2">
                                     <label htmlFor="state" className="block text-sm font-medium leading-6 text-gray-300">State *</label>
-                                    <input
-                                        type="text"
+                                    <StateSelect
                                         id="state"
                                         name="state"
                                         value={newCustomerData.state}
-                                        onChange={handleNewCustomerChange}
-                                        maxLength={2}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
-                                        placeholder="CA"
+                                        onChange={(value) => {
+                                            setNewCustomerData(prev => ({ ...prev, state: value }));
+                                            if (errors.state) {
+                                                setErrors(prev => ({ ...prev, state: '' }));
+                                            }
+                                        }}
+                                        required
+                                        className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
                                     />
                                     {errors.state && <p className="mt-1 text-sm text-red-400">{errors.state}</p>}
                                 </div>
@@ -654,7 +658,13 @@ const JobForm: React.FC<{
                             </div>
                             <div className="sm:col-span-2">
                                 <label htmlFor="locationState" className="block text-sm font-medium leading-6 text-gray-300">State</label>
-                                <input type="text" id="locationState" name="state" value={jobLocationData.state} onChange={handleJobLocationChange} maxLength={2} placeholder="CA" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6 uppercase" />
+                                <StateSelect
+                                    id="locationState"
+                                    name="state"
+                                    value={jobLocationData.state}
+                                    onChange={(value) => setJobLocationData(prev => ({ ...prev, state: value }))}
+                                    className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                />
                             </div>
                             <div className="sm:col-span-2">
                                 <label htmlFor="locationZip" className="block text-sm font-medium leading-6 text-gray-300">Zip Code</label>

@@ -77,15 +77,26 @@ async function assignDefaultRole(userId, email) {
 
 async function createUser({ email, password, firstName, lastName }) {
   const passwordHash = await bcrypt.hash(password, 12);
+  
+  // Check if this is the first user (auto-approve as owner)
+  const existingUsers = await db.query('SELECT COUNT(*) as count FROM users');
+  const isFirstUser = existingUsers.rows[0].count === '0';
+  const status = isFirstUser ? 'approved' : 'pending';
+  
   const result = await db.query(
-    `INSERT INTO users (email, first_name, last_name, password_hash, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, NOW(), NOW())
-     RETURNING id, email, first_name, last_name, profile_image_url, created_at, updated_at`,
-    [email, firstName || null, lastName || null, passwordHash]
+    `INSERT INTO users (id, email, first_name, last_name, password_hash, status, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW(), NOW())
+     RETURNING id, email, first_name, last_name, profile_image_url, status, created_at, updated_at`,
+    [email, firstName || null, lastName || null, passwordHash, status]
   );
 
   const user = result.rows[0];
-  await assignDefaultRole(user.id, user.email);
+  
+  // Only assign role if user is auto-approved (first user)
+  if (isFirstUser) {
+    await assignDefaultRole(user.id, user.email);
+  }
+  
   return user;
 }
 
@@ -116,6 +127,15 @@ async function setupAuth(app) {
         const isValid = await bcrypt.compare(password, user.password_hash);
         if (!isValid) {
           return done(null, false, { message: 'Invalid credentials' });
+        }
+
+        // Check if user is approved
+        if (user.status === 'pending') {
+          return done(null, false, { message: 'Your account is pending approval. Please wait for an administrator to approve your account.' });
+        }
+        
+        if (user.status === 'rejected') {
+          return done(null, false, { message: 'Your account has been rejected. Please contact an administrator.' });
         }
 
         const { password_hash, ...safeUser } = user;
@@ -152,6 +172,16 @@ async function signup(req, res, next) {
 
     const user = await createUser({ email, password, firstName, lastName });
 
+    // If user is pending approval, don't log them in
+    if (user.status === 'pending') {
+      return res.status(201).json({ 
+        message: 'Account created successfully! Your account is pending approval by an administrator. You will receive access once approved.',
+        pendingApproval: true,
+        user: { email: user.email, firstName: user.first_name, lastName: user.last_name }
+      });
+    }
+
+    // Auto-approved users (first user) get logged in immediately
     req.login(user, async (err) => {
       if (err) return next(err);
       await logLogin({ userId: user.id, method: 'local', metadata: { email } });

@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Client, CustomerUpload, Job } from '../../types';
 import { useClientsQuery, useQuotesQuery, useJobsQuery, useInvoicesQuery } from '../../hooks/useDataQueries';
 import { leadService } from '../../services/apiService';
 import { quoteService } from '../../services/apiService';
+import { formatPhone } from '../../utils/formatters';
 import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import CheckCircleIcon from '../../components/icons/CheckCircleIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
@@ -121,7 +121,7 @@ const ClientHub: React.FC = () => {
 
   const handleFileUpload: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
     if (!event.target.files) return;
-    const files = Array.from(event.target.files);
+    const files: File[] = Array.from(event.target.files);
     const previews: UploadPreview[] = [];
     for (const file of files) {
       if (file.size > 25 * 1024 * 1024) {
@@ -241,7 +241,7 @@ const ClientHub: React.FC = () => {
           type="text"
           value={guestCode}
           onChange={e => setGuestCode(e.target.value)}
-          className="w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+          className="w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
           placeholder="Enter access code"
         />
         <button
@@ -538,7 +538,7 @@ const ClientHub: React.FC = () => {
                 type="text"
                 value={requestDetails.service}
                 onChange={e => setRequestDetails(prev => ({ ...prev, service: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
                 placeholder="Tree removal, pruning, stump grinding..."
                 required
               />
@@ -549,7 +549,7 @@ const ClientHub: React.FC = () => {
                 type="date"
                 value={requestDetails.preferredDate}
                 onChange={e => setRequestDetails(prev => ({ ...prev, preferredDate: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900"
               />
             </div>
           </div>
@@ -558,7 +558,7 @@ const ClientHub: React.FC = () => {
             <textarea
               value={requestDetails.description}
               onChange={e => setRequestDetails(prev => ({ ...prev, description: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+              className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
               rows={4}
               placeholder="Tree location, concerns, access notes, gate codes, hazards..."
             />
@@ -570,7 +570,7 @@ const ClientHub: React.FC = () => {
                 type="text"
                 value={requestDetails.contactName}
                 onChange={e => setRequestDetails(prev => ({ ...prev, contactName: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
                 placeholder="Who should we coordinate with?"
               />
             </div>
@@ -580,7 +580,7 @@ const ClientHub: React.FC = () => {
                 type="email"
                 value={requestDetails.contactEmail}
                 onChange={e => setRequestDetails(prev => ({ ...prev, contactEmail: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
                 placeholder="email@example.com"
               />
             </div>
@@ -589,8 +589,8 @@ const ClientHub: React.FC = () => {
               <input
                 type="tel"
                 value={requestDetails.contactPhone}
-                onChange={e => setRequestDetails(prev => ({ ...prev, contactPhone: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+                onChange={e => setRequestDetails(prev => ({ ...prev, contactPhone: formatPhone(e.target.value) }))}
+                className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
                 placeholder="(555) 123-4567"
               />
             </div>
@@ -601,7 +601,7 @@ const ClientHub: React.FC = () => {
               type="text"
               value={requestDetails.address}
               onChange={e => setRequestDetails(prev => ({ ...prev, address: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500"
+              className="mt-1 block w-full rounded-md border-brand-gray-200 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 text-gray-900 placeholder-gray-400"
               placeholder="Street, City, State"
             />
           </div>

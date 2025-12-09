@@ -4,7 +4,10 @@ const ROLES = {
   MANAGER: 'manager',
   SALES: 'sales',
   SCHEDULER: 'scheduler',
+  FOREMAN: 'foreman',
+  LABORER: 'laborer',
   CREW: 'crew',
+  CUSTOMER: 'customer',
   CLIENT: 'client'
 };
 
@@ -33,7 +36,11 @@ const RESOURCES = {
   AUTOMATION: 'automation',
   AI: 'ai',
   SETTINGS: 'settings',
-  TEMPLATES: 'templates'
+  TEMPLATES: 'templates',
+  USER_MANAGEMENT: 'user_management',
+  TIME_TRACKING: 'time_tracking',
+  FIELD_APP: 'field_app',
+  CUSTOMER_PORTAL: 'customer_portal'
 };
 
 const PERMISSIONS_MATRIX = {
@@ -187,8 +194,59 @@ const PERMISSIONS_MATRIX = {
     [ROLES.MANAGER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
     [ROLES.SALES]: [ACTIONS.READ, ACTIONS.LIST],
     [ROLES.SCHEDULER]: [ACTIONS.READ, ACTIONS.LIST],
+    [ROLES.FOREMAN]: [ACTIONS.READ],
+    [ROLES.LABORER]: [],
     [ROLES.CREW]: [ACTIONS.READ],
+    [ROLES.CUSTOMER]: [],
     [ROLES.CLIENT]: []
+  },
+  [RESOURCES.USER_MANAGEMENT]: {
+    [ROLES.OWNER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.ADMIN]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
+    [ROLES.MANAGER]: [],
+    [ROLES.SALES]: [],
+    [ROLES.SCHEDULER]: [],
+    [ROLES.FOREMAN]: [],
+    [ROLES.LABORER]: [],
+    [ROLES.CREW]: [],
+    [ROLES.CUSTOMER]: [],
+    [ROLES.CLIENT]: []
+  },
+  [RESOURCES.TIME_TRACKING]: {
+    [ROLES.OWNER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.ADMIN]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.MANAGER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
+    [ROLES.SALES]: [ACTIONS.CREATE, ACTIONS.READ],
+    [ROLES.SCHEDULER]: [ACTIONS.READ, ACTIONS.LIST],
+    [ROLES.FOREMAN]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
+    [ROLES.LABORER]: [ACTIONS.CREATE, ACTIONS.READ],
+    [ROLES.CREW]: [ACTIONS.CREATE, ACTIONS.READ],
+    [ROLES.CUSTOMER]: [],
+    [ROLES.CLIENT]: []
+  },
+  [RESOURCES.FIELD_APP]: {
+    [ROLES.OWNER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.ADMIN]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.MANAGER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
+    [ROLES.SALES]: [ACTIONS.READ, ACTIONS.LIST],
+    [ROLES.SCHEDULER]: [ACTIONS.READ, ACTIONS.LIST],
+    [ROLES.FOREMAN]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
+    [ROLES.LABORER]: [ACTIONS.READ],
+    [ROLES.CREW]: [ACTIONS.READ, ACTIONS.UPDATE],
+    [ROLES.CUSTOMER]: [],
+    [ROLES.CLIENT]: []
+  },
+  [RESOURCES.CUSTOMER_PORTAL]: {
+    [ROLES.OWNER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.ADMIN]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.DELETE, ACTIONS.LIST],
+    [ROLES.MANAGER]: [ACTIONS.READ, ACTIONS.LIST],
+    [ROLES.SALES]: [ACTIONS.READ, ACTIONS.LIST],
+    [ROLES.SCHEDULER]: [],
+    [ROLES.FOREMAN]: [],
+    [ROLES.LABORER]: [],
+    [ROLES.CREW]: [],
+    [ROLES.CUSTOMER]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST],
+    [ROLES.CLIENT]: [ACTIONS.CREATE, ACTIONS.READ, ACTIONS.UPDATE, ACTIONS.LIST]
   }
 };
 
@@ -222,12 +280,52 @@ function getRoleHierarchy(role) {
     [ROLES.MANAGER]: 70,
     [ROLES.SALES]: 50,
     [ROLES.SCHEDULER]: 50,
+    [ROLES.FOREMAN]: 40,
     [ROLES.CREW]: 30,
+    [ROLES.LABORER]: 25,
+    [ROLES.CUSTOMER]: 10,
     [ROLES.CLIENT]: 10
   };
   
   return hierarchy[role] || 0;
 }
+
+const ROLE_DESCRIPTIONS = {
+  [ROLES.OWNER]: 'Full system access including user management, financials, and all settings',
+  [ROLES.ADMIN]: 'Administrative access to most features except sensitive financial data',
+  [ROLES.MANAGER]: 'Office management including scheduling, estimates, invoicing, and team oversight',
+  [ROLES.SALES]: 'Create and manage leads, estimates, and quotes. View customer data',
+  [ROLES.SCHEDULER]: 'Manage job scheduling and crew assignments',
+  [ROLES.FOREMAN]: 'Field supervisor with job management, crew oversight, and time tracking',
+  [ROLES.LABORER]: 'Field worker with view-only access to assigned jobs and time clock',
+  [ROLES.CREW]: 'General crew member with basic job access',
+  [ROLES.CUSTOMER]: 'Customer portal access for quotes, invoices, and service requests',
+  [ROLES.CLIENT]: 'Legacy customer role'
+};
+
+const CONFIGURABLE_PERMISSIONS = {
+  [ROLES.FOREMAN]: {
+    canUpdateJobStatus: { default: true, description: 'Update job status (in progress, completed)' },
+    canAddJobPhotos: { default: true, description: 'Add photos to jobs' },
+    canAddJobNotes: { default: true, description: 'Add notes to jobs' },
+    canManageCrewTime: { default: true, description: 'Approve crew time entries' },
+    canViewPricing: { default: false, description: 'View job pricing and costs' }
+  },
+  [ROLES.LABORER]: {
+    canUpdateJobStatus: { default: false, description: 'Update job status' },
+    canAddJobPhotos: { default: true, description: 'Add photos to jobs' },
+    canAddJobNotes: { default: false, description: 'Add notes to jobs' },
+    canClockInOut: { default: true, description: 'Clock in/out for time tracking' },
+    canViewOtherCrewSchedules: { default: false, description: 'View other crew members schedules' }
+  },
+  [ROLES.SALES]: {
+    canCreateLeads: { default: true, description: 'Create new leads' },
+    canCreateQuotes: { default: true, description: 'Create and send quotes' },
+    canViewAllCustomers: { default: true, description: 'View all customer data' },
+    canViewJobCosts: { default: false, description: 'View job cost breakdown' },
+    canAccessFieldApp: { default: false, description: 'Access field app features' }
+  }
+};
 
 function isRoleAtLeast(userRole, requiredRole) {
   return getRoleHierarchy(userRole) >= getRoleHierarchy(requiredRole);
@@ -238,6 +336,8 @@ module.exports = {
   ACTIONS,
   RESOURCES,
   PERMISSIONS_MATRIX,
+  ROLE_DESCRIPTIONS,
+  CONFIGURABLE_PERMISSIONS,
   hasPermission,
   getPermittedActions,
   getRoleHierarchy,

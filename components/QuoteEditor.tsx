@@ -4,6 +4,8 @@ import { quoteService, clientService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 import PlusCircleIcon from './icons/PlusCircleIcon';
 import FormCombobox, { ComboboxOption } from './ui/FormCombobox';
+import StateSelect from './ui/StateSelect';
+import { formatPhone } from '../utils/formatters';
 
 interface QuoteEditorProps {
   isOpen: boolean;
@@ -612,7 +614,13 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       id="phone"
                       name="phone"
                       value={newCustomerData.phone}
-                      onChange={handleNewCustomerChange}
+                      onChange={(e) => {
+                        const formatted = formatPhone(e.target.value);
+                        setNewCustomerData(prev => ({ ...prev, phone: formatted }));
+                        if (errors.phone) {
+                          setErrors(prev => ({ ...prev, phone: undefined }));
+                        }
+                      }}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       placeholder="(555) 123-4567"
                     />
@@ -696,14 +704,18 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     <label htmlFor="state" className="block text-sm font-medium text-gray-300 mb-1">
                       State <span className="text-red-400">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <StateSelect
                       id="state"
                       name="state"
                       value={newCustomerData.state}
-                      onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                      placeholder="CA"
+                      onChange={(value) => {
+                        setNewCustomerData(prev => ({ ...prev, state: value }));
+                        if (errors.state) {
+                          setErrors(prev => ({ ...prev, state: undefined }));
+                        }
+                      }}
+                      required
+                      error={errors.state}
                     />
                     {errors.state && (
                       <p className="mt-1 text-sm text-red-400">{errors.state}</p>

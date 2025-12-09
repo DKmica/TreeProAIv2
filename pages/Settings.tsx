@@ -11,6 +11,8 @@ import { mockCustomFields, mockDocumentTemplates } from '../data/mockData';
 import PuzzlePieceIcon from '../components/icons/PuzzlePieceIcon';
 import DocumentTextIcon from '../components/icons/DocumentTextIcon';
 import { integrationService } from '../services/apiService';
+import { formatPhone } from '../utils/formatters';
+import { US_STATES } from '../components/ui/StateSelect';
 
 interface CompanyProfile {
   id?: string;
@@ -626,7 +628,8 @@ const Settings: React.FC = () => {
                         type="tel" 
                         id="phone-number" 
                         value={companyProfile.phoneNumber}
-                        onChange={(e) => handleCompanyProfileChange('phoneNumber', e.target.value)}
+                        onChange={(e) => handleCompanyProfileChange('phoneNumber', formatPhone(e.target.value))}
+                        placeholder="(555) 123-4567"
                         className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
                       />
                     </div>
@@ -673,13 +676,19 @@ const Settings: React.FC = () => {
                     
                     <div className="sm:col-span-2">
                       <label htmlFor="state" className="block text-sm font-medium leading-6 text-brand-gray-900">State</label>
-                      <input 
-                        type="text" 
+                      <select 
                         id="state" 
                         value={companyProfile.state}
                         onChange={(e) => handleCompanyProfileChange('state', e.target.value)}
                         className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
-                      />
+                      >
+                        <option value="">Select state...</option>
+                        {US_STATES.map((state) => (
+                          <option key={state.value} value={state.value}>
+                            {state.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     
                     <div className="sm:col-span-2">

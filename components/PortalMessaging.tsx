@@ -47,7 +47,7 @@ const PortalMessaging: React.FC<PortalMessagingProps> = ({ messages, onSendMessa
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+            className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm text-gray-900 placeholder-gray-400"
             aria-label="New message"
             disabled={isLoading}
           />

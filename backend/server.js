@@ -22,6 +22,7 @@ const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient')
 const leadsRouter = require('./routes/leads');
 const { mountApiRoutes } = require('./routes');
 const { camelToSnake, snakeToCamel, sanitizeUUID } = require('./utils/formatters');
+const userManagement = require('./controllers/userManagementController');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -202,6 +203,19 @@ const handleError = (res, err) => {
   console.error(err);
   res.status(500).json({ error: 'Internal Server Error', details: err.message });
 };
+
+// ============================================================================
+// USER MANAGEMENT ROUTES (Owner-only)
+// ============================================================================
+apiRouter.get('/users', isAuthenticated, userManagement.listUsers);
+apiRouter.get('/users/pending', isAuthenticated, userManagement.getPendingUsers);
+apiRouter.get('/users/roles-config', isAuthenticated, userManagement.getRolesAndPermissions);
+apiRouter.get('/users/:userId', isAuthenticated, userManagement.getUserDetails);
+apiRouter.post('/users/:userId/approve', isAuthenticated, userManagement.approveUser);
+apiRouter.post('/users/:userId/reject', isAuthenticated, userManagement.rejectUser);
+apiRouter.post('/users/:userId/roles', isAuthenticated, userManagement.assignUserRole);
+apiRouter.delete('/users/:userId/roles', isAuthenticated, userManagement.removeUserRole);
+apiRouter.put('/users/:userId/permissions', isAuthenticated, userManagement.updateUserCustomPermissions);
 
 const collectionDocIdPrefixes = {
   clients: 'client',

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Client } from '../types';
 import { clientService } from '../services/apiService';
 import XIcon from './icons/XIcon';
+import StateSelect from './ui/StateSelect';
+import { formatPhone } from '../utils/formatters';
 
 interface ClientEditorProps {
   isOpen: boolean;
@@ -400,7 +402,13 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     id="primaryPhone"
                     name="primaryPhone"
                     value={formData.primaryPhone}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const formatted = formatPhone(e.target.value);
+                      setFormData(prev => ({ ...prev, primaryPhone: formatted }));
+                      if (errors.primaryPhone) {
+                        setErrors(prev => ({ ...prev, primaryPhone: undefined }));
+                      }
+                    }}
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                     placeholder="(555) 123-4567"
                   />
@@ -465,14 +473,11 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     <label htmlFor="billingState" className="block text-sm font-medium text-gray-300 mb-1">
                       State/Province
                     </label>
-                    <input
-                      type="text"
+                    <StateSelect
                       id="billingState"
                       name="billingState"
                       value={formData.billingState}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                      placeholder="State"
+                      onChange={(value) => setFormData(prev => ({ ...prev, billingState: value }))}
                     />
                   </div>
                 </div>

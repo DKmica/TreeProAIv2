@@ -73,7 +73,7 @@ const Login: React.FC = () => {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500"
+                    className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500 text-gray-900 placeholder-gray-400"
                     placeholder="Alex"
                   />
                 </div>
@@ -86,7 +86,7 @@ const Login: React.FC = () => {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500"
+                    className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500 text-gray-900 placeholder-gray-400"
                     placeholder="Johnson"
                   />
                 </div>
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500"
+                className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500 text-gray-900 placeholder-gray-400"
                 placeholder="you@example.com"
                 required
               />
@@ -117,7 +117,7 @@ const Login: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500"
+                className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500 text-gray-900 placeholder-gray-400"
                 placeholder="••••••••"
                 required
                 minLength={8}

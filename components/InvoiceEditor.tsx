@@ -3,6 +3,7 @@ import { Invoice, LineItem } from '../types';
 import { invoiceService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 import LineItemBuilder from './LineItemBuilder';
+import { formatPhone } from '../utils/formatters';
 
 interface InvoiceEditorProps {
   isOpen: boolean;
@@ -360,7 +361,10 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       id="customerPhone"
                       name="customerPhone"
                       value={formData.customerPhone}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        const formatted = formatPhone(e.target.value);
+                        setFormData(prev => ({ ...prev, customerPhone: formatted }));
+                      }}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                       placeholder="(555) 123-4567"
                     />

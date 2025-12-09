@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Employee } from '../types';
 import { useEmployeesQuery } from '../hooks/useDataQueries';
 import * as api from '../services/apiService';
+import { formatPhone, formatSSN } from '../utils/formatters';
 
 const EmployeeForm: React.FC<{
     onSave: (employee: Partial<Employee>) => void;
@@ -53,7 +54,15 @@ const EmployeeForm: React.FC<{
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        let formattedValue = value;
+        
+        if (name === 'phone') {
+            formattedValue = formatPhone(value);
+        } else if (name === 'ssn') {
+            formattedValue = formatSSN(value);
+        }
+        
+        setFormData(prev => ({ ...prev, [name]: formattedValue }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
