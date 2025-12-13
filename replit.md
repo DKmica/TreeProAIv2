@@ -24,7 +24,26 @@ The frontend uses React 19 with TypeScript, Vite 6.4.1, and React Router DOM v6.
 
 ### Backend Architecture
 
-The backend is built with Node.js and Express.js, providing a RESTful API on port 3001 with CORS enabled. Authentication uses Replit Auth (OpenID Connect) with `express-session` backed by PostgreSQL (`connect-pg-simple`) and `passport.js` for OAuth handling. Users can sign in via Google, GitHub, X, Apple, or email/password. A comprehensive RBAC system provides granular access control and audit logging. The API has a modular route structure with centralized error handling and UUID-based resource identifiers. Business logic is isolated using a service layer pattern, which includes a job state machine, a template system, and an automation engine. Key services encompass RAG, vector store, job lifecycle management, and payment integration. The backend also supports equipment usage and maintenance tracking, and a time tracking system with GPS capture and an approval workflow.
+The backend is built with Node.js and Express.js, providing a RESTful API on port 3001 with CORS enabled. Authentication uses local email/password (bcryptjs) with `express-session` backed by PostgreSQL (`connect-pg-simple`) and `passport.js` for local strategy handling. 
+
+#### Role-Based Access Control (RBAC)
+
+A comprehensive RBAC system provides granular access control with the following role hierarchy:
+- **Owner (100)**: Full system access, user management, approve new signups
+- **Admin (90)**: Near-full access, can manage most settings
+- **Manager (70)**: Manage operations, crews, employees, view reports
+- **Sales/Scheduler (50)**: CRM access, quotes, calendar management
+- **Foreman (40)**: Field operations, job management, time tracking
+- **Laborer/Crew (30)**: View assigned jobs, clock in/out, equipment
+- **Customer (10)**: Portal access only - view quotes, invoices, job status
+
+**User Approval Workflow**: New signups require owner approval before access is granted. First user is auto-approved as owner.
+
+**User Management UI** (`/user-management`): Owner-only page for approving pending users, assigning roles, and customizing permissions.
+
+**Role-Based Navigation**: Sidebar dynamically shows/hides menu items based on user roles. Routes are protected with `RoleProtectedRoute` component.
+
+The API has a modular route structure with centralized error handling and UUID-based resource identifiers. Business logic is isolated using a service layer pattern, which includes a job state machine, a template system, and an automation engine. Key services encompass RAG, vector store, job lifecycle management, and payment integration. The backend also supports equipment usage and maintenance tracking, and a time tracking system with GPS capture and an approval workflow.
 
 ### Database Design
 
