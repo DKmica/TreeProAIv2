@@ -94,7 +94,7 @@ export const userManagementService = {
     }),
 
   removeRole: (userId: string, role: string): Promise<{ message: string; userId: string; role: string; remainingRoles: string[] }> =>
-    apiFetch(`users/${userId}/roles?role=${encodeURIComponent(role)}`, {
+    apiFetch(`users/${userId}/roles/${encodeURIComponent(role)}`, {
       method: 'DELETE',
     }),
 

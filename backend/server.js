@@ -214,7 +214,7 @@ apiRouter.get('/users/:userId', isAuthenticated, userManagement.getUserDetails);
 apiRouter.post('/users/:userId/approve', isAuthenticated, userManagement.approveUser);
 apiRouter.post('/users/:userId/reject', isAuthenticated, userManagement.rejectUser);
 apiRouter.post('/users/:userId/roles', isAuthenticated, userManagement.assignUserRole);
-apiRouter.delete('/users/:userId/roles', isAuthenticated, userManagement.removeUserRole);
+apiRouter.delete('/users/:userId/roles/:role', isAuthenticated, userManagement.removeUserRole);
 apiRouter.put('/users/:userId/permissions', isAuthenticated, userManagement.updateUserCustomPermissions);
 
 const collectionDocIdPrefixes = {
