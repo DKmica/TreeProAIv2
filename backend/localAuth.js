@@ -40,10 +40,24 @@ async function findUserByEmail(email) {
 
 async function getUser(userId) {
   const result = await db.query(
-    'SELECT id, email, first_name, last_name, profile_image_url, created_at, updated_at FROM users WHERE id = $1',
+    'SELECT id, email, first_name, last_name, profile_image_url, status, created_at, updated_at FROM users WHERE id = $1',
     [userId]
   );
-  return result.rows[0] || null;
+  
+  if (!result.rows[0]) {
+    return null;
+  }
+  
+  const user = result.rows[0];
+  
+  const rolesResult = await db.query(
+    'SELECT role FROM user_roles WHERE user_id = $1',
+    [userId]
+  );
+  
+  user.roles = rolesResult.rows.map(r => r.role);
+  
+  return user;
 }
 
 async function assignDefaultRole(userId, email) {
@@ -185,7 +199,8 @@ async function signup(req, res, next) {
     req.login(user, async (err) => {
       if (err) return next(err);
       await logLogin({ userId: user.id, method: 'local', metadata: { email } });
-      return res.json(user);
+      const fullUser = await getUser(user.id);
+      return res.json(fullUser);
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -193,7 +208,7 @@ async function signup(req, res, next) {
   }
 }
 
-function login(req, res, next) {
+async function login(req, res, next) {
   passport.authenticate('local', async (err, user, info) => {
     if (err) return next(err);
     if (!user) {
@@ -203,7 +218,9 @@ function login(req, res, next) {
     req.login(user, async (loginErr) => {
       if (loginErr) return next(loginErr);
       await logLogin({ userId: user.id, method: 'local', metadata: { email: user.email } });
-      res.json(user);
+      
+      const fullUser = await getUser(user.id);
+      res.json(fullUser);
     });
   })(req, res, next);
 }

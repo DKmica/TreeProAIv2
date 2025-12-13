@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import CrewLayout from './components/CrewLayout';
 import CustomerPortalLayout from './components/CustomerPortalLayout';
 import SpinnerIcon from './components/icons/SpinnerIcon';
@@ -84,19 +85,39 @@ const App: React.FC = () => {
               <Route path="/calendar" element={<Suspense fallback={<PageLoader />}><Calendar /></Suspense>} />
               <Route path="/crews" element={<Suspense fallback={<PageLoader />}><Crews /></Suspense>} />
               <Route path="/time-tracking" element={<Suspense fallback={<PageLoader />}><TimeTracking /></Suspense>} />
-              <Route path="/employees" element={<Suspense fallback={<PageLoader />}><Employees /></Suspense>} />
-              <Route path="/payroll" element={<Suspense fallback={<PageLoader />}><Payroll /></Suspense>} />
+              <Route path="/employees" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
+                  <Suspense fallback={<PageLoader />}><Employees /></Suspense>
+                </RoleProtectedRoute>
+              } />
+              <Route path="/payroll" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin']}>
+                  <Suspense fallback={<PageLoader />}><Payroll /></Suspense>
+                </RoleProtectedRoute>
+              } />
               <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><Equipment /></Suspense>} />
               <Route path="/equipment/:equipmentId" element={<Suspense fallback={<PageLoader />}><EquipmentDetail /></Suspense>} />
               <Route path="/marketing" element={<Suspense fallback={<PageLoader />}><Marketing /></Suspense>} />
-              <Route path="/profitability" element={<Suspense fallback={<PageLoader />}><Profitability /></Suspense>} />
+              <Route path="/profitability" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin']}>
+                  <Suspense fallback={<PageLoader />}><Profitability /></Suspense>
+                </RoleProtectedRoute>
+              } />
               <Route path="/exception-queue" element={<Suspense fallback={<PageLoader />}><ExceptionQueue /></Suspense>} />
-              <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
+              <Route path="/settings" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
+                  <Suspense fallback={<PageLoader />}><Settings /></Suspense>
+                </RoleProtectedRoute>
+              } />
               <Route path="/settings/template/:templateId" element={<Suspense fallback={<PageLoader />}><TemplateViewer /></Suspense>} />
               <Route path="/workflows" element={<Suspense fallback={<PageLoader />}><Workflows /></Suspense>} />
               <Route path="/automation-logs" element={<Suspense fallback={<PageLoader />}><AutomationLogs /></Suspense>} />
               <Route path="/document-scanner" element={<Suspense fallback={<PageLoader />}><DocumentScanner /></Suspense>} />
-              <Route path="/user-management" element={<Suspense fallback={<PageLoader />}><UserManagement /></Suspense>} />
+              <Route path="/user-management" element={
+                <RoleProtectedRoute allowedRoles={['owner']}>
+                  <Suspense fallback={<PageLoader />}><UserManagement /></Suspense>
+                </RoleProtectedRoute>
+              } />
             </Route>
           </Route>
 

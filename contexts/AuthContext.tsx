@@ -6,9 +6,24 @@ interface User {
   first_name: string | null;
   last_name: string | null;
   profile_image_url: string | null;
+  status: string;
+  roles: string[];
   created_at: string;
   updated_at: string;
 }
+
+const ROLE_HIERARCHY: Record<string, number> = {
+  owner: 100,
+  admin: 90,
+  manager: 70,
+  sales: 50,
+  scheduler: 50,
+  foreman: 40,
+  laborer: 30,
+  crew: 30,
+  crew_member: 30,
+  customer: 10,
+};
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,7 +31,14 @@ interface AuthContextType {
   user: User | null;
   userEmail: string | null;
   userRole: string | null;
+  userRoles: string[];
   userName: string | null;
+  hasRole: (role: string) => boolean;
+  hasAnyRole: (roles: string[]) => boolean;
+  isOwnerOrAdmin: boolean;
+  isManager: boolean;
+  isFieldCrew: boolean;
+  isCustomer: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (options: { email: string; password: string; firstName?: string; lastName?: string }) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -103,10 +125,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const userName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'User' : null;
   const userEmail = user?.email || null;
-  const userRole = 'owner';
+  const userRoles = user?.roles || [];
+  
+  const userRole = userRoles.length > 0 
+    ? userRoles.reduce((highest, role) => {
+        const currentLevel = ROLE_HIERARCHY[role] || 0;
+        const highestLevel = ROLE_HIERARCHY[highest] || 0;
+        return currentLevel > highestLevel ? role : highest;
+      }, userRoles[0])
+    : null;
+
+  const hasRole = (role: string): boolean => userRoles.includes(role);
+  const hasAnyRole = (roles: string[]): boolean => roles.some(role => userRoles.includes(role));
+  
+  const isOwnerOrAdmin = hasAnyRole(['owner', 'admin']);
+  const isManager = hasAnyRole(['owner', 'admin', 'manager']);
+  const isFieldCrew = hasAnyRole(['foreman', 'laborer', 'crew', 'crew_member']);
+  const isCustomer = hasRole('customer') && userRoles.length === 1;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, userEmail, userRole, userName, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      isLoading, 
+      user, 
+      userEmail, 
+      userRole, 
+      userRoles,
+      userName, 
+      hasRole,
+      hasAnyRole,
+      isOwnerOrAdmin,
+      isManager,
+      isFieldCrew,
+      isCustomer,
+      login, 
+      signup, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

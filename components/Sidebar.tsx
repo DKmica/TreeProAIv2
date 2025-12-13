@@ -21,39 +21,43 @@ import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
 import AutomationIcon from './icons/AutomationIcon';
 import LogsIcon from './icons/LogsIcon';
 import ScanIcon from './icons/ScanIcon';
+import ShieldCheckIcon from './icons/ShieldCheckIcon';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
+import { useAuth } from '../contexts/AuthContext';
 
 type NavigationItem = { 
   name: string; 
   href: string; 
   icon: React.ComponentType<{ className?: string }>;
   badge?: number | string;
+  allowedRoles?: string[];
 };
 
 const navigationItems: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-  { name: 'CRM', href: '/crm', icon: CustomerIcon },
+  { name: 'CRM', href: '/crm', icon: CustomerIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales', 'scheduler'] },
   { name: 'Jobs', href: '/jobs', icon: JobIcon },
-  { name: 'Document Scanner', href: '/document-scanner', icon: ScanIcon },
-  { name: 'Crews', href: '/crews', icon: UsersIcon },
-  { name: 'Employees', href: '/employees', icon: EmployeeIcon },
+  { name: 'Document Scanner', href: '/document-scanner', icon: ScanIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+  { name: 'Crews', href: '/crews', icon: UsersIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'Employees', href: '/employees', icon: EmployeeIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
-  { name: 'Invoices', href: '/invoices', icon: InvoiceIcon },
-  { name: 'Payroll', href: '/payroll', icon: DollarIcon },
-  { name: 'Profitability', href: '/profitability', icon: DollarIcon },
-  { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon },
-  { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon },
+  { name: 'Invoices', href: '/invoices', icon: InvoiceIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+  { name: 'Payroll', href: '/payroll', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
+  { name: 'Profitability', href: '/profitability', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
+  { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+  { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Chat', href: '/chat', icon: ChatIcon },
-  { name: 'Marketing', href: '/marketing', icon: MarketingIcon },
-  { name: 'Workflows', href: '/workflows', icon: AutomationIcon },
-  { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon },
-  { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon },
-  { name: 'Forms', href: '/forms', icon: ClipboardDocumentListIcon },
-  { name: 'AI Core', href: '/ai-core', icon: AICoreIcon },
-  { name: 'Settings', href: '/settings', icon: CogIcon },
-  { name: 'Exceptions', href: '/exception-queue', icon: ExclamationTriangleIcon },
+  { name: 'Marketing', href: '/marketing', icon: MarketingIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'Workflows', href: '/workflows', icon: AutomationIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'Forms', href: '/forms', icon: ClipboardDocumentListIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'AI Core', href: '/ai-core', icon: AICoreIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'Settings', href: '/settings', icon: CogIcon, allowedRoles: ['owner', 'admin', 'manager'] },
+  { name: 'User Management', href: '/user-management', icon: ShieldCheckIcon, allowedRoles: ['owner'] },
+  { name: 'Exceptions', href: '/exception-queue', icon: ExclamationTriangleIcon, allowedRoles: ['owner', 'admin', 'manager'] },
 ];
 
 interface SidebarProps {
@@ -64,7 +68,16 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
   const { counts } = useBadgeCounts();
+  const { hasAnyRole, userRoles } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const filteredNavigation = useMemo(() => {
+    return navigationItems.filter(item => {
+      if (!item.allowedRoles) return true;
+      if (userRoles.length === 0) return false;
+      return hasAnyRole(item.allowedRoles);
+    });
+  }, [hasAnyRole, userRoles]);
 
   const navigationWithBadges = useMemo(() => {
     const badgeMap: Record<string, number | string | undefined> = {
@@ -75,11 +88,11 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
       '/chat': counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
     };
 
-    return navigationItems.map(item => ({
+    return filteredNavigation.map(item => ({
       ...item,
       badge: badgeMap[item.href],
     }));
-  }, [counts]);
+  }, [counts, filteredNavigation]);
 
   const isActiveRoute = useCallback((href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
