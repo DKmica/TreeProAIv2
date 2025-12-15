@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Client, CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist, AiRiskAssessment } from '../../types';
+import { Client, CrewNote, CrewPendingAction, Job, JobHazardAnalysis, SafetyChecklist, AiRiskAssessment, JobMaterial } from '../../types';
 import ArrowLeftIcon from '../../components/icons/ArrowLeftIcon';
 import MapPinIcon from '../../components/icons/MapPinIcon';
 import ClockIcon from '../../components/icons/ClockIcon';
@@ -10,10 +10,11 @@ import SpinnerIcon from '../../components/icons/SpinnerIcon';
 import { generateJobHazardAnalysis } from '../../services/geminiService';
 import ExclamationTriangleIcon from '../../components/icons/ExclamationTriangleIcon';
 import ShieldCheckIcon from '../../components/icons/ShieldCheckIcon';
-import { useJobsQuery, useQuotesQuery, useClientsQuery } from '../../hooks/useDataQueries';
+import { useJobsQuery, useQuotesQuery, useClientsQuery, useEmployeesQuery } from '../../hooks/useDataQueries';
 import * as api from '../../services/apiService';
 import { useCrewSync } from '../../contexts/CrewSyncContext';
 import VoiceNotes from '../../components/crew/VoiceNotes';
+import MaterialUsageForm from '../../components/MaterialUsageForm';
 
 const getClientDisplayName = (client: Client): string => {
   if (client.companyName) return client.companyName;
@@ -64,6 +65,7 @@ const CrewJobDetail: React.FC = () => {
   const { data: jobs = [], isLoading: jobsLoading, refetch: refetchJobs } = useJobsQuery();
   const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
   const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
 
   const { isOnline, queueJobUpdate, jobPatches, pendingActions, syncPendingActions, syncing } = useCrewSync();
 
@@ -76,6 +78,9 @@ const CrewJobDetail: React.FC = () => {
   const [riskAssessment, setRiskAssessment] = useState<AiRiskAssessment | null>(null);
   const [isLoadingRisk, setIsLoadingRisk] = useState(false);
   const [riskError, setRiskError] = useState<string | null>(null);
+  const [jobMaterials, setJobMaterials] = useState<(JobMaterial & { employeeName?: string })[]>([]);
+  const [materialsLoading, setMaterialsLoading] = useState(false);
+  const [materialsError, setMaterialsError] = useState<string | null>(null);
 
   const job = useMemo(() => jobs.find(j => j.id === jobId), [jobs, jobId]);
   const mergedJob = useMemo(() => {
@@ -129,7 +134,110 @@ const CrewJobDetail: React.FC = () => {
     loadRiskAssessment();
   }, [mergedJob?.id]);
 
-  const isLoading = jobsLoading || quotesLoading || customersLoading;
+  const fetchMaterials = useCallback(async () => {
+    if (!jobId) return;
+    setMaterialsLoading(true);
+    setMaterialsError(null);
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/materials`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch materials: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.success) {
+        const materialsWithNames = data.data.map((mat: JobMaterial) => {
+          const employee = employees.find(e => e.id === mat.appliedBy);
+          return {
+            ...mat,
+            employeeName: employee?.name || mat.appliedBy
+          };
+        });
+        setJobMaterials(materialsWithNames);
+      } else {
+        throw new Error(data.error || 'Failed to load materials');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch job materials:', error);
+      setMaterialsError(error?.message || 'Failed to load materials. Please try again.');
+    } finally {
+      setMaterialsLoading(false);
+    }
+  }, [jobId, employees]);
+
+  useEffect(() => {
+    if (jobId && employees.length >= 0) {
+      fetchMaterials();
+    }
+  }, [jobId, fetchMaterials, employees]);
+
+  const handleAddMaterial = async (material: Partial<JobMaterial>) => {
+    if (!jobId) return;
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/materials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(material)
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to add material: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to add material');
+      }
+      await fetchMaterials();
+    } catch (error) {
+      console.error('Failed to add material:', error);
+      alert('Failed to add material. Please try again.');
+    }
+  };
+
+  const handleUpdateMaterial = async (id: string, material: Partial<JobMaterial>) => {
+    try {
+      const response = await fetch(`/api/job-materials/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(material)
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update material: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to update material');
+      }
+      await fetchMaterials();
+    } catch (error) {
+      console.error('Failed to update material:', error);
+      alert('Failed to update material. Please try again.');
+    }
+  };
+
+  const handleDeleteMaterial = async (id: string) => {
+    try {
+      const response = await fetch(`/api/job-materials/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to delete material: ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete material');
+      }
+      await fetchMaterials();
+    } catch (error) {
+      console.error('Failed to delete material:', error);
+      alert('Failed to delete material. Please try again.');
+    }
+  };
+
+  const isLoading = jobsLoading || quotesLoading || customersLoading || employeesLoading;
 
   if (isLoading) {
     return (
@@ -702,6 +810,32 @@ const CrewJobDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {jobId && (
+        <div className="mt-6">
+          {materialsError && (
+            <div className="mb-3 p-3 bg-red-50 border-l-4 border-red-400 text-red-700 rounded">
+              <p className="font-semibold">Error loading materials</p>
+              <p className="text-sm">{materialsError}</p>
+              <button
+                onClick={fetchMaterials}
+                className="mt-2 text-sm text-red-600 underline hover:text-red-800"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+          <MaterialUsageForm
+            jobId={jobId}
+            materials={jobMaterials}
+            employees={employees}
+            onAddMaterial={handleAddMaterial}
+            onUpdateMaterial={handleUpdateMaterial}
+            onDeleteMaterial={handleDeleteMaterial}
+            isLoading={materialsLoading}
+          />
+        </div>
+      )}
 
       <div className="mt-6 space-y-4">
         <h2 className="text-xl font-bold text-brand-gray-900">Job Actions</h2>

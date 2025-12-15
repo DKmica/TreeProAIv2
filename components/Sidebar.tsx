@@ -43,6 +43,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'Employees', href: '/employees', icon: EmployeeIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
+  { name: 'PHC Compliance', href: '/phc-compliance', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager', 'foreman'] },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
   { name: 'Payroll', href: '/payroll', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
   { name: 'Profitability', href: '/profitability', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
