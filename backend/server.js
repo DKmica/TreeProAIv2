@@ -119,14 +119,59 @@ app.post(
         const stripeCustomerId = session.customer;
         
         console.log(`💳 Processing checkout.session.completed for invoice: ${invoiceId}`);
+        console.log(`   Payment status: ${session.payment_status}`);
         
         if (invoiceId) {
-          const clientId = await stripeService.updateInvoiceAfterPayment(
-            invoiceId,
-            session
-          );
+          if (session.payment_status === 'paid') {
+            let paymentMethodType = 'Credit Card';
+            
+            if (session.payment_intent) {
+              try {
+                const stripe = require('stripe')(cachedStripeSecretKey);
+                const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent, {
+                  expand: ['payment_method']
+                });
+                if (paymentIntent.payment_method?.type === 'us_bank_account') {
+                  paymentMethodType = 'ACH Bank Transfer';
+                }
+              } catch (err) {
+                console.log(`⚠️ Could not determine payment method type, defaulting to Credit Card: ${err.message}`);
+              }
+            }
+            
+            console.log(`   Payment method: ${paymentMethodType}`);
+            
+            const clientId = await stripeService.updateInvoiceAfterPayment(
+              invoiceId,
+              session,
+              paymentMethodType
+            );
 
-          // Only persist customer ID after confirmed successful checkout
+            if (clientId && stripeCustomerId) {
+              try {
+                await db.query(
+                  'UPDATE clients SET stripe_customer_id = $1 WHERE id = $2 AND stripe_customer_id IS NULL',
+                  [stripeCustomerId, clientId]
+                );
+                console.log(`✅ Updated client ${clientId} with Stripe customer ID: ${stripeCustomerId}`);
+              } catch (err) {
+                console.error(`❌ Failed to update client ${clientId} with Stripe customer ID:`, err.message);
+              }
+            }
+          } else if (session.payment_status === 'unpaid' || session.payment_status === 'no_payment_required') {
+            console.log(`🏦 Payment pending for invoice ${invoiceId}. Waiting for payment_intent.succeeded.`);
+            await stripeService.markInvoicePaymentProcessing(invoiceId);
+          }
+        }
+      } else if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        const invoiceId = paymentIntent.metadata?.invoiceId;
+        
+        if (invoiceId) {
+          console.log(`✅ Processing payment_intent.succeeded for invoice: ${invoiceId}`);
+          const clientId = await stripeService.updateInvoiceAfterAsyncPayment(invoiceId, paymentIntent);
+          
+          const stripeCustomerId = paymentIntent.customer;
           if (clientId && stripeCustomerId) {
             try {
               await db.query(
@@ -138,6 +183,14 @@ app.post(
               console.error(`❌ Failed to update client ${clientId} with Stripe customer ID:`, err.message);
             }
           }
+        }
+      } else if (event.type === 'payment_intent.processing') {
+        const paymentIntent = event.data.object;
+        const invoiceId = paymentIntent.metadata?.invoiceId;
+        
+        if (invoiceId) {
+          console.log(`🔄 ACH payment processing for invoice: ${invoiceId}`);
+          await stripeService.markInvoicePaymentProcessing(invoiceId);
         }
       } else if (event.type === 'payment_intent.payment_failed') {
         const intent = event.data.object;
