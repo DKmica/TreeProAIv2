@@ -45,6 +45,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
   { name: 'PHC Compliance', href: '/phc-compliance', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager', 'foreman'] },
   { name: 'Invoices', href: '/invoices', icon: InvoiceIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+  { name: 'Invoice Templates', href: '/invoice-templates', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'A/R Aging', href: '/ar-aging', icon: DollarIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Payroll', href: '/payroll', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
   { name: 'Profitability', href: '/profitability', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },

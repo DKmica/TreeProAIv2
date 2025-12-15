@@ -615,6 +615,42 @@ export interface PaymentRecord {
   createdAt: string;
 }
 
+export interface InvoiceTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  
+  logoUrl?: string;
+  headerText?: string;
+  footerText?: string;
+  
+  companyName?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  companyWebsite?: string;
+  
+  defaultPaymentTerms: string;
+  defaultTaxRate: number;
+  defaultNotes?: string;
+  defaultCustomerNotes?: string;
+  
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily: string;
+  
+  isDefault: boolean;
+  isActive: boolean;
+  isSystem: boolean;
+  
+  usageCount: number;
+  lastUsedAt?: string;
+  
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Employee {
   id: string;
   name: string;

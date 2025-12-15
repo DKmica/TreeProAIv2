@@ -811,3 +811,67 @@ export const dashboardService = {
     return response.data;
   }
 };
+
+import { InvoiceTemplate } from '../types';
+
+function toSnakeCase(str: string): string {
+  return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+}
+
+function toCamelCase(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+function convertKeysToSnakeCase(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const key of Object.keys(obj)) {
+    result[toSnakeCase(key)] = obj[key];
+  }
+  return result;
+}
+
+function convertKeysToCamelCase(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const key of Object.keys(obj)) {
+    result[toCamelCase(key)] = obj[key];
+  }
+  return result;
+}
+
+export const invoiceTemplateService = {
+  getAll: async (): Promise<InvoiceTemplate[]> => {
+    const response = await apiFetch<{ success: boolean; data: any[] }>('invoice-templates');
+    return (response.data ?? []).map(item => convertKeysToCamelCase(item)) as InvoiceTemplate[];
+  },
+  getById: async (id: string): Promise<InvoiceTemplate> => {
+    const response = await apiFetch<{ success: boolean; data: any }>(`invoice-templates/${id}`);
+    return convertKeysToCamelCase(response.data) as InvoiceTemplate;
+  },
+  create: async (data: Partial<Omit<InvoiceTemplate, 'id'>>): Promise<InvoiceTemplate> => {
+    const snakeCaseData = convertKeysToSnakeCase(data as Record<string, any>);
+    const response = await apiFetch<{ success: boolean; data: any }>('invoice-templates', {
+      method: 'POST',
+      body: JSON.stringify(snakeCaseData)
+    });
+    return convertKeysToCamelCase(response.data) as InvoiceTemplate;
+  },
+  update: async (id: string, data: Partial<InvoiceTemplate>): Promise<InvoiceTemplate> => {
+    const snakeCaseData = convertKeysToSnakeCase(data as Record<string, any>);
+    const response = await apiFetch<{ success: boolean; data: any }>(`invoice-templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(snakeCaseData)
+    });
+    return convertKeysToCamelCase(response.data) as InvoiceTemplate;
+  },
+  remove: async (id: string): Promise<void> => {
+    await apiFetch<{ success: boolean }>(`invoice-templates/${id}`, {
+      method: 'DELETE'
+    });
+  },
+  setDefault: async (id: string): Promise<InvoiceTemplate> => {
+    const response = await apiFetch<{ success: boolean; data: any }>(`invoice-templates/${id}/set-default`, {
+      method: 'POST'
+    });
+    return convertKeysToCamelCase(response.data) as InvoiceTemplate;
+  }
+};
