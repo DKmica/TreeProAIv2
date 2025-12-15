@@ -875,3 +875,176 @@ export const invoiceTemplateService = {
     return convertKeysToCamelCase(response.data) as InvoiceTemplate;
   }
 };
+
+export interface AnalyticsDateRange {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface SalesFunnelMetrics {
+  totalLeads: number;
+  qualifiedLeads: number;
+  wonLeads: number;
+  lostLeads: number;
+  totalQuotes: number;
+  sentQuotes: number;
+  acceptedQuotes: number;
+  convertedQuotes: number;
+  acceptedValue: number;
+  totalJobs: number;
+  completedJobs: number;
+  activeJobs: number;
+  leadQualificationRate: number;
+  quoteAcceptanceRate: number;
+  quoteConversionRate: number;
+}
+
+export interface JobProfitabilityItem {
+  id: string;
+  jobNumber: string;
+  customerName: string;
+  completedAt: string;
+  quoteAmount: number;
+  laborCost: number;
+  equipmentCost: number;
+  materialsCost: number;
+  disposalCost: number;
+  totalCost: number;
+  profit: number;
+  profitMargin: number;
+}
+
+export interface JobProfitabilityData {
+  jobs: JobProfitabilityItem[];
+  summary: {
+    totalJobs: number;
+    totalRevenue: number;
+    totalCosts: number;
+    totalProfit: number;
+    avgProfitMargin: number;
+  };
+}
+
+export interface CrewProductivityItem {
+  employeeId: string;
+  employeeName: string;
+  role: string;
+  totalEntries: number;
+  totalHours: number;
+  jobsWorked: number;
+  jobsCompleted: number;
+  avgHoursPerJob: number;
+}
+
+export interface CrewProductivityData {
+  employees: CrewProductivityItem[];
+  summary: {
+    totalEmployees: number;
+    totalHours: number;
+    totalJobsCompleted: number;
+    avgHoursPerEmployee: number;
+  };
+}
+
+export interface EquipmentUtilizationItem {
+  equipmentId: string;
+  equipmentName: string;
+  equipmentType: string;
+  status: string;
+  usageCount: number;
+  totalHoursUsed: number;
+  jobsUsedOn: number;
+  lastUsed: string | null;
+}
+
+export interface EquipmentUtilizationData {
+  equipment: EquipmentUtilizationItem[];
+  summary: {
+    totalEquipment: number;
+    activeEquipment: number;
+    utilizationRate: number;
+    totalHoursUsed: number;
+  };
+}
+
+export interface RevenueByServiceItem {
+  serviceType: string;
+  invoiceCount: number;
+  totalRevenue: number;
+  collectedRevenue: number;
+  collectionRate: number;
+}
+
+export interface RevenueByServiceData {
+  services: RevenueByServiceItem[];
+  summary: {
+    totalServiceTypes: number;
+    totalRevenue: number;
+    totalCollected: number;
+    overallCollectionRate: number;
+  };
+}
+
+export interface RevenueTrendItem {
+  period: string;
+  invoiceCount: number;
+  totalInvoiced: number;
+  totalPaid: number;
+}
+
+export interface DashboardKPIs {
+  newLeads: number;
+  quotesCreated: number;
+  quotesWon: number;
+  jobsCreated: number;
+  jobsCompleted: number;
+  totalInvoiced: number;
+  totalCollected: number;
+  outstandingBalance: number;
+  winRate: number;
+}
+
+export const analyticsService = {
+  getSalesFunnel: async (params?: AnalyticsDateRange): Promise<SalesFunnelMetrics> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/sales-funnel?${query}` : 'analytics/sales-funnel';
+    const response = await apiFetch<{ success: boolean; data: SalesFunnelMetrics }>(endpoint);
+    return response.data;
+  },
+  getJobProfitability: async (params?: AnalyticsDateRange): Promise<JobProfitabilityData> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/job-profitability?${query}` : 'analytics/job-profitability';
+    const response = await apiFetch<{ success: boolean; data: JobProfitabilityData }>(endpoint);
+    return response.data;
+  },
+  getCrewProductivity: async (params?: AnalyticsDateRange): Promise<CrewProductivityData> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/crew-productivity?${query}` : 'analytics/crew-productivity';
+    const response = await apiFetch<{ success: boolean; data: CrewProductivityData }>(endpoint);
+    return response.data;
+  },
+  getEquipmentUtilization: async (params?: AnalyticsDateRange): Promise<EquipmentUtilizationData> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/equipment-utilization?${query}` : 'analytics/equipment-utilization';
+    const response = await apiFetch<{ success: boolean; data: EquipmentUtilizationData }>(endpoint);
+    return response.data;
+  },
+  getRevenueByService: async (params?: AnalyticsDateRange): Promise<RevenueByServiceData> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/revenue-by-service?${query}` : 'analytics/revenue-by-service';
+    const response = await apiFetch<{ success: boolean; data: RevenueByServiceData }>(endpoint);
+    return response.data;
+  },
+  getRevenueTrend: async (params?: AnalyticsDateRange & { groupBy?: string }): Promise<RevenueTrendItem[]> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/revenue-trend?${query}` : 'analytics/revenue-trend';
+    const response = await apiFetch<{ success: boolean; data: RevenueTrendItem[] }>(endpoint);
+    return response.data;
+  },
+  getDashboardKPIs: async (params?: AnalyticsDateRange): Promise<DashboardKPIs> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `analytics/dashboard-kpis?${query}` : 'analytics/dashboard-kpis';
+    const response = await apiFetch<{ success: boolean; data: DashboardKPIs }>(endpoint);
+    return response.data;
+  }
+};

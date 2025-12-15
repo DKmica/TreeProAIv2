@@ -31,6 +31,7 @@ const AITreeEstimator = lazy(() => import('./pages/AITreeEstimator'));
 const EstimateFeedbackAnalytics = lazy(() => import('./pages/EstimateFeedbackAnalytics'));
 const ChatPage = lazy(() => import('./pages/Chat'));
 const Profitability = lazy(() => import('./pages/Profitability'));
+const Reports = lazy(() => import('./pages/Reports'));
 const ExceptionQueue = lazy(() => import('./pages/ExceptionQueue'));
 const Settings = lazy(() => import('./pages/Settings'));
 const TemplateViewer = lazy(() => import('./pages/TemplateViewer'));
@@ -116,6 +117,11 @@ const App: React.FC = () => {
               <Route path="/profitability" element={
                 <RoleProtectedRoute allowedRoles={['owner', 'admin']}>
                   <Suspense fallback={<PageLoader />}><Profitability /></Suspense>
+                </RoleProtectedRoute>
+              } />
+              <Route path="/reports" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
+                  <Suspense fallback={<PageLoader />}><Reports /></Suspense>
                 </RoleProtectedRoute>
               } />
               <Route path="/exception-queue" element={<Suspense fallback={<PageLoader />}><ExceptionQueue /></Suspense>} />

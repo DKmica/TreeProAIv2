@@ -88,6 +88,36 @@ The platform includes comprehensive financial management capabilities:
   - Automatic payment method detection and recording
   - Webhook handling for async ACH settlements with Processing → Paid status flow
 
+### Reporting & Business Intelligence (Phase 11)
+
+The Reports Dashboard (`/reports`) provides comprehensive business analytics:
+
+- **Backend Analytics Service** (`backend/services/analyticsService.js`):
+  - Sales funnel metrics (leads → quotes → jobs conversion rates)
+  - Job profitability analysis (estimated vs actual costs, margin tracking)
+  - Crew productivity tracking (hours worked, jobs completed per employee)
+  - Equipment utilization rates (usage hours, job assignments)
+  - Revenue by service type breakdown
+  - Revenue trends over time (daily/weekly/monthly groupings)
+  - Dashboard KPIs aggregation
+
+- **Analytics API Endpoints** (`/api/analytics/*`):
+  - `GET /analytics/sales-funnel` - Conversion metrics through the sales pipeline
+  - `GET /analytics/job-profitability` - Profit margins and cost breakdown per job
+  - `GET /analytics/crew-productivity` - Employee hours and job completion stats
+  - `GET /analytics/equipment-utilization` - Equipment usage and availability
+  - `GET /analytics/revenue-by-service` - Revenue breakdown by service type
+  - `GET /analytics/revenue-trend` - Time-series revenue data
+  - `GET /analytics/dashboard-kpis` - Aggregated key performance indicators
+
+- **Reports Dashboard UI** (`pages/Reports.tsx`):
+  - KPI cards (Total Invoiced, Win Rate, Jobs Completed, Outstanding Balance)
+  - Interactive charts using Recharts (line, bar, pie)
+  - Date range filters (7 days, 30 days, 90 days, year, all time)
+  - Tab navigation (Overview, Sales Funnel, Revenue, Crew, Equipment)
+  - CSV export for job profitability data
+  - Role-protected access (owner, admin, manager)
+
 ## External Dependencies
 
 ### Third-Party Services

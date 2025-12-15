@@ -24,6 +24,7 @@ const integrationsRouter = require('./integrations');
 const aiRouter = require('./ai');
 const documentsRouter = require('./documents');
 const pdfRouter = require('./pdf');
+const analyticsRouter = require('./analytics');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -54,6 +55,7 @@ function buildApiRouter() {
   router.use(aiRouter);
   router.use(documentsRouter);
   router.use(pdfRouter);
+  router.use(analyticsRouter);
   return router;
 }
 

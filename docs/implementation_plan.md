@@ -633,35 +633,37 @@ modules/{domain}/
 
 ---
 
-## Phase 11: Reporting & Business Intelligence
+## Phase 11: Reporting & Business Intelligence ✅ COMPLETE
 
 **Goal:** Provide an admin "cockpit" for the business.
 
 **Estimated Time:** 3-4 weeks
 
-### 11.1 Backend Metrics
+### 11.1 Backend Metrics ✅ COMPLETE
 
-- [ ] Sales funnel metrics
-- [ ] Job profitability (estimated vs actual)
-- [ ] Crew productivity
-- [ ] Equipment utilization
-- [ ] Revenue by service type/date
+- [x] Sales funnel metrics
+- [x] Job profitability (estimated vs actual)
+- [x] Crew productivity
+- [x] Equipment utilization
+- [x] Revenue by service type/date
+- [x] Dashboard KPIs endpoint
+- [x] Revenue trend over time
 
-### 11.2 Dashboard UI
+### 11.2 Dashboard UI ✅ COMPLETE
 
-- [ ] Charts (revenue, jobs, leads)
-- [ ] KPI cards
-- [ ] Date range filters
-- [ ] Service type filters
-- [ ] Crew filters
+- [x] Charts (revenue trend line chart, sales funnel bar chart, service pie chart)
+- [x] KPI cards (Total Invoiced, Win Rate, Jobs Completed, Outstanding Balance)
+- [x] Date range filters (7 days, 30 days, 90 days, year, all time)
+- [x] Tab navigation (Overview, Sales Funnel, Revenue, Crew, Equipment)
+- [x] Recharts library integration
 
-### 11.3 Reports
+### 11.3 Reports ✅ COMPLETE
 
-- [ ] Revenue report
-- [ ] Job profitability report
-- [ ] Crew hours report
-- [ ] Equipment usage report
-- [ ] CSV export
+- [x] Revenue report with service breakdown
+- [x] Job profitability report with margin analysis
+- [x] Crew hours report with productivity metrics
+- [x] Equipment usage report with utilization rates
+- [x] CSV export functionality
 
 ---
 
