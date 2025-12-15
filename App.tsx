@@ -17,6 +17,7 @@ const Jobs = lazy(() => import('./pages/Jobs'));
 const JobTemplates = lazy(() => import('./pages/JobTemplates'));
 const FormTemplates = lazy(() => import('./pages/FormTemplates'));
 const Invoices = lazy(() => import('./pages/Invoices'));
+const ARAgingDashboard = lazy(() => import('./pages/ARAgingDashboard'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Crews = lazy(() => import('./pages/Crews'));
 const TimeTracking = lazy(() => import('./pages/TimeTracking'));
@@ -84,6 +85,11 @@ const App: React.FC = () => {
               <Route path="/forms" element={<Suspense fallback={<PageLoader />}><FormTemplates /></Suspense>} />
               <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
               <Route path="/invoices" element={<Suspense fallback={<PageLoader />}><Invoices /></Suspense>} />
+              <Route path="/ar-aging" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
+                  <Suspense fallback={<PageLoader />}><ARAgingDashboard /></Suspense>
+                </RoleProtectedRoute>
+              } />
               <Route path="/calendar" element={<Suspense fallback={<PageLoader />}><Calendar /></Suspense>} />
               <Route path="/crews" element={<Suspense fallback={<PageLoader />}><Crews /></Suspense>} />
               <Route path="/time-tracking" element={<Suspense fallback={<PageLoader />}><TimeTracking /></Suspense>} />
