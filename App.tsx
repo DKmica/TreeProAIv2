@@ -36,6 +36,7 @@ const Payroll = lazy(() => import('./pages/Payroll'));
 const Workflows = lazy(() => import('./pages/Workflows'));
 const AutomationLogs = lazy(() => import('./pages/AutomationLogs'));
 const DocumentScanner = lazy(() => import('./pages/DocumentScanner'));
+const Visualizer = lazy(() => import('./pages/Visualizer'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
 const CrewDashboard = lazy(() => import('./pages/crew/CrewDashboard'));
 const CrewJobDetail = lazy(() => import('./pages/crew/CrewJobDetail'));
@@ -113,6 +114,7 @@ const App: React.FC = () => {
               <Route path="/workflows" element={<Suspense fallback={<PageLoader />}><Workflows /></Suspense>} />
               <Route path="/automation-logs" element={<Suspense fallback={<PageLoader />}><AutomationLogs /></Suspense>} />
               <Route path="/document-scanner" element={<Suspense fallback={<PageLoader />}><DocumentScanner /></Suspense>} />
+              <Route path="/visualizer" element={<Suspense fallback={<PageLoader />}><Visualizer /></Suspense>} />
               <Route path="/user-management" element={
                 <RoleProtectedRoute allowedRoles={['owner']}>
                   <Suspense fallback={<PageLoader />}><UserManagement /></Suspense>

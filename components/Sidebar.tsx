@@ -47,6 +47,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'Payroll', href: '/payroll', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
   { name: 'Profitability', href: '/profitability', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
   { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+  { name: 'Tree Visualizer', href: '/visualizer', icon: SparklesIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
   { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Chat', href: '/chat', icon: ChatIcon },
   { name: 'Marketing', href: '/marketing', icon: MarketingIcon, allowedRoles: ['owner', 'admin', 'manager'] },
