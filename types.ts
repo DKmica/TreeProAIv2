@@ -528,6 +528,18 @@ export interface DispatchResult {
 }
 
 
+export type BillingType = 'single' | 'deposit' | 'milestone' | 'final';
+
+export interface PaymentScheduleItem {
+  name: string;
+  percentage: number;
+  amount: number;
+  dueDate: string;
+  paid: boolean;
+  paidDate?: string;
+  invoiceId?: string;
+}
+
 export interface Invoice {
   id: string;
   quoteId?: string;
@@ -559,6 +571,13 @@ export interface Invoice {
   amountDue: number;
   paymentTerms: string;
   
+  // Progress billing fields
+  billingType: BillingType;
+  parentInvoiceId?: string;
+  paymentSchedule?: PaymentScheduleItem[];
+  billingSequence: number;
+  contractTotal: number;
+  
   // Customer information
   customerEmail?: string;
   customerPhone?: string;
@@ -580,6 +599,7 @@ export interface Invoice {
   job?: Job;
   client?: Client;
   property?: Property;
+  relatedInvoices?: Invoice[];
 }
 
 export interface PaymentRecord {

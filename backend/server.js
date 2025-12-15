@@ -8887,6 +8887,12 @@ apiRouter.post('/invoices', async (req, res) => {
     const amountPaid = 0;
     const amountDue = totals.grandTotal;
     
+    const billingType = invoiceData.billingType || 'single';
+    const parentInvoiceId = invoiceData.parentInvoiceId || null;
+    const paymentSchedule = invoiceData.paymentSchedule || [];
+    const billingSequence = invoiceData.billingSequence || 1;
+    const contractTotal = invoiceData.contractTotal || totals.grandTotal;
+
     const query = `
       INSERT INTO invoices (
         id, quote_id, job_id, client_id, property_id, customer_name, status,
@@ -8895,7 +8901,8 @@ apiRouter.post('/invoices', async (req, res) => {
         tax_rate, tax_amount, total_amount, grand_total,
         amount_paid, amount_due, payment_terms,
         customer_email, customer_phone, customer_address,
-        notes, customer_notes, amount
+        notes, customer_notes, amount,
+        billing_type, parent_invoice_id, payment_schedule, billing_sequence, contract_total
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7,
         $8, $9, $10,
@@ -8903,7 +8910,8 @@ apiRouter.post('/invoices', async (req, res) => {
         $15, $16, $17, $18,
         $19, $20, $21,
         $22, $23, $24,
-        $25, $26, $27
+        $25, $26, $27,
+        $28, $29, $30, $31, $32
       )
       RETURNING *
     `;
@@ -8935,7 +8943,12 @@ apiRouter.post('/invoices', async (req, res) => {
       invoiceData.customerAddress || null,
       invoiceData.notes || null,
       invoiceData.customerNotes || null,
-      amount
+      amount,
+      billingType,
+      parentInvoiceId,
+      JSON.stringify(paymentSchedule),
+      billingSequence,
+      contractTotal
     ];
     
     const { rows } = await db.query(query, values);

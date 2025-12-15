@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Invoice, LineItem } from '../types';
+import { Invoice, LineItem, BillingType, PaymentScheduleItem } from '../types';
 import { invoiceService } from '../services/apiService';
 import XIcon from './icons/XIcon';
 import LineItemBuilder from './LineItemBuilder';
@@ -37,12 +37,16 @@ interface FormData {
   customerNotes: string;
   status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
   jobId?: string;
+  billingType: BillingType;
+  contractTotal: number;
+  paymentSchedule: PaymentScheduleItem[];
 }
 
 interface FormErrors {
   customerName?: string;
   dueDate?: string;
   lineItems?: string;
+  paymentSchedule?: string;
 }
 
 const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, invoice, prefilledData }) => {
@@ -63,6 +67,9 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
     customerNotes: '',
     status: 'Draft',
     jobId: undefined,
+    billingType: 'single',
+    contractTotal: 0,
+    paymentSchedule: [],
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -88,6 +95,9 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
         customerNotes: invoice.customerNotes || '',
         status: invoice.status,
         jobId: invoice.jobId,
+        billingType: invoice.billingType || 'single',
+        contractTotal: invoice.contractTotal || 0,
+        paymentSchedule: invoice.paymentSchedule || [],
       });
     } else if (prefilledData) {
       setFormData(prev => ({
@@ -120,6 +130,9 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
         customerNotes: '',
         status: 'Draft',
         jobId: undefined,
+        billingType: 'single',
+        contractTotal: 0,
+        paymentSchedule: [],
       });
     }
     setErrors({});
@@ -165,6 +178,17 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
       newErrors.lineItems = 'At least one line item is required';
     } else if (!formData.lineItems.some(item => item.selected && item.description.trim())) {
       newErrors.lineItems = 'At least one line item must have a description';
+    }
+
+    if (formData.billingType !== 'single' && formData.paymentSchedule.length > 0) {
+      const totalPercentage = formData.paymentSchedule.reduce((sum, item) => sum + item.percentage, 0);
+      if (totalPercentage !== 100) {
+        newErrors.paymentSchedule = `Payment schedule must total 100% (currently ${totalPercentage}%)`;
+      }
+      const hasInvalidPercentage = formData.paymentSchedule.some(item => item.percentage < 0 || item.percentage > 100);
+      if (hasInvalidPercentage) {
+        newErrors.paymentSchedule = 'Each payment percentage must be between 0% and 100%';
+      }
     }
 
     setErrors(newErrors);
@@ -230,6 +254,9 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
         status: formData.status,
         jobId: formData.jobId,
         amount: totals.grandTotal,
+        billingType: formData.billingType,
+        contractTotal: formData.billingType !== 'single' ? formData.contractTotal : totals.grandTotal,
+        paymentSchedule: formData.billingType !== 'single' ? formData.paymentSchedule : undefined,
       };
 
       if (formData.status === 'Sent' && !invoice?.sentDate) {
@@ -447,6 +474,88 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                     </select>
                   </div>
 
+                  <div>
+                    <label htmlFor="billingType" className="block text-sm font-medium text-gray-300 mb-1">
+                      Billing Type
+                    </label>
+                    <select
+                      id="billingType"
+                      name="billingType"
+                      value={formData.billingType}
+                      onChange={(e) => {
+                        const newType = e.target.value as BillingType;
+                        setFormData(prev => {
+                          const currentTotal = totals.grandTotal || prev.contractTotal || 0;
+                          const newState = { ...prev, billingType: newType };
+                          if (newType !== 'single') {
+                            if (prev.contractTotal === 0) {
+                              newState.contractTotal = currentTotal;
+                            }
+                            if (prev.paymentSchedule.length === 0 || prev.billingType === 'single') {
+                              const defaultSchedule: PaymentScheduleItem[] = [];
+                              if (newType === 'deposit') {
+                                defaultSchedule.push(
+                                  { name: 'Deposit', percentage: 50, amount: currentTotal * 0.5, dueDate: prev.issueDate, paid: false },
+                                  { name: 'Final Payment', percentage: 50, amount: currentTotal * 0.5, dueDate: prev.dueDate, paid: false }
+                                );
+                              } else if (newType === 'milestone') {
+                                defaultSchedule.push(
+                                  { name: 'Milestone 1', percentage: 33, amount: currentTotal * 0.33, dueDate: prev.issueDate, paid: false },
+                                  { name: 'Milestone 2', percentage: 33, amount: currentTotal * 0.33, dueDate: '', paid: false },
+                                  { name: 'Final Payment', percentage: 34, amount: currentTotal * 0.34, dueDate: prev.dueDate, paid: false }
+                                );
+                              } else if (newType === 'final') {
+                                defaultSchedule.push(
+                                  { name: 'Final Payment', percentage: 100, amount: currentTotal, dueDate: prev.dueDate, paid: false }
+                                );
+                              }
+                              newState.paymentSchedule = defaultSchedule;
+                            }
+                          }
+                          return newState;
+                        });
+                      }}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    >
+                      <option value="single">Single Invoice</option>
+                      <option value="deposit">Deposit + Final</option>
+                      <option value="milestone">Milestone Billing</option>
+                      <option value="final">Final Invoice</option>
+                    </select>
+                  </div>
+
+                  {formData.billingType !== 'single' && (
+                    <div>
+                      <label htmlFor="contractTotal" className="block text-sm font-medium text-gray-300 mb-1">
+                        Total Contract Value
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2 text-gray-400">$</span>
+                        <input
+                          type="number"
+                          id="contractTotal"
+                          name="contractTotal"
+                          value={formData.contractTotal}
+                          onChange={(e) => {
+                            const newTotal = parseFloat(e.target.value) || 0;
+                            setFormData(prev => ({
+                              ...prev,
+                              contractTotal: newTotal,
+                              paymentSchedule: prev.paymentSchedule.map(item => ({
+                                ...item,
+                                amount: (newTotal * item.percentage) / 100
+                              }))
+                            }));
+                          }}
+                          step="0.01"
+                          min="0"
+                          className="w-full pl-7 pr-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {formData.status === 'Draft' && (
                     <div className="pt-2">
                       <button
@@ -471,6 +580,124 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                 <p className="mt-1 text-sm text-red-400">{errors.lineItems}</p>
               )}
             </div>
+
+            {formData.billingType !== 'single' && formData.paymentSchedule.length > 0 && (
+              <div className="border-t border-gray-700 pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">Payment Schedule</h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newItem: PaymentScheduleItem = {
+                        name: `Payment ${formData.paymentSchedule.length + 1}`,
+                        percentage: 0,
+                        amount: 0,
+                        dueDate: '',
+                        paid: false,
+                      };
+                      setFormData(prev => ({
+                        ...prev,
+                        paymentSchedule: [...prev.paymentSchedule, newItem],
+                      }));
+                    }}
+                    className="text-sm text-cyan-400 hover:text-cyan-300"
+                  >
+                    + Add Payment
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {formData.paymentSchedule.map((item, index) => (
+                    <div key={index} className="bg-gray-800 border border-gray-600 rounded-md p-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Name</label>
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) => {
+                              const updated = [...formData.paymentSchedule];
+                              updated[index] = { ...updated[index], name: e.target.value };
+                              setFormData(prev => ({ ...prev, paymentSchedule: updated }));
+                            }}
+                            className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-cyan-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Percentage</label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={item.percentage}
+                              onChange={(e) => {
+                                const updated = [...formData.paymentSchedule];
+                                const pct = parseFloat(e.target.value) || 0;
+                                updated[index] = { 
+                                  ...updated[index], 
+                                  percentage: pct,
+                                  amount: (formData.contractTotal * pct) / 100
+                                };
+                                setFormData(prev => ({ ...prev, paymentSchedule: updated }));
+                              }}
+                              step="1"
+                              min="0"
+                              max="100"
+                              className="w-full px-2 py-1.5 pr-6 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-cyan-500"
+                            />
+                            <span className="absolute right-2 top-1.5 text-gray-400 text-sm">%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">Due Date</label>
+                          <input
+                            type="date"
+                            value={item.dueDate}
+                            onChange={(e) => {
+                              const updated = [...formData.paymentSchedule];
+                              updated[index] = { ...updated[index], dueDate: e.target.value };
+                              setFormData(prev => ({ ...prev, paymentSchedule: updated }));
+                            }}
+                            className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-cyan-500"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-300">
+                            ${((formData.contractTotal * item.percentage) / 100).toFixed(2)}
+                          </span>
+                          {formData.paymentSchedule.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = formData.paymentSchedule.filter((_, i) => i !== index);
+                                setFormData(prev => ({ ...prev, paymentSchedule: updated }));
+                              }}
+                              className="text-red-400 hover:text-red-300 text-sm"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm pt-2 border-t border-gray-600">
+                    <span className="text-gray-400">Total:</span>
+                    <span className={`font-medium ${
+                      formData.paymentSchedule.reduce((sum, item) => sum + item.percentage, 0) === 100 
+                        ? 'text-green-400' 
+                        : 'text-yellow-400'
+                    }`}>
+                      {formData.paymentSchedule.reduce((sum, item) => sum + item.percentage, 0)}%
+                      {formData.paymentSchedule.reduce((sum, item) => sum + item.percentage, 0) !== 100 && (
+                        <span className="ml-2 text-yellow-400">(should be 100%)</span>
+                      )}
+                    </span>
+                  </div>
+                  {errors.paymentSchedule && (
+                    <p className="mt-2 text-sm text-red-400">{errors.paymentSchedule}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="border-t border-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Discounts & Taxes</h3>
