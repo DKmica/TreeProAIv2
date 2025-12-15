@@ -73,11 +73,26 @@ Database tables: `ai_estimate_logs` (estimation history), `job_duration_history`
 
 Unit and integration testing are performed with Vitest and React Testing Library, providing coverage reporting. End-to-end testing uses Playwright for browser automation, configured for Chromium with screenshot and video capture on failures, and HTML reporting.
 
+### Financial Features
+
+The platform includes comprehensive financial management capabilities:
+
+- **Progress Billing**: Support for deposit, milestone, and final invoices with payment schedules
+- **Batch Invoicing**: Create invoices for multiple completed jobs at once
+- **A/R Aging Dashboard**: Track receivables with 30/60/90 day buckets and overdue indicators
+- **Client Payment History**: Customer portal displays complete payment history
+- **Invoice Templates**: Customizable templates with branding, company info, and appearance settings
+- **Stripe Payment Integration**: 
+  - Credit card payments via Stripe Checkout
+  - ACH bank transfer payments (US bank accounts)
+  - Automatic payment method detection and recording
+  - Webhook handling for async ACH settlements with Processing → Paid status flow
+
 ## External Dependencies
 
 ### Third-Party Services
 
--   **Stripe (v20.0.0)**: For payment processing.
+-   **Stripe (v20.0.0)**: For payment processing (credit cards and ACH bank transfers).
 -   **Google Gemini API**: For AI and machine learning capabilities.
 -   **Google Maps API**: For mapping, location services, and route optimization.
 -   **SendGrid (@sendgrid/mail v8.1.6)**: For transactional emails (quotes, invoices, notifications).
