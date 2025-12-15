@@ -12,6 +12,9 @@ interface InvoiceEditorProps {
   invoice?: Invoice;
   prefilledData?: {
     customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    customerAddress?: string;
     jobId?: string;
     lineItems?: LineItem[];
   };
@@ -90,6 +93,9 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
       setFormData(prev => ({
         ...prev,
         customerName: prefilledData.customerName || '',
+        customerEmail: prefilledData.customerEmail || '',
+        customerPhone: prefilledData.customerPhone || '',
+        customerAddress: prefilledData.customerAddress || '',
         jobId: prefilledData.jobId,
         lineItems: prefilledData.lineItems || [],
       }));

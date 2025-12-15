@@ -729,7 +729,7 @@ const Jobs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'info' | 'transitions' | 'history'>('info');
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [isInvoiceEditorOpen, setIsInvoiceEditorOpen] = useState(false);
-  const [invoicePrefilledData, setInvoicePrefilledData] = useState<{ customerName?: string; jobId?: string; lineItems?: LineItem[] } | undefined>();
+  const [invoicePrefilledData, setInvoicePrefilledData] = useState<{ customerName?: string; customerEmail?: string; customerPhone?: string; customerAddress?: string; jobId?: string; lineItems?: LineItem[] } | undefined>();
   const navigate = useNavigate();
   const location = useLocation();
   const [linkageWarnings, setLinkageWarnings] = useState<string[]>([]);
@@ -869,6 +869,9 @@ const Jobs: React.FC = () => {
 
     setInvoicePrefilledData({
       customerName: job.customerName,
+      customerEmail: job.customerEmail || '',
+      customerPhone: job.customerPhone || '',
+      customerAddress: job.customerAddress || '',
       jobId: job.id,
       lineItems: lineItems
     });

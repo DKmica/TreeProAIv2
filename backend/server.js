@@ -8724,6 +8724,34 @@ apiRouter.post('/quotes/:id/convert-to-invoice', async (req, res) => {
     const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const paymentTerms = quote.payment_terms || 'Net 30';
 
+    let clientEmail = null;
+    let clientPhone = null;
+    let clientAddress = null;
+
+    if (quote.client_id) {
+      const { rows: clients } = await db.query(
+        `SELECT primary_email, primary_phone, billing_address_line1, billing_address_line2, 
+                billing_city, billing_state, billing_zip_code 
+         FROM clients WHERE id = $1`,
+        [quote.client_id]
+      );
+      
+      if (clients.length > 0) {
+        const client = clients[0];
+        clientEmail = client.primary_email;
+        clientPhone = client.primary_phone;
+        
+        const addressParts = [
+          client.billing_address_line1,
+          client.billing_address_line2,
+          client.billing_city,
+          client.billing_state,
+          client.billing_zip_code
+        ].filter(Boolean);
+        clientAddress = addressParts.join(', ');
+      }
+    }
+
     const insertInvoiceQuery = `
       INSERT INTO invoices (
         id, quote_id, job_id, client_id, property_id, customer_name, status,
@@ -8767,9 +8795,9 @@ apiRouter.post('/quotes/:id/convert-to-invoice', async (req, res) => {
       0,
       totals.grandTotal,
       paymentTerms,
-      quote.customer_email || null,
-      quote.customer_phone || null,
-      quote.job_location || null,
+      clientEmail || quote.customer_email || null,
+      clientPhone || quote.customer_phone || null,
+      clientAddress || quote.job_location || null,
       quote.terms_and_conditions || null,
       quote.special_instructions || null,
       totals.grandTotal
