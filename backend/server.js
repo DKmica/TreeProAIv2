@@ -8976,6 +8976,212 @@ apiRouter.post('/invoices', async (req, res) => {
   }
 });
 
+// GET /api/invoices/batch/candidates - Get completed jobs without invoices for batch invoicing
+apiRouter.get('/invoices/batch/candidates', async (req, res) => {
+  try {
+    const query = `
+      SELECT j.*, 
+             c.company_name, c.first_name, c.last_name, c.primary_email, c.primary_phone,
+             p.address as property_address, p.city as property_city, p.state as property_state
+      FROM jobs j
+      LEFT JOIN clients c ON j.client_id = c.id
+      LEFT JOIN properties p ON j.property_id = p.id
+      WHERE j.status = 'completed'
+        AND j.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM invoices i WHERE i.job_id = j.id
+        )
+      ORDER BY j.updated_at DESC
+    `;
+    
+    const { rows } = await db.query(query);
+    
+    const candidates = rows.map(row => {
+      const job = transformRow(row, 'jobs');
+      job.clientName = row.company_name || `${row.first_name || ''} ${row.last_name || ''}`.trim() || job.customerName || 'Unknown';
+      job.clientEmail = row.primary_email;
+      job.clientPhone = row.primary_phone;
+      job.propertyAddress = [row.property_address, row.property_city, row.property_state].filter(Boolean).join(', ');
+      return job;
+    });
+    
+    res.json({
+      success: true,
+      data: candidates,
+      count: candidates.length
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /api/invoices/batch - Create invoices for multiple completed jobs
+apiRouter.post('/invoices/batch', async (req, res) => {
+  const client = await db.getClient();
+  
+  try {
+    const { jobIds, paymentTerms = 'Net 30', taxRate = 0 } = req.body;
+    
+    if (!jobIds || !Array.isArray(jobIds) || jobIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'jobIds is required and must be a non-empty array'
+      });
+    }
+    
+    await client.query('BEGIN');
+    
+    const createdInvoices = [];
+    const errors = [];
+    
+    for (const jobId of jobIds) {
+      try {
+        const sanitizedJobId = sanitizeUUID(jobId);
+        if (!sanitizedJobId) {
+          errors.push({ jobId, error: 'Invalid job ID format' });
+          continue;
+        }
+        
+        // Get job with related data
+        const jobQuery = `
+          SELECT j.*, 
+                 c.company_name, c.first_name, c.last_name, c.primary_email, c.primary_phone,
+                 c.id as client_id,
+                 p.address, p.city, p.state, p.zip
+          FROM jobs j
+          LEFT JOIN clients c ON j.client_id = c.id
+          LEFT JOIN properties p ON j.property_id = p.id
+          WHERE j.id = $1 AND j.status = 'completed' AND j.deleted_at IS NULL
+        `;
+        
+        const { rows: jobRows } = await client.query(jobQuery, [sanitizedJobId]);
+        
+        if (jobRows.length === 0) {
+          errors.push({ jobId, error: 'Job not found or not completed' });
+          continue;
+        }
+        
+        const job = jobRows[0];
+        
+        // Check if invoice already exists
+        const existingInvoiceQuery = 'SELECT id FROM invoices WHERE job_id = $1';
+        const { rows: existingInvoices } = await client.query(existingInvoiceQuery, [sanitizedJobId]);
+        
+        if (existingInvoices.length > 0) {
+          errors.push({ jobId, error: 'Invoice already exists for this job' });
+          continue;
+        }
+        
+        // Build line items from job
+        const lineItems = job.line_items || [];
+        if (lineItems.length === 0) {
+          // Create a single line item from job total
+          lineItems.push({
+            description: job.description || `Services for Job #${job.job_number || job.id.slice(0, 8)}`,
+            quantity: 1,
+            unitPrice: parseFloat(job.total_amount) || 0,
+            price: parseFloat(job.total_amount) || 0,
+            selected: true
+          });
+        }
+        
+        // Calculate totals
+        const totals = calculateInvoiceTotals(lineItems, 0, 0, taxRate);
+        
+        // Generate invoice number
+        const invoiceNumber = await generateInvoiceNumber();
+        
+        // Customer info
+        const customerName = job.company_name || `${job.first_name || ''} ${job.last_name || ''}`.trim() || job.customer_name || 'Unknown';
+        const customerAddress = [job.address, job.city, job.state, job.zip].filter(Boolean).join(', ');
+        
+        const invoiceId = uuidv4();
+        const issueDate = new Date().toISOString().split('T')[0];
+        const dueDays = paymentTerms === 'Due on Receipt' ? 0 : parseInt(paymentTerms.replace('Net ', '')) || 30;
+        const dueDate = new Date(Date.now() + dueDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        const insertQuery = `
+          INSERT INTO invoices (
+            id, job_id, client_id, property_id, customer_name, status,
+            invoice_number, issue_date, due_date,
+            line_items, subtotal, discount_amount, discount_percentage,
+            tax_rate, tax_amount, total_amount, grand_total,
+            amount_paid, amount_due, payment_terms,
+            customer_email, customer_phone, customer_address, amount,
+            billing_type, billing_sequence, contract_total
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6,
+            $7, $8, $9,
+            $10, $11, $12, $13,
+            $14, $15, $16, $17,
+            $18, $19, $20,
+            $21, $22, $23, $24,
+            $25, $26, $27
+          )
+          RETURNING *
+        `;
+        
+        const insertValues = [
+          invoiceId,
+          sanitizedJobId,
+          job.client_id || null,
+          job.property_id || null,
+          customerName,
+          'Draft',
+          invoiceNumber,
+          issueDate,
+          dueDate,
+          JSON.stringify(lineItems),
+          totals.subtotal,
+          0,
+          0,
+          taxRate,
+          totals.taxAmount,
+          totals.totalAmount,
+          totals.grandTotal,
+          0,
+          totals.grandTotal,
+          paymentTerms,
+          job.primary_email || null,
+          job.primary_phone || null,
+          customerAddress || null,
+          totals.grandTotal,
+          'single',
+          1,
+          totals.grandTotal
+        ];
+        
+        const { rows: invoiceRows } = await client.query(insertQuery, insertValues);
+        const invoice = transformRow(invoiceRows[0], 'invoices');
+        createdInvoices.push(invoice);
+        
+        // Schedule reminders
+        reminderService.scheduleInvoiceReminders(invoiceRows[0]);
+        
+      } catch (jobError) {
+        errors.push({ jobId, error: jobError.message });
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    res.status(201).json({
+      success: true,
+      data: {
+        created: createdInvoices,
+        errors: errors
+      },
+      message: `Created ${createdInvoices.length} invoice(s)${errors.length > 0 ? `, ${errors.length} failed` : ''}`
+    });
+    
+  } catch (err) {
+    await client.query('ROLLBACK');
+    handleError(res, err);
+  } finally {
+    client.release();
+  }
+});
+
 // GET /api/invoices - List invoices with filtering
 apiRouter.get('/invoices', async (req, res) => {
   try {

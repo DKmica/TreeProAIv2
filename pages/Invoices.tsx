@@ -9,7 +9,8 @@ import InvoiceEditor from '../components/InvoiceEditor';
 import PaymentRecorder from '../components/PaymentRecorder';
 import InvoiceTemplate from '../components/InvoiceTemplate';
 import StatusBadge from '../components/StatusBadge';
-import { Download, Mail } from 'lucide-react';
+import BatchInvoicing from '../components/BatchInvoicing';
+import { Download, Mail, FileStack } from 'lucide-react';
 
 type StatusFilter = 'All' | 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Void';
 
@@ -38,6 +39,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
   const [emailMessage, setEmailMessage] = useState('');
   const [isSendingPdf, setIsSendingPdf] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<string | null>(null);
+  const [isBatchOpen, setIsBatchOpen] = useState(false);
 
   const fetchInvoices = async () => {
     try {
@@ -379,6 +381,13 @@ const Invoices: React.FC<InvoicesProps> = () => {
           >
             <PlusCircleIcon className="h-5 w-5" />
             Create Invoice
+          </button>
+          <button
+            onClick={() => setIsBatchOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors shadow-sm"
+          >
+            <FileStack className="h-5 w-5" />
+            Batch Invoice
           </button>
         </div>
       </div>
@@ -775,6 +784,14 @@ const Invoices: React.FC<InvoicesProps> = () => {
         onClose={() => setIsEditorOpen(false)}
         onSave={handleInvoiceSaved}
         invoice={selectedInvoice}
+      />
+
+      <BatchInvoicing
+        isOpen={isBatchOpen}
+        onClose={() => setIsBatchOpen(false)}
+        onSuccess={(count) => {
+          fetchInvoices();
+        }}
       />
 
       {selectedInvoice && (
