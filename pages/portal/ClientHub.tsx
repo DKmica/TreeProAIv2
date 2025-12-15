@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Client, CustomerUpload, Job } from '../../types';
+import { Client, CustomerUpload, Job, PaymentRecord } from '../../types';
 import { useClientsQuery, useQuotesQuery, useJobsQuery, useInvoicesQuery } from '../../hooks/useDataQueries';
 import { leadService } from '../../services/apiService';
 import { quoteService } from '../../services/apiService';
@@ -87,6 +87,21 @@ const ClientHub: React.FC = () => {
     [invoices, matchesCustomer]
   );
   const clientJobs = useMemo(() => jobs.filter(job => matchesCustomer(job.clientId, job.customerName)), [jobs, matchesCustomer]);
+
+  const clientPayments = useMemo(() => {
+    const payments: (PaymentRecord & { invoiceNumber?: string })[] = [];
+    clientInvoices.forEach(invoice => {
+      if (invoice.payments && invoice.payments.length > 0) {
+        invoice.payments.forEach(payment => {
+          payments.push({
+            ...payment,
+            invoiceNumber: invoice.invoiceNumber || invoice.id,
+          });
+        });
+      }
+    });
+    return payments.sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+  }, [clientInvoices]);
 
   const pendingQuotes = clientQuotes.filter(q => q.status === 'Sent' || q.status === 'Draft');
   const acceptedQuotes = clientQuotes.filter(q => q.status === 'Accepted');
@@ -441,6 +456,62 @@ const ClientHub: React.FC = () => {
             <div className="px-6 py-6 text-center text-sm text-brand-gray-500">No invoices available yet.</div>
           )}
         </div>
+      </div>
+
+      <div id="payment-history" className="bg-white rounded-xl shadow border border-brand-gray-100">
+        <div className="px-6 py-4 border-b border-brand-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-brand-gray-900">Payment History</h2>
+          <p className="text-xs text-brand-gray-500">Your complete record of payments.</p>
+        </div>
+        <div className="divide-y divide-brand-gray-50">
+          {clientPayments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-brand-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-semibold text-brand-gray-700">Date</th>
+                    <th className="px-6 py-3 text-left font-semibold text-brand-gray-700">Invoice</th>
+                    <th className="px-6 py-3 text-left font-semibold text-brand-gray-700">Method</th>
+                    <th className="px-6 py-3 text-right font-semibold text-brand-gray-700">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-brand-gray-50">
+                  {clientPayments.map(payment => (
+                    <tr key={payment.id} className="hover:bg-brand-gray-50">
+                      <td className="px-6 py-4 text-brand-gray-900">
+                        {new Date(payment.paymentDate).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 text-brand-gray-600">
+                        #{payment.invoiceNumber}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-brand-gray-100 text-brand-gray-700">
+                          <CreditCardIcon className="w-3.5 h-3.5" />
+                          {payment.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right font-semibold text-brand-green-700">
+                        {formatCurrency(payment.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="px-6 py-6 text-center text-sm text-brand-gray-500">No payments recorded yet.</div>
+          )}
+        </div>
+        {clientPayments.length > 0 && (
+          <div className="px-6 py-4 border-t border-brand-gray-100 bg-brand-gray-50 flex justify-between items-center">
+            <span className="text-sm text-brand-gray-600">
+              Total payments: {clientPayments.length}
+            </span>
+            <span className="text-lg font-bold text-brand-green-700">
+              {formatCurrency(clientPayments.reduce((sum, p) => sum + p.amount, 0))}
+            </span>
+          </div>
+        )}
       </div>
 
       <div id="schedule" className="bg-white rounded-xl shadow border border-brand-gray-100">
