@@ -661,6 +661,57 @@ export interface EquipmentMaintenance {
 }
 
 // ============================================================================
+// PHASE 5 PHC & INVENTORY TYPES
+// ============================================================================
+
+export interface JobMaterial {
+  id: string;
+  jobId: string;
+  materialName: string;
+  quantityUsed?: number;
+  unit?: string;
+  epaRegNumber?: string;
+  applicationMethod?: string;
+  applicationRate?: string;
+  targetPestOrCondition?: string;
+  appliedBy?: string;
+  appliedAt?: string;
+  weatherConditions?: string;
+  windSpeedMph?: number;
+  temperatureF?: number;
+  ppeUsed?: string[];
+  reiHours?: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy?: string;
+  employee?: Employee;
+}
+
+export interface MaterialInventory {
+  id: string;
+  materialName: string;
+  manufacturer?: string;
+  epaRegNumber?: string;
+  activeIngredient?: string;
+  formulationType?: string;
+  defaultUnit?: string;
+  defaultApplicationMethod?: string;
+  defaultApplicationRate?: string;
+  signalWord?: 'Caution' | 'Warning' | 'Danger';
+  requiredPpe?: string[];
+  defaultReiHours?: number;
+  storageRequirements?: string;
+  disposalInstructions?: string;
+  currentQuantity?: number;
+  minimumQuantity?: number;
+  unitCost?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// ============================================================================
 // PHASE 1 CRM TYPES
 // ============================================================================
 
