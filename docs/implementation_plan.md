@@ -428,35 +428,39 @@ modules/{domain}/
 
 ---
 
-## Phase 6: Scheduling & Route Optimization
+## Phase 6: Scheduling & Route Optimization ✅ COMPLETE
 
 **Goal:** Enhance scheduling for office/dispatch users.
 
 **Estimated Time:** 3-4 weeks
 
-### 6.1 Enhanced Calendar
+### 6.1 Enhanced Calendar ✅ COMPLETE
 
-- [ ] Day/Week/Month views (existing)
-- [ ] Crew timeline view (rows per crew)
-- [ ] Map view with job pins
+- [x] Day/Week/Month/ThreeDay/List views
+- [x] Crew timeline view (CrewView.tsx - rows per crew with weekly schedule)
+- [x] Map view with job pins (MapViewWrapper.tsx with Google Maps integration)
 
-### 6.2 Recurring Jobs
+### 6.2 Recurring Jobs ✅ COMPLETE
 
-- [ ] Add `recurrence_rule` field to jobs (RRULE format)
-- [ ] Worker to generate job instances
-- [ ] UI for managing recurrence
-- [ ] "Skip" and "Reschedule" options
+- [x] Job series with recurrence patterns (daily, weekly, monthly, quarterly, yearly)
+- [x] Backend service to generate job instances (recurringJobsService.js)
+- [x] RecurringJobsPanel UI for managing recurrence
+- [x] "Skip" and "Reschedule" options for recurring instances
+- [x] Convert recurring instance to actual job
 
-### 6.3 Route Optimization
+### 6.3 Route Optimization ✅ COMPLETE
 
-- [ ] Integrate OR-Tools or simpler heuristic
-- [ ] `POST /api/schedule/optimize-routes`
-  - Input: crew_id, date, job_ids
-  - Output: optimized order with ETAs
+- [x] Route optimization service with Google Maps integration
+- [x] `POST /api/scheduling/routes/optimize` endpoint
+  - Input: crew_id, date, startLocation, endLocation
+  - Output: optimized order with ETAs, distances, drive times
 
-- [ ] UI "Optimize Routes" button
-- [ ] Drag-and-drop reordering
-- [ ] Estimated travel time between stops
+- [x] UI "Optimize Routes" button in Calendar
+- [x] RoutePlanDrawer with drag-and-drop reordering
+- [x] Route summary showing total distance and travel time
+- [x] Re-optimize button for live adjustments
+- [x] Crew status tracking (en_route, on_site, available)
+- [x] "On My Way" and arrival notifications
 
 ---
 

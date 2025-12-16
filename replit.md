@@ -69,6 +69,26 @@ The backend AI module (`backend/src/modules/ai/`) provides enhanced AI capabilit
 
 Database tables: `ai_estimate_logs` (estimation history), `job_duration_history` (actual vs predicted tracking).
 
+### Scheduling & Route Optimization (Phase 6)
+
+The platform includes comprehensive scheduling and route optimization features:
+
+- **Calendar Views**: Day, Week, Month, ThreeDay, and List views for job scheduling
+- **Crew Timeline View** (`CrewView.tsx`): Weekly schedule organized by crew with drag-and-drop rescheduling
+- **Map View** (`MapViewWrapper.tsx`): Google Maps integration showing job locations with route visualization
+- **Recurring Jobs**:
+  - Job series with patterns (daily, weekly, monthly, quarterly, yearly)
+  - Auto-generation of job instances up to 60 days ahead
+  - Skip/reschedule individual occurrences
+  - Convert recurring instance to actual job
+- **Route Optimization**:
+  - `POST /api/scheduling/routes/optimize` - Optimize crew routes with Google Maps
+  - RoutePlanDrawer with drag-and-drop stop reordering
+  - Travel time and distance calculations
+  - "On My Way" and arrival notifications to customers
+- **Crew Status Tracking**: Real-time crew locations (en_route, on_site, available)
+- **Capacity Planning**: Crew availability calendar with conflict detection
+
 ### Testing Strategy
 
 Unit and integration testing are performed with Vitest and React Testing Library, providing coverage reporting. End-to-end testing uses Playwright for browser automation, configured for Chromium with screenshot and video capture on failures, and HTML reporting.
