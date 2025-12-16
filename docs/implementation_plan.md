@@ -384,47 +384,47 @@ modules/{domain}/
 
 ---
 
-## Phase 5: PHC & Inventory (Plant Health Care)
+## Phase 5: PHC & Inventory (Plant Health Care) ✅ COMPLETE
 
 **Goal:** Add compliance-friendly tracking for PHC jobs.
 
 **Estimated Time:** 2 weeks
 
-### 5.1 Database Migration
+### 5.1 Database Migration ✅ COMPLETE
 
-- [ ] Create migration `018_phc_materials.sql`:
-  ```sql
-  CREATE TABLE job_materials (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    job_id UUID REFERENCES jobs(id) ON DELETE CASCADE,
-    material_name VARCHAR(255) NOT NULL,
-    quantity_used NUMERIC(10,2),
-    unit VARCHAR(50),
-    epa_reg_number VARCHAR(100),
-    application_method VARCHAR(100),
-    applied_by UUID REFERENCES employees(id),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-  );
-  ```
+- [x] Migration `019_phc_materials.sql` with:
+  - job_materials table (EPA reg, application method, weather, PPE, REI hours)
+  - material_inventory table for autocomplete and tracking
+  - Full compliance-tracking fields
 
-### 5.2 Backend Routes
+### 5.2 Backend Routes ✅ COMPLETE
 
-- [ ] `POST /api/jobs/:id/materials` - Add material usage
-- [ ] `GET /api/jobs/:id/materials` - Get materials for job
-- [ ] `PUT /api/job-materials/:id` - Update material record
-- [ ] `DELETE /api/job-materials/:id` - Remove material record
+- [x] `POST /api/jobs/:id/materials` - Add material usage
+- [x] `GET /api/jobs/:id/materials` - Get materials for job
+- [x] `PUT /api/job-materials/:id` - Update material record
+- [x] `DELETE /api/job-materials/:id` - Remove material record
+- [x] `GET /api/material-inventory` - Get inventory for autocomplete
+- [x] `POST /api/material-inventory` - Add inventory item
+- [x] `GET /api/phc-reports/compliance` - PHC compliance report
 
-### 5.3 Frontend UI
+### 5.3 Frontend UI ✅ COMPLETE
 
-- [ ] Add "Chemical/Material Usage" section to job completion form
-- [ ] Fields:
-  - [ ] Material name (autocomplete from inventory)
-  - [ ] Quantity and unit
-  - [ ] EPA registration number
-  - [ ] Application method (dropdown)
-  - [ ] Applied by (employee selector)
+- [x] MaterialUsageForm component with:
+  - Material name autocomplete from inventory
+  - Quantity and unit selection
+  - EPA registration number
+  - Application method dropdown (Foliar Spray, Trunk Injection, etc.)
+  - Applied by employee selector
+  - Weather conditions, wind speed, temperature
+  - PPE used (multi-select)
+  - REI hours tracking
 
-- [ ] PHC compliance report
+- [x] PHCComplianceReport page (`/phc-compliance`) with:
+  - Date range filters
+  - Search and compliance status filters
+  - Stats dashboard (total applications, compliant %, unique materials)
+  - CSV export
+  - Role-protected access (owner, admin, manager, foreman)
 
 ---
 

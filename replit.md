@@ -69,6 +69,31 @@ The backend AI module (`backend/src/modules/ai/`) provides enhanced AI capabilit
 
 Database tables: `ai_estimate_logs` (estimation history), `job_duration_history` (actual vs predicted tracking).
 
+### PHC & Inventory (Phase 5)
+
+The platform includes Plant Health Care (PHC) compliance tracking:
+
+- **Material Usage Tracking** (`MaterialUsageForm.tsx`):
+  - Material name with autocomplete from inventory
+  - Quantity, unit, and EPA registration number
+  - Application method (Foliar Spray, Trunk Injection, Soil Drench, etc.)
+  - Weather conditions, wind speed, temperature
+  - PPE used (multi-select)
+  - REI (Restricted Entry Interval) hours
+
+- **Material Inventory** (`material_inventory` table):
+  - Product information with EPA registration
+  - Safety data (signal word, required PPE)
+  - Inventory tracking with minimum quantities
+  - Default application settings
+
+- **PHC Compliance Report** (`/phc-compliance`):
+  - Date range filters
+  - Compliance status indicators
+  - Stats dashboard
+  - CSV export for audits
+  - Role-protected access
+
 ### Scheduling & Route Optimization (Phase 6)
 
 The platform includes comprehensive scheduling and route optimization features:
