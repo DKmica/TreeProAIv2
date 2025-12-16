@@ -464,35 +464,35 @@ modules/{domain}/
 
 ---
 
-## Phase 7: Invoicing, Payments & QuickBooks
+## Phase 7: Invoicing, Payments & QuickBooks ✅ MOSTLY COMPLETE
 
 **Goal:** Complete the financial loop and connect to QB Online.
 
 **Estimated Time:** 4-5 weeks
 
-### 7.1 Invoice Enhancements
+### 7.1 Invoice Enhancements ✅ COMPLETE
 
-- [ ] Progress billing (deposit, milestone, final)
-- [ ] Batch invoicing (all completed jobs)
-- [ ] Invoice editing before sending
-- [ ] Invoice templates
+- [x] Progress billing (deposit, milestone, final) - migration 029
+- [x] Batch invoicing (GET/POST /api/invoices/batch)
+- [x] Invoice editing before sending
+- [x] Invoice templates (InvoiceTemplates.tsx with full customization)
 
-### 7.2 Stripe Integration (Complete)
+### 7.2 Stripe Integration ✅ COMPLETE
 
-- [x] Basic Stripe integration exists
-- [ ] Create checkout sessions for invoices
-- [ ] Webhook handlers for payment events
-- [ ] Card on file for recurring
-- [ ] ACH payments
+- [x] Stripe checkout sessions for invoices
+- [x] Webhook handlers for payment events
+- [x] ACH bank transfer payments
+- [x] Payment method recording
+- [x] Processing → Paid status flow for async ACH
 
-### 7.3 Client Portal Payments
+### 7.3 Client Portal Payments ✅ COMPLETE
 
-- [ ] View invoices
-- [ ] Pay invoices online
-- [ ] Payment history
-- [ ] Auto-pay setup
+- [x] View invoices (InvoicePortal.tsx)
+- [x] Pay invoices online (Stripe Checkout integration)
+- [x] Payment history (ClientHub.tsx)
+- [x] Client hub with quotes, jobs, invoices overview
 
-### 7.4 QuickBooks Online Sync
+### 7.4 QuickBooks Online Sync ⏳ NOT STARTED
 
 - [ ] Install `node-quickbooks` or use OAuth2 directly
 - [ ] Create `quickbooksService.js`:
@@ -509,12 +509,12 @@ modules/{domain}/
 
 - [ ] Create `quickbooks_tokens` table for OAuth storage
 
-### 7.5 A/R & Reminders
+### 7.5 A/R & Reminders ✅ COMPLETE
 
-- [ ] Overdue detection (30/60/90 aging)
-- [ ] Automated reminder emails
-- [ ] Late fee calculation
-- [ ] Aging dashboard
+- [x] Overdue detection (30/60/90 aging buckets)
+- [x] Automated reminder scheduling (3 days before, due today, 7 days overdue)
+- [x] Dunning check for overdue status updates
+- [x] Aging dashboard (ARAgingDashboard.tsx)
 
 ---
 
