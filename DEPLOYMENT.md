@@ -1,6 +1,6 @@
 # TreePro AI - Deployment Guide
 
-This guide describes how to run TreePro AI outside of Replit using standard infrastructure. The application ships as a Vite-powered React frontend and an Express API that can be hosted on any server with Node.js and PostgreSQL available.
+This guide describes how to run TreePro AI outside of Replit using standard infrastructure. The application ships as a Vite-powered React frontend and an Express API that can be hosted on any server with Node.js and PostgreSQL available. For a cloud-native recipe that pairs Supabase (database), Vercel (hosting), and Dyad (preview builds), see [`docs/SUPABASE_VERCEL_DYAD.md`](docs/SUPABASE_VERCEL_DYAD.md).
 
 ## Prerequisites
 - Node.js 20+
