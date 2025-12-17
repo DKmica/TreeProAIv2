@@ -4,7 +4,6 @@ const db = require('../db');
 const stripeService = require('../services/stripeService');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('../stripeClient');
 
-// Cache Stripe secrets
 let cachedStripeSecretKey = null;
 let cachedWebhookSecret = null;
 let stripeInitialized = false;
@@ -22,7 +21,7 @@ let stripeInitialized = false;
   }
 })();
 
-router.post('/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+router.post('/', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['stripe-signature'];
 
   if (!signature || !stripeInitialized) {
@@ -32,8 +31,6 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
   try {
     const stripe = require('stripe')(cachedStripeSecretKey);
     const event = stripe.webhooks.constructEvent(req.body, signature, cachedWebhookSecret);
-
-    console.log(`📨 Stripe webhook: ${event.type}`);
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
@@ -46,7 +43,6 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
         }
       }
     } 
-    // Add other event types here as needed (payment_intent.succeeded, etc.)
 
     res.json({ received: true });
   } catch (err) {
