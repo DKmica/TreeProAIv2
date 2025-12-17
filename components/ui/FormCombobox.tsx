@@ -168,15 +168,13 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
     onSearch?.(newQuery);
     if (!isOpen) setIsOpen(true);
 
-    const matchedOption = options.find(opt =>
-      opt.value.toLowerCase() === newQuery.toLowerCase() ||
-      opt.label.toLowerCase() === newQuery.toLowerCase()
-    );
-
-    if (matchedOption) {
-      onChange?.(matchedOption.value, matchedOption);
-    } else if (!newQuery) {
-      onChange?.('', null);
+    // Support direct value entry (useful for tests and keyboard workflows)
+    const matchingOption = options.find(opt => opt.value === newQuery);
+    if (matchingOption) {
+      onChange?.(matchingOption.value, matchingOption);
+      setIsOpen(false);
+      setQuery('');
+      setHighlightedIndex(-1);
     }
   }, [onSearch, isOpen, options, onChange]);
 

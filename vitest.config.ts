@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./tests/setup/setup.ts'],
     include: ['tests/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['tests/e2e/**', 'tests/integration/**', 'tests/smoke/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -30,6 +31,8 @@ export default defineConfig({
       '@services': path.resolve(__dirname, './services'),
       '@utils': path.resolve(__dirname, './utils'),
       '@assets': path.resolve(__dirname, './attached_assets'),
+      uuid: path.resolve(__dirname, './tests/mocks/uuid.ts'),
+      dotenv: path.resolve(__dirname, './tests/mocks/dotenv.ts'),
     },
   },
 });

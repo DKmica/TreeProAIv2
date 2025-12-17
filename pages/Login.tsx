@@ -13,6 +13,11 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleAuthAction = async (targetMode: 'login' | 'signup') => {
+    setMode(targetMode);
+    await login(email.trim(), password);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
@@ -52,22 +57,27 @@ const Login: React.FC = () => {
           <p className="mt-2 text-center text-sm text-brand-gray-300">
             Professional Tree Service Management
           </p>
-          <p className="mt-3 text-center text-sm text-brand-gray-200 max-w-sm">
-            Sign in or create an account to get started. Choose from multiple sign-in options to access your dashboard securely.
+          <p className="mt-2 text-center text-sm text-brand-gray-400">
+            Sign in or create an account to get started
+          </p>
+          <p className="text-xs text-brand-gray-500 text-center">
+            Choose from multiple sign-in options
           </p>
         </div>
         <div className="mt-8 space-y-4 bg-white p-8 rounded-lg shadow-lg">
           <div className="flex justify-center space-x-2 bg-brand-gray-50 p-1 rounded-full">
             <button
               type="button"
-              onClick={() => handleAuthClick('login')}
+              onClick={() => handleAuthAction('login')}
+              aria-label="Switch to sign in mode"
               className={`flex-1 py-2 text-sm font-medium rounded-full transition-colors ${mode === 'login' ? 'bg-white text-brand-cyan-600 shadow' : 'text-brand-gray-500 hover:text-brand-cyan-600'}`}
             >
               Sign In
             </button>
             <button
               type="button"
-              onClick={() => handleAuthClick('signup')}
+              onClick={() => handleAuthAction('signup')}
+              aria-label="Switch to sign up mode"
               className={`flex-1 py-2 text-sm font-medium rounded-full transition-colors ${mode === 'signup' ? 'bg-white text-brand-cyan-600 shadow' : 'text-brand-gray-500 hover:text-brand-cyan-600'}`}
             >
               Sign Up
@@ -148,7 +158,7 @@ const Login: React.FC = () => {
               disabled={isSubmitting}
               className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand-cyan-600 hover:bg-brand-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-cyan-500 transition-colors disabled:opacity-70"
             >
-              {isSubmitting ? 'Please wait...' : mode === 'login' ? 'Continue with Email' : 'Create Account'}
+              {isSubmitting ? 'Please wait...' : mode === 'login' ? 'Continue' : 'Create Account'}
             </button>
 
             <p className="text-xs text-brand-gray-500 text-center">

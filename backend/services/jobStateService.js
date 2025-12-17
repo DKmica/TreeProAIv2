@@ -20,7 +20,6 @@
 
 const db = require('../db');
 const { randomUUID } = require('crypto');
-const uuidv4 = () => randomUUID();
 const reminderService = require('./reminderService');
 const { emitBusinessEvent } = require('./automation');
 
@@ -606,7 +605,7 @@ const AUTOMATED_TRIGGERS = {
         console.log(`      Grand Total: $${totals.grandTotal}`);
         
         // Step 5: Prepare invoice data
-        const invoiceId = uuidv4();
+        const invoiceId = randomUUID();
         const issueDate = new Date().toISOString().split('T')[0];
         const dueDate = new Date();
         dueDate.setDate(dueDate.getDate() + 30); // Net 30 terms
@@ -994,7 +993,7 @@ async function recordTransition(transitionData) {
     metadata
   } = transitionData;
   
-  const transitionId = uuidv4();
+  const transitionId = randomUUID();
   
   await db.query(
     `INSERT INTO job_state_transitions 
@@ -1098,7 +1097,7 @@ async function transitionJobState(jobId, toState, options = {}) {
     );
     
     // Record transition in audit trail
-    const transitionId = uuidv4();
+    const transitionId = randomUUID();
     await db.query(
       `INSERT INTO job_state_transitions 
        (id, job_id, from_state, to_state, changed_by, changed_by_role, change_source, reason, notes, metadata)
