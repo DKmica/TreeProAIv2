@@ -36,6 +36,16 @@ const Login: React.FC = () => {
     setIsSubmitting(false);
   };
 
+  const handleAuthClick = async (targetMode: 'login' | 'signup') => {
+    setMode(targetMode);
+    setError(null);
+    setIsSubmitting(true);
+
+    await login(email.trim(), password);
+
+    setIsSubmitting(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-gray-900 via-brand-gray-800 to-brand-gray-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
