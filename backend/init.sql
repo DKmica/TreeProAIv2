@@ -560,7 +560,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     -- State Machine
     status TEXT NOT NULL DEFAULT 'draft',
     last_state_change_at TIMESTAMPTZ,
-    
+
     -- Scheduling
     scheduled_date TEXT,
     assigned_crew JSONB DEFAULT '[]',
@@ -568,8 +568,9 @@ CREATE TABLE IF NOT EXISTS jobs (
     job_template_id VARCHAR(36) REFERENCES job_templates(id) ON DELETE SET NULL,
 
     -- Pricing
+    line_items JSONB DEFAULT '[]',
     stump_grinding_price NUMERIC DEFAULT 0,
-    
+
     -- Work Tracking
     work_started_at TIMESTAMP WITH TIME ZONE,
     work_ended_at TIMESTAMP WITH TIME ZONE,
