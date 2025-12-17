@@ -1,4 +1,6 @@
 const express = require('express');
+
+// Import all feature routers
 const authRouter = require('./auth');
 const healthRouter = require('./health');
 const leadsRouter = require('./leads');
@@ -26,59 +28,73 @@ const documentsRouter = require('./documents');
 const pdfRouter = require('./pdf');
 const analyticsRouter = require('./analytics');
 
-const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
+// Import the new Webhooks router (created in the previous step)
+const webhooksRouter = require('./webhooks');
 
+/**
+ * Builds the main API router by combining all feature modules.
+ * This keeps the routing logic organized and modular.
+ */
 function buildApiRouter() {
   const router = express.Router();
+
+  // Core features
   router.use(healthRouter);
   router.use(authRouter);
   router.use(dashboardRouter);
+  router.use(searchRouter); // Mounted at root level in original, but often better at /search. 
+                            // Note: The original file had `router.use('/search', searchRouter)`. 
+                            // Ensure searchRouter doesn't have /search in its internal paths if you do this.
+                            // Based on your original file:
+  router.use('/search', searchRouter); 
+
+  // CRM & Entity Management
   router.use(leadsRouter);
   router.use(clientsRouter);
   router.use(propertiesRouter);
   router.use(contactsRouter);
   router.use(tagsRouter);
-  router.use(jobsRouter);
-  router.use(invoicesRouter);
   router.use(employeesRouter);
   router.use(equipmentRouter);
-  router.use('/search', searchRouter);
-  router.use(badgeCountsRouter);
+
+  // Operations & Finance
+  router.use(jobsRouter);
+  router.use(invoicesRouter);
+  router.use(quotingRouter);
+  router.use(schedulingRouter);
+
+  // Automation & Intelligence
   router.use(workflowsRouter);
   router.use(automationLogsRouter);
-  router.use(templatesRouter);
-  router.use(schedulingRouter);
-  router.use(quotingRouter);
+  router.use(aiRouter);
+  router.use(analyticsRouter);
   router.use(telemetryRouter);
+
+  // Utilities & Integration
+  router.use(templatesRouter);
   router.use(segmentsRouter);
   router.use(integrationsRouter);
-  router.use(aiRouter);
   router.use(documentsRouter);
   router.use(pdfRouter);
-  router.use(analyticsRouter);
+  router.use(badgeCountsRouter);
+
   return router;
 }
 
-function mountApiRoutes(app, legacyRouter) {
+/**
+ * Mounts the API routes onto the main Express application.
+ * * @param {express.Application} app - The main Express app instance
+ */
+function mountApiRoutes(app) {
+  // 1. Mount Webhooks
+  // These are mounted separately and specifically to handle raw bodies or special parsing
+  // needed for Stripe signatures.
+  app.use('/api/stripe/webhook', webhooksRouter);
+
+  // 2. Mount the Modular API Router
+  // This unifies all your standard JSON-based API endpoints under /api
   const modularRouter = buildApiRouter();
-
-  if (useModularRoutes) {
-    if (legacyRouter) {
-      modularRouter.use(legacyRouter);
-    }
-    app.use('/api', modularRouter);
-    return;
-  }
-
-  if (!legacyRouter) {
-    app.use('/api', modularRouter);
-    return;
-  }
-
-  const combinedRouter = express.Router();
-  combinedRouter.use(modularRouter);
-  combinedRouter.use(legacyRouter);
-  app.use('/api', combinedRouter);
+  app.use('/api', modularRouter);
 }
 
 module.exports = { buildApiRouter, mountApiRoutes };
