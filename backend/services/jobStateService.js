@@ -19,7 +19,8 @@
  */
 
 const db = require('../db');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
+const uuidv4 = () => randomUUID();
 const reminderService = require('./reminderService');
 const { emitBusinessEvent } = require('./automation');
 

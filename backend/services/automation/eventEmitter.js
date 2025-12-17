@@ -1,6 +1,8 @@
 const EventEmitter = require('events');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const db = require('../../db');
+
+const uuidv4 = () => randomUUID();
 
 const SUPPORTED_EVENT_TYPES = [
   'quote_sent',
