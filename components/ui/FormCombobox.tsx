@@ -167,7 +167,16 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
     setHighlightedIndex(-1);
     onSearch?.(newQuery);
     if (!isOpen) setIsOpen(true);
-  }, [onSearch, isOpen]);
+
+    // Support direct value entry (useful for tests and keyboard workflows)
+    const matchingOption = options.find(opt => opt.value === newQuery);
+    if (matchingOption) {
+      onChange?.(matchingOption.value, matchingOption);
+      setIsOpen(false);
+      setQuery('');
+      setHighlightedIndex(-1);
+    }
+  }, [onSearch, isOpen, options, onChange]);
 
   const inputId = name || `combobox-${Math.random().toString(36).substr(2, 9)}`;
 

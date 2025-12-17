@@ -1,4 +1,6 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
+
+const uuidv4 = () => randomUUID();
 
 const deepClone = (value) => JSON.parse(JSON.stringify(value));
 
