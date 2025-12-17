@@ -1,7 +1,9 @@
 const db = require('../../db');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const emailService = require('./emailService');
 const smsService = require('./smsService');
+
+const uuidv4 = () => randomUUID();
 
 const ACTION_HANDLERS = {
   send_email: async (config, context) => {

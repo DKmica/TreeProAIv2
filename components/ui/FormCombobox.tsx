@@ -167,7 +167,18 @@ const FormCombobox: React.FC<FormComboboxProps> = ({
     setHighlightedIndex(-1);
     onSearch?.(newQuery);
     if (!isOpen) setIsOpen(true);
-  }, [onSearch, isOpen]);
+
+    const matchedOption = options.find(opt =>
+      opt.value.toLowerCase() === newQuery.toLowerCase() ||
+      opt.label.toLowerCase() === newQuery.toLowerCase()
+    );
+
+    if (matchedOption) {
+      onChange?.(matchedOption.value, matchedOption);
+    } else if (!newQuery) {
+      onChange?.('', null);
+    }
+  }, [onSearch, isOpen, options, onChange]);
 
   const inputId = name || `combobox-${Math.random().toString(36).substr(2, 9)}`;
 
