@@ -22,6 +22,7 @@ const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const reminderService = require('./reminderService');
 const { emitBusinessEvent } = require('./automation');
+const eventService = require('./eventService');
 
 // ============================================================================
 // STATE TRANSITION MATRIX
@@ -1156,6 +1157,20 @@ async function transitionJobState(jobId, toState, options = {}) {
       } catch (eventError) {
         console.error(`[State Machine] Failed to emit business event:`, eventError.message);
         // Don't fail the transition if event emission fails
+      }
+    }
+
+    if (toState === 'completed') {
+      try {
+        await eventService.publishEvent(
+          eventService.EVENT_TYPES.JOB_COMPLETED,
+          'jobs',
+          jobId,
+          { jobNumber: updatedJob.job_number, fromState }
+        );
+        console.log(`📨 [State Machine] Published JOB_COMPLETED event for job ${jobId}`);
+      } catch (eventError) {
+        console.error(`[State Machine] Failed to publish job completed event:`, eventError.message);
       }
     }
     

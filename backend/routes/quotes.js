@@ -10,6 +10,7 @@ const { emitBusinessEvent } = require('../services/automation');
 const ragService = require('../services/ragService');
 const vectorStore = require('../services/vectorStore');
 const { generateJobNumber } = require('../services/numberService');
+const eventService = require('../services/eventService');
 
 const router = express.Router();
 
@@ -816,17 +817,25 @@ router.put('/quotes/:id', isAuthenticated, async (req, res) => {
     const { rows: updatedRows } = await db.query(updateQuery, values);
     const quote = snakeToCamel(updatedRows[0]);
 
-    let automation = null;
-    try {
-      automation = await automationService.createJobFromApprovedQuote(sanitizedId);
-
-      if (automation?.job) {
-        reindexDocument('jobs', automation.job);
-        automation.job = transformRow(automation.job, 'jobs');
+    let automation = { status: 'pending', message: 'Job creation queued' };
+    
+    const shouldCreateJob = 
+      updatedRows[0].approval_status === 'approved' || 
+      updatedRows[0].status === 'Accepted';
+    
+    if (shouldCreateJob) {
+      try {
+        await eventService.publishEvent(
+          eventService.EVENT_TYPES.QUOTE_ACCEPTED,
+          'quotes',
+          sanitizedId,
+          { quoteNumber: updatedRows[0].quote_number }
+        );
+        automation = { status: 'queued', message: 'Job will be created automatically' };
+      } catch (eventError) {
+        console.error('⚠️ Failed to publish quote accepted event:', eventError.message);
+        automation = { status: 'error', error: eventError.message };
       }
-    } catch (automationError) {
-      console.error('⚠️ Failed to auto-create job from approved quote:', automationError.message);
-      automation = { status: 'error', error: automationError.message };
     }
 
     res.json({ success: true, data: quote, automation });
@@ -1047,7 +1056,18 @@ router.post('/quotes/:id/approve', isAuthenticated, async (req, res) => {
     
     const quote = snakeToCamel(updatedRows[0]);
     
-    res.json({ success: true, data: quote });
+    try {
+      await eventService.publishEvent(
+        eventService.EVENT_TYPES.QUOTE_APPROVED,
+        'quotes',
+        sanitizedId,
+        { quoteNumber: updatedRows[0].quote_number, approvedBy }
+      );
+    } catch (eventError) {
+      console.error('⚠️ Failed to publish quote approved event:', eventError.message);
+    }
+    
+    res.json({ success: true, data: quote, automation: { status: 'queued', message: 'Job will be created automatically' } });
     
   } catch (err) {
     handleError(res, err);

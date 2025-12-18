@@ -11,6 +11,7 @@ const reminderService = require('./services/reminderService');
 const { initializeAutomationEngine, shutdownAutomationEngine } = require('./services/automation');
 const { getStripeSecretKey, getStripeWebhookSecret } = require('./stripeClient');
 const { mountApiRoutes } = require('./routes');
+const eventProcessor = require('./services/eventProcessor');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -327,6 +328,13 @@ async function startServer() {
       console.error('⚠️ Automation Engine initialization failed:', error);
       console.log('💡 Workflows may not run automatically until this is resolved');
     }
+
+    try {
+      eventProcessor.startProcessor(10000);
+      console.log('📨 Event Processor started (10s interval)');
+    } catch (error) {
+      console.error('⚠️ Event Processor initialization failed:', error);
+    }
   });
 
   server.on('error', (err) => {
@@ -349,6 +357,13 @@ async function shutdown(exitCode = 0) {
     console.log('✅ Automation Engine shut down');
   } catch (error) {
     console.error('⚠️ Error shutting down Automation Engine:', error.message);
+  }
+
+  try {
+    eventProcessor.stopProcessor();
+    console.log('✅ Event Processor stopped');
+  } catch (error) {
+    console.error('⚠️ Error stopping Event Processor:', error.message);
   }
   
   if (reminderInterval) {

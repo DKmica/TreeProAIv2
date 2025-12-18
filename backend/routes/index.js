@@ -39,6 +39,7 @@ const webhooksRouter = require('./webhooks');
 const estimateFeedbackRouter = require('./estimate-feedback');
 const payPeriodsRouter = require('./pay-periods');
 const usersRouter = require('./users');
+const eventsRouter = require('./events');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -84,6 +85,7 @@ function buildApiRouter() {
   router.use(estimateFeedbackRouter);
   router.use(payPeriodsRouter);
   router.use(usersRouter);
+  router.use(eventsRouter);
   return router;
 }
 
