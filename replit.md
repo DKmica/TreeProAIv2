@@ -17,6 +17,15 @@ Preferred communication style: Simple, everyday language.
 - Shared utilities consolidated in `backend/utils/` (errors.js, transformers.js, formatters.js, pagination.js)
 - server.js now only handles: Stripe webhook, middleware setup, server lifecycle
 
+### Event-Driven Workflow System
+- **domain_events table** for tracking async business events with retry capability
+- **Event Types**:
+  - `QUOTE_APPROVED`: Published when quote status changes to Accepted (from Draft/Sent)
+  - `JOB_COMPLETED`: Published when job state transitions to 'completed'
+- **Event Processor**: Background service polls every 10 seconds, max 3 retries per event
+- **Event API** (`/api/events/*`): View, retry, and dismiss failed events
+- **Integration**: Server startup/shutdown manages processor lifecycle
+
 ### Codebase Cleanup
 - **Deleted unused files:**
   - `backend/replitAuth.js` - Not used, replaced by localAuth.js
