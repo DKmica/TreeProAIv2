@@ -8,6 +8,24 @@ TreePro AI is an AI-powered business management platform designed for tree servi
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (December 18, 2025)
+
+### Codebase Cleanup
+- **Deleted unused files:**
+  - `backend/replitAuth.js` - Not used, replaced by localAuth.js
+  - `backend/seedDatabase.js` - Duplicate seed data generator (638 lines)
+  - `services/stripeService.ts` - Mock service with no imports
+  - `services/quickbooksService.ts` - Not used
+  - `src/components/Sidebar.tsx` - Duplicate of components/Sidebar.tsx
+  - `src/components/WorkflowStepper.tsx` - Not imported
+  - `src/utils/navigationConfig.ts` - Only used by deleted Sidebar
+
+### Technical Debt Identified
+- **backend/server.js**: 11,060 lines with 153 legacy API endpoints
+- Modular route files exist in `backend/routes/` but not all endpoints migrated
+- Uses hybrid routing approach (both modular and legacy routes)
+- Future work: Migrate remaining legacy routes to modular files
+
 ## System Architecture
 
 ### Frontend Architecture
