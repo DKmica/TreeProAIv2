@@ -244,7 +244,7 @@ class AnalyticsService {
         COALESCE(j.service_type, 'Unspecified') as service_type,
         COUNT(DISTINCT i.id) as invoice_count,
         COALESCE(SUM(i.total_amount), 0) as total_revenue,
-        COALESCE(SUM(CASE WHEN i.status = 'Paid' THEN i.amount_paid ELSE 0 END), 0) as collected_revenue
+        COALESCE(SUM(i.amount_paid), 0) as collected_revenue
       FROM invoices i
       LEFT JOIN jobs j ON i.job_id = j.id
       WHERE i.status != 'Void'
@@ -306,7 +306,7 @@ class AnalyticsService {
         TO_CHAR(DATE_TRUNC('${dateTrunc}', i.created_at), '${dateFormat}') as period,
         COUNT(*) as invoice_count,
         COALESCE(SUM(i.total_amount), 0) as total_invoiced,
-        COALESCE(SUM(CASE WHEN i.status = 'Paid' THEN i.amount_paid ELSE 0 END), 0) as total_paid
+        COALESCE(SUM(i.amount_paid), 0) as total_paid
       FROM invoices i
       WHERE i.status != 'Void'
       ${dateFilter}
@@ -335,8 +335,8 @@ class AnalyticsService {
         (SELECT COUNT(*) FROM jobs ${dateFilter}) as jobs_created,
         (SELECT COUNT(*) FROM jobs WHERE status = 'completed' ${dateFilter}) as jobs_completed,
         (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE status != 'Void' ${dateFilter}) as total_invoiced,
-        (SELECT COALESCE(SUM(amount_paid), 0) FROM invoices WHERE status = 'Paid' ${dateFilter}) as total_collected,
-        (SELECT COALESCE(SUM(balance_amount), 0) FROM invoices WHERE status NOT IN ('Paid', 'Void') ${dateFilter}) as outstanding_balance
+        (SELECT COALESCE(SUM(amount_paid), 0) FROM invoices WHERE status != 'Void' ${dateFilter}) as total_collected,
+        (SELECT COALESCE(SUM(amount_due), 0) FROM invoices WHERE status NOT IN ('Paid', 'Void') ${dateFilter}) as outstanding_balance
     `;
     
     const { rows } = await db.query(query);
