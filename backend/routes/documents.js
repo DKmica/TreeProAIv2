@@ -562,13 +562,18 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
 
     const jobResult = await client.query(`
       INSERT INTO jobs (
-        property_id, status, description, scheduled_date, 
-        total_cost, deposit_amount, notes, created_by
+        client_id, property_id, status, special_instructions, scheduled_date, 
+        customer_name, stump_grinding_price, deposit_required, deposit_amount
       )
-      VALUES ($1, 'completed', $2, $3, $4, $5, $6, 'document_scan')
+      VALUES ($1, $2, 'completed', $3, $4, $5, $6, $7, $8)
       RETURNING id, job_number
-    `, [propertyId, workDescription, scheduledDate, total, deposit, 
-        `Imported from scanned document. Tree species: ${treeSpecies.join(', ')}`]);
+    `, [clientId, propertyId, 
+        workDescription + (treeSpecies.length > 0 ? ` | Tree species: ${treeSpecies.join(', ')}` : ''), 
+        scheduledDate, 
+        data.customer.name,
+        total, 
+        deposit > 0,
+        deposit]);
     
     const jobId = jobResult.rows[0].id;
 
