@@ -120,10 +120,10 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ isOpen, onClose, invo
                 </tr>
               </thead>
               <tbody>
-                {invoice.lineItems.filter(item => item.selected).map((item, index) => (
+                {(invoice.lineItems || []).filter(item => item.selected).map((item, index) => (
                   <tr key={index} className="border-b border-gray-200">
                     <td className="py-3 px-4 text-gray-900">{item.description}</td>
-                    <td className="py-3 px-4 text-right text-gray-900">${item.price.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right text-gray-900">${(item.price ?? 0).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -133,39 +133,39 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ isOpen, onClose, invo
               <div className="w-64">
                 <div className="flex justify-between py-2 text-sm">
                   <span className="text-gray-700">Subtotal:</span>
-                  <span className="text-gray-900 font-medium">${invoice.subtotal.toFixed(2)}</span>
+                  <span className="text-gray-900 font-medium">${(invoice.subtotal ?? 0).toFixed(2)}</span>
                 </div>
                 
-                {invoice.discountAmount > 0 && (
+                {(invoice.discountAmount ?? 0) > 0 && (
                   <div className="flex justify-between py-2 text-sm">
                     <span className="text-gray-700">
-                      Discount {invoice.discountPercentage > 0 ? `(${invoice.discountPercentage}%)` : ''}:
+                      Discount {(invoice.discountPercentage ?? 0) > 0 ? `(${invoice.discountPercentage}%)` : ''}:
                     </span>
-                    <span className="text-red-600">-${invoice.discountAmount.toFixed(2)}</span>
+                    <span className="text-red-600">-${(invoice.discountAmount ?? 0).toFixed(2)}</span>
                   </div>
                 )}
                 
-                {invoice.taxAmount > 0 && (
+                {(invoice.taxAmount ?? 0) > 0 && (
                   <div className="flex justify-between py-2 text-sm">
-                    <span className="text-gray-700">Tax ({invoice.taxRate}%):</span>
-                    <span className="text-gray-900 font-medium">${invoice.taxAmount.toFixed(2)}</span>
+                    <span className="text-gray-700">Tax ({invoice.taxRate ?? 0}%):</span>
+                    <span className="text-gray-900 font-medium">${(invoice.taxAmount ?? 0).toFixed(2)}</span>
                   </div>
                 )}
                 
                 <div className="flex justify-between py-3 border-t-2 border-gray-300 mt-2">
                   <span className="text-gray-900 font-bold text-lg">Total:</span>
-                  <span className="text-gray-900 font-bold text-lg">${invoice.grandTotal.toFixed(2)}</span>
+                  <span className="text-gray-900 font-bold text-lg">${(invoice.grandTotal ?? invoice.totalAmount ?? 0).toFixed(2)}</span>
                 </div>
 
-                {invoice.amountPaid > 0 && (
+                {(invoice.amountPaid ?? 0) > 0 && (
                   <>
                     <div className="flex justify-between py-2 text-sm">
                       <span className="text-gray-700">Amount Paid:</span>
-                      <span className="text-green-600 font-medium">-${invoice.amountPaid.toFixed(2)}</span>
+                      <span className="text-green-600 font-medium">-${(invoice.amountPaid ?? 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between py-3 border-t border-gray-300">
                       <span className="text-gray-900 font-bold">Amount Due:</span>
-                      <span className="text-cyan-600 font-bold text-lg">${invoice.amountDue.toFixed(2)}</span>
+                      <span className="text-cyan-600 font-bold text-lg">${(invoice.amountDue ?? 0).toFixed(2)}</span>
                     </div>
                   </>
                 )}
@@ -190,7 +190,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ isOpen, onClose, invo
                         <td className="py-2 px-3 text-sm text-gray-900">{formatDate(payment.paymentDate)}</td>
                         <td className="py-2 px-3 text-sm text-gray-900">{payment.paymentMethod}</td>
                         <td className="py-2 px-3 text-sm text-gray-600">{payment.referenceNumber || '-'}</td>
-                        <td className="py-2 px-3 text-sm text-right text-green-600 font-medium">${payment.amount.toFixed(2)}</td>
+                        <td className="py-2 px-3 text-sm text-right text-green-600 font-medium">${(payment.amount ?? 0).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -201,7 +201,7 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ isOpen, onClose, invo
             <div className="pt-6 border-t border-gray-300">
               <div className="text-sm text-gray-600 space-y-1">
                 <p className="font-semibold text-gray-900">Payment Terms: {invoice.paymentTerms}</p>
-                {invoice.amountDue > 0 && (
+                {(invoice.amountDue ?? 0) > 0 && (
                   <p className="text-red-600 font-medium">
                     Payment is due by {formatDate(invoice.dueDate)}
                   </p>
