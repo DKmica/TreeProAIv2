@@ -87,33 +87,33 @@ const AssociationModal: React.FC<AssociationModalProps> = ({ isOpen, onClose, de
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
-              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
+              <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="input-light" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
-              <input value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
+              <input value={lastName} onChange={(e) => setLastName(e.target.value)} className="input-light" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-light" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
+              <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input-light" />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Property address</label>
-            <input value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className="w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" placeholder="Street address" />
+            <input value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className="input-light" placeholder="Street address" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
-            <input value={state} onChange={(e) => setState(e.target.value)} placeholder="State" className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
-            <input value={zipCode} onChange={(e) => setZipCode(e.target.value)} placeholder="ZIP" className="rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500" />
+            <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="input-light" />
+            <input value={state} onChange={(e) => setState(e.target.value)} placeholder="State" className="input-light" />
+            <input value={zipCode} onChange={(e) => setZipCode(e.target.value)} placeholder="ZIP" className="input-light" />
           </div>
         </div>
 

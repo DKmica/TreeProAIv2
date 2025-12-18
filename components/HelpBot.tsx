@@ -241,7 +241,7 @@ const HelpBot: React.FC<HelpBotProps> = ({ isOpen, setIsOpen, chat, voice }) => 
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder={getPlaceholder()}
-                            className="flex-1 block w-full rounded-md border border-brand-gray-300 text-gray-900 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                            className="flex-1 block w-full px-3 py-2 rounded-md border border-brand-gray-300 bg-white text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                             aria-label="Chat input"
                             disabled={isLoading}
                         />
