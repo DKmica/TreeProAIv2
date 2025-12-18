@@ -10,7 +10,6 @@ import StateTransitionControl from '../components/StateTransitionControl';
 import StateHistoryTimeline from '../components/StateHistoryTimeline';
 import XIcon from '../components/icons/XIcon';
 import TemplateSelector from '../components/TemplateSelector';
-import JobForms from '../components/JobForms';
 import InvoiceEditor from '../components/InvoiceEditor';
 import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
@@ -726,7 +725,7 @@ const Jobs: React.FC = () => {
   const [linkCopied, setLinkCopied] = useState('');
   const [viewingMessages, setViewingMessages] = useState<Job | null>(null);
   const [viewingJobDetail, setViewingJobDetail] = useState<Job | null>(null);
-  const [activeTab, setActiveTab] = useState<'info' | 'transitions' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'history'>('info');
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [isInvoiceEditorOpen, setIsInvoiceEditorOpen] = useState(false);
   const [invoicePrefilledData, setInvoicePrefilledData] = useState<{ customerName?: string; customerEmail?: string; customerPhone?: string; customerAddress?: string; jobId?: string; lineItems?: LineItem[] } | undefined>();
@@ -1332,26 +1331,6 @@ const Jobs: React.FC = () => {
                   Information
                 </button>
                 <button
-                  onClick={() => setActiveTab('forms')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'forms'
-                      ? 'border-cyan-500 text-cyan-400'
-                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
-                  }`}
-                >
-                  Forms
-                </button>
-                <button
-                  onClick={() => setActiveTab('transitions')}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === 'transitions'
-                      ? 'border-cyan-500 text-cyan-400'
-                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
-                  }`}
-                >
-                  State Transitions
-                </button>
-                <button
                   onClick={() => setActiveTab('history')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'history'
@@ -1478,38 +1457,6 @@ const Jobs: React.FC = () => {
                       </span>
                     </div>
                   )}
-                </div>
-              )}
-
-              {activeTab === 'forms' && (
-                <JobForms jobId={viewingJobDetail.id} />
-              )}
-
-              {activeTab === 'transitions' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-4">Change Job State</h3>
-                    {!viewingJobDetail.clientId || !viewingJobDetail.propertyId ? (
-                      <div className="rounded-md border border-yellow-500 bg-yellow-900/40 text-yellow-100 p-4">
-                        <p className="text-sm mb-3">Link a client and property before changing job states.</p>
-                        <button
-                          onClick={() => {
-                            setAssociationJob(viewingJobDetail);
-                            setShowAssociationModal(true);
-                          }}
-                          className="px-3 py-2 bg-yellow-500 text-yellow-900 rounded-md font-medium text-sm hover:bg-yellow-400"
-                        >
-                          Add associations
-                        </button>
-                      </div>
-                    ) : (
-                      <StateTransitionControl
-                        jobId={viewingJobDetail.id}
-                        currentState={viewingJobDetail.status}
-                        onStateChanged={(newState) => handleStateChanged(viewingJobDetail.id, newState)}
-                      />
-                    )}
-                  </div>
                 </div>
               )}
 
