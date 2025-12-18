@@ -10,6 +10,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (December 18, 2025)
 
+### Backend Refactoring Completed
+- **server.js reduced from 10,001 lines to 412 lines** (96% reduction)
+- All 153+ legacy API endpoints migrated to 41 modular route files in `backend/routes/`
+- Created dedicated route files for: crews, time-tracking, quotes, invoices, jobs, users, materials, operations, company, exception-queue, rag, webhooks, estimate-feedback, pay-periods
+- Shared utilities consolidated in `backend/utils/` (errors.js, transformers.js, formatters.js, pagination.js)
+- server.js now only handles: Stripe webhook, middleware setup, server lifecycle
+
 ### Codebase Cleanup
 - **Deleted unused files:**
   - `backend/replitAuth.js` - Not used, replaced by localAuth.js
@@ -19,12 +26,6 @@ Preferred communication style: Simple, everyday language.
   - `src/components/Sidebar.tsx` - Duplicate of components/Sidebar.tsx
   - `src/components/WorkflowStepper.tsx` - Not imported
   - `src/utils/navigationConfig.ts` - Only used by deleted Sidebar
-
-### Technical Debt Identified
-- **backend/server.js**: 11,060 lines with 153 legacy API endpoints
-- Modular route files exist in `backend/routes/` but not all endpoints migrated
-- Uses hybrid routing approach (both modular and legacy routes)
-- Future work: Migrate remaining legacy routes to modular files
 
 ## System Architecture
 
