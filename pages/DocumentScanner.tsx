@@ -56,6 +56,7 @@ const DocumentScanner: React.FC = () => {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +69,7 @@ const DocumentScanner: React.FC = () => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
+      setPreviewError(false);
       setPreview(URL.createObjectURL(selectedFile));
       setError(null);
       setScanResult(null);
@@ -82,6 +84,7 @@ const DocumentScanner: React.FC = () => {
     const droppedFile = event.dataTransfer.files[0];
     if (droppedFile && droppedFile.type.startsWith('image/')) {
       setFile(droppedFile);
+      setPreviewError(false);
       setPreview(URL.createObjectURL(droppedFile));
       setError(null);
       setScanResult(null);
@@ -216,11 +219,18 @@ const DocumentScanner: React.FC = () => {
         ) : (
           <div className="flex items-start gap-4">
             <div className="relative">
-              <img
-                src={preview!}
-                alt="Preview"
-                className="w-48 h-64 object-cover rounded-lg shadow-lg"
-              />
+              {preview && !previewError ? (
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-48 h-64 object-cover rounded-lg shadow-lg"
+                  onError={() => setPreviewError(true)}
+                />
+              ) : (
+                <div className="w-48 h-64 bg-brand-gray-700 rounded-lg shadow-lg flex items-center justify-center">
+                  <FileText className="w-12 h-12 text-brand-gray-500" />
+                </div>
+              )}
               <button
                 onClick={clearFile}
                 className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full text-white hover:bg-red-600"
@@ -545,13 +555,14 @@ const DocumentScanner: React.FC = () => {
           {step === 'complete' && renderCompleteStep()}
         </div>
 
-        {preview && step !== 'complete' && (
+        {preview && step !== 'complete' && !previewError && (
           <div className="mt-6 bg-brand-gray-800/50 rounded-xl p-4 border border-brand-gray-700">
             <p className="text-sm text-brand-gray-400 mb-2">Original Document</p>
             <img
               src={preview}
               alt="Document preview"
               className="max-h-96 mx-auto rounded-lg shadow-lg"
+              onError={() => setPreviewError(true)}
             />
           </div>
         )}
