@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 
 interface User {
   id: string;
@@ -8,6 +9,7 @@ interface User {
   profile_image_url: string | null;
   created_at: string;
   updated_at: string;
+  role?: string | null;
 }
 
 interface AuthContextType {
@@ -17,11 +19,41 @@ interface AuthContextType {
   userEmail: string | null;
   userRole: string | null;
   userName: string | null;
-  login: () => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, options?: { role?: string }) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
+const fallbackUser: User = {
+  id: 'local-admin',
+  email: 'owner@treepro.ai',
+  first_name: 'TreePro',
+  last_name: 'Owner',
+  profile_image_url: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  role: 'admin',
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const mapSupabaseUser = (supabaseUser: any): User => {
+  if (!supabaseUser) return fallbackUser;
+
+  const meta = supabaseUser.user_metadata || {};
+  const appMeta = supabaseUser.app_metadata || {};
+
+  return {
+    id: supabaseUser.id,
+    email: supabaseUser.email,
+    first_name: meta.first_name || meta.firstName || null,
+    last_name: meta.last_name || meta.lastName || null,
+    profile_image_url: meta.avatar_url || null,
+    created_at: supabaseUser.created_at,
+    updated_at: supabaseUser.updated_at || supabaseUser.created_at,
+    role: appMeta.role || meta.role || 'user',
+  };
+};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -29,46 +61,113 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    let isMounted = true;
+    let unsubscribe: (() => void) | undefined;
+
+    const initializeAuth = async () => {
       try {
-        const response = await fetch('/api/auth/user', {
-          credentials: 'include',
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+        if (!isSupabaseConfigured || !supabase) {
+          setUser(fallbackUser);
+          setIsAuthenticated(true);
+          return;
+        }
+
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('Auth session check failed:', error);
+          setIsAuthenticated(false);
+          setUser(null);
+        } else if (data.session?.user) {
+          setUser(mapSupabaseUser(data.session.user));
           setIsAuthenticated(true);
         } else {
-          setUser(null);
           setIsAuthenticated(false);
+          setUser(null);
         }
+
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!isMounted) return;
+          if (session?.user) {
+            setUser(mapSupabaseUser(session.user));
+            setIsAuthenticated(true);
+          } else {
+            setUser(null);
+            setIsAuthenticated(false);
+          }
+        });
+        unsubscribe = () => authListener?.subscription.unsubscribe();
       } catch (error) {
-        console.error('Auth check failed:', error);
-        setUser(null);
+        console.error('Auth initialization failed:', error);
         setIsAuthenticated(false);
+        setUser(null);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    checkAuth();
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
-  const login = () => {
-    window.location.href = '/api/login';
+  const login = async (email: string, password: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      setUser(fallbackUser);
+      setIsAuthenticated(true);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      throw error;
+    }
   };
 
-  const logout = () => {
-    window.location.href = '/api/logout';
+  const signUp = async (email: string, password: string, options?: { role?: string }) => {
+    if (!isSupabaseConfigured || !supabase) {
+      setUser(fallbackUser);
+      setIsAuthenticated(true);
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          role: options?.role || 'user',
+        },
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.auth.signOut();
+    }
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
   const userName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'User' : null;
   const userEmail = user?.email || null;
-  const userRole = 'owner';
+  const userRole = user?.role || 'owner';
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, userEmail, userRole, userName, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, userEmail, userRole, userName, login, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );

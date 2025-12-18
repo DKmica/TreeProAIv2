@@ -26,6 +26,7 @@
     "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.48.0",
     "@google/genai": "^1.22.0",
     "@playwright/test": "^1.56.1",
     "@sendgrid/mail": "^8.1.6",

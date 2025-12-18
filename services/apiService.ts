@@ -1,7 +1,59 @@
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation } from '../types';
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult } from '../types';
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig } from '../types';
+import {
+  AiAccuracyStats,
+  AiJobDurationPrediction,
+  AiQuoteRecommendation,
+  AiRiskAssessment,
+  AiSchedulingSuggestion,
+  AiWorkflowRecommendation,
+  Client,
+  Contact,
+  Crew,
+  CrewAssignment,
+  CrewAvailabilitySummary,
+  CrewMember,
+  Customer,
+  CustomerActivityEvent,
+  CustomerSegment,
+  DispatchResult,
+  EmailCampaignSend,
+  Employee,
+  Equipment,
+  EstimateFeedback,
+  EstimateFeedbackStats,
+  FormTemplate,
+  IntegrationConnection,
+  IntegrationProvider,
+  IntegrationTestResult,
+  Invoice,
+  Job,
+  JobForm,
+  JobTemplate,
+  Lead,
+  MaintenanceLog,
+  NurtureSequence,
+  PayPeriod,
+  PayrollRecord,
+  Property,
+  Quote,
+  QuotePricingOption,
+  QuoteProposalData,
+  QuoteVersion,
+  RecurringJobInstance,
+  RecurringJobSeries,
+  RouteOptimizationResult,
+  TimeEntry,
+  WebLeadFormConfig,
+  WeatherImpact,
+  CompanyProfile
+} from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
+import { getAccessToken } from './supabaseClient';
+
+type ApiFetchOptions = RequestInit & {
+  useAuth?: boolean;
+};
+
+const DEV_FALLBACK_TOKEN = import.meta.env.VITE_DEV_AUTH_TOKEN as string | undefined;
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -18,20 +70,36 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 // Generic fetch function with timeout
-async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(endpoint: string, options: ApiFetchOptions = {}): Promise<T> {
   const url = `/api/${endpoint}`;
   const timeout = 10000;
+  const { useAuth = true, ...rest } = options;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(rest.headers as Record<string, string> | undefined),
+  };
+
+  if (useAuth) {
+    try {
+      const accessToken = await getAccessToken();
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      } else if (import.meta.env.DEV && DEV_FALLBACK_TOKEN) {
+        headers.Authorization = `Bearer ${DEV_FALLBACK_TOKEN}`;
+      }
+    } catch (err) {
+      console.warn('Unable to read Supabase session for API request:', err);
+    }
+  }
 
   try {
     const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      ...rest,
+      headers,
       signal: controller.signal,
     });
     
