@@ -15,7 +15,6 @@ const ClientDetail = lazy(() => import('./pages/ClientDetail'));
 const QuoteDetail = lazy(() => import('./pages/QuoteDetail'));
 const Jobs = lazy(() => import('./pages/Jobs'));
 const JobTemplates = lazy(() => import('./pages/JobTemplates'));
-const FormTemplates = lazy(() => import('./pages/FormTemplates'));
 const Invoicing = lazy(() => import('./pages/Invoicing'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Crews = lazy(() => import('./pages/Crews'));
@@ -30,7 +29,6 @@ const EstimateFeedbackAnalytics = lazy(() => import('./pages/EstimateFeedbackAna
 const ChatPage = lazy(() => import('./pages/Chat'));
 const Profitability = lazy(() => import('./pages/Profitability'));
 const Reports = lazy(() => import('./pages/Reports'));
-const ExceptionQueue = lazy(() => import('./pages/ExceptionQueue'));
 const Settings = lazy(() => import('./pages/Settings'));
 const TemplateViewer = lazy(() => import('./pages/TemplateViewer'));
 const Payroll = lazy(() => import('./pages/Payroll'));
@@ -82,7 +80,6 @@ const App: React.FC = () => {
               <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
               <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><Jobs /></Suspense>} />
               <Route path="/job-templates" element={<Suspense fallback={<PageLoader />}><JobTemplates /></Suspense>} />
-              <Route path="/forms" element={<Suspense fallback={<PageLoader />}><FormTemplates /></Suspense>} />
               <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
               <Route path="/invoicing" element={<Suspense fallback={<PageLoader />}><Invoicing /></Suspense>} />
               <Route path="/invoices" element={<Navigate to="/invoicing" replace />} />
@@ -115,7 +112,6 @@ const App: React.FC = () => {
                   <Suspense fallback={<PageLoader />}><Reports /></Suspense>
                 </RoleProtectedRoute>
               } />
-              <Route path="/exception-queue" element={<Suspense fallback={<PageLoader />}><ExceptionQueue /></Suspense>} />
               <Route path="/settings" element={
                 <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
                   <Suspense fallback={<PageLoader />}><Settings /></Suspense>

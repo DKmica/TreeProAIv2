@@ -56,11 +56,9 @@ const navigationItems: NavigationItem[] = [
   { name: 'Workflows', href: '/workflows', icon: AutomationIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Forms', href: '/forms', icon: ClipboardDocumentListIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'AI Core', href: '/ai-core', icon: AICoreIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Settings', href: '/settings', icon: CogIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'User Management', href: '/user-management', icon: ShieldCheckIcon, allowedRoles: ['owner'] },
-  { name: 'Exceptions', href: '/exception-queue', icon: ExclamationTriangleIcon, allowedRoles: ['owner', 'admin', 'manager'] },
 ];
 
 interface SidebarProps {
