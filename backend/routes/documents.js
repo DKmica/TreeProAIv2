@@ -3,6 +3,7 @@ const multer = require('multer');
 const { GoogleGenAI } = require('@google/genai');
 const { query, pool } = require('../db');
 const { v4: uuidv4 } = require('uuid');
+const { generateInvoiceNumber } = require('../services/jobStateService');
 
 const router = express.Router();
 
@@ -579,18 +580,7 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
 
     let invoiceId = null;
     if (total > 0) {
-      const year = new Date().getFullYear();
-      const prefix = `INV-${year}-`;
-      const { rows: seqRows } = await client.query(`
-        SELECT COALESCE(
-          MAX(CAST(SUBSTRING(invoice_number FROM 'INV-[0-9]+-([0-9]+)') AS INTEGER)), 
-          0
-        ) as max_seq
-        FROM invoices
-        WHERE invoice_number LIKE $1
-      `, [`${prefix}%`]);
-      const nextSeq = (seqRows[0]?.max_seq || 0) + 1;
-      const invoiceNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+      const invoiceNumber = await generateInvoiceNumber(pool);
 
       const invoiceResult = await client.query(`
         INSERT INTO invoices (

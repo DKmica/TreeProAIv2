@@ -29,7 +29,6 @@ const CRM: React.FC = () => {
   const [isClientsLoading, setIsClientsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [clientLoadError, setClientLoadError] = useState<string | null>(null);
-  const [clientCategoryFilter, setClientCategoryFilter] = useState<'all' | 'potential_client' | 'active_customer'>('all');
   const [isClientEditorOpen, setIsClientEditorOpen] = useState(false);
   const [isLeadEditorOpen, setIsLeadEditorOpen] = useState(false);
   const [isQuoteEditorOpen, setIsQuoteEditorOpen] = useState(false);
@@ -100,14 +99,13 @@ const CRM: React.FC = () => {
     }
   }, [activeTab]);
 
-  const fetchClients = async (category: 'all' | 'potential_client' | 'active_customer', bubbleError = false) => {
+  const fetchClients = async (bubbleError = false) => {
     setIsClientsLoading(true);
     if (!bubbleError) {
       setClientLoadError(null);
     }
     try {
-      const params = category !== 'all' ? { clientCategory: category } : undefined;
-      const clientsData = await clientService.getAll(params);
+      const clientsData = await clientService.getAll();
       setClients(clientsData);
     } catch (err: any) {
       const message = err.message || 'Failed to load clients';
@@ -138,7 +136,7 @@ const CRM: React.FC = () => {
         const leadsPromise = leadService.getAll();
         const quotesPromise = quoteService.getAll();
         await Promise.all([
-          fetchClients(clientCategoryFilter, true),
+          fetchClients(true),
           leadsPromise.then(setLeads),
           quotesPromise.then(setQuotes)
         ]);
@@ -153,11 +151,6 @@ const CRM: React.FC = () => {
     fetchInitialData();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      fetchClients(clientCategoryFilter);
-    }
-  }, [clientCategoryFilter, isLoading]);
 
   const activeSegment = useMemo(() => segments.find((s) => s.id === activeSegmentId) || null, [segments, activeSegmentId]);
 
@@ -912,22 +905,6 @@ const CRM: React.FC = () => {
 
       {activeTab === 'clients' && (
         <div className="mt-6">
-          <div className="flex flex-wrap gap-2 mb-4">
-            {clientCategoryOptions.map(option => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setClientCategoryFilter(option.value)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                  clientCategoryFilter === option.value
-                    ? 'bg-brand-cyan-600 text-white border-brand-cyan-600'
-                    : 'bg-white text-brand-gray-700 border-brand-gray-200 hover:border-brand-cyan-400'
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
           {clientLoadError && (
             <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {clientLoadError}
@@ -971,22 +948,21 @@ const CRM: React.FC = () => {
                         <h3 className="text-lg font-semibold text-brand-gray-900">
                           {client.companyName || `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unnamed Client'}
                         </h3>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              client.clientType === 'commercial'
-                                ? 'bg-purple-100 text-purple-800'
-                                : client.clientType === 'residential'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {client.clientType || 'N/A'}
-                          </span>
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${getCategoryClasses(client.clientCategory)}`}>
-                            {getCategoryLabel(client.clientCategory)}
-                          </span>
-                        </div>
+                        {client.clientType && (
+                          <div className="mt-2">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                client.clientType === 'commercial'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : client.clientType === 'residential'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {client.clientType}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
                         client.status === 'active' ? 'bg-green-100' : 'bg-gray-100'
@@ -1527,21 +1503,3 @@ const CRM: React.FC = () => {
 };
 
 export default CRM;
-  const clientCategoryOptions = [
-    { value: 'all' as const, label: 'All Clients' },
-    { value: 'active_customer' as const, label: 'Active Customers' },
-    { value: 'potential_client' as const, label: 'Potential Clients' }
-  ];
-
-  const getCategoryLabel = (category?: string) => {
-    if (category === 'active_customer') return 'Active Customer';
-    return 'Potential Client';
-  };
-
-  const getCategoryClasses = (category?: string) => {
-    if (category === 'active_customer') {
-      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-    }
-    return 'bg-amber-100 text-amber-800 border-amber-200';
-  };
-

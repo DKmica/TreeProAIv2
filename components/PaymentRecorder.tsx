@@ -40,7 +40,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
 
   useEffect(() => {
     if (isOpen && invoice) {
-      const remainingAmount = invoice.amountDue;
+      const remainingAmount = invoice.amountDue ?? invoice.grandTotal ?? invoice.totalAmount ?? 0;
       const presetAmount = defaultAmount ?? remainingAmount;
       setFormData({
         amount: presetAmount > 0 ? presetAmount : 0,
@@ -54,13 +54,18 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
     }
   }, [defaultAmount, invoice, isOpen]);
 
+  const getAmountDue = (): number => {
+    return invoice.amountDue ?? invoice.grandTotal ?? invoice.totalAmount ?? 0;
+  };
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
+    const amountDue = getAmountDue();
 
     if (!formData.amount || formData.amount <= 0) {
       newErrors.amount = 'Payment amount must be greater than zero';
-    } else if (formData.amount > invoice.amountDue) {
-      newErrors.amount = `Payment amount cannot exceed amount due ($${invoice.amountDue.toFixed(2)})`;
+    } else if (formData.amount > amountDue + 0.01) {
+      newErrors.amount = `Payment amount cannot exceed amount due ($${amountDue.toFixed(2)})`;
     }
 
     if (!formData.paymentDate) {
@@ -125,9 +130,10 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
   if (!isOpen) return null;
 
   const isFormValid = () => {
+    const amountDue = getAmountDue();
     return (
       formData.amount > 0 &&
-      formData.amount <= invoice.amountDue &&
+      formData.amount <= amountDue + 0.01 &&
       formData.paymentDate !== ''
     );
   };
@@ -172,15 +178,15 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
             <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Invoice Total:</span>
-                <span className="text-white font-medium">${invoice.grandTotal.toFixed(2)}</span>
+                <span className="text-white font-medium">${(invoice.grandTotal ?? invoice.totalAmount ?? 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Amount Paid:</span>
-                <span className="text-green-400 font-medium">${invoice.amountPaid.toFixed(2)}</span>
+                <span className="text-green-400 font-medium">${(invoice.amountPaid ?? 0).toFixed(2)}</span>
               </div>
               <div className="border-t border-gray-600 pt-2 flex justify-between">
                 <span className="text-white font-bold">Amount Due:</span>
-                <span className="text-cyan-400 font-bold text-lg">${invoice.amountDue.toFixed(2)}</span>
+                <span className="text-cyan-400 font-bold text-lg">${getAmountDue().toFixed(2)}</span>
               </div>
             </div>
 
@@ -194,7 +200,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                   {invoice.payments.map((payment) => (
                     <div key={payment.id} className="py-2 text-sm flex justify-between">
                       <div className="space-y-0.5">
-                        <p className="text-white">${payment.amount.toFixed(2)}</p>
+                        <p className="text-white">${(payment.amount ?? 0).toFixed(2)}</p>
                         <p className="text-gray-400 text-xs">{payment.paymentMethod} • {new Date(payment.paymentDate).toLocaleDateString()}</p>
                         {payment.referenceNumber && <p className="text-gray-500 text-xs">Ref: {payment.referenceNumber}</p>}
                       </div>
@@ -219,7 +225,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                   onChange={handleChange}
                   step="0.01"
                   min="0"
-                  max={invoice.amountDue}
+                  max={getAmountDue()}
                   className="w-full pl-8 pr-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white text-lg placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                   placeholder="0.00"
                 />
@@ -230,14 +236,14 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
               <div className="mt-2 flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, amount: invoice.amountDue }))}
+                  onClick={() => setFormData(prev => ({ ...prev, amount: getAmountDue() }))}
                   className="px-3 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors"
                 >
                   Full Amount
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, amount: invoice.amountDue / 2 }))}
+                  onClick={() => setFormData(prev => ({ ...prev, amount: getAmountDue() / 2 }))}
                   className="px-3 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors"
                 >
                   50%

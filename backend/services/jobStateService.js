@@ -1266,6 +1266,7 @@ module.exports = {
   getAllowedTransitions,
   validateTransition,
   getJob,
+  generateInvoiceNumber,
   
   // Constants
   STATE_TRANSITION_MATRIX,

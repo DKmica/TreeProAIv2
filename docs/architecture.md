@@ -1,8 +1,8 @@
 # TreePro AI - Architecture Documentation
 
-> **Version:** 2.0  
-> **Last Updated:** December 2024  
-> **Phase 0 - Analysis & Planning**
+> **Version:** 3.0  
+> **Last Updated:** December 2025  
+> **Status:** Backend Refactoring Complete
 
 ---
 
@@ -38,11 +38,11 @@ TreePro AI is built as a **modular monolith** with clear separation between fron
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Backend Structure (Current)
+### Backend Structure (Current - Refactored December 2025)
 
 ```
 backend/
-├── server.js                 # Main entry point (~10,000 lines - needs refactoring)
+├── server.js                 # Main entry point (~412 lines - refactored from 10,000+)
 ├── db.js                     # Database connection pool
 ├── auth.js                   # Authentication middleware
 ├── stripeClient.js           # Stripe API client
@@ -62,23 +62,32 @@ backend/
 │   ├── errorHandler.js
 │   └── validate.js
 │
-├── routes/                   # API route definitions
+├── routes/                   # API route definitions (41 modular files)
+│   ├── index.js              # Route aggregator - buildApiRouter()
 │   ├── ai.js                 # AI endpoints (estimator, chat, RAG)
 │   ├── auth.js               # Authentication
 │   ├── clients.js            # CRM - Clients
 │   ├── contacts.js           # CRM - Contacts
-│   ├── employees.js          # Crew management
+│   ├── crews.js              # Crew management
+│   ├── documents.js          # Document scanner & processing
+│   ├── employees.js          # Staff management
 │   ├── equipment.js          # Asset tracking
-│   ├── invoices.js           # Billing
+│   ├── invoices.js           # Billing & payments
 │   ├── jobs.js               # Job management
 │   ├── leads.js              # Lead management
+│   ├── materials.js          # Material inventory
+│   ├── operations.js         # Company operations
+│   ├── pay-periods.js        # Payroll periods
 │   ├── properties.js         # Property management
-│   ├── quoting.js            # Quote management
+│   ├── quotes.js             # Quote management
 │   ├── scheduling.js         # Calendar & scheduling
 │   ├── search.js             # Global search
 │   ├── segments.js           # Customer segmentation
 │   ├── tags.js               # Tagging system
 │   ├── templates.js          # Form & job templates
+│   ├── time-tracking.js      # Time entries & approvals
+│   ├── users.js              # User management
+│   ├── webhooks.js           # External webhooks
 │   ├── workflows.js          # Automation workflows
 │   └── ...
 │
@@ -106,15 +115,19 @@ backend/
 │   │   ├── notificationService.js
 │   │   └── routeOptimizationService.js
 │   │
-│   ├── jobStateService.js    # Job state machine
+│   ├── jobStateService.js    # Job state machine + generateInvoiceNumber()
 │   ├── jobTemplateService.js # Job templates
 │   ├── ragService.js         # RAG/AI context
 │   ├── vectorStore.js        # Embeddings storage
-│   ├── stripeService.js      # Payment processing
 │   └── ...
 │
+├── utils/                    # Shared utilities (consolidated)
+│   ├── errors.js             # Error classes (NotFoundError, ValidationError)
+│   ├── formatters.js         # Date/number formatting
+│   ├── pagination.js         # Pagination helpers
+│   └── transformers.js       # DB row to API response transformers
+│
 ├── migrations/               # SQL migrations (17 files)
-├── utils/                    # Utility functions
 └── templates/                # PDF templates
 ```
 
@@ -372,41 +385,45 @@ src/
 
 | Phase | Description | Current Status | Gap Level |
 |-------|-------------|----------------|-----------|
-| **0** | Analysis & Plan | ✅ This document | Complete |
-| **1** | Backend Refactor + RBAC | Partial services exist | **High** |
-| **2** | PWA/Offline | No service worker | **High** |
-| **3** | Crew Mobile Mode | Pages exist, not optimized | **Medium** |
+| **0** | Analysis & Plan | ✅ Complete | Complete |
+| **1** | Backend Refactor + RBAC | ✅ server.js 412 lines, 41 route files, RBAC implemented | Complete |
+| **2** | PWA/Offline | Service worker + IndexedDB persistence | Complete |
+| **3** | Crew Mobile Mode | Pages exist, functional | **Low** |
 | **4** | Field Operations | Partial implementation | **Medium** |
-| **5** | PHC Materials | Not implemented | **High** |
-| **6** | Scheduling/Routes | Stubbed | **Medium** |
+| **5** | PHC Materials | Material tracking + compliance | Complete |
+| **6** | Scheduling/Routes | Route optimization, calendar views | Complete |
 | **7** | QuickBooks | Stub exists | **High** |
-| **8** | Automation Events | Scaffolded | **Low** |
-| **9** | AI Enhancements | Core exists | **Low** |
+| **8** | Automation Events | Workflow engine operational | **Low** |
+| **9** | AI Enhancements | Estimator, assistant, RAG functional | Complete |
 | **10** | AI Visualizer | Not implemented | **High** |
-| **11** | Reporting/BI | Basic dashboard | **Medium** |
+| **11** | Reporting/BI | Analytics dashboard complete | Complete |
 | **12** | Tests & Docs | Partial | **Medium** |
 
-### Critical Gaps
+### Completed Items
 
-1. **RBAC Enforcement** (Phase 1)
-   - Schema exists but middleware not enforcing permissions
-   - All routes effectively admin-only
+1. **Backend Refactoring** (Phase 1) - ✅ Complete December 2025
+   - server.js reduced from 10,000+ to 412 lines (97% reduction)
+   - 153+ endpoints migrated to 41 modular route files
+   - Shared utilities consolidated in backend/utils/
+   - RBAC middleware enforcing permissions
 
-2. **PWA/Offline Support** (Phase 2)
-   - No `vite-plugin-pwa` configured
-   - No service worker
-   - No offline data persistence
+2. **PWA/Offline Support** (Phase 2) - ✅ Complete
+   - vite-plugin-pwa configured
+   - Service worker operational
+   - IndexedDB persistence for offline crews
 
-3. **PHC Materials Tracking** (Phase 5)
-   - No `job_materials` table
-   - No EPA compliance fields
+3. **PHC Materials Tracking** (Phase 5) - ✅ Complete
+   - Material inventory with EPA registration
+   - Compliance reporting with CSV export
 
-4. **QuickBooks Integration** (Phase 7)
+### Remaining Gaps
+
+1. **QuickBooks Integration** (Phase 7)
    - Service stub exists
    - No OAuth flow implemented
    - No actual sync logic
 
-5. **AI Visualizer** (Phase 10)
+2. **AI Visualizer** (Phase 10)
    - No canvas/masking UI
    - No generative AI integration
 
