@@ -117,7 +117,8 @@ const Login: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500 text-gray-900 placeholder-gray-400"
+                className="w-full px-3 py-2 border border-brand-gray-200 rounded-md focus:ring-2 focus:ring-brand-cyan-500 focus:border-brand-cyan-500 text-gray-900 placeholder-gray-400 appearance-none"
+                style={{ color: 'rgb(17, 24, 39)' }}
                 placeholder="••••••••"
                 required
                 minLength={8}

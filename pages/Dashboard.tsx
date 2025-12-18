@@ -6,6 +6,12 @@ import { payrollRecordService, timeEntryService, payPeriodService, equipmentServ
 import { getAiCoreInsights } from '../services/gemini/businessService';
 import { useJobsQuery, useEmployeesQuery, useClientsQuery, useLeadsQuery, useQuotesQuery } from '../hooks/useDataQueries';
 
+async function apiFetch<T>(endpoint: string): Promise<T> {
+  const response = await fetch(`/api/${endpoint}`);
+  if (!response.ok) throw new Error('API Error');
+  return response.json();
+}
+
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
@@ -23,6 +29,7 @@ const Dashboard: React.FC = () => {
     const [aiInsights, setAiInsights] = useState<AICoreInsights | null>(null);
     const [loadingInsights, setLoadingInsights] = useState(false);
     const [insightsError, setInsightsError] = useState<string | null>(null);
+    const [dashboardSummary, setDashboardSummary] = useState<any>(null);
 
     const isLoading = jobsLoading || employeesLoading || customersLoading || leadsLoading || quotesLoading;
 
@@ -48,6 +55,10 @@ const Dashboard: React.FC = () => {
     );
 
     const monthlyRevenue = useMemo(() => {
+        if (dashboardSummary?.revenue?.totalPaid) {
+            return dashboardSummary.revenue.totalPaid;
+        }
+        
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -59,7 +70,7 @@ const Dashboard: React.FC = () => {
                 return completedDate.getMonth() === currentMonth && completedDate.getFullYear() === currentYear;
             })
             .reduce((sum, job) => sum + (job.costs?.total || 0), 0);
-    }, [jobs]);
+    }, [jobs, dashboardSummary]);
 
     const fetchAiInsights = async () => {
         if (isLoading) return;
@@ -68,17 +79,19 @@ const Dashboard: React.FC = () => {
         setInsightsError(null);
         
         try {
-            const [payrollData, timeData, payPeriodData, equipmentData] = await Promise.all([
+            const [payrollData, timeData, payPeriodData, equipmentData, summary] = await Promise.all([
                 payrollRecordService.getAll().catch(() => []),
                 timeEntryService.getAll().catch(() => []),
                 payPeriodService.getAll().catch(() => []),
-                equipmentService.getAll().catch(() => [])
+                equipmentService.getAll().catch(() => []),
+                apiFetch<any>('dashboard/summary').catch(() => null)
             ]);
             
             setPayrollRecords(payrollData);
             setTimeEntries(timeData);
             setPayPeriods(payPeriodData);
             setEquipment(equipmentData);
+            if (summary) setDashboardSummary(summary.data);
             
             const insights = await getAiCoreInsights(
                 leads,
