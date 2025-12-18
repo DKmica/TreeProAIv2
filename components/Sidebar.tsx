@@ -204,7 +204,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
         {!collapsed && (
           <div>
             <span className="text-lg font-bold text-white">TreePro AI</span>
-            <span className="block text-xs text-brand-gray-400">Field Service Management</span>
+            <span className="block text-xs text-brand-gray-400">Tree Service Management</span>
           </div>
         )}
       </div>
