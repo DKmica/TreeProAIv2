@@ -16,9 +16,7 @@ const QuoteDetail = lazy(() => import('./pages/QuoteDetail'));
 const Jobs = lazy(() => import('./pages/Jobs'));
 const JobTemplates = lazy(() => import('./pages/JobTemplates'));
 const FormTemplates = lazy(() => import('./pages/FormTemplates'));
-const Invoices = lazy(() => import('./pages/Invoices'));
-const InvoiceTemplates = lazy(() => import('./pages/InvoiceTemplates'));
-const ARAgingDashboard = lazy(() => import('./pages/ARAgingDashboard'));
+const Invoicing = lazy(() => import('./pages/Invoicing'));
 const Calendar = lazy(() => import('./pages/Calendar'));
 const Crews = lazy(() => import('./pages/Crews'));
 const TimeTracking = lazy(() => import('./pages/TimeTracking'));
@@ -86,17 +84,10 @@ const App: React.FC = () => {
               <Route path="/job-templates" element={<Suspense fallback={<PageLoader />}><JobTemplates /></Suspense>} />
               <Route path="/forms" element={<Suspense fallback={<PageLoader />}><FormTemplates /></Suspense>} />
               <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
-              <Route path="/invoices" element={<Suspense fallback={<PageLoader />}><Invoices /></Suspense>} />
-              <Route path="/invoice-templates" element={
-                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
-                  <Suspense fallback={<PageLoader />}><InvoiceTemplates /></Suspense>
-                </RoleProtectedRoute>
-              } />
-              <Route path="/ar-aging" element={
-                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
-                  <Suspense fallback={<PageLoader />}><ARAgingDashboard /></Suspense>
-                </RoleProtectedRoute>
-              } />
+              <Route path="/invoicing" element={<Suspense fallback={<PageLoader />}><Invoicing /></Suspense>} />
+              <Route path="/invoices" element={<Navigate to="/invoicing" replace />} />
+              <Route path="/invoice-templates" element={<Navigate to="/invoicing" replace />} />
+              <Route path="/ar-aging" element={<Navigate to="/invoicing" replace />} />
               <Route path="/calendar" element={<Suspense fallback={<PageLoader />}><Calendar /></Suspense>} />
               <Route path="/crews" element={<Suspense fallback={<PageLoader />}><Crews /></Suspense>} />
               <Route path="/time-tracking" element={<Suspense fallback={<PageLoader />}><TimeTracking /></Suspense>} />
