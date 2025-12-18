@@ -28,6 +28,17 @@ const pdfRouter = require('./pdf');
 const analyticsRouter = require('./analytics');
 const crewsRouter = require('./crews');
 const timeTrackingRouter = require('./time-tracking');
+const customFieldsRouter = require('./custom-fields');
+const formTemplatesRouter = require('./form-templates');
+const materialsRouter = require('./materials');
+const operationsRouter = require('./operations');
+const companyRouter = require('./company');
+const exceptionQueueRouter = require('./exception-queue');
+const ragRouter = require('./rag');
+const webhooksRouter = require('./webhooks');
+const estimateFeedbackRouter = require('./estimate-feedback');
+const payPeriodsRouter = require('./pay-periods');
+const usersRouter = require('./users');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -62,6 +73,17 @@ function buildApiRouter() {
   router.use(pdfRouter);
   router.use(analyticsRouter);
   router.use(timeTrackingRouter);
+  router.use(customFieldsRouter);
+  router.use(formTemplatesRouter);
+  router.use(materialsRouter);
+  router.use(operationsRouter);
+  router.use(companyRouter);
+  router.use(exceptionQueueRouter);
+  router.use(ragRouter);
+  router.use(webhooksRouter);
+  router.use(estimateFeedbackRouter);
+  router.use(payPeriodsRouter);
+  router.use(usersRouter);
   return router;
 }
 
