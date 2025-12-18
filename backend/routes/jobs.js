@@ -1,11 +1,65 @@
 const express = require('express');
+const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { handleError } = require('../utils/errors');
 const { transformRow } = require('../utils/transformers');
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
 const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
+const jobStateService = require('../services/jobStateService');
+const jobTemplateService = require('../services/jobTemplateService');
+const recurringJobsService = require('../services/recurringJobsService');
 
 const router = express.Router();
+
+const updateClientCategoryFromJobs = async (clientId) => {
+  if (!clientId) return;
+
+  const { rows } = await db.query(
+    `SELECT COUNT(*) AS completed_jobs
+       FROM jobs
+       WHERE client_id = $1 AND status IN ('completed', 'invoiced', 'paid')`,
+    [clientId]
+  );
+
+  const completedJobs = parseInt(rows[0]?.completed_jobs || '0', 10);
+  let category = 'new';
+  if (completedJobs >= 5) {
+    category = 'vip';
+  } else if (completedJobs >= 1) {
+    category = 'repeat';
+  }
+
+  await db.query(
+    'UPDATE clients SET category = $1, updated_at = NOW() WHERE id = $2',
+    [category, clientId]
+  );
+};
+
+const transformJobMaterial = (row) => {
+  if (!row) return null;
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    materialName: row.material_name,
+    quantityUsed: row.quantity_used ? parseFloat(row.quantity_used) : null,
+    unit: row.unit,
+    epaRegNumber: row.epa_reg_number,
+    applicationMethod: row.application_method,
+    applicationRate: row.application_rate,
+    targetPestOrCondition: row.target_pest_or_condition,
+    appliedBy: row.applied_by,
+    employeeName: row.employee_name || null,
+    appliedAt: row.applied_at,
+    weatherConditions: row.weather_conditions,
+    windSpeedMph: row.wind_speed_mph ? parseFloat(row.wind_speed_mph) : null,
+    temperatureF: row.temperature_f ? parseFloat(row.temperature_f) : null,
+    ppeUsed: row.ppe_used,
+    reiHours: row.rei_hours ? parseFloat(row.rei_hours) : null,
+    notes: row.notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+};
 
 router.get('/jobs', 
   requirePermission(RESOURCES.JOBS, ACTIONS.LIST),
@@ -71,6 +125,909 @@ router.get('/jobs',
       success: true,
       data: transformed,
       pagination: buildPaginationMeta(total, page, pageSize),
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/jobs/:id/state-history', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const job = await jobStateService.getJob(id);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    const history = await jobStateService.getStateHistory(id);
+    
+    res.json({
+      success: true,
+      data: {
+        jobId: id,
+        currentState: job.status,
+        currentStateName: jobStateService.STATE_NAMES[job.status],
+        history
+      }
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/jobs/:id/state-transitions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      toState, 
+      reason, 
+      notes,
+      changedByRole = 'admin',
+      changeSource = 'manual',
+      jobUpdates = {}
+    } = req.body;
+    
+    const changedBy = req.session?.userId || null;
+    
+    if (!toState) {
+      return res.status(400).json({
+        success: false,
+        error: 'toState is required'
+      });
+    }
+    
+    const job = await jobStateService.getJob(id);
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    const result = await jobStateService.transitionJobState(id, toState, {
+      changedBy,
+      changedByRole,
+      changeSource,
+      reason,
+      notes,
+      jobUpdates
+    });
+    
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        errors: result.errors
+      });
+    }
+
+    if (result.job?.client_id) {
+      await updateClientCategoryFromJobs(result.job.client_id);
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        job: transformRow(result.job, 'jobs'),
+        transition: result.transition
+      },
+      message: `Job transitioned from '${result.transition.from}' to '${result.transition.to}'`
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/jobs/:id/allowed-transitions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await jobStateService.getAllowedTransitionsForJob(id);
+    
+    if (result.error) {
+      return res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result
+    });
+    
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-templates', async (req, res) => {
+  try {
+    const { category, search, limit } = req.query;
+    
+    const filters = {
+      category,
+      search,
+      limit: limit ? parseInt(limit) : undefined
+    };
+    
+    const templates = await jobTemplateService.getAllTemplates(filters);
+    
+    res.json({
+      success: true,
+      data: templates
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-templates/by-category', async (req, res) => {
+  try {
+    const grouped = await jobTemplateService.getTemplatesByCategory();
+    
+    res.json({
+      success: true,
+      data: grouped
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-templates/usage-stats', async (req, res) => {
+  try {
+    const stats = await jobTemplateService.getUsageStats();
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const template = await jobTemplateService.getTemplateById(id);
+    
+    res.json({
+      success: true,
+      data: template
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+router.post('/job-templates', async (req, res) => {
+  try {
+    const template = await jobTemplateService.createTemplate(req.body);
+    
+    res.status(201).json({
+      success: true,
+      data: template,
+      message: 'Template created successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/job-templates/from-job/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const templateData = req.body;
+    
+    const template = await jobTemplateService.createTemplateFromJob(jobId, templateData);
+    
+    res.status(201).json({
+      success: true,
+      data: template,
+      message: 'Template created from job successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+router.put('/job-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const template = await jobTemplateService.updateTemplate(id, req.body);
+    
+    res.json({
+      success: true,
+      data: template,
+      message: 'Template updated successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+router.delete('/job-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    await jobTemplateService.deleteTemplate(id);
+    
+    res.json({
+      success: true,
+      message: 'Template deleted successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+router.post('/job-templates/:id/use', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const jobData = req.body;
+    
+    const job = await jobTemplateService.useTemplate(id, jobData);
+    
+    res.status(201).json({
+      success: true,
+      data: transformRow(job, 'jobs'),
+      message: 'Job created from template successfully'
+    });
+  } catch (err) {
+    if (err.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: err.message
+      });
+    }
+    handleError(res, err);
+  }
+});
+
+router.get('/job-series', async (req, res) => {
+  try {
+    const data = await recurringJobsService.listSeries();
+    res.json({ success: true, data });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-series/:id', async (req, res) => {
+  try {
+    const data = await recurringJobsService.getSeriesById(req.params.id);
+    res.json({ success: true, data });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/job-series', async (req, res) => {
+  try {
+    const created = await recurringJobsService.createSeries(req.body || {});
+    res.status(201).json({ success: true, data: created });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.put('/job-series/:id', async (req, res) => {
+  try {
+    const updated = await recurringJobsService.updateSeries(req.params.id, req.body || {});
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.delete('/job-series/:id', async (req, res) => {
+  try {
+    await recurringJobsService.removeSeries(req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-series/:id/instances', async (req, res) => {
+  try {
+    const instances = await recurringJobsService.listInstances(req.params.id);
+    res.json({ success: true, data: instances });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/job-series/:id/generate', async (req, res) => {
+  try {
+    const instances = await recurringJobsService.generateInstances(req.params.id, req.body || {});
+    res.json({ success: true, data: instances });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/job-series/:id/instances/:instanceId/convert', async (req, res) => {
+  try {
+    const { job, instance } = await recurringJobsService.convertInstanceToJob(req.params.id, req.params.instanceId);
+    res.status(201).json({
+      success: true,
+      data: {
+        job: transformRow(job, 'jobs'),
+        instance: transformRow(instance, 'recurring_job_instances')
+      }
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.put('/job-series/:id/instances/:instanceId/status', async (req, res) => {
+  try {
+    const updated = await recurringJobsService.updateInstanceStatus(req.params.id, req.params.instanceId, req.body?.status);
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/jobs/:jobId/forms', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const { formTemplateId } = req.body;
+    
+    if (!formTemplateId) {
+      return res.status(400).json({
+        success: false,
+        error: 'formTemplateId is required'
+      });
+    }
+    
+    const { rows: jobRows } = await db.query(
+      'SELECT id FROM jobs WHERE id = $1',
+      [jobId]
+    );
+    
+    if (jobRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    const { rows: templateRows } = await db.query(
+      'SELECT * FROM form_templates WHERE id = $1 AND deleted_at IS NULL',
+      [formTemplateId]
+    );
+    
+    if (templateRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Form template not found'
+      });
+    }
+    
+    const { rows } = await db.query(
+      `INSERT INTO job_forms (job_id, form_template_id, status, form_data)
+       VALUES ($1, $2, 'pending', '{}')
+       RETURNING *`,
+      [jobId, formTemplateId]
+    );
+    
+    const jobForm = transformRow(rows[0], 'job_forms');
+    
+    res.status(201).json({
+      success: true,
+      data: jobForm,
+      message: 'Form attached to job successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/jobs/:jobId/forms', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    
+    const { rows: jobRows } = await db.query(
+      'SELECT id FROM jobs WHERE id = $1',
+      [jobId]
+    );
+    
+    if (jobRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    const { rows } = await db.query(
+      `SELECT 
+        jf.*,
+        ft.name as template_name,
+        ft.description as template_description,
+        ft.form_type as template_form_type,
+        ft.fields as template_fields,
+        ft.require_signature,
+        ft.require_photos,
+        ft.min_photos
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.job_id = $1
+       ORDER BY jf.created_at DESC`,
+      [jobId]
+    );
+    
+    const jobForms = rows.map(row => {
+      const jobForm = transformRow(row, 'job_forms');
+      jobForm.template = {
+        name: row.template_name,
+        description: row.template_description,
+        formType: row.template_form_type,
+        fields: row.template_fields,
+        requireSignature: row.require_signature,
+        requirePhotos: row.require_photos,
+        minPhotos: row.min_photos
+      };
+      return jobForm;
+    });
+    
+    res.json({
+      success: true,
+      data: jobForms
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/job-forms/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      `SELECT 
+        jf.*,
+        ft.name as template_name,
+        ft.description as template_description,
+        ft.form_type as template_form_type,
+        ft.fields as template_fields,
+        ft.require_signature,
+        ft.require_photos,
+        ft.min_photos
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.id = $1`,
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    const jobForm = transformRow(rows[0], 'job_forms');
+    jobForm.template = {
+      name: rows[0].template_name,
+      description: rows[0].template_description,
+      formType: rows[0].template_form_type,
+      fields: rows[0].template_fields,
+      requireSignature: rows[0].require_signature,
+      requirePhotos: rows[0].require_photos,
+      minPhotos: rows[0].min_photos
+    };
+    
+    res.json({
+      success: true,
+      data: jobForm
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.put('/job-forms/:id/submit', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { formData } = req.body;
+    
+    if (!formData || typeof formData !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'formData is required and must be an object'
+      });
+    }
+    
+    const { rows: formRows } = await db.query(
+      `SELECT jf.*, ft.fields as template_fields
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.id = $1`,
+      [id]
+    );
+    
+    if (formRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    const templateFields = formRows[0].template_fields;
+    const errors = [];
+    
+    for (const field of templateFields) {
+      const value = formData[field.id];
+      
+      if (value !== undefined && value !== null && value !== '') {
+        switch (field.type) {
+          case 'number':
+            if (isNaN(Number(value))) {
+              errors.push(`Field '${field.label}' must be a number`);
+            }
+            break;
+          case 'checkbox':
+            if (typeof value !== 'boolean') {
+              errors.push(`Field '${field.label}' must be a boolean`);
+            }
+            break;
+          case 'date':
+            if (isNaN(Date.parse(value))) {
+              errors.push(`Field '${field.label}' must be a valid date`);
+            }
+            break;
+        }
+      }
+    }
+    
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation errors',
+        errors
+      });
+    }
+    
+    const { rows } = await db.query(
+      `UPDATE job_forms 
+       SET form_data = $1, status = 'in_progress', updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [JSON.stringify(formData), id]
+    );
+    
+    const jobForm = transformRow(rows[0], 'job_forms');
+    
+    res.json({
+      success: true,
+      data: jobForm,
+      message: 'Form data updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.put('/job-forms/:id/complete', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { completedBy } = req.body;
+    
+    const { rows: formRows } = await db.query(
+      `SELECT jf.*, ft.fields as template_fields
+       FROM job_forms jf
+       JOIN form_templates ft ON jf.form_template_id = ft.id
+       WHERE jf.id = $1`,
+      [id]
+    );
+    
+    if (formRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    const jobForm = formRows[0];
+    const templateFields = jobForm.template_fields;
+    const formData = jobForm.form_data || {};
+    
+    const errors = [];
+    for (const field of templateFields) {
+      if (field.required) {
+        const value = formData[field.id];
+        if (value === undefined || value === null || value === '') {
+          errors.push(`Required field '${field.label}' is not filled`);
+        }
+      }
+    }
+    
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot complete form: required fields are missing',
+        errors
+      });
+    }
+    
+    const { rows } = await db.query(
+      `UPDATE job_forms 
+       SET status = 'completed', 
+           completed_at = NOW(), 
+           completed_by = $1,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [completedBy || null, id]
+    );
+    
+    const updatedJobForm = transformRow(rows[0], 'job_forms');
+    
+    res.json({
+      success: true,
+      data: updatedJobForm,
+      message: 'Form marked as completed'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.delete('/job-forms/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      'DELETE FROM job_forms WHERE id = $1 RETURNING *',
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job form not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Form removed from job successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.get('/jobs/:id/materials', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const query = `
+      SELECT jm.*, e.name as employee_name
+      FROM job_materials jm
+      LEFT JOIN employees e ON jm.applied_by = e.id
+      WHERE jm.job_id = $1
+      ORDER BY jm.created_at DESC
+    `;
+    
+    const { rows } = await db.query(query, [id]);
+    
+    res.json({
+      success: true,
+      data: rows.map(transformJobMaterial)
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.post('/jobs/:id/materials', async (req, res) => {
+  try {
+    const { id: jobId } = req.params;
+    const {
+      materialName,
+      quantityUsed,
+      unit,
+      epaRegNumber,
+      applicationMethod,
+      applicationRate,
+      targetPestOrCondition,
+      appliedBy,
+      appliedAt,
+      weatherConditions,
+      windSpeedMph,
+      temperatureF,
+      ppeUsed,
+      reiHours,
+      notes
+    } = req.body;
+    
+    if (!materialName) {
+      return res.status(400).json({
+        success: false,
+        error: 'materialName is required'
+      });
+    }
+    
+    const materialId = uuidv4();
+    const userId = req.user?.id || null;
+    
+    const query = `
+      INSERT INTO job_materials (
+        id, job_id, material_name, quantity_used, unit,
+        epa_reg_number, application_method, application_rate,
+        target_pest_or_condition, applied_by, applied_at,
+        weather_conditions, wind_speed_mph, temperature_f,
+        ppe_used, rei_hours, notes, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [
+      materialId,
+      jobId,
+      materialName,
+      quantityUsed || null,
+      unit || null,
+      epaRegNumber || null,
+      applicationMethod || null,
+      applicationRate || null,
+      targetPestOrCondition || null,
+      appliedBy || null,
+      appliedAt || null,
+      weatherConditions || null,
+      windSpeedMph || null,
+      temperatureF || null,
+      ppeUsed || null,
+      reiHours || null,
+      notes || null,
+      userId
+    ]);
+    
+    res.status(201).json({
+      success: true,
+      data: transformJobMaterial(rows[0]),
+      message: 'Material usage recorded'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.put('/job-materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      materialName,
+      quantityUsed,
+      unit,
+      epaRegNumber,
+      applicationMethod,
+      applicationRate,
+      targetPestOrCondition,
+      appliedBy,
+      appliedAt,
+      weatherConditions,
+      windSpeedMph,
+      temperatureF,
+      ppeUsed,
+      reiHours,
+      notes
+    } = req.body;
+    
+    const query = `
+      UPDATE job_materials SET
+        material_name = COALESCE($1, material_name),
+        quantity_used = COALESCE($2, quantity_used),
+        unit = COALESCE($3, unit),
+        epa_reg_number = COALESCE($4, epa_reg_number),
+        application_method = COALESCE($5, application_method),
+        application_rate = COALESCE($6, application_rate),
+        target_pest_or_condition = COALESCE($7, target_pest_or_condition),
+        applied_by = COALESCE($8, applied_by),
+        applied_at = COALESCE($9, applied_at),
+        weather_conditions = COALESCE($10, weather_conditions),
+        wind_speed_mph = COALESCE($11, wind_speed_mph),
+        temperature_f = COALESCE($12, temperature_f),
+        ppe_used = COALESCE($13, ppe_used),
+        rei_hours = COALESCE($14, rei_hours),
+        notes = COALESCE($15, notes),
+        updated_at = NOW()
+      WHERE id = $16
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [
+      materialName,
+      quantityUsed,
+      unit,
+      epaRegNumber,
+      applicationMethod,
+      applicationRate,
+      targetPestOrCondition,
+      appliedBy,
+      appliedAt,
+      weatherConditions,
+      windSpeedMph,
+      temperatureF,
+      ppeUsed,
+      reiHours,
+      notes,
+      id
+    ]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Material record not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: transformJobMaterial(rows[0]),
+      message: 'Material record updated'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+router.delete('/job-materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows } = await db.query(
+      'DELETE FROM job_materials WHERE id = $1 RETURNING id',
+      [id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Material record not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Material record deleted'
     });
   } catch (err) {
     handleError(res, err);
