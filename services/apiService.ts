@@ -346,8 +346,10 @@ export const invoiceService = {
   create: (data: Partial<Omit<Invoice, 'id'>>): Promise<Invoice> => apiFetch('invoices', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Invoice>): Promise<Invoice> => apiFetch(`invoices/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   remove: (id: string): Promise<void> => apiFetch<void>(`invoices/${id}`, { method: 'DELETE' }),
-  recordPayment: (invoiceId: string, paymentData: { amount: number; paymentDate: string; paymentMethod: string; referenceNumber?: string; notes?: string }): Promise<{ success: boolean; payment: any; invoice: Invoice }> =>
-    apiFetch(`invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(paymentData) }),
+  recordPayment: async (invoiceId: string, paymentData: { amount: number; paymentDate: string; paymentMethod: string; referenceNumber?: string; notes?: string }): Promise<{ success: boolean; payment: any; invoice: Invoice }> => {
+    const response = await apiFetch<{ success: boolean; data: { payment: any; invoice: Invoice }; message: string }>(`invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(paymentData) });
+    return { success: response.success, payment: response.data.payment, invoice: response.data.invoice };
+  },
   generatePaymentLink: (invoiceId: string): Promise<{ success: boolean; paymentLink: string }> =>
     apiFetch(`invoices/${invoiceId}/payment-link`, { method: 'POST' }),
   downloadPdf: async (id: string): Promise<void> => {
