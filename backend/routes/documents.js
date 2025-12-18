@@ -579,20 +579,36 @@ router.post('/documents/scans/:id/create-records', async (req, res) => {
 
     let invoiceId = null;
     if (total > 0) {
+      const year = new Date().getFullYear();
+      const prefix = `INV-${year}-`;
+      const { rows: seqRows } = await client.query(`
+        SELECT COALESCE(
+          MAX(CAST(SUBSTRING(invoice_number FROM 'INV-[0-9]+-([0-9]+)') AS INTEGER)), 
+          0
+        ) as max_seq
+        FROM invoices
+        WHERE invoice_number LIKE $1
+      `, [`${prefix}%`]);
+      const nextSeq = (seqRows[0]?.max_seq || 0) + 1;
+      const invoiceNumber = `${prefix}${String(nextSeq).padStart(4, '0')}`;
+
       const invoiceResult = await client.query(`
         INSERT INTO invoices (
-          client_id, property_id, job_id, amount, status, 
-          paid_amount, due_date, notes
+          client_id, property_id, job_id, customer_name, invoice_number, amount, total_amount, grand_total,
+          status, amount_paid, amount_due, due_date, notes
         )
-        VALUES ($1, $2, $3, $4, $5, $6, NOW() + INTERVAL '30 days', $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $6, $6, $7, $8, $9, NOW() + INTERVAL '30 days', $10)
         RETURNING id, invoice_number
       `, [
         clientId, 
         propertyId, 
         jobId, 
-        total, 
-        deposit >= total ? 'paid' : (deposit > 0 ? 'partial' : 'sent'),
+        data.customer.name,
+        invoiceNumber,
+        total,
+        deposit >= total ? 'Paid' : (deposit > 0 ? 'Partial' : 'Sent'),
         deposit,
+        total - deposit,
         'Generated from scanned service contract'
       ]);
       invoiceId = invoiceResult.rows[0].id;
