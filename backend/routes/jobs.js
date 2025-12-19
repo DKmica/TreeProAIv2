@@ -318,10 +318,19 @@ router.post('/jobs',
     
     const job = transformRow(rows[0], 'jobs');
     
+    // If this job was created from a quote, delete the quote
+    let quoteDeleted = false;
+    if (quoteId) {
+      await db.query('UPDATE quotes SET deleted_at = NOW() WHERE id = $1', [quoteId]);
+      console.log(`Quote ${quoteId} archived after conversion to job ${jobId}`);
+      quoteDeleted = true;
+    }
+    
     res.status(201).json({
       success: true,
       data: job,
-      message: 'Job created successfully'
+      message: 'Job created successfully',
+      quoteDeleted
     });
   } catch (err) {
     handleError(res, err);

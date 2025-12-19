@@ -359,10 +359,16 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
         ]
       );
       
+      // If this quote was created from a lead, delete the lead
+      if (sanitizedLeadId) {
+        await db.query('DELETE FROM leads WHERE id = $1', [sanitizedLeadId]);
+        console.log(`Lead ${sanitizedLeadId} deleted after conversion to quote ${quoteId}`);
+      }
+      
       await db.query('COMMIT');
       
       const quote = snakeToCamel(quoteRows[0]);
-      res.status(201).json({ success: true, data: quote });
+      res.status(201).json({ success: true, data: quote, leadDeleted: !!sanitizedLeadId });
       
       reindexDocument('quotes', quoteRows[0]);
       

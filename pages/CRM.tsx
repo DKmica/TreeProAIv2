@@ -550,10 +550,17 @@ const CRM: React.FC = () => {
 
   const handleQuoteSave = async (quote: Quote) => {
     try {
+      // Refresh quotes list
       const updatedQuotes = await quoteService.getAll();
       setQuotes(updatedQuotes);
+      
+      // If a lead was converted, it's now deleted - refresh leads list
+      if (leadToConvert) {
+        const updatedLeads = await leadService.getAll();
+        setLeads(updatedLeads);
+      }
     } catch (err) {
-      console.error('Error refreshing quotes:', err);
+      console.error('Error refreshing data:', err);
     }
   };
 
