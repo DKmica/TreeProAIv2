@@ -953,27 +953,33 @@ async function getJobWithRelations(jobId) {
 
 /**
  * Validate state transition
+ * NOTE: Status restrictions have been removed to allow flexible workflows.
+ * Any transition is now allowed - the state machine is for tracking only.
  * @param {Object} job - Current job object
  * @param {string} toState - Desired state
- * @returns {Object} - { valid: boolean, errors: string[] }
+ * @returns {Object} - { valid: boolean, errors: string[], warnings: string[] }
  */
 async function validateTransition(job, toState) {
-  // Check if transition is allowed by state machine
+  const warnings = [];
+  
+  // Log if this was not a standard transition (for informational purposes)
   if (!isTransitionAllowed(job.status, toState)) {
-    return {
-      valid: false,
-      errors: [`Transition from '${job.status}' to '${toState}' is not allowed`]
-    };
+    console.log(`[State Machine] Non-standard transition: ${job.status} → ${toState} (allowed - no restrictions)`);
+    warnings.push(`Non-standard transition from '${job.status}' to '${toState}'`);
   }
   
-  // Run state-specific validation
+  // State-specific validations are now optional warnings, not blocking errors
   const validator = VALIDATION_RULES[toState];
   if (validator) {
-    return await validator(job, db);
+    const result = await validator(job, db);
+    if (!result.valid) {
+      console.log(`[State Machine] Transition warnings for ${toState}:`, result.errors);
+      warnings.push(...result.errors);
+    }
   }
   
-  // No specific validation for this state
-  return { valid: true, errors: [] };
+  // Always allow the transition - just track warnings
+  return { valid: true, errors: [], warnings };
 }
 
 /**

@@ -8,6 +8,7 @@ const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
 const jobStateService = require('../services/jobStateService');
 const jobTemplateService = require('../services/jobTemplateService');
 const recurringJobsService = require('../services/recurringJobsService');
+const { generateJobNumber } = require('../services/numberService');
 
 const router = express.Router();
 
@@ -125,6 +126,336 @@ router.get('/jobs',
       success: true,
       data: transformed,
       pagination: buildPaginationMeta(total, page, pageSize),
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// GET /jobs/:id - Get a single job by ID
+router.get('/jobs/:id',
+  requirePermission(RESOURCES.JOBS, ACTIONS.READ),
+  async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const query = `
+      SELECT
+        j.*,
+        q.quote_number,
+        q.version AS quote_version,
+        q.approval_status AS quote_approval_status,
+        c.first_name as client_first_name,
+        c.last_name as client_last_name,
+        c.company_name as client_company_name,
+        c.primary_email as client_email,
+        c.primary_phone as client_phone,
+        p.property_name,
+        p.address_line1 as property_address,
+        p.city as property_city,
+        p.state as property_state
+      FROM jobs j
+      LEFT JOIN quotes q ON q.id = j.quote_id
+      LEFT JOIN clients c ON c.id = j.client_id
+      LEFT JOIN properties p ON p.id = j.property_id
+      WHERE j.id = $1 AND j.deleted_at IS NULL
+    `;
+    
+    const { rows } = await db.query(query, [id]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    const job = transformRow(rows[0], 'jobs');
+    
+    if (rows[0].client_first_name || rows[0].client_last_name || rows[0].client_company_name) {
+      job.client = {
+        firstName: rows[0].client_first_name,
+        lastName: rows[0].client_last_name,
+        companyName: rows[0].client_company_name,
+        email: rows[0].client_email,
+        phone: rows[0].client_phone
+      };
+    }
+    
+    if (rows[0].property_name || rows[0].property_address) {
+      job.property = {
+        propertyName: rows[0].property_name,
+        address: rows[0].property_address,
+        city: rows[0].property_city,
+        state: rows[0].property_state
+      };
+    }
+    
+    res.json({
+      success: true,
+      data: job
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// POST /jobs - Create a new standalone job (no quote required)
+router.post('/jobs',
+  requirePermission(RESOURCES.JOBS, ACTIONS.CREATE),
+  async (req, res) => {
+  try {
+    const {
+      clientId,
+      propertyId,
+      quoteId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      customerAddress,
+      jobLocation,
+      scheduledDate,
+      scheduledTime,
+      estimatedHours,
+      assignedCrew,
+      specialInstructions,
+      status,
+      equipmentNeeded,
+      completionChecklist,
+      jhaRequired
+    } = req.body;
+    
+    if (!customerName && !clientId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Either customerName or clientId is required'
+      });
+    }
+    
+    const jobId = uuidv4();
+    const jobNumber = await generateJobNumber();
+    
+    let resolvedCustomerName = customerName;
+    let resolvedCustomerPhone = customerPhone;
+    let resolvedCustomerEmail = customerEmail;
+    let resolvedCustomerAddress = customerAddress;
+    
+    if (clientId && !customerName) {
+      const { rows: clientRows } = await db.query(
+        `SELECT company_name, first_name, last_name, primary_phone, primary_email,
+                billing_address_line1, billing_city, billing_state, billing_zip_code
+         FROM clients WHERE id = $1`,
+        [clientId]
+      );
+      if (clientRows.length > 0) {
+        const client = clientRows[0];
+        resolvedCustomerName = client.company_name || `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Unknown';
+        resolvedCustomerPhone = resolvedCustomerPhone || client.primary_phone;
+        resolvedCustomerEmail = resolvedCustomerEmail || client.primary_email;
+        const addressParts = [client.billing_address_line1, client.billing_city, client.billing_state, client.billing_zip_code].filter(Boolean);
+        resolvedCustomerAddress = resolvedCustomerAddress || (addressParts.length > 0 ? addressParts.join(', ') : null);
+      }
+    }
+    
+    let resolvedJobLocation = jobLocation;
+    if (propertyId && !jobLocation) {
+      const { rows: propRows } = await db.query(
+        `SELECT address_line1, city, state, zip_code FROM properties WHERE id = $1`,
+        [propertyId]
+      );
+      if (propRows.length > 0) {
+        const prop = propRows[0];
+        const propParts = [prop.address_line1, prop.city, prop.state, prop.zip_code].filter(Boolean);
+        resolvedJobLocation = propParts.length > 0 ? propParts.join(', ') : null;
+      }
+    }
+    
+    const query = `
+      INSERT INTO jobs (
+        id, client_id, property_id, quote_id, job_number, status,
+        customer_name, customer_phone, customer_email, customer_address,
+        job_location, scheduled_date, scheduled_time, estimated_hours,
+        assigned_crew, special_instructions, equipment_needed,
+        completion_checklist, jha_required, created_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW()
+      ) RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, [
+      jobId,
+      clientId || null,
+      propertyId || null,
+      quoteId || null,
+      jobNumber,
+      status || 'draft',
+      resolvedCustomerName,
+      resolvedCustomerPhone || null,
+      resolvedCustomerEmail || null,
+      resolvedCustomerAddress || null,
+      resolvedJobLocation || null,
+      scheduledDate || null,
+      scheduledTime || null,
+      estimatedHours || null,
+      assignedCrew ? JSON.stringify(assignedCrew) : null,
+      specialInstructions || null,
+      equipmentNeeded ? JSON.stringify(equipmentNeeded) : null,
+      completionChecklist ? JSON.stringify(completionChecklist) : null,
+      jhaRequired || false
+    ]);
+    
+    const job = transformRow(rows[0], 'jobs');
+    
+    res.status(201).json({
+      success: true,
+      data: job,
+      message: 'Job created successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// PUT /jobs/:id - Update a job (no status restrictions)
+router.put('/jobs/:id',
+  requirePermission(RESOURCES.JOBS, ACTIONS.UPDATE),
+  async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const { rows: existingRows } = await db.query(
+      'SELECT * FROM jobs WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    const allowedFields = [
+      'client_id', 'property_id', 'quote_id', 'status', 'customer_name',
+      'customer_phone', 'customer_email', 'customer_address', 'job_location',
+      'scheduled_date', 'scheduled_time', 'estimated_hours', 'assigned_crew',
+      'special_instructions', 'equipment_needed', 'completion_checklist',
+      'jha_required', 'jha', 'jha_acknowledged_at', 'work_start_time',
+      'work_end_time', 'work_started_at', 'work_ended_at', 'weather_hold_reason',
+      'permit_required', 'permit_status', 'deposit_required', 'deposit_status',
+      'costs', 'internal_notes', 'clock_in_coordinates', 'clock_out_coordinates'
+    ];
+    
+    const fieldMapping = {
+      clientId: 'client_id',
+      propertyId: 'property_id',
+      quoteId: 'quote_id',
+      customerName: 'customer_name',
+      customerPhone: 'customer_phone',
+      customerEmail: 'customer_email',
+      customerAddress: 'customer_address',
+      jobLocation: 'job_location',
+      scheduledDate: 'scheduled_date',
+      scheduledTime: 'scheduled_time',
+      estimatedHours: 'estimated_hours',
+      assignedCrew: 'assigned_crew',
+      specialInstructions: 'special_instructions',
+      equipmentNeeded: 'equipment_needed',
+      completionChecklist: 'completion_checklist',
+      jhaRequired: 'jha_required',
+      jhaAcknowledgedAt: 'jha_acknowledged_at',
+      workStartTime: 'work_start_time',
+      workEndTime: 'work_end_time',
+      workStartedAt: 'work_started_at',
+      workEndedAt: 'work_ended_at',
+      weatherHoldReason: 'weather_hold_reason',
+      permitRequired: 'permit_required',
+      permitStatus: 'permit_status',
+      depositRequired: 'deposit_required',
+      depositStatus: 'deposit_status',
+      internalNotes: 'internal_notes',
+      clockInCoordinates: 'clock_in_coordinates',
+      clockOutCoordinates: 'clock_out_coordinates'
+    };
+    
+    const setClauses = [];
+    const values = [id];
+    let paramIndex = 2;
+    
+    for (const [key, value] of Object.entries(updates)) {
+      const dbField = fieldMapping[key] || key;
+      if (allowedFields.includes(dbField)) {
+        let dbValue = value;
+        if (['assigned_crew', 'equipment_needed', 'completion_checklist', 'jha', 'costs', 'clock_in_coordinates', 'clock_out_coordinates'].includes(dbField) && typeof value === 'object') {
+          dbValue = JSON.stringify(value);
+        }
+        setClauses.push(`${dbField} = $${paramIndex}`);
+        values.push(dbValue);
+        paramIndex++;
+      }
+    }
+    
+    if (setClauses.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No valid fields to update'
+      });
+    }
+    
+    setClauses.push('updated_at = NOW()');
+    
+    const query = `
+      UPDATE jobs SET ${setClauses.join(', ')}
+      WHERE id = $1
+      RETURNING *
+    `;
+    
+    const { rows } = await db.query(query, values);
+    const job = transformRow(rows[0], 'jobs');
+    
+    if (job.clientId) {
+      await updateClientCategoryFromJobs(job.clientId);
+    }
+    
+    res.json({
+      success: true,
+      data: job,
+      message: 'Job updated successfully'
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// DELETE /jobs/:id - Soft delete a job (no status restrictions)
+router.delete('/jobs/:id',
+  requirePermission(RESOURCES.JOBS, ACTIONS.DELETE),
+  async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { rows: existingRows } = await db.query(
+      'SELECT id FROM jobs WHERE id = $1 AND deleted_at IS NULL',
+      [id]
+    );
+    
+    if (existingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Job not found'
+      });
+    }
+    
+    await db.query(
+      'UPDATE jobs SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1',
+      [id]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Job deleted successfully'
     });
   } catch (err) {
     handleError(res, err);

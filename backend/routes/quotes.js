@@ -1200,24 +1200,6 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
       }
       
       const quote = quoteRows[0];
-      
-      const allowedStatuses = ['Sent', 'Accepted'];
-      
-      if (!allowedStatuses.includes(quote.status)) {
-        await db.query('ROLLBACK');
-        return res.status(400).json({
-          success: false,
-          error: `Cannot convert quote with status '${quote.status}' to job. Quote must be 'Sent' or 'Accepted'.`
-        });
-      }
-      
-      if (quote.approval_status === 'rejected') {
-        await db.query('ROLLBACK');
-        return res.status(400).json({
-          success: false,
-          error: 'Cannot convert rejected quote to job'
-        });
-      }
 
       let customerPhone = null;
       let customerEmail = null;
