@@ -134,8 +134,27 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
         // Add Job Markers
         const activeJobs = jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress');
         activeJobs.forEach(job => {
-            const customer = customers.find(c => c.name === job.customerName);
-            if (!customer?.coordinates || (customer.coordinates.lat === 0 && customer.coordinates.lng === 0)) return;
+            // Get coordinates from various sources
+            let coords: { lat: number; lng: number } | null = null;
+            const jobAny = job as any;
+            
+            // 1. Try job's own coordinates (job_lat/job_lon from DB)
+            if (jobAny.jobLat && jobAny.jobLon) {
+                coords = { lat: parseFloat(jobAny.jobLat), lng: parseFloat(jobAny.jobLon) };
+            }
+            // 2. Try job's property coordinates
+            else if (jobAny.property?.lat && jobAny.property?.lon) {
+                coords = { lat: parseFloat(jobAny.property.lat), lng: parseFloat(jobAny.property.lon) };
+            }
+            // 3. Fallback to customer lookup (legacy support)
+            else {
+                const customer = customers.find(c => c.name === job.customerName);
+                if (customer?.coordinates && (customer.coordinates.lat !== 0 || customer.coordinates.lng !== 0)) {
+                    coords = customer.coordinates;
+                }
+            }
+            
+            if (!coords || (coords.lat === 0 && coords.lng === 0)) return;
 
             const isSelected = job.id === selectedJobId;
             const routeStop = orderedRouteStops.find(stop => stop.jobId === job.id);
@@ -162,7 +181,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
             });
 
             const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: customer.coordinates,
+                position: coords,
                 map,
                 title: `Job: ${job.id}`,
                 content: jobPin.element,
@@ -230,22 +249,36 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
         // Auto-center and open info window if a job is selected from the list
         if (selectedJobId) {
             const job = jobs.find(j => j.id === selectedJobId);
-            const customer = customers.find(c => c.name === job?.customerName);
-            if (customer?.coordinates && (customer.coordinates.lat !== 0 || customer.coordinates.lng !== 0)) {
-                map.setZoom(15);
-                map.setCenter(customer.coordinates);
-                 // Open info window for selected job
-                const selectedMarker = newMarkers.find(m => m.title?.startsWith(`Job: ${selectedJobId}`));
-                if (selectedMarker) {
-                    const content = `
-                    <div style="font-family: sans-serif; color: #334155; padding: 5px;">
-                        <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id}</h3>
-                        <p style="margin: 2px 0;"><strong>Customer:</strong> ${job.customerName}</p>
-                        <p style="margin: 2px 0;"><strong>Status:</strong> ${job.status}</p>
-                        <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
-                    </div>`;
-                    infoWindow.setContent(content);
-                    infoWindow.open({ anchor: selectedMarker, map });
+            if (job) {
+                // Get coordinates using same logic as marker creation
+                let jobCoords: { lat: number; lng: number } | null = null;
+                if ((job as any).property?.lat && (job as any).property?.lon) {
+                    jobCoords = { lat: (job as any).property.lat, lng: (job as any).property.lon };
+                } else if ((job as any).lat && (job as any).lng) {
+                    jobCoords = { lat: (job as any).lat, lng: (job as any).lng };
+                } else {
+                    const customer = customers.find(c => c.name === job.customerName);
+                    if (customer?.coordinates && (customer.coordinates.lat !== 0 || customer.coordinates.lng !== 0)) {
+                        jobCoords = customer.coordinates;
+                    }
+                }
+                
+                if (jobCoords) {
+                    map.setZoom(15);
+                    map.setCenter(jobCoords);
+                    // Open info window for selected job
+                    const selectedMarker = newMarkers.find(m => m.title?.startsWith(`Job: ${selectedJobId}`));
+                    if (selectedMarker) {
+                        const content = `
+                        <div style="font-family: sans-serif; color: #334155; padding: 5px;">
+                            <h3 style="font-weight: 600; font-size: 1.125rem; margin: 0 0 8px 0; color: #1e293b;">Job: ${job.id}</h3>
+                            <p style="margin: 2px 0;"><strong>Customer:</strong> ${job.customerName}</p>
+                            <p style="margin: 2px 0;"><strong>Status:</strong> ${job.status}</p>
+                            <p style="margin: 2px 0;"><strong>Date:</strong> ${job.scheduledDate}</p>
+                        </div>`;
+                        infoWindow.setContent(content);
+                        infoWindow.open({ anchor: selectedMarker, map });
+                    }
                 }
             }
         }

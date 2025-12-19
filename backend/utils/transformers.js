@@ -285,6 +285,34 @@ const transformRow = (row, tableName) => {
       transformed.quoteNumber = row.quote_number;
       delete transformed.quote_number;
     }
+    // Transform property coordinates for map display
+    if (row.property_lat !== undefined || row.property_lon !== undefined) {
+      transformed.property = {
+        lat: row.property_lat ? parseFloat(row.property_lat) : null,
+        lon: row.property_lon ? parseFloat(row.property_lon) : null,
+        name: row.property_name || null,
+        address: row.property_address || null,
+        city: row.property_city || null,
+        state: row.property_state || null
+      };
+      delete transformed.property_lat;
+      delete transformed.property_lon;
+      delete transformed.property_name;
+      delete transformed.property_address;
+      delete transformed.property_city;
+      delete transformed.property_state;
+    }
+    // Transform client info
+    if (row.client_first_name !== undefined || row.client_last_name !== undefined || row.client_company_name !== undefined) {
+      transformed.client = {
+        firstName: row.client_first_name || null,
+        lastName: row.client_last_name || null,
+        companyName: row.client_company_name || null
+      };
+      delete transformed.client_first_name;
+      delete transformed.client_last_name;
+      delete transformed.client_company_name;
+    }
   }
 
   if (tableName === 'job_series') {

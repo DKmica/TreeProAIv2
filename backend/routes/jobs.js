@@ -93,6 +93,8 @@ router.get('/jobs',
     const baseQuery = `
       FROM jobs j
       LEFT JOIN quotes q ON q.id = j.quote_id
+      LEFT JOIN properties p ON p.id = j.property_id
+      LEFT JOIN clients c ON c.id = j.client_id
       ${whereClause}
     `;
 
@@ -103,7 +105,16 @@ router.get('/jobs',
         q.version AS quote_version,
         q.approval_status AS quote_approval_status,
         q.approved_by AS quote_approved_by,
-        q.approved_at AS quote_approved_at
+        q.approved_at AS quote_approved_at,
+        p.lat AS property_lat,
+        p.lon AS property_lon,
+        p.property_name,
+        p.address_line1 AS property_address,
+        p.city AS property_city,
+        p.state AS property_state,
+        c.first_name AS client_first_name,
+        c.last_name AS client_last_name,
+        c.company_name AS client_company_name
       ${baseQuery}
       ORDER BY j.created_at DESC
       ${usePagination ? `LIMIT $${params.length + 1} OFFSET $${params.length + 2}` : ''}

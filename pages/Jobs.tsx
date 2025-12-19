@@ -15,7 +15,7 @@ import { generateJobRiskAssessment } from '../services/geminiService';
 import * as api from '../services/apiService';
 import AssociationModal from '../components/AssociationModal';
 import RecurringJobsPanel from '../components/RecurringJobsPanel';
-import { formatPhone, formatZip, parseEquipment, lookupZipCode } from '../utils/formatters';
+import { formatPhone, formatZip, formatState, parseEquipment, lookupZipCode } from '../utils/formatters';
 import StateSelect from '../components/ui/StateSelect';
 import { useJobsQuery, useQuotesQuery, useInvoicesQuery, useEmployeesQuery } from '../hooks/useDataQueries';
 
@@ -1113,10 +1113,10 @@ const Jobs: React.FC = () => {
                       const canCreateInvoice = !isInvoiceCreated && job.status === 'completed';
                       const portalUrl = `#/portal/job/${job.id}`;
                       return (
-                        <tr key={job.id}>
+                        <tr key={job.id} onClick={() => handleViewDetails(job)} className="cursor-pointer hover:bg-brand-gray-50 transition-colors">
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
                             <div className="flex items-center">
-                                {job.id}
+                                {job.jobNumber || job.id}
                                 {job.messages && job.messages.length > 0 && (
                                     <button onClick={() => setViewingMessages(job)} className="ml-2 text-brand-gray-400 hover:text-brand-green-600">
                                         <ChatBubbleLeftRightIcon className="h-5 w-5" />
@@ -1129,7 +1129,7 @@ const Jobs: React.FC = () => {
                             <JobStatusBadge status={job.status} size="sm" />
                           </td>
                           <td className="whitespace-nowrap px-3 py-4 text-sm text-brand-gray-500">{job.scheduledDate || 'N/A'}</td>
-                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2" onClick={(e) => e.stopPropagation()}>
                             <button onClick={() => handleViewDetails(job)} className="text-brand-cyan-600 hover:text-brand-cyan-900 font-medium">Details</button>
                             <div className="inline-flex rounded-md shadow-sm">
                               <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="relative inline-flex items-center rounded-l-md bg-white px-2 py-1 text-sm font-semibold text-brand-gray-900 ring-1 ring-inset ring-brand-gray-300 hover:bg-brand-gray-50 focus:z-10">
@@ -1182,10 +1182,10 @@ const Jobs: React.FC = () => {
           const canCreateInvoice = !isInvoiceCreated && job.status === 'completed';
           const portalUrl = `#/portal/job/${job.id}`;
           return (
-            <div key={job.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+            <div key={job.id} onClick={() => handleViewDetails(job)} className="bg-white rounded-lg shadow p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-brand-gray-900">Job {job.id}</h3>
+                  <h3 className="font-semibold text-brand-gray-900">{job.jobNumber || job.id}</h3>
                   {job.messages && job.messages.length > 0 && (
                     <button onClick={() => setViewingMessages(job)} className="text-brand-gray-400 hover:text-brand-green-600">
                       <ChatBubbleLeftRightIcon className="h-5 w-5" />
@@ -1206,7 +1206,7 @@ const Jobs: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100">
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100" onClick={(e) => e.stopPropagation()}>
                 <button 
                   onClick={() => handleViewDetails(job)} 
                   className="flex-1 min-w-[100px] px-3 py-2 text-sm font-medium text-brand-cyan-600 hover:text-brand-cyan-700 border border-brand-cyan-600 rounded-md hover:bg-brand-cyan-50"
@@ -1236,7 +1236,7 @@ const Jobs: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <button 
                   type="button" 
                   onClick={() => handleCreateInvoice(job)}
@@ -1264,7 +1264,7 @@ const Jobs: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <button 
                   onClick={() => handleEditClick(job)} 
                   className="flex-1 px-3 py-2 text-sm font-medium text-brand-green-600 hover:text-brand-green-700 border border-brand-green-600 rounded-md hover:bg-brand-green-50"
