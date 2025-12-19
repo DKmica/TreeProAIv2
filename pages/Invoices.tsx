@@ -495,7 +495,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                       const displayStatus = calculateStatus(invoice);
                       const agingBucket = getAgingBucket(invoice);
                       return (
-                        <tr key={invoice.id} className="hover:bg-gray-50">
+                        <tr key={invoice.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleViewInvoice(invoice)}>
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
                             {invoice.invoiceNumber || invoice.id}
                           </td>
@@ -521,7 +521,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                               {agingBucket}
                             </span>
                           </td>
-                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => handleViewInvoice(invoice)}
@@ -652,7 +652,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
             const displayStatus = calculateStatus(invoice);
             const agingBucket = getAgingBucket(invoice);
             return (
-              <div key={invoice.id} className="bg-white rounded-lg shadow p-4 space-y-3">
+              <div key={invoice.id} className="bg-white rounded-lg shadow p-4 space-y-3 cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleViewInvoice(invoice)}>
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <h3 className="font-semibold text-brand-gray-900">
@@ -686,7 +686,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => handleViewInvoice(invoice)}
                     className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
@@ -717,7 +717,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   </button>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                   {displayStatus !== 'Paid' && displayStatus !== 'Void' && (
                     <button
                       onClick={() => handleRecordPayment(invoice)}
