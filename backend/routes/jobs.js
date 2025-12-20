@@ -509,6 +509,65 @@ router.put('/jobs/:id',
           console.error('Error creating commission:', commErr);
         }
       }
+      
+      // Check if job has stump grinding work and create stump records
+      try {
+        if (rows[0].quote_id) {
+          const { rows: quoteRows } = await db.query(
+            'SELECT line_items FROM quotes WHERE id = $1',
+            [rows[0].quote_id]
+          );
+          
+          if (quoteRows.length > 0 && quoteRows[0].line_items) {
+            const lineItems = typeof quoteRows[0].line_items === 'string' 
+              ? JSON.parse(quoteRows[0].line_items) 
+              : quoteRows[0].line_items;
+            
+            // Find stump grinding line items
+            const stumpItems = lineItems.filter(item => 
+              item.description?.toLowerCase().includes('stump') ||
+              item.service?.toLowerCase().includes('stump') ||
+              item.name?.toLowerCase().includes('stump')
+            );
+            
+            for (const stumpItem of stumpItems) {
+              // Generate stump number
+              const { rows: stumpNumRows } = await db.query(
+                "SELECT stump_number FROM stumps WHERE stump_number LIKE 'STG-%' ORDER BY created_at DESC LIMIT 1"
+              );
+              let nextNum = 1;
+              if (stumpNumRows.length > 0 && stumpNumRows[0].stump_number) {
+                const match = stumpNumRows[0].stump_number.match(/STG-(\d+)/);
+                if (match) {
+                  nextNum = parseInt(match[1], 10) + 1;
+                }
+              }
+              const stumpNumber = `STG-${String(nextNum).padStart(5, '0')}`;
+              
+              await db.query(`
+                INSERT INTO stumps (
+                  job_id, client_id, property_id, stump_number, 
+                  tree_species, diameter_inches, customer_name, job_location, 
+                  notes, status
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
+              `, [
+                id,
+                rows[0].client_id,
+                rows[0].property_id,
+                stumpNumber,
+                stumpItem.treeSpecies || stumpItem.species || null,
+                stumpItem.diameter || stumpItem.size || null,
+                rows[0].customer_name,
+                rows[0].job_location,
+                stumpItem.description || stumpItem.notes || null
+              ]);
+              console.log(`Stump ${stumpNumber} created from completed job ${id}`);
+            }
+          }
+        }
+      } catch (stumpErr) {
+        console.error('Error creating stumps from job:', stumpErr);
+      }
     }
     
     res.json({

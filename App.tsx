@@ -35,6 +35,7 @@ const Payroll = lazy(() => import('./pages/Payroll'));
 const Sales = lazy(() => import('./pages/Sales'));
 const Workflows = lazy(() => import('./pages/Workflows'));
 const PHCComplianceReport = lazy(() => import('./pages/PHCComplianceReport'));
+const StumpGrinding = lazy(() => import('./pages/StumpGrinding'));
 const AutomationLogs = lazy(() => import('./pages/AutomationLogs'));
 const DocumentScanner = lazy(() => import('./pages/DocumentScanner'));
 const Visualizer = lazy(() => import('./pages/Visualizer'));
@@ -107,6 +108,7 @@ const App: React.FC = () => {
               <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><Equipment /></Suspense>} />
               <Route path="/equipment/:equipmentId" element={<Suspense fallback={<PageLoader />}><EquipmentDetail /></Suspense>} />
               <Route path="/phc-compliance" element={<Suspense fallback={<PageLoader />}><PHCComplianceReport /></Suspense>} />
+              <Route path="/stump-grinding" element={<Suspense fallback={<PageLoader />}><StumpGrinding /></Suspense>} />
               <Route path="/marketing" element={<Suspense fallback={<PageLoader />}><Marketing /></Suspense>} />
               <Route path="/profitability" element={
                 <RoleProtectedRoute allowedRoles={['owner', 'admin']}>
