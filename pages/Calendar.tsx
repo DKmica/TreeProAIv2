@@ -277,9 +277,9 @@ const Calendar: React.FC = () => {
             .map(item => {
                 const existing = stopLookup.get(item.jobId);
                 if (!existing) return null;
-                return { ...existing, order: item.order } as RouteStop;
+                return { ...existing as RouteStop, order: item.order };
             })
-            .filter(Boolean) as RouteStop[];
+            .filter((stop): stop is RouteStop => stop !== null);
 
         const previousPlan = routePlan;
         setRoutePlan({ ...routePlan, stops: nextStops });
