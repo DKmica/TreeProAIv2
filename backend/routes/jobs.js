@@ -233,7 +233,8 @@ router.post('/jobs',
       status,
       equipmentNeeded,
       completionChecklist,
-      jhaRequired
+      jhaRequired,
+      soldByEmployeeId
     } = req.body;
     
     if (!customerName && !clientId) {
@@ -281,16 +282,29 @@ router.post('/jobs',
       }
     }
     
+    let resolvedSoldBy = soldByEmployeeId || null;
+    let quoteGrandTotal = null;
+    if (quoteId && !resolvedSoldBy) {
+      const { rows: quoteRows } = await db.query(
+        'SELECT sold_by_employee_id, grand_total FROM quotes WHERE id = $1',
+        [quoteId]
+      );
+      if (quoteRows.length > 0) {
+        resolvedSoldBy = quoteRows[0].sold_by_employee_id;
+        quoteGrandTotal = quoteRows[0].grand_total;
+      }
+    }
+    
     const query = `
       INSERT INTO jobs (
         id, client_id, property_id, quote_id, job_number, status,
         customer_name, customer_phone, customer_email, customer_address,
         job_location, scheduled_date, scheduled_time, estimated_hours,
         assigned_crew, special_instructions, equipment_needed,
-        completion_checklist, jha_required, created_at
+        completion_checklist, jha_required, sold_by_employee_id, created_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW()
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW()
       ) RETURNING *
     `;
     
@@ -313,7 +327,8 @@ router.post('/jobs',
       specialInstructions || null,
       equipmentNeeded ? JSON.stringify(equipmentNeeded) : null,
       completionChecklist ? JSON.stringify(completionChecklist) : null,
-      jhaRequired || false
+      jhaRequired || false,
+      resolvedSoldBy
     ]);
     
     const job = transformRow(rows[0], 'jobs');
@@ -434,9 +449,66 @@ router.put('/jobs/:id',
     
     const { rows } = await db.query(query, values);
     const job = transformRow(rows[0], 'jobs');
+    const previousJob = existingRows[0];
     
     if (job.clientId) {
       await updateClientCategoryFromJobs(job.clientId);
+    }
+    
+    // If job just completed and has a salesman, create/update commission
+    if (updates.status === 'completed' && previousJob.status !== 'completed') {
+      const soldBy = rows[0].sold_by_employee_id;
+      if (soldBy) {
+        try {
+          // Get the sale amount from quote or estimate the job value
+          let saleAmount = 0;
+          if (rows[0].quote_id) {
+            const { rows: quoteRows } = await db.query(
+              'SELECT grand_total FROM quotes WHERE id = $1',
+              [rows[0].quote_id]
+            );
+            saleAmount = quoteRows[0]?.grand_total || 0;
+          }
+          
+          if (saleAmount > 0) {
+            // Get salesman's default commission rate
+            const { rows: empRows } = await db.query(
+              'SELECT default_commission_rate FROM employees WHERE id = $1',
+              [soldBy]
+            );
+            const commissionRate = empRows[0]?.default_commission_rate || 10;
+            const commissionAmount = (saleAmount * commissionRate) / 100;
+            
+            // Check if commission already exists for this job
+            const { rows: existingComm } = await db.query(
+              'SELECT id FROM sales_commissions WHERE job_id = $1 AND employee_id = $2',
+              [id, soldBy]
+            );
+            
+            if (existingComm.length > 0) {
+              // Update existing commission to earned
+              await db.query(
+                `UPDATE sales_commissions 
+                 SET status = 'earned', job_completed_at = NOW(), updated_at = NOW()
+                 WHERE id = $1`,
+                [existingComm[0].id]
+              );
+            } else {
+              // Create new commission record as earned
+              await db.query(
+                `INSERT INTO sales_commissions (
+                  employee_id, job_id, quote_id, sale_amount, commission_rate,
+                  commission_amount, status, job_completed_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, 'earned', NOW())`,
+                [soldBy, id, rows[0].quote_id, saleAmount, commissionRate, commissionAmount]
+              );
+            }
+            console.log(`Commission created/updated for job ${id}: ${commissionAmount} (${commissionRate}%)`);
+          }
+        } catch (commErr) {
+          console.error('Error creating commission:', commErr);
+        }
+      }
     }
     
     res.json({

@@ -262,6 +262,18 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
       const sanitizedPropertyId = sanitizeUUID(quoteData.propertyId);
       const sanitizedLeadId = sanitizeUUID(quoteData.leadId);
 
+      let soldByEmployeeId = quoteData.soldByEmployeeId || null;
+      
+      if (sanitizedLeadId && !soldByEmployeeId) {
+        const { rows: leadRows } = await db.query(
+          'SELECT sold_by_employee_id FROM leads WHERE id = $1',
+          [sanitizedLeadId]
+        );
+        if (leadRows.length > 0 && leadRows[0].sold_by_employee_id) {
+          soldByEmployeeId = leadRows[0].sold_by_employee_id;
+        }
+      }
+
       let associatedClientId = sanitizedClientId;
       let ensuredClient;
 
@@ -311,10 +323,10 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
           approval_status, line_items, total_amount, discount_amount,
           discount_percentage, tax_rate, tax_amount, grand_total,
           terms_and_conditions, internal_notes, status, valid_until,
-          deposit_amount, payment_terms, special_instructions, created_at
+          deposit_amount, payment_terms, special_instructions, sold_by_employee_id, created_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, 1, 'pending', $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, NOW()
+          $14, $15, $16, $17, $18, $19, $20, $21, NOW()
         ) RETURNING *
       `;
       
@@ -338,7 +350,8 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
         quoteData.validUntil || null,
         quoteData.depositAmount || null,
         quoteData.paymentTerms || 'Net 30',
-        quoteData.specialInstructions || null
+        quoteData.specialInstructions || null,
+        soldByEmployeeId
       ]);
       
       const versionId = uuidv4();

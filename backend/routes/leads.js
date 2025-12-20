@@ -150,9 +150,9 @@ router.post('/leads',
       INSERT INTO leads (
         id, client_id_new, property_id, source, status, priority,
         lead_score, assigned_to, estimated_value, expected_close_date,
-        next_followup_date, description, created_at, updated_at
+        next_followup_date, description, sold_by_employee_id, created_at, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
       ) RETURNING *
     `;
 
@@ -168,7 +168,8 @@ router.post('/leads',
       leadData.estimatedValue || null,
       leadData.expectedCloseDate || null,
       leadData.nextFollowupDate || null,
-      leadData.description || null
+      leadData.description || null,
+      leadData.soldByEmployeeId || null
     ]);
 
     const lead = transformRow(rows[0], 'leads');
@@ -252,8 +253,9 @@ router.put('/leads/:id',
         expected_close_date = COALESCE($9, expected_close_date),
         next_followup_date = COALESCE($10, next_followup_date),
         description = COALESCE($11, description),
+        sold_by_employee_id = $12,
         updated_at = NOW()
-      WHERE id = $12
+      WHERE id = $13
       RETURNING *
     `;
 
@@ -269,6 +271,7 @@ router.put('/leads/:id',
       leadData.expectedCloseDate,
       leadData.nextFollowupDate,
       leadData.description,
+      leadData.soldByEmployeeId !== undefined ? leadData.soldByEmployeeId : null,
       id
     ]);
 
