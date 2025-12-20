@@ -28,6 +28,9 @@ const Calendar: React.FC = () => {
     const [activeView, setActiveView] = useState<CalendarView>('month');
     const [statusFilter, setStatusFilter] = useState('all');
     const [employeeFilter, setEmployeeFilter] = useState('all');
+    const [viewByRole, setViewByRole] = useState<'all' | 'salesman' | 'crew_leader' | 'job'>('all');
+    const [selectedSalesman, setSelectedSalesman] = useState('all');
+    const [selectedCrewLeader, setSelectedCrewLeader] = useState('all');
     const [draggedJobId, setDraggedJobId] = useState<string | null>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [showTemplateSelector, setShowTemplateSelector] = useState(false);
@@ -112,13 +115,35 @@ const Calendar: React.FC = () => {
         loadOperationalIntel();
     }, [currentDate, selectedCrewId]);
 
+    const salesmen = useMemo(() => {
+        return employees.filter(emp => {
+            const title = (emp.jobTitle || '').toLowerCase();
+            return title.includes('sales') || title.includes('salesman') || title.includes('salesperson');
+        });
+    }, [employees]);
+
+    const crewLeaders = useMemo(() => {
+        return employees.filter(emp => {
+            const title = (emp.jobTitle || '').toLowerCase();
+            return title.includes('foreman') || title.includes('crew leader') || title.includes('lead') || title.includes('supervisor');
+        });
+    }, [employees]);
+
     const filteredJobsOnCalendar = useMemo(() => {
         return jobs.filter(job => {
             const statusMatch = statusFilter === 'all' || job.status === statusFilter;
             const employeeMatch = employeeFilter === 'all' || job.assignedCrew.includes(employeeFilter);
-            return statusMatch && employeeMatch;
+            
+            let roleMatch = true;
+            if (viewByRole === 'salesman' && selectedSalesman !== 'all') {
+                roleMatch = job.assignedCrew.includes(selectedSalesman);
+            } else if (viewByRole === 'crew_leader' && selectedCrewLeader !== 'all') {
+                roleMatch = job.assignedCrew.includes(selectedCrewLeader);
+            }
+            
+            return statusMatch && employeeMatch && roleMatch;
         });
-    }, [jobs, statusFilter, employeeFilter]);
+    }, [jobs, statusFilter, employeeFilter, viewByRole, selectedSalesman, selectedCrewLeader]);
 
     const currentDateString = useMemo(() => currentDate.toISOString().split('T')[0], [currentDate]);
 
@@ -762,7 +787,7 @@ const Calendar: React.FC = () => {
                                         setRoutePlan(null);
                                         setDispatchResult(null);
                                     }}
-                                    className="rounded-md border-brand-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand-cyan-500 focus:outline-none focus:ring-brand-cyan-500"
+                                    className="rounded-md border border-brand-gray-300 bg-white text-brand-gray-900 px-3 py-2 text-sm shadow-sm focus:border-brand-cyan-500 focus:outline-none focus:ring-brand-cyan-500"
                                 >
                                     <option value="">All crews</option>
                                     {crews.map(crew => (
@@ -921,27 +946,93 @@ const Calendar: React.FC = () => {
                     </div>
 
                     {activeView !== 'list' && activeView !== 'map' && activeView !== 'crew' && (
-                        <div className="mb-4 flex flex-wrap gap-2">
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
-                            >
-                                <option value="all">All Statuses</option>
-                                <option value="Unscheduled">Unscheduled</option>
-                                <option value="Scheduled">Scheduled</option>
-                                <option value="In Progress">In Progress</option>
-                            </select>
-                            <select 
-                                value={employeeFilter} 
-                                onChange={(e) => setEmployeeFilter(e.target.value)}
-                                className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
-                            >
-                                <option value="all">All Employees</option>
-                                {employees.map(emp => (
-                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                ))}
-                            </select>
+                        <div className="mb-4 flex flex-wrap gap-3">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-brand-gray-600">View By</label>
+                                <select
+                                    value={viewByRole}
+                                    onChange={(e) => setViewByRole(e.target.value as 'all' | 'salesman' | 'crew_leader' | 'job')}
+                                    className="rounded-md border border-brand-gray-300 bg-white text-brand-gray-900 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm px-3 py-2"
+                                >
+                                    <option value="all">All Jobs</option>
+                                    <option value="salesman">Salesman</option>
+                                    <option value="crew_leader">Crew Leader</option>
+                                    <option value="job">Job</option>
+                                </select>
+                            </div>
+
+                            {viewByRole === 'salesman' && (
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium text-brand-gray-600">Salesman</label>
+                                    <select
+                                        value={selectedSalesman}
+                                        onChange={(e) => setSelectedSalesman(e.target.value)}
+                                        className="rounded-md border border-brand-gray-300 bg-white text-brand-gray-900 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm px-3 py-2"
+                                    >
+                                        <option value="all">All Salesmen</option>
+                                        {salesmen.length > 0 ? (
+                                            salesmen.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            ))
+                                        ) : (
+                                            employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            ))
+                                        )}
+                                    </select>
+                                </div>
+                            )}
+
+                            {viewByRole === 'crew_leader' && (
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-medium text-brand-gray-600">Crew Leader</label>
+                                    <select
+                                        value={selectedCrewLeader}
+                                        onChange={(e) => setSelectedCrewLeader(e.target.value)}
+                                        className="rounded-md border border-brand-gray-300 bg-white text-brand-gray-900 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm px-3 py-2"
+                                    >
+                                        <option value="all">All Crew Leaders</option>
+                                        {crewLeaders.length > 0 ? (
+                                            crewLeaders.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            ))
+                                        ) : (
+                                            employees.map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            ))
+                                        )}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-brand-gray-600">Status</label>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="rounded-md border border-brand-gray-300 bg-white text-brand-gray-900 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm px-3 py-2"
+                                >
+                                    <option value="all">All Statuses</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                                <label className="text-xs font-medium text-brand-gray-600">Employee</label>
+                                <select 
+                                    value={employeeFilter} 
+                                    onChange={(e) => setEmployeeFilter(e.target.value)}
+                                    className="rounded-md border border-brand-gray-300 bg-white text-brand-gray-900 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm px-3 py-2"
+                                >
+                                    <option value="all">All Employees</option>
+                                    {employees.map(emp => (
+                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     )}
 
