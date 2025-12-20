@@ -80,39 +80,39 @@ const EmployeeForm: React.FC<{
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
                         <label htmlFor="name" className="block text-sm font-medium leading-6 text-brand-gray-900">Full Name</label>
-                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="phone" className="block text-sm font-medium leading-6 text-brand-gray-900">Phone Number</label>
-                        <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="col-span-full">
                         <label htmlFor="address" className="block text-sm font-medium leading-6 text-brand-gray-900">Address</label>
-                        <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="ssn" className="block text-sm font-medium leading-6 text-brand-gray-900">Social Security Number</label>
-                        <input type="text" name="ssn" id="ssn" value={formData.ssn} onChange={handleChange} placeholder="XXX-XX-XXXX" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="ssn" id="ssn" value={formData.ssn} onChange={handleChange} placeholder="XXX-XX-XXXX" className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="dob" className="block text-sm font-medium leading-6 text-brand-gray-900">Date of Birth</label>
-                        <input type="date" name="dob" id="dob" value={formData.dob} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="date" name="dob" id="dob" value={formData.dob} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                      <div className="sm:col-span-3">
                         <label htmlFor="jobTitle" className="block text-sm font-medium leading-6 text-brand-gray-900">Job Title</label>
-                        <input type="text" name="jobTitle" id="jobTitle" value={formData.jobTitle} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="jobTitle" id="jobTitle" value={formData.jobTitle} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                      <div className="sm:col-span-3">
                         <label htmlFor="payRate" className="block text-sm font-medium leading-6 text-brand-gray-900">Pay Rate ($/hr)</label>
-                        <input type="number" name="payRate" id="payRate" value={formData.payRate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="number" name="payRate" id="payRate" value={formData.payRate} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="hireDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Hire Date</label>
-                        <input type="date" name="hireDate" id="hireDate" value={formData.hireDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="date" name="hireDate" id="hireDate" value={formData.hireDate} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="col-span-full">
                          <label htmlFor="certifications" className="block text-sm font-medium leading-6 text-brand-gray-900">Certifications</label>
-                         <textarea id="certifications" name="certifications" rows={3} value={formData.certifications} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                         <textarea id="certifications" name="certifications" rows={3} value={formData.certifications} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">

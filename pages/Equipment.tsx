@@ -64,27 +64,27 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
                         <label htmlFor="name" className="block text-sm font-medium leading-6 text-brand-gray-900">Equipment Name</label>
-                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="make" className="block text-sm font-medium leading-6 text-brand-gray-900">Make</label>
-                        <input type="text" name="make" id="make" value={formData.make} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="make" id="make" value={formData.make} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="model" className="block text-sm font-medium leading-6 text-brand-gray-900">Model</label>
-                        <input type="text" name="model" id="model" value={formData.model} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="model" id="model" value={formData.model} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="purchaseDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Purchase Date</label>
-                        <input type="date" name="purchaseDate" id="purchaseDate" value={formData.purchaseDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="date" name="purchaseDate" id="purchaseDate" value={formData.purchaseDate} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                      <div className="sm:col-span-3">
                         <label htmlFor="lastServiceDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Last Service Date</label>
-                        <input type="date" name="lastServiceDate" id="lastServiceDate" value={formData.lastServiceDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="date" name="lastServiceDate" id="lastServiceDate" value={formData.lastServiceDate} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-gray-900">Status</label>
-                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
+                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm">
                             <option>Operational</option>
                             <option>Needs Maintenance</option>
                             <option>Out of Service</option>
@@ -92,7 +92,7 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="assignedTo" className="block text-sm font-medium leading-6 text-brand-gray-900">Assigned To</label>
-                        <input type="text" name="assignedTo" id="assignedTo" value={formData.assignedTo} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                        <input type="text" name="assignedTo" id="assignedTo" value={formData.assignedTo} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">

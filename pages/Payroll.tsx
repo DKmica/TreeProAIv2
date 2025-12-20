@@ -411,7 +411,7 @@ const Payroll: React.FC = () => {
                   <select
                     value={filterPayPeriod}
                     onChange={(e) => setFilterPayPeriod(e.target.value)}
-                    className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
+                    className="rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 text-sm"
                   >
                     <option value="">All Pay Periods</option>
                     {payPeriods.map(period => (
@@ -423,7 +423,7 @@ const Payroll: React.FC = () => {
                   <select
                     value={filterEmployee}
                     onChange={(e) => setFilterEmployee(e.target.value)}
-                    className="rounded-md border-brand-gray-300 shadow-sm focus:border-brand-cyan-500 focus:ring-brand-cyan-500 text-sm"
+                    className="rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 text-sm"
                   >
                     <option value="">All Employees</option>
                     {employees.map(emp => (

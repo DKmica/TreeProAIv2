@@ -34,11 +34,11 @@ const SocialMediaGenerator: React.FC = () => {
             <h3 className="text-lg font-bold text-brand-gray-900">Social Media Post Generator</h3>
             <div>
                 <label htmlFor="topic" className="block text-sm font-medium text-brand-gray-700">Topic or Goal</label>
-                <input type="text" id="topic" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g., Spring cleanup discount" className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
+                <input type="text" id="topic" value={topic} onChange={e => setTopic(e.target.value)} placeholder="e.g., Spring cleanup discount" className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
             </div>
             <div>
                 <label htmlFor="platform" className="block text-sm font-medium text-brand-gray-700">Platform</label>
-                <select id="platform" value={platform} onChange={e => setPlatform(e.target.value)} className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm">
+                <select id="platform" value={platform} onChange={e => setPlatform(e.target.value)} className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm">
                     <option>Facebook</option>
                     <option>Instagram</option>
                     <option>Twitter</option>
@@ -84,11 +84,11 @@ const SEOOptimizer: React.FC = () => {
             <h3 className="text-lg font-bold text-brand-gray-900">SEO Content Optimizer</h3>
             <div>
                 <label htmlFor="content" className="block text-sm font-medium text-brand-gray-700">Page Content</label>
-                <textarea id="content" value={content} onChange={e => setContent(e.target.value)} rows={5} placeholder="Paste your blog post or service page content here..." className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
+                <textarea id="content" value={content} onChange={e => setContent(e.target.value)} rows={5} placeholder="Paste your blog post or service page content here..." className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
             </div>
             <div>
                 <label htmlFor="keyword" className="block text-sm font-medium text-brand-gray-700">Target Keyword</label>
-                <input type="text" id="keyword" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="e.g., emergency tree removal" className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
+                <input type="text" id="keyword" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="e.g., emergency tree removal" className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
             </div>
             <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
                 {isLoading && <SpinnerIcon className="h-5 w-5 mr-2" />}
@@ -147,11 +147,11 @@ const EmailCampaignCreator: React.FC = () => {
             <h3 className="text-lg font-bold text-brand-gray-900">Email Campaign Creator</h3>
             <div>
                 <label htmlFor="goal" className="block text-sm font-medium text-brand-gray-700">Campaign Goal</label>
-                <input type="text" id="goal" value={goal} onChange={e => setGoal(e.target.value)} placeholder="e.g., Promote new stump grinding service" className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
+                <input type="text" id="goal" value={goal} onChange={e => setGoal(e.target.value)} placeholder="e.g., Promote new stump grinding service" className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
             </div>
             <div>
                 <label htmlFor="audience" className="block text-sm font-medium text-brand-gray-700">Target Audience</label>
-                <input type="text" id="audience" value={audience} onChange={e => setAudience(e.target.value)} placeholder="e.g., Past customers who didn't get stump grinding" className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm" />
+                <input type="text" id="audience" value={audience} onChange={e => setAudience(e.target.value)} placeholder="e.g., Past customers who didn't get stump grinding" className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
             </div>
             <button onClick={handleGenerate} disabled={isLoading} className="w-full inline-flex justify-center items-center rounded-md border border-transparent bg-brand-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-green-700 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:bg-brand-gray-300">
                 {isLoading && <SpinnerIcon className="h-5 w-5 mr-2" />}
@@ -217,7 +217,7 @@ const CampaignSender: React.FC<{ segments: CustomerSegment[] }> = ({ segments })
                     <select
                         value={segmentId}
                         onChange={(e) => setSegmentId(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                        className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
                     >
                         {segments.map((segment) => (
                             <option key={segment.id} value={segment.id}>
@@ -232,7 +232,7 @@ const CampaignSender: React.FC<{ segments: CustomerSegment[] }> = ({ segments })
                         type="datetime-local"
                         value={scheduleAt}
                         onChange={(e) => setScheduleAt(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                        className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
                     />
                 </div>
             </div>
@@ -242,7 +242,7 @@ const CampaignSender: React.FC<{ segments: CustomerSegment[] }> = ({ segments })
                     type="text"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
                 />
             </div>
             <div>
@@ -251,7 +251,7 @@ const CampaignSender: React.FC<{ segments: CustomerSegment[] }> = ({ segments })
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     rows={5}
-                    className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
                 />
             </div>
             <button
@@ -355,7 +355,7 @@ const WebLeadEmbedCard: React.FC<{ forms: WebLeadFormConfig[] }> = ({ forms }) =
                 <select
                     value={selectedFormId}
                     onChange={(e) => setSelectedFormId(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
                 >
                     {forms.map((form) => (
                         <option key={form.id} value={form.id}>{form.name}</option>

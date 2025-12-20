@@ -545,21 +545,21 @@ const Settings: React.FC = () => {
               <div className="sm:col-span-3">
                 <label htmlFor="first-name" className="block text-sm font-medium leading-6 text-brand-gray-900">First name</label>
                 <div className="mt-2">
-                  <input type="text" name="first-name" id="first-name" autoComplete="given-name" defaultValue="Admin" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                  <input type="text" name="first-name" id="first-name" autoComplete="given-name" defaultValue="Admin" className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                 </div>
               </div>
 
               <div className="sm:col-span-3">
                 <label htmlFor="last-name" className="block text-sm font-medium leading-6 text-brand-gray-900">Last name</label>
                 <div className="mt-2">
-                  <input type="text" name="last-name" id="last-name" autoComplete="family-name" defaultValue="User" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                  <input type="text" name="last-name" id="last-name" autoComplete="family-name" defaultValue="User" className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                 </div>
               </div>
 
               <div className="sm:col-span-4">
                 <label htmlFor="email" className="block text-sm font-medium leading-6 text-brand-gray-900">Email address</label>
                 <div className="mt-2">
-                  <input id="email" name="email" type="email" autoComplete="email" defaultValue="admin@tree-pro.ai" className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                  <input id="email" name="email" type="email" autoComplete="email" defaultValue="admin@tree-pro.ai" className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                 </div>
               </div>
             </div>
@@ -595,7 +595,7 @@ const Settings: React.FC = () => {
                         id="company-name" 
                         value={companyProfile.companyName}
                         onChange={(e) => handleCompanyProfileChange('companyName', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -607,7 +607,7 @@ const Settings: React.FC = () => {
                         value={companyProfile.tagline}
                         onChange={(e) => handleCompanyProfileChange('tagline', e.target.value)}
                         placeholder="e.g., Professional Tree Services"
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -618,7 +618,7 @@ const Settings: React.FC = () => {
                         id="email" 
                         value={companyProfile.email}
                         onChange={(e) => handleCompanyProfileChange('email', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -630,7 +630,7 @@ const Settings: React.FC = () => {
                         value={companyProfile.phoneNumber}
                         onChange={(e) => handleCompanyProfileChange('phoneNumber', formatPhone(e.target.value))}
                         placeholder="(555) 123-4567"
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -642,7 +642,7 @@ const Settings: React.FC = () => {
                         value={companyProfile.website}
                         onChange={(e) => handleCompanyProfileChange('website', e.target.value)}
                         placeholder="https://www.example.com"
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                   </div>
@@ -659,7 +659,7 @@ const Settings: React.FC = () => {
                         id="address" 
                         value={companyProfile.address}
                         onChange={(e) => handleCompanyProfileChange('address', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -670,7 +670,7 @@ const Settings: React.FC = () => {
                         id="city" 
                         value={companyProfile.city}
                         onChange={(e) => handleCompanyProfileChange('city', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -680,7 +680,7 @@ const Settings: React.FC = () => {
                         id="state" 
                         value={companyProfile.state}
                         onChange={(e) => handleCompanyProfileChange('state', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       >
                         <option value="">Select state...</option>
                         {US_STATES.map((state) => (
@@ -698,7 +698,7 @@ const Settings: React.FC = () => {
                         id="zip-code" 
                         value={companyProfile.zipCode}
                         onChange={(e) => handleCompanyProfileChange('zipCode', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                   </div>
@@ -716,7 +716,7 @@ const Settings: React.FC = () => {
                         value={companyProfile.businessHours}
                         onChange={(e) => handleCompanyProfileChange('businessHours', e.target.value)}
                         placeholder="e.g., Mon-Fri: 8AM-5PM, Sat: 9AM-2PM"
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -728,7 +728,7 @@ const Settings: React.FC = () => {
                         value={companyProfile.logoUrl}
                         onChange={(e) => handleCompanyProfileChange('logoUrl', e.target.value)}
                         placeholder="https://example.com/logo.png"
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                       <p className="mt-2 text-sm text-brand-gray-500">Enter the URL of your company logo</p>
                     </div>
@@ -747,7 +747,7 @@ const Settings: React.FC = () => {
                         value={companyProfile.taxEin}
                         onChange={(e) => handleCompanyProfileChange('taxEin', e.target.value)}
                         placeholder="XX-XXXXXXX"
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -758,7 +758,7 @@ const Settings: React.FC = () => {
                         id="license-number" 
                         value={companyProfile.licenseNumber}
                         onChange={(e) => handleCompanyProfileChange('licenseNumber', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                     
@@ -769,7 +769,7 @@ const Settings: React.FC = () => {
                         id="insurance-policy" 
                         value={companyProfile.insurancePolicyNumber}
                         onChange={(e) => handleCompanyProfileChange('insurancePolicyNumber', e.target.value)}
-                        className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" 
+                        className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" 
                       />
                     </div>
                   </div>
@@ -833,8 +833,8 @@ const Settings: React.FC = () => {
                   <div className="mt-4 p-3 bg-brand-gray-50 rounded-md border space-y-3">
                     <h4 className="font-medium text-sm">New Field Details</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input type="text" placeholder="Field Name (e.g., Gate Code)" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm" />
-                      <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as CustomFieldDefinition['fieldType'])} className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm">
+                      <input type="text" placeholder="Field Name (e.g., Gate Code)" value={newFieldName} onChange={e => setNewFieldName(e.target.value)} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                      <select value={newFieldType} onChange={e => setNewFieldType(e.target.value as CustomFieldDefinition['fieldType'])} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm">
                         <option value="text">Text</option>
                         <option value="number">Number</option>
                         <option value="date">Date</option>
@@ -873,7 +873,7 @@ const Settings: React.FC = () => {
                        value={templateContent} 
                        onChange={e => setTemplateContent(e.target.value)}
                        rows={12}
-                       className="block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm font-mono"
+                       className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm font-mono"
                        placeholder="Enter template content..."
                      />
                    </div>
@@ -1174,7 +1174,7 @@ const Settings: React.FC = () => {
                       type="text"
                       readOnly
                       value={`https://${window.location.hostname}/api/webhooks/angi`}
-                      className="flex-1 block w-full rounded-md border-0 py-2 px-3 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 bg-brand-gray-50 sm:text-sm font-mono"
+                      className="flex-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm font-mono"
                     />
                     <button
                       onClick={() => {

@@ -66,7 +66,7 @@ const ModifyScheduleModal: React.FC<{
                 <div className="mt-6 space-y-6">
                   <div>
                       <label htmlFor="scheduledDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Scheduled Date</label>
-                      <input type="date" name="scheduledDate" id="scheduledDate" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} required className="mt-2 block w-full rounded-md border-0 py-1.5 text-brand-gray-900 shadow-sm ring-1 ring-inset ring-brand-gray-300 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
+                      <input type="date" name="scheduledDate" id="scheduledDate" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} required className="mt-2 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                   </div>
                   <div>
                       <h4 className="text-sm font-medium leading-6 text-brand-gray-900">Assign Crew</h4>

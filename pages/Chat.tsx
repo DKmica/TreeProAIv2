@@ -129,7 +129,7 @@ const ChatPage: React.FC = () => {
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder={getPlaceholder()}
-                            className="flex-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                            className="flex-1 block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
                             aria-label="Chat input"
                             disabled={isLoading}
                         />
