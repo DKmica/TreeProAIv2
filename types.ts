@@ -668,6 +668,66 @@ export interface Employee {
     safetyIncidents: number;
     customerRating: number; // out of 5
   };
+  defaultCommissionRate?: number;
+  isSalesman?: boolean;
+}
+
+export interface SalesmanSummary {
+  employeeId: string;
+  employeeName: string;
+  jobTitle: string;
+  defaultCommissionRate: number;
+  isSalesman: boolean;
+  totalJobsSold: number;
+  completedJobs: number;
+  pendingJobs: number;
+  totalSalesCompleted: number;
+  totalSalesAll: number;
+  earnedCommissions: number;
+  paidCommissions: number;
+  pendingCommissions: number;
+}
+
+export interface SalesCommission {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  jobId: string;
+  jobNumber: string;
+  customerName: string;
+  jobStatus: string;
+  scheduledDate?: string;
+  quoteId?: string;
+  saleAmount: number;
+  commissionRate: number;
+  commissionAmount: number;
+  status: 'pending' | 'earned' | 'paid' | 'cancelled';
+  jobCompletedAt?: string;
+  payrollRecordId?: string;
+  paidAt?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SalesmanDetail {
+  id: string;
+  name: string;
+  jobTitle: string;
+  defaultCommissionRate: number;
+  isSalesman: boolean;
+  jobs: {
+    id: string;
+    jobNumber: string;
+    customerName: string;
+    status: string;
+    scheduledDate?: string;
+    saleAmount: number;
+    createdAt: string;
+    commissionRate: number;
+    commissionAmount: number;
+    commissionStatus?: string;
+  }[];
 }
 
 export interface MaintenanceLog {

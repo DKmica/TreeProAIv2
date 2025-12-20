@@ -32,6 +32,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Settings = lazy(() => import('./pages/Settings'));
 const TemplateViewer = lazy(() => import('./pages/TemplateViewer'));
 const Payroll = lazy(() => import('./pages/Payroll'));
+const Sales = lazy(() => import('./pages/Sales'));
 const Workflows = lazy(() => import('./pages/Workflows'));
 const PHCComplianceReport = lazy(() => import('./pages/PHCComplianceReport'));
 const AutomationLogs = lazy(() => import('./pages/AutomationLogs'));
@@ -96,6 +97,11 @@ const App: React.FC = () => {
               <Route path="/payroll" element={
                 <RoleProtectedRoute allowedRoles={['owner', 'admin']}>
                   <Suspense fallback={<PageLoader />}><Payroll /></Suspense>
+                </RoleProtectedRoute>
+              } />
+              <Route path="/sales" element={
+                <RoleProtectedRoute allowedRoles={['owner', 'admin', 'manager']}>
+                  <Suspense fallback={<PageLoader />}><Sales /></Suspense>
                 </RoleProtectedRoute>
               } />
               <Route path="/equipment" element={<Suspense fallback={<PageLoader />}><Equipment /></Suspense>} />

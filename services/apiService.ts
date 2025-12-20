@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation } from '../types';
+import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation, SalesmanSummary, SalesCommission, SalesmanDetail } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -1049,4 +1049,24 @@ export const analyticsService = {
     const response = await apiFetch<{ success: boolean; data: DashboardKPIs }>(endpoint);
     return response.data;
   }
+};
+
+export const salesService = {
+  getSummary: (): Promise<SalesmanSummary[]> => apiFetch('sales/summary'),
+  getCommissions: (params?: { employeeId?: string; status?: string; startDate?: string; endDate?: string }): Promise<SalesCommission[]> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
+    const endpoint = query ? `sales/commissions?${query}` : 'sales/commissions';
+    return apiFetch(endpoint);
+  },
+  getSalesmanDetail: (employeeId: string): Promise<SalesmanDetail> => apiFetch(`sales/salesman/${employeeId}`),
+  updateCommissionRate: (employeeId: string, data: { defaultCommissionRate?: number; isSalesman?: boolean }): Promise<Employee> =>
+    apiFetch(`employees/${employeeId}/commission-rate`, { method: 'PATCH', body: JSON.stringify(data) }),
+  calculateCommission: (data: { jobId: string; employeeId: string; saleAmount: number; commissionRate?: number }): Promise<SalesCommission> =>
+    apiFetch('sales/commissions/calculate', { method: 'POST', body: JSON.stringify(data) }),
+  markEarned: (commissionId: string): Promise<{ success: boolean; commission: SalesCommission }> =>
+    apiFetch(`sales/commissions/${commissionId}/mark-earned`, { method: 'POST' }),
+  processPayroll: (data: { employeeId: string; payPeriodId?: string; commissionIds: string[] }): Promise<{ success: boolean; payrollRecordId: string; totalCommission: number; commissionsProcessed: number }> =>
+    apiFetch('sales/commissions/process-payroll', { method: 'POST', body: JSON.stringify(data) }),
+  getSalesmen: (): Promise<{ id: string; name: string; jobTitle: string; defaultCommissionRate: number; isSalesman: boolean }[]> =>
+    apiFetch('salesmen')
 };
