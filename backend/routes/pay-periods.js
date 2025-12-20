@@ -86,6 +86,102 @@ const transformPayPeriodRow = (row) => {
   return transformed;
 };
 
+// GET all pay periods
+router.get('/pay_periods', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT * FROM pay_periods ORDER BY start_date DESC'
+    );
+    res.json(rows.map(transformPayPeriodRow));
+  } catch (err) {
+    console.error('Error fetching pay periods:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+// GET single pay period
+router.get('/pay_periods/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'SELECT * FROM pay_periods WHERE id = $1',
+      [req.params.id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Pay period not found' });
+    }
+    res.json(transformPayPeriodRow(rows[0]));
+  } catch (err) {
+    console.error('Error fetching pay period:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+// POST create pay period
+router.post('/pay_periods', async (req, res) => {
+  try {
+    const { startDate, endDate, periodType, status } = req.body;
+    const id = uuidv4();
+    
+    const { rows } = await db.query(
+      `INSERT INTO pay_periods (id, start_date, end_date, period_type, status)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [id, startDate, endDate, periodType || 'bi-weekly', status || 'Open']
+    );
+    
+    res.status(201).json(transformPayPeriodRow(rows[0]));
+  } catch (err) {
+    console.error('Error creating pay period:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+// PUT update pay period
+router.put('/pay_periods/:id', async (req, res) => {
+  try {
+    const { startDate, endDate, periodType, status } = req.body;
+    
+    const { rows } = await db.query(
+      `UPDATE pay_periods 
+       SET start_date = COALESCE($1, start_date),
+           end_date = COALESCE($2, end_date),
+           period_type = COALESCE($3, period_type),
+           status = COALESCE($4, status)
+       WHERE id = $5
+       RETURNING *`,
+      [startDate, endDate, periodType, status, req.params.id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Pay period not found' });
+    }
+    
+    res.json(transformPayPeriodRow(rows[0]));
+  } catch (err) {
+    console.error('Error updating pay period:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+// DELETE pay period
+router.delete('/pay_periods/:id', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'DELETE FROM pay_periods WHERE id = $1 RETURNING *',
+      [req.params.id]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Pay period not found' });
+    }
+    
+    res.json({ success: true, message: 'Pay period deleted' });
+  } catch (err) {
+    console.error('Error deleting pay period:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
 router.post('/pay_periods/:id/process', async (req, res) => {
   try {
     const { rows: payPeriodRows } = await db.query(
