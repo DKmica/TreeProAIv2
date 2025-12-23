@@ -938,7 +938,30 @@ class InMemoryDatabase {
   async query(text, params = []) {
     const normalized = text.replace(/\s+/g, ' ').trim();
     const lower = normalized.toLowerCase();
+    const lowerNoSemicolon = lower.endsWith(';') ? lower.slice(0, -1) : lower;
     let match;
+
+    if (['begin', 'commit', 'rollback'].includes(lowerNoSemicolon)) {
+      return { rows: [], rowCount: 0 };
+    }
+
+    const truncateMatch = lowerNoSemicolon.match(/^truncate table ([a-z_]+)(?: cascade)?$/);
+    if (truncateMatch) {
+      const tableName = truncateMatch[1];
+      if (!this.tables[tableName]) {
+        throw new Error(`Unknown table: ${tableName}`);
+      }
+
+      this.tables[tableName] = [];
+      return { rows: [], rowCount: 0 };
+    }
+
+    const countMatch = lowerNoSemicolon.match(/^select count\(\*\)(?:::\w+)? as count from ([a-z_]+)$/);
+    if (countMatch) {
+      const tableName = countMatch[1];
+      const count = this.getTable(tableName).length;
+      return { rows: [{ count }], rowCount: 1 };
+    }
 
     // Leads with customer join
     if (lower.startsWith('select l.*') && lower.includes('from leads l left join customers c on l.customer_id = c.id')) {
