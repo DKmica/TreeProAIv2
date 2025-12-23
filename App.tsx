@@ -10,10 +10,12 @@ import SpinnerIcon from './components/icons/SpinnerIcon';
 import { AppDataProvider } from './contexts/AppDataContext';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
-const CRM = lazy(() => import('./pages/CRM'));
+const Clients = lazy(() => import('./pages/Clients'));
 const ClientDetail = lazy(() => import('./pages/ClientDetail'));
 const QuoteDetail = lazy(() => import('./pages/QuoteDetail'));
-const Jobs = lazy(() => import('./pages/Jobs'));
+const Leads = lazy(() => import('./pages/Leads'));
+const Quotes = lazy(() => import('./pages/Quotes'));
+const WorkOrderJobs = lazy(() => import('./pages/WorkOrderJobs'));
 const JobTemplates = lazy(() => import('./pages/JobTemplates'));
 const Invoicing = lazy(() => import('./pages/Invoicing'));
 const Calendar = lazy(() => import('./pages/Calendar'));
@@ -72,20 +74,20 @@ const App: React.FC = () => {
                   <Dashboard />
                 </Suspense>
               } />
-              <Route path="/crm" element={<Suspense fallback={<PageLoader />}><CRM /></Suspense>} />
-              <Route path="/crm/clients/:id" element={<Suspense fallback={<PageLoader />}><ClientDetail /></Suspense>} />
+              <Route path="/clients" element={<Suspense fallback={<PageLoader />}><Clients /></Suspense>} />
+              <Route path="/clients/:id" element={<Suspense fallback={<PageLoader />}><ClientDetail /></Suspense>} />
               <Route path="/quotes/:id" element={<Suspense fallback={<PageLoader />}><QuoteDetail /></Suspense>} />
               <Route path="/ai-core" element={<Suspense fallback={<PageLoader />}><AICore /></Suspense>} />
               <Route path="/ai-tree-estimator" element={<Suspense fallback={<PageLoader />}><AITreeEstimator /></Suspense>} />
               <Route path="/estimate-feedback-analytics" element={<Suspense fallback={<PageLoader />}><EstimateFeedbackAnalytics /></Suspense>} />
               <Route path="/chat" element={<Suspense fallback={<PageLoader />}><ChatPage /></Suspense>} />
-              <Route path="/leads" element={<Navigate to="/crm?tab=leads" replace />} />
-              <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
-              <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><Jobs /></Suspense>} />
+              <Route path="/leads" element={<Suspense fallback={<PageLoader />}><Leads /></Suspense>} />
+              <Route path="/quotes" element={<Suspense fallback={<PageLoader />}><Quotes /></Suspense>} />
+              <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><WorkOrderJobs /></Suspense>} />
               <Route path="/work-orders" element={<Suspense fallback={<PageLoader />}><WorkOrders /></Suspense>} />
               <Route path="/work-orders/:id" element={<Suspense fallback={<PageLoader />}><WorkOrders /></Suspense>} />
               <Route path="/job-templates" element={<Suspense fallback={<PageLoader />}><JobTemplates /></Suspense>} />
-              <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
+              <Route path="/customers" element={<Navigate to="/clients" replace />} />
               <Route path="/invoicing" element={<Suspense fallback={<PageLoader />}><Invoicing /></Suspense>} />
               <Route path="/invoices" element={<Navigate to="/invoicing" replace />} />
               <Route path="/invoice-templates" element={<Navigate to="/invoicing" replace />} />

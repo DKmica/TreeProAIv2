@@ -3,6 +3,8 @@ import { NavLink, useLocation } from 'react-router-dom';
 import DashboardIcon from './icons/DashboardIcon';
 import JobIcon from './icons/JobIcon';
 import CustomerIcon from './icons/CustomerIcon';
+import LeadIcon from './icons/LeadIcon';
+import QuoteIcon from './icons/QuoteIcon';
 import InvoiceIcon from './icons/InvoiceIcon';
 import EmployeeIcon from './icons/EmployeeIcon';
 import EquipmentIcon from './icons/EquipmentIcon';
@@ -36,9 +38,11 @@ type NavigationItem = {
 const navigationItems: NavigationItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-  { name: 'CRM', href: '/crm', icon: CustomerIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales', 'scheduler'] },
-  { name: 'Jobs', href: '/jobs', icon: JobIcon },
   { name: 'Work Orders', href: '/work-orders', icon: ClipboardDocumentListIcon },
+  { name: 'Clients', href: '/clients', icon: CustomerIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales', 'scheduler'] },
+  { name: 'Leads', href: '/leads', icon: LeadIcon },
+  { name: 'Quotes', href: '/quotes', icon: QuoteIcon },
+  { name: 'Jobs', href: '/jobs', icon: JobIcon },
   { name: 'Document Scanner', href: '/document-scanner', icon: ScanIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
   { name: 'Crews', href: '/crews', icon: UsersIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Employees', href: '/employees', icon: EmployeeIcon, allowedRoles: ['owner', 'admin', 'manager'] },
@@ -85,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
   const navigationWithBadges = useMemo(() => {
     const badgeMap: Record<string, number | string | undefined> = {
-      '/crm': counts.pendingLeads > 0 ? counts.pendingLeads : undefined,
+      '/leads': counts.pendingLeads > 0 ? counts.pendingLeads : undefined,
       '/jobs': counts.todayJobs > 0 ? counts.todayJobs : undefined,
       '/invoices': counts.unpaidInvoices > 0 ? counts.unpaidInvoices : undefined,
       '/exception-queue': counts.exceptions > 0 ? counts.exceptions : undefined,
@@ -100,7 +104,6 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
   const isActiveRoute = useCallback((href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
-    if (href === '/crm') return location.pathname.startsWith('/crm');
     return location.pathname.startsWith(href);
   }, [location.pathname]);
 

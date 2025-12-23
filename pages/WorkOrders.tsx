@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { WorkOrder, WorkOrderStage, WorkOrderStageSummary, WorkOrderEvent } from '../types';
-import { workOrderService } from '../services/apiService';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { WorkOrder, WorkOrderStage, WorkOrderStageSummary, WorkOrderEvent, Lead, Quote, Job } from '../types';
+import { leadService, workOrderService } from '../services/apiService';
 import SpinnerIcon from '../components/icons/SpinnerIcon';
 import { Briefcase, Users, ClipboardList, Truck, CheckCircle, XCircle, ChevronRight, Search, Filter, ArrowLeft, Clock, Calendar, DollarSign, User, FileText, MapPin } from 'lucide-react';
 
@@ -18,8 +18,12 @@ const STAGE_CONFIG: Record<WorkOrderStage, { label: string; color: string; bgCol
 const ALL_STAGES: WorkOrderStage[] = ['lead', 'quoting', 'scheduled', 'in_progress', 'complete', 'invoiced', 'lost'];
 
 const WorkOrderDetail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) => {
+  const navigate = useNavigate();
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
   const [timeline, setTimeline] = useState<WorkOrderEvent[]>([]);
+  const [sourceLead, setSourceLead] = useState<Lead | null>(null);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +38,31 @@ const WorkOrderDetail: React.FC<{ id: string; onBack: () => void }> = ({ id, onB
         ]);
         setWorkOrder(wo);
         setTimeline(events);
+
+        if (wo.sourceLeadId) {
+          try {
+            const lead = await leadService.getById(wo.sourceLeadId);
+            setSourceLead(lead);
+          } catch (leadErr) {
+            console.error('Failed to load source lead', leadErr);
+            setSourceLead(null);
+          }
+        } else {
+          setSourceLead(null);
+        }
+
+        try {
+          const [relatedQuotes, relatedJobs] = await Promise.all([
+            workOrderService.getQuotes(id),
+            workOrderService.getJobs(id)
+          ]);
+          setQuotes(relatedQuotes);
+          setJobs(relatedJobs);
+        } catch (relationErr) {
+          console.error('Failed to load related records', relationErr);
+          setQuotes([]);
+          setJobs([]);
+        }
       } catch (err: any) {
         console.error('Error loading work order:', err);
         setError(err.message || 'Failed to load work order');
@@ -189,6 +218,103 @@ const WorkOrderDetail: React.FC<{ id: string; onBack: () => void }> = ({ id, onB
               })}
             </div>
           </div>
+
+          <div className="bg-gray-800 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Related records</h3>
+              {workOrder.clientId && (
+                <div className="flex items-center gap-2 text-sm">
+                  <button
+                    className="text-cyan-400 hover:text-cyan-300"
+                    onClick={() => navigate(`/clients?search=${encodeURIComponent(workOrder.clientName || '')}`)}
+                  >
+                    View client
+                  </button>
+                  <span className="text-gray-600">•</span>
+                  <button
+                    className="text-cyan-400 hover:text-cyan-300"
+                    onClick={() => navigate(`/leads?clientId=${workOrder.clientId}`)}
+                  >
+                    Leads
+                  </button>
+                  <button
+                    className="text-cyan-400 hover:text-cyan-300"
+                    onClick={() => navigate(`/quotes?clientId=${workOrder.clientId}`)}
+                  >
+                    Quotes
+                  </button>
+                  <button
+                    className="text-cyan-400 hover:text-cyan-300"
+                    onClick={() => navigate(`/jobs?clientId=${workOrder.clientId}`)}
+                  >
+                    Jobs
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {sourceLead && (
+                <div className="bg-gray-700/50 rounded-lg p-4">
+                  <div className="text-sm uppercase text-gray-400 mb-1">Source lead</div>
+                  <div className="text-white font-semibold">{sourceLead.title || sourceLead.customerName || 'Lead'}</div>
+                  {sourceLead.customerName && (
+                    <div className="text-gray-400 text-sm">{sourceLead.customerName}</div>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-gray-200">Quotes ({quotes.length})</h4>
+                  <span className="text-xs text-gray-500">From work order</span>
+                </div>
+                <div className="space-y-2">
+                  {quotes.map((quote) => (
+                    <div key={quote.id} className="bg-gray-700/50 rounded-lg p-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white font-medium">{quote.title || quote.quoteNumber || 'Quote'}</span>
+                        {quote.total && (
+                          <span className="text-cyan-400 font-semibold">
+                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(quote.total)}
+                          </span>
+                        )}
+                      </div>
+                      {quote.status && <div className="text-xs text-gray-500 capitalize">{quote.status.replace(/_/g, ' ')}</div>}
+                    </div>
+                  ))}
+                  {quotes.length === 0 && (
+                    <div className="text-sm text-gray-500">No quotes attached</div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-gray-200">Jobs ({jobs.length})</h4>
+                  <span className="text-xs text-gray-500">From work order</span>
+                </div>
+                <div className="space-y-2">
+                  {jobs.map((job) => (
+                    <div key={job.id} className="bg-gray-700/50 rounded-lg p-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white font-medium">{job.title || 'Job'}</span>
+                        {job.status && (
+                          <span className="text-xs text-gray-400 capitalize">{job.status.replace(/_/g, ' ')}</span>
+                        )}
+                      </div>
+                      {job.scheduledDate && (
+                        <div className="text-xs text-gray-500">Scheduled {new Date(job.scheduledDate).toLocaleDateString()}</div>
+                      )}
+                    </div>
+                  ))}
+                  {jobs.length === 0 && (
+                    <div className="text-sm text-gray-500">No jobs attached</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -235,11 +361,12 @@ const WorkOrderDetail: React.FC<{ id: string; onBack: () => void }> = ({ id, onB
 const WorkOrders: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
+  const [searchParams] = useSearchParams();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [summary, setSummary] = useState<WorkOrderStageSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [stageFilter, setStageFilter] = useState<WorkOrderStage | 'all'>('all');
   const [viewMode, setViewMode] = useState<'pipeline' | 'list'>('pipeline');
 
@@ -250,8 +377,9 @@ const WorkOrders: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
+        const clientId = searchParams.get('clientId') || undefined;
         const [ordersResult, summaryData] = await Promise.all([
-          workOrderService.getAll({ pageSize: 100 }),
+          workOrderService.getAll({ pageSize: 100, clientId }),
           workOrderService.getSummary()
         ]);
         setWorkOrders(ordersResult.data);
@@ -265,7 +393,7 @@ const WorkOrders: React.FC = () => {
     };
 
     loadData();
-  }, [id]);
+  }, [id, searchParams]);
 
   if (id) {
     return <WorkOrderDetail id={id} onBack={() => navigate('/work-orders')} />;
