@@ -45,7 +45,8 @@ export interface Lead {
   nextFollowupDate?: string;
   updatedAt: string;
   deletedAt?: string;
-  
+  workOrderId?: string;
+
   // Nested
   client?: Client;
   property?: Property;
@@ -67,6 +68,7 @@ export interface PortalMessage {
 export interface Quote {
   id: string;
   leadId?: string;
+  workOrderId?: string;
   customerName: string;
   status: 'Draft' | 'Sent' | 'Accepted' | 'Declined' | 'Converted';
   lineItems: LineItem[];
@@ -392,6 +394,7 @@ export interface JobCost {
 export interface Job {
   id: string;
   quoteId?: string;
+  workOrderId?: string;
   customerName: string;
   customerPhone?: string;
   customerEmail?: string;
@@ -544,6 +547,7 @@ export interface Invoice {
   id: string;
   quoteId?: string;
   jobId?: string;
+  workOrderId?: string;
   clientId?: string;
   propertyId?: string;
   customerName: string;
@@ -1611,7 +1615,7 @@ export interface AiWorkflowRecommendation {
   confidence?: number;
 }
 
-export type WorkOrderStage = 'lead' | 'quoting' | 'scheduled' | 'in_progress' | 'complete' | 'lost';
+export type WorkOrderStage = 'lead' | 'quoting' | 'scheduled' | 'in_progress' | 'complete' | 'invoiced' | 'lost';
 
 export interface WorkOrder {
   id: string;
@@ -1641,6 +1645,7 @@ export interface WorkOrder {
   assignedEmployeeName?: string;
   quotesCount: number;
   jobsCount: number;
+  invoicesCount: number;
 }
 
 export interface WorkOrderEvent {

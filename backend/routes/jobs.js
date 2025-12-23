@@ -16,8 +16,8 @@ const JOB_TO_WORK_ORDER_STAGE = {
   scheduled: 'scheduled',
   in_progress: 'in_progress',
   completed: 'complete',
-  invoiced: 'complete',
-  paid: 'complete',
+  invoiced: 'invoiced',
+  paid: 'invoiced',
   cancelled: 'lost'
 };
 
