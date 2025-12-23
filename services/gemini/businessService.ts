@@ -89,11 +89,12 @@ export const getAiCoreInsights = async (
     const totalRevenue = jobs.filter(j => j.status === 'completed').reduce((sum, job) => {
         const quote = quotes.find(q => q.id === job.quoteId);
         if (quote) {
-            const total = quote.lineItems.filter(li => li.selected).reduce((s, li) => s + li.price, 0) + (quote.stumpGrindingPrice || 0);
+            const lineItemsTotal = (quote.lineItems || []).filter(li => li.selected).reduce((s, li) => s + (Number(li.price) || 0), 0);
+            const total = lineItemsTotal + (Number(quote.stumpGrindingPrice) || 0);
             return sum + total;
         }
         return sum;
-    }, 0);
+    }, 0) || 0;
 
     const currentPayPeriod = payPeriods.find(pp => pp.status === 'Open' || pp.status === 'Processing');
     const upcomingPayrollAmount = payrollRecords
