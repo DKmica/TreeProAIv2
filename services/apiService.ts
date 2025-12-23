@@ -1,4 +1,4 @@
-import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation, SalesmanSummary, SalesCommission, SalesmanDetail } from '../types';
+import { Customer, Lead, Quote, QuotePricingOption, QuoteProposalData, QuoteVersion, AiAccuracyStats, Job, Invoice, Employee, Equipment, MaintenanceLog, PayPeriod, TimeEntry, PayrollRecord, CompanyProfile, EstimateFeedback, EstimateFeedbackStats, Client, Property, Contact, JobTemplate, Crew, CrewMember, CrewAssignment, FormTemplate, JobForm, RouteOptimizationResult, CrewAvailabilitySummary, WeatherImpact, DispatchResult, RecurringJobSeries, RecurringJobInstance, CustomerActivityEvent, CustomerSegment, EmailCampaignSend, NurtureSequence, WebLeadFormConfig, IntegrationConnection, IntegrationProvider, IntegrationTestResult, AiJobDurationPrediction, AiSchedulingSuggestion, AiRiskAssessment, AiQuoteRecommendation, AiWorkflowRecommendation, SalesmanSummary, SalesCommission, SalesmanDetail, WorkOrder, WorkOrderEvent, WorkOrderStageSummary } from '../types';
 import { PaginationParams, PaginatedResponse } from '../types/pagination';
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -1047,6 +1047,69 @@ export const analyticsService = {
     const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v)).toString() : '';
     const endpoint = query ? `analytics/dashboard-kpis?${query}` : 'analytics/dashboard-kpis';
     const response = await apiFetch<{ success: boolean; data: DashboardKPIs }>(endpoint);
+    return response.data;
+  }
+};
+
+export const workOrderService = {
+  getAll: async (params?: { stage?: string; clientId?: string; search?: string; page?: number; pageSize?: number }): Promise<{ data: WorkOrder[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }> => {
+    const query = params ? new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString() : '';
+    const endpoint = query ? `work-orders?${query}` : 'work-orders';
+    const response = await apiFetch<{ success: boolean; data: WorkOrder[]; pagination: any }>(endpoint);
+    return { data: response.data ?? [], pagination: response.pagination };
+  },
+  getById: async (id: string): Promise<WorkOrder> => {
+    const response = await apiFetch<{ success: boolean; data: WorkOrder }>(`work-orders/${id}`);
+    return response.data;
+  },
+  getSummary: async (): Promise<WorkOrderStageSummary[]> => {
+    const response = await apiFetch<{ success: boolean; data: WorkOrderStageSummary[] }>('work-orders/summary');
+    return response.data ?? [];
+  },
+  create: async (data: Partial<Omit<WorkOrder, 'id'>>): Promise<WorkOrder> => {
+    const response = await apiFetch<{ success: boolean; data: WorkOrder }>('work-orders', { method: 'POST', body: JSON.stringify(data) });
+    return response.data;
+  },
+  update: async (id: string, data: Partial<WorkOrder>): Promise<WorkOrder> => {
+    const response = await apiFetch<{ success: boolean; data: WorkOrder }>(`work-orders/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    return response.data;
+  },
+  changeStage: async (id: string, stage: string, statusReason?: string): Promise<WorkOrder> => {
+    const response = await apiFetch<{ success: boolean; data: WorkOrder }>(`work-orders/${id}/stage`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stage, statusReason })
+    });
+    return response.data;
+  },
+  delete: async (id: string): Promise<void> => {
+    await apiFetch<void>(`work-orders/${id}`, { method: 'DELETE' });
+  },
+  getTimeline: async (id: string): Promise<WorkOrderEvent[]> => {
+    const response = await apiFetch<{ success: boolean; data: WorkOrderEvent[] }>(`work-orders/${id}/timeline`);
+    return response.data ?? [];
+  },
+  getQuotes: async (id: string): Promise<Quote[]> => {
+    const response = await apiFetch<{ success: boolean; data: Quote[] }>(`work-orders/${id}/quotes`);
+    return response.data ?? [];
+  },
+  getJobs: async (id: string): Promise<Job[]> => {
+    const response = await apiFetch<{ success: boolean; data: Job[] }>(`work-orders/${id}/jobs`);
+    return response.data ?? [];
+  },
+  createFromLead: async (data: {
+    clientId: string;
+    propertyId?: string;
+    source?: string;
+    description?: string;
+    priority?: string;
+    assignedTo?: string;
+    soldByEmployeeId?: string;
+    estimatedValue?: number;
+  }): Promise<{ workOrder: WorkOrder; lead: Lead }> => {
+    const response = await apiFetch<{ success: boolean; data: { workOrder: WorkOrder; lead: Lead } }>('work-orders/from-lead', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
     return response.data;
   }
 };

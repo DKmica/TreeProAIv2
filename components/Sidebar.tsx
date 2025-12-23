@@ -38,6 +38,7 @@ const navigationItems: NavigationItem[] = [
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'CRM', href: '/crm', icon: CustomerIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales', 'scheduler'] },
   { name: 'Jobs', href: '/jobs', icon: JobIcon },
+  { name: 'Work Orders', href: '/work-orders', icon: ClipboardDocumentListIcon },
   { name: 'Document Scanner', href: '/document-scanner', icon: ScanIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
   { name: 'Crews', href: '/crews', icon: UsersIcon, allowedRoles: ['owner', 'admin', 'manager'] },
   { name: 'Employees', href: '/employees', icon: EmployeeIcon, allowedRoles: ['owner', 'admin', 'manager'] },

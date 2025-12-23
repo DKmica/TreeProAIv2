@@ -36,6 +36,7 @@ const Sales = lazy(() => import('./pages/Sales'));
 const Workflows = lazy(() => import('./pages/Workflows'));
 const PHCComplianceReport = lazy(() => import('./pages/PHCComplianceReport'));
 const StumpGrinding = lazy(() => import('./pages/StumpGrinding'));
+const WorkOrders = lazy(() => import('./pages/WorkOrders'));
 const AutomationLogs = lazy(() => import('./pages/AutomationLogs'));
 const DocumentScanner = lazy(() => import('./pages/DocumentScanner'));
 const Visualizer = lazy(() => import('./pages/Visualizer'));
@@ -81,6 +82,8 @@ const App: React.FC = () => {
               <Route path="/leads" element={<Navigate to="/crm?tab=leads" replace />} />
               <Route path="/quotes" element={<Navigate to="/crm?tab=quotes" replace />} />
               <Route path="/jobs" element={<Suspense fallback={<PageLoader />}><Jobs /></Suspense>} />
+              <Route path="/work-orders" element={<Suspense fallback={<PageLoader />}><WorkOrders /></Suspense>} />
+              <Route path="/work-orders/:id" element={<Suspense fallback={<PageLoader />}><WorkOrders /></Suspense>} />
               <Route path="/job-templates" element={<Suspense fallback={<PageLoader />}><JobTemplates /></Suspense>} />
               <Route path="/customers" element={<Navigate to="/crm?tab=clients" replace />} />
               <Route path="/invoicing" element={<Suspense fallback={<PageLoader />}><Invoicing /></Suspense>} />

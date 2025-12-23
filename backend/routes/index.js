@@ -42,6 +42,7 @@ const usersRouter = require('./users');
 const eventsRouter = require('./events');
 const salesRouter = require('./sales');
 const stumpsRouter = require('./stumps');
+const workOrdersRouter = require('./workOrders');
 
 const useModularRoutes = String(process.env.USE_MODULAR_ROUTES).toLowerCase() === 'true';
 
@@ -90,6 +91,7 @@ function buildApiRouter() {
   router.use(eventsRouter);
   router.use(salesRouter);
   router.use(stumpsRouter);
+  router.use(workOrdersRouter);
   return router;
 }
 

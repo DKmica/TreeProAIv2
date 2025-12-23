@@ -1605,3 +1605,54 @@ export interface AiWorkflowRecommendation {
   autoEnabled?: boolean;
   confidence?: number;
 }
+
+export type WorkOrderStage = 'lead' | 'quoting' | 'scheduled' | 'in_progress' | 'complete' | 'lost';
+
+export interface WorkOrder {
+  id: string;
+  clientId: string;
+  propertyId?: string;
+  sourceLeadId?: string;
+  title?: string;
+  description?: string;
+  stage: WorkOrderStage;
+  statusReason?: string;
+  assignedEmployeeId?: string;
+  soldByEmployeeId?: string;
+  estimatedValue?: number;
+  source?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  tags: string[];
+  metadata: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  propertyAddress?: string;
+  propertyCity?: string;
+  propertyState?: string;
+  assignedEmployeeName?: string;
+  quotesCount: number;
+  jobsCount: number;
+}
+
+export interface WorkOrderEvent {
+  id: string;
+  workOrderId: string;
+  occurredAt: string;
+  actorId?: string;
+  actorType?: 'user' | 'system' | 'integration';
+  actorName?: string;
+  eventType: string;
+  payload: Record<string, any>;
+  sourceTable?: string;
+  sourceRecordId?: string;
+}
+
+export interface WorkOrderStageSummary {
+  stage: WorkOrderStage;
+  count: number;
+  totalValue: number;
+}
