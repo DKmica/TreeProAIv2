@@ -30,12 +30,14 @@ router.get('/leads',
       String(req.query.cache || '').toLowerCase() === '0' ||
       String(req.headers['cache-control'] || '').toLowerCase().includes('no-cache');
 
-    const filters = [];
+    const filters = ['l.deleted_at IS NULL'];
     const params = [];
 
     if (status) {
       params.push(status);
       filters.push(`l.status = $${params.length}`);
+    } else {
+      filters.push("l.status != 'Lost'");
     }
 
     if (search) {
@@ -331,7 +333,10 @@ router.delete('/leads/:id',
   requirePermission(RESOURCES.LEADS, ACTIONS.DELETE),
   async (req, res) => {
   try {
-    const result = await db.query('DELETE FROM leads WHERE id = $1', [req.params.id]);
+    const result = await db.query(
+      'UPDATE leads SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL',
+      [req.params.id]
+    );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Lead not found' });
