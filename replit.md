@@ -35,6 +35,12 @@ The platform now features a unified Work Order model that tracks opportunities f
 - **Detail View**: Shows work order info, linked quotes/jobs, and timeline of events
 - **Backend Service**: `WorkOrderService` handles CRUD operations, stage transitions, and linkage management
 - **REST API**: `/api/work-orders` endpoints with authentication and proper error handling
+- **Legacy Endpoint Integration**: Lead, quote, and job endpoints now automatically sync with work orders:
+  - Lead creation (POST /leads) creates a work order at 'lead' stage
+  - Quote creation from lead transitions work order to 'quoting' stage
+  - Quote-to-job conversion transitions work order to 'scheduled' stage
+  - Job status changes sync work order stages (in_progress → complete, cancelled → lost)
+  - All transitions are transactionally safe and log events
 
 ### Database Design
 

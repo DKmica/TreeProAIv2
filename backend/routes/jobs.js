@@ -12,6 +12,42 @@ const { generateJobNumber } = require('../services/numberService');
 
 const router = express.Router();
 
+const JOB_TO_WORK_ORDER_STAGE = {
+  scheduled: 'scheduled',
+  in_progress: 'in_progress',
+  completed: 'complete',
+  invoiced: 'complete',
+  paid: 'complete',
+  cancelled: 'lost'
+};
+
+const syncWorkOrderStage = async (jobId, newJobStatus, previousJobStatus) => {
+  const newWoStage = JOB_TO_WORK_ORDER_STAGE[newJobStatus];
+  const prevWoStage = JOB_TO_WORK_ORDER_STAGE[previousJobStatus];
+  
+  if (!newWoStage || newWoStage === prevWoStage) return;
+  
+  try {
+    const { rows } = await db.query('SELECT work_order_id FROM jobs WHERE id = $1', [jobId]);
+    const workOrderId = rows[0]?.work_order_id;
+    
+    if (!workOrderId) return;
+    
+    await db.query(`
+      UPDATE work_orders SET stage = $1, updated_at = NOW() WHERE id = $2
+    `, [newWoStage, workOrderId]);
+    
+    await db.query(`
+      INSERT INTO work_order_events (id, work_order_id, event_type, payload, actor_type, occurred_at)
+      VALUES ($1, $2, 'work_order.stage_changed', $3, 'system', NOW())
+    `, [uuidv4(), workOrderId, JSON.stringify({ from: prevWoStage || 'scheduled', to: newWoStage, jobId, jobStatus: newJobStatus, via: 'job_status_change' })]);
+    
+    console.log(`Work order ${workOrderId} synced to '${newWoStage}' from job status '${newJobStatus}'`);
+  } catch (err) {
+    console.error('Failed to sync work order stage:', err.message);
+  }
+};
+
 const updateClientCategoryFromJobs = async (clientId) => {
   if (!clientId) return;
 
@@ -453,6 +489,11 @@ router.put('/jobs/:id',
     
     if (job.clientId) {
       await updateClientCategoryFromJobs(job.clientId);
+    }
+    
+    // Sync work order stage when job status changes
+    if (updates.status && updates.status !== previousJob.status) {
+      await syncWorkOrderStage(id, updates.status, previousJob.status);
     }
     
     // If job just completed and has a salesman, create/update commission

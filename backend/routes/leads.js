@@ -9,6 +9,7 @@ const { reindexDocument, removeFromVectorStore } = require('../utils/vectorStore
 const { parsePagination, buildPaginationMeta } = require('../utils/pagination');
 const { getJson, setJson } = require('../services/cacheService');
 const { requirePermission, RESOURCES, ACTIONS } = require('../auth');
+const workOrderService = require('../services/workOrderService');
 
 const { LEADS_CACHE_TTL_SECONDS } = process.env;
 const LEADS_CACHE_TTL = Number.isFinite(Number(LEADS_CACHE_TTL_SECONDS))
@@ -146,36 +147,74 @@ router.post('/leads',
 
     delete leadData.customerDetails;
 
-    const insertQuery = `
-      INSERT INTO leads (
-        id, client_id_new, property_id, source, status, priority,
-        lead_score, assigned_to, estimated_value, expected_close_date,
-        next_followup_date, description, sold_by_employee_id, created_at, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW()
-      ) RETURNING *
-    `;
+    await db.query('BEGIN');
+    
+    try {
+      const workOrderId = uuidv4();
+      await db.query(`
+        INSERT INTO work_orders (
+          id, client_id, property_id, stage, source, description, priority,
+          assigned_employee_id, sold_by_employee_id, estimated_value, created_at, updated_at
+        ) VALUES ($1, $2, $3, 'lead', $4, $5, $6, $7, $8, $9, NOW(), NOW())
+      `, [
+        workOrderId,
+        associatedClientId,
+        leadData.propertyId || null,
+        leadData.source || null,
+        leadData.description || null,
+        leadData.priority || 'medium',
+        leadData.assignedTo || null,
+        leadData.soldByEmployeeId || null,
+        leadData.estimatedValue || null
+      ]);
 
-    const { rows } = await db.query(insertQuery, [
-      leadId,
-      associatedClientId,
-      leadData.propertyId || null,
-      leadData.source || null,
-      leadData.status || 'New',
-      leadData.priority || 'medium',
-      leadData.leadScore || 50,
-      leadData.assignedTo || null,
-      leadData.estimatedValue || null,
-      leadData.expectedCloseDate || null,
-      leadData.nextFollowupDate || null,
-      leadData.description || null,
-      leadData.soldByEmployeeId || null
-    ]);
+      const insertQuery = `
+        INSERT INTO leads (
+          id, client_id_new, property_id, work_order_id, source, status, priority,
+          lead_score, assigned_to, estimated_value, expected_close_date,
+          next_followup_date, description, sold_by_employee_id, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+        ) RETURNING *
+      `;
 
-    const lead = transformRow(rows[0], 'leads');
-    res.status(201).json(lead);
+      const { rows } = await db.query(insertQuery, [
+        leadId,
+        associatedClientId,
+        leadData.propertyId || null,
+        workOrderId,
+        leadData.source || null,
+        leadData.status || 'New',
+        leadData.priority || 'medium',
+        leadData.leadScore || 50,
+        leadData.assignedTo || null,
+        leadData.estimatedValue || null,
+        leadData.expectedCloseDate || null,
+        leadData.nextFollowupDate || null,
+        leadData.description || null,
+        leadData.soldByEmployeeId || null
+      ]);
 
-    reindexDocument('leads', rows[0]);
+      await db.query(`
+        UPDATE work_orders SET source_lead_id = $1 WHERE id = $2
+      `, [leadId, workOrderId]);
+
+      await db.query(`
+        INSERT INTO work_order_events (id, work_order_id, event_type, payload, actor_type, occurred_at)
+        VALUES ($1, $2, 'work_order.created', $3, 'system', NOW())
+      `, [uuidv4(), workOrderId, JSON.stringify({ stage: 'lead', source: leadData.source, via: 'lead_endpoint' })]);
+
+      await db.query('COMMIT');
+
+      const lead = transformRow(rows[0], 'leads');
+      lead.workOrderId = workOrderId;
+      res.status(201).json(lead);
+
+      reindexDocument('leads', rows[0]);
+    } catch (err) {
+      await db.query('ROLLBACK');
+      throw err;
+    }
   } catch (err) {
     handleError(res, err);
   }

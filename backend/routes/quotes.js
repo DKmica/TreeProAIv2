@@ -11,6 +11,7 @@ const ragService = require('../services/ragService');
 const vectorStore = require('../services/vectorStore');
 const { generateJobNumber } = require('../services/numberService');
 const eventService = require('../services/eventService');
+const workOrderService = require('../services/workOrderService');
 
 const router = express.Router();
 
@@ -263,14 +264,20 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
       const sanitizedLeadId = sanitizeUUID(quoteData.leadId);
 
       let soldByEmployeeId = quoteData.soldByEmployeeId || null;
+      let workOrderId = quoteData.workOrderId || null;
       
-      if (sanitizedLeadId && !soldByEmployeeId) {
+      if (sanitizedLeadId) {
         const { rows: leadRows } = await db.query(
-          'SELECT sold_by_employee_id FROM leads WHERE id = $1',
+          'SELECT sold_by_employee_id, work_order_id FROM leads WHERE id = $1',
           [sanitizedLeadId]
         );
-        if (leadRows.length > 0 && leadRows[0].sold_by_employee_id) {
-          soldByEmployeeId = leadRows[0].sold_by_employee_id;
+        if (leadRows.length > 0) {
+          if (!soldByEmployeeId && leadRows[0].sold_by_employee_id) {
+            soldByEmployeeId = leadRows[0].sold_by_employee_id;
+          }
+          if (!workOrderId && leadRows[0].work_order_id) {
+            workOrderId = leadRows[0].work_order_id;
+          }
         }
       }
 
@@ -319,14 +326,14 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
       
       const insertQuery = `
         INSERT INTO quotes (
-          id, client_id, property_id, lead_id, customer_name, quote_number, version,
+          id, client_id, property_id, lead_id, work_order_id, customer_name, quote_number, version,
           approval_status, line_items, total_amount, discount_amount,
           discount_percentage, tax_rate, tax_amount, grand_total,
           terms_and_conditions, internal_notes, status, valid_until,
           deposit_amount, payment_terms, special_instructions, sold_by_employee_id, created_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, 1, 'pending', $7, $8, $9, $10, $11, $12, $13,
-          $14, $15, $16, $17, $18, $19, $20, $21, NOW()
+          $1, $2, $3, $4, $5, $6, $7, 1, 'pending', $8, $9, $10, $11, $12, $13, $14,
+          $15, $16, $17, $18, $19, $20, $21, $22, NOW()
         ) RETURNING *
       `;
       
@@ -335,6 +342,7 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
         associatedClientId,
         sanitizedPropertyId,
         sanitizedLeadId,
+        workOrderId,
         customerName,
         quoteNumber,
         JSON.stringify(lineItems),
@@ -376,6 +384,18 @@ router.post('/quotes', isAuthenticated, async (req, res) => {
       if (sanitizedLeadId) {
         await db.query('DELETE FROM leads WHERE id = $1', [sanitizedLeadId]);
         console.log(`Lead ${sanitizedLeadId} deleted after conversion to quote ${quoteId}`);
+      }
+      
+      // Transition work order to 'quoting' stage if linked (inside transaction for atomicity)
+      if (workOrderId) {
+        await db.query(`
+          UPDATE work_orders SET stage = 'quoting', updated_at = NOW() WHERE id = $1
+        `, [workOrderId]);
+        await db.query(`
+          INSERT INTO work_order_events (id, work_order_id, event_type, payload, actor_type, occurred_at)
+          VALUES ($1, $2, 'work_order.stage_changed', $3, 'system', NOW())
+        `, [uuidv4(), workOrderId, JSON.stringify({ from: 'lead', to: 'quoting', quoteId, via: 'quote_creation' })]);
+        console.log(`Work order ${workOrderId} transitioned to 'quoting' stage`);
       }
       
       await db.query('COMMIT');
@@ -1272,17 +1292,18 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
 
       const jobId = uuidv4();
       const jobNumber = await generateJobNumber();
+      const workOrderId = quote.work_order_id || null;
 
       const insertJobQuery = `
         INSERT INTO jobs (
-          id, client_id, property_id, quote_id, job_number, status,
+          id, client_id, property_id, quote_id, work_order_id, job_number, status,
           customer_name, customer_phone, customer_email, customer_address,
           job_location, special_instructions,
           equipment_needed, estimated_hours,
           completion_checklist, jha_required, created_at
         ) VALUES (
-          $1, $2, $3, $4, $5, 'scheduled', $6, $7, $8, $9, $10, $11,
-          $12, $13, $14, $15, NOW()
+          $1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9, $10, $11, $12,
+          $13, $14, $15, $16, NOW()
         ) RETURNING *
       `;
 
@@ -1291,6 +1312,7 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
         quote.client_id,
         quote.property_id,
         sanitizedId,
+        workOrderId,
         jobNumber,
         quote.customer_name || 'Unknown',
         customerPhone,
@@ -1308,6 +1330,18 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
         `UPDATE quotes SET status = 'Converted', updated_at = NOW() WHERE id = $1`,
         [sanitizedId]
       );
+
+      // Transition work order to 'scheduled' stage (inside transaction for atomicity)
+      if (workOrderId) {
+        await db.query(`
+          UPDATE work_orders SET stage = 'scheduled', updated_at = NOW() WHERE id = $1
+        `, [workOrderId]);
+        await db.query(`
+          INSERT INTO work_order_events (id, work_order_id, event_type, payload, actor_type, occurred_at)
+          VALUES ($1, $2, 'work_order.stage_changed', $3, 'system', NOW())
+        `, [uuidv4(), workOrderId, JSON.stringify({ from: 'quoting', to: 'scheduled', jobId, via: 'quote_to_job_conversion' })]);
+        console.log(`Work order ${workOrderId} transitioned to 'scheduled' stage`);
+      }
       
       await db.query('COMMIT');
       
