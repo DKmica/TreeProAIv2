@@ -79,6 +79,10 @@ const transformRow = (row, tableName) => {
       transformed.leadId = row.lead_id;
       delete transformed.lead_id;
     }
+    if (row.work_order_id !== undefined) {
+      transformed.workOrderId = row.work_order_id;
+      delete transformed.work_order_id;
+    }
     if (row.client_id !== undefined) {
       transformed.clientId = row.client_id;
       delete transformed.client_id;
@@ -191,6 +195,10 @@ const transformRow = (row, tableName) => {
       transformed.customerId = row.customer_id;
       delete transformed.customer_id;
     }
+    if (row.work_order_id !== undefined) {
+      transformed.workOrderId = row.work_order_id;
+      delete transformed.work_order_id;
+    }
     if (row.customer_uploads !== undefined) {
       transformed.customerUploads = row.customer_uploads;
       delete transformed.customer_uploads;
@@ -228,6 +236,10 @@ const transformRow = (row, tableName) => {
     if (row.quote_id !== undefined) {
       transformed.quoteId = row.quote_id;
       delete transformed.quote_id;
+    }
+    if (row.work_order_id !== undefined) {
+      transformed.workOrderId = row.work_order_id;
+      delete transformed.work_order_id;
     }
     if (row.customer_name !== undefined) {
       transformed.customerName = row.customer_name;
@@ -849,9 +861,17 @@ const transformRow = (row, tableName) => {
   
   // Transform invoices fields
   if (tableName === 'invoices') {
+    if (row.quote_id !== undefined) {
+      transformed.quoteId = row.quote_id;
+      delete transformed.quote_id;
+    }
     if (row.job_id !== undefined) {
       transformed.jobId = row.job_id;
       delete transformed.job_id;
+    }
+    if (row.work_order_id !== undefined) {
+      transformed.workOrderId = row.work_order_id;
+      delete transformed.work_order_id;
     }
     if (row.client_id !== undefined) {
       transformed.clientId = row.client_id;
@@ -1050,6 +1070,10 @@ const transformToDb = (data, tableName) => {
       transformed.lead_id = data.leadId;
       delete transformed.leadId;
     }
+    if (data.workOrderId !== undefined) {
+      transformed.work_order_id = data.workOrderId;
+      delete transformed.workOrderId;
+    }
     if (data.clientId !== undefined) {
       transformed.client_id = data.clientId;
       delete transformed.clientId;
@@ -1162,6 +1186,10 @@ const transformToDb = (data, tableName) => {
       transformed.customer_id = data.customerId;
       delete transformed.customerId;
     }
+    if (data.workOrderId !== undefined) {
+      transformed.work_order_id = data.workOrderId;
+      delete transformed.workOrderId;
+    }
     if (data.customerUploads !== undefined) {
       transformed.customer_uploads = data.customerUploads;
       delete transformed.customerUploads;
@@ -1204,6 +1232,10 @@ const transformToDb = (data, tableName) => {
     if (data.quoteId !== undefined) {
       transformed.quote_id = data.quoteId;
       delete transformed.quoteId;
+    }
+    if (data.workOrderId !== undefined) {
+      transformed.work_order_id = data.workOrderId;
+      delete transformed.workOrderId;
     }
     if (data.customerName !== undefined) {
       transformed.customer_name = data.customerName;
@@ -1451,6 +1483,10 @@ const transformToDb = (data, tableName) => {
     if (data.jobId !== undefined) {
       transformed.job_id = data.jobId;
       delete transformed.jobId;
+    }
+    if (data.workOrderId !== undefined) {
+      transformed.work_order_id = data.workOrderId;
+      delete transformed.workOrderId;
     }
     if (data.clientId !== undefined) {
       transformed.client_id = data.clientId;

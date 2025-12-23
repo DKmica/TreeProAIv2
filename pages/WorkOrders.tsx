@@ -11,10 +11,11 @@ const STAGE_CONFIG: Record<WorkOrderStage, { label: string; color: string; bgCol
   scheduled: { label: 'Scheduled', color: 'text-purple-400', bgColor: 'bg-purple-500/20', icon: <Briefcase className="w-4 h-4" /> },
   in_progress: { label: 'In Progress', color: 'text-cyan-400', bgColor: 'bg-cyan-500/20', icon: <Truck className="w-4 h-4" /> },
   complete: { label: 'Complete', color: 'text-green-400', bgColor: 'bg-green-500/20', icon: <CheckCircle className="w-4 h-4" /> },
+  invoiced: { label: 'Invoiced', color: 'text-amber-300', bgColor: 'bg-amber-500/20', icon: <DollarSign className="w-4 h-4" /> },
   lost: { label: 'Lost', color: 'text-red-400', bgColor: 'bg-red-500/20', icon: <XCircle className="w-4 h-4" /> }
 };
 
-const ALL_STAGES: WorkOrderStage[] = ['lead', 'quoting', 'scheduled', 'in_progress', 'complete', 'lost'];
+const ALL_STAGES: WorkOrderStage[] = ['lead', 'quoting', 'scheduled', 'in_progress', 'complete', 'invoiced', 'lost'];
 
 const WorkOrderDetail: React.FC<{ id: string; onBack: () => void }> = ({ id, onBack }) => {
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
@@ -155,6 +156,13 @@ const WorkOrderDetail: React.FC<{ id: string; onBack: () => void }> = ({ id, onB
                 </div>
                 <div className="text-white font-medium">{workOrder.jobsCount || 0}</div>
               </div>
+              <div className="bg-gray-700/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                  <DollarSign className="w-4 h-4" />
+                  Invoices
+                </div>
+                <div className="text-white font-medium">{workOrder.invoicesCount || 0}</div>
+              </div>
             </div>
           </div>
 
@@ -281,6 +289,7 @@ const WorkOrders: React.FC = () => {
       scheduled: [],
       in_progress: [],
       complete: [],
+      invoiced: [],
       lost: []
     };
 
@@ -336,8 +345,8 @@ const WorkOrders: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        {(['lead', 'quoting', 'scheduled', 'in_progress', 'complete', 'lost'] as WorkOrderStage[]).map(stage => {
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
+        {(['lead', 'quoting', 'scheduled', 'in_progress', 'complete', 'invoiced', 'lost'] as WorkOrderStage[]).map(stage => {
           const config = STAGE_CONFIG[stage];
           const stageData = summary.find(s => s.stage === stage);
           return (
@@ -410,7 +419,7 @@ const WorkOrders: React.FC = () => {
       </div>
 
       {viewMode === 'pipeline' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 overflow-x-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 overflow-x-auto">
           {ALL_STAGES
             .filter(stage => stageFilter === 'all' || stageFilter === stage)
             .map(stage => {
@@ -457,6 +466,11 @@ const WorkOrders: React.FC = () => {
                           {wo.jobsCount > 0 && (
                             <span className="bg-gray-600 px-2 py-0.5 rounded">
                               {wo.jobsCount} job{wo.jobsCount !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {wo.invoicesCount > 0 && (
+                            <span className="bg-gray-600 px-2 py-0.5 rounded">
+                              {wo.invoicesCount} invoice{wo.invoicesCount !== 1 ? 's' : ''}
                             </span>
                           )}
                         </div>
