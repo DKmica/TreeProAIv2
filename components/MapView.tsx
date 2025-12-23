@@ -212,7 +212,15 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
 
         // Add Employee Markers
         employees.forEach(employee => {
-            if (!employee.coordinates || (employee.coordinates.lat === 0 && employee.coordinates.lng === 0)) return;
+            const coords = employee.coordinates;
+            if (!coords) return;
+            
+            const lat = typeof coords.lat === 'number' ? coords.lat : parseFloat(String(coords.lat));
+            const lng = typeof coords.lng === 'number' ? coords.lng : parseFloat(String(coords.lng));
+            
+            if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+
+            const validPosition = { lat, lng };
 
             const crewPin = new google.maps.marker.PinElement({
                 background: '#f97316', // Orange for crew
@@ -222,7 +230,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, employees, customers, selectedJ
             });
 
             const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: employee.coordinates,
+                position: validPosition,
                 map,
                 title: `Crew: ${employee.name}`,
                 content: crewPin.element,
