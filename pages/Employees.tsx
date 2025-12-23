@@ -5,6 +5,34 @@ import { useEmployeesQuery } from '../hooks/useDataQueries';
 import * as api from '../services/apiService';
 import { formatPhone, formatSSN } from '../utils/formatters';
 
+const JOB_TITLES = [
+    'Crew Leader',
+    'Climber',
+    'Groundman',
+    'Salesman',
+    'Stump Grinder'
+];
+
+const US_STATES = [
+    { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' }, { value: 'AZ', label: 'Arizona' },
+    { value: 'AR', label: 'Arkansas' }, { value: 'CA', label: 'California' }, { value: 'CO', label: 'Colorado' },
+    { value: 'CT', label: 'Connecticut' }, { value: 'DE', label: 'Delaware' }, { value: 'FL', label: 'Florida' },
+    { value: 'GA', label: 'Georgia' }, { value: 'HI', label: 'Hawaii' }, { value: 'ID', label: 'Idaho' },
+    { value: 'IL', label: 'Illinois' }, { value: 'IN', label: 'Indiana' }, { value: 'IA', label: 'Iowa' },
+    { value: 'KS', label: 'Kansas' }, { value: 'KY', label: 'Kentucky' }, { value: 'LA', label: 'Louisiana' },
+    { value: 'ME', label: 'Maine' }, { value: 'MD', label: 'Maryland' }, { value: 'MA', label: 'Massachusetts' },
+    { value: 'MI', label: 'Michigan' }, { value: 'MN', label: 'Minnesota' }, { value: 'MS', label: 'Mississippi' },
+    { value: 'MO', label: 'Missouri' }, { value: 'MT', label: 'Montana' }, { value: 'NE', label: 'Nebraska' },
+    { value: 'NV', label: 'Nevada' }, { value: 'NH', label: 'New Hampshire' }, { value: 'NJ', label: 'New Jersey' },
+    { value: 'NM', label: 'New Mexico' }, { value: 'NY', label: 'New York' }, { value: 'NC', label: 'North Carolina' },
+    { value: 'ND', label: 'North Dakota' }, { value: 'OH', label: 'Ohio' }, { value: 'OK', label: 'Oklahoma' },
+    { value: 'OR', label: 'Oregon' }, { value: 'PA', label: 'Pennsylvania' }, { value: 'RI', label: 'Rhode Island' },
+    { value: 'SC', label: 'South Carolina' }, { value: 'SD', label: 'South Dakota' }, { value: 'TN', label: 'Tennessee' },
+    { value: 'TX', label: 'Texas' }, { value: 'UT', label: 'Utah' }, { value: 'VT', label: 'Vermont' },
+    { value: 'VA', label: 'Virginia' }, { value: 'WA', label: 'Washington' }, { value: 'WV', label: 'West Virginia' },
+    { value: 'WI', label: 'Wisconsin' }, { value: 'WY', label: 'Wyoming' }
+];
+
 const EmployeeForm: React.FC<{
     onSave: (employee: Partial<Employee>) => void;
     onCancel: () => void;
@@ -13,11 +41,15 @@ const EmployeeForm: React.FC<{
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
-        address: '',
+        streetAddress: '',
+        city: '',
+        state: '',
+        zipCode: '',
         ssn: '',
         dob: '',
         jobTitle: '',
         payRate: '',
+        commissionRate: '',
         hireDate: '',
         certifications: ''
     });
@@ -25,25 +57,33 @@ const EmployeeForm: React.FC<{
     useEffect(() => {
         if (initialData) {
             setFormData({
-                name: initialData.name,
-                phone: initialData.phone,
-                address: initialData.address,
-                ssn: initialData.ssn,
-                dob: initialData.dob,
-                jobTitle: initialData.jobTitle,
-                payRate: initialData.payRate.toString(),
-                hireDate: initialData.hireDate,
-                certifications: initialData.certifications
+                name: initialData.name || '',
+                phone: initialData.phone || '',
+                streetAddress: initialData.streetAddress || '',
+                city: initialData.city || '',
+                state: initialData.state || '',
+                zipCode: initialData.zipCode || '',
+                ssn: initialData.ssn || '',
+                dob: initialData.dob || '',
+                jobTitle: initialData.jobTitle || '',
+                payRate: initialData.payRate != null ? initialData.payRate.toString() : '',
+                commissionRate: initialData.commissionRate != null ? initialData.commissionRate.toString() : '',
+                hireDate: initialData.hireDate || '',
+                certifications: initialData.certifications || ''
             });
         } else {
             setFormData({
                 name: '',
                 phone: '',
-                address: '',
+                streetAddress: '',
+                city: '',
+                state: '',
+                zipCode: '',
                 ssn: '',
                 dob: '',
                 jobTitle: '',
                 payRate: '',
+                commissionRate: '',
                 hireDate: '',
                 certifications: ''
             });
@@ -52,7 +92,7 @@ const EmployeeForm: React.FC<{
 
     const isEditing = !!initialData;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         let formattedValue = value;
         
@@ -67,9 +107,14 @@ const EmployeeForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const fullAddress = [formData.streetAddress, formData.city, formData.state, formData.zipCode]
+            .filter(Boolean)
+            .join(', ');
         onSave({
             ...formData,
+            address: fullAddress,
             payRate: parseFloat(formData.payRate) || 0,
+            commissionRate: formData.commissionRate ? parseFloat(formData.commissionRate) : undefined,
         });
     };
 
@@ -87,8 +132,23 @@ const EmployeeForm: React.FC<{
                         <input type="tel" name="phone" id="phone" value={formData.phone} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="col-span-full">
-                        <label htmlFor="address" className="block text-sm font-medium leading-6 text-brand-gray-900">Address</label>
-                        <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                        <label htmlFor="streetAddress" className="block text-sm font-medium leading-6 text-brand-gray-900">Street Address</label>
+                        <input type="text" name="streetAddress" id="streetAddress" value={formData.streetAddress} onChange={handleChange} placeholder="123 Main St" className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                    </div>
+                    <div className="sm:col-span-2">
+                        <label htmlFor="city" className="block text-sm font-medium leading-6 text-brand-gray-900">City</label>
+                        <input type="text" name="city" id="city" value={formData.city} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                    </div>
+                    <div className="sm:col-span-2">
+                        <label htmlFor="state" className="block text-sm font-medium leading-6 text-brand-gray-900">State</label>
+                        <select name="state" id="state" value={formData.state} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm">
+                            <option value="">Select State</option>
+                            {US_STATES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                        <label htmlFor="zipCode" className="block text-sm font-medium leading-6 text-brand-gray-900">Zip Code</label>
+                        <input type="text" name="zipCode" id="zipCode" value={formData.zipCode} onChange={handleChange} placeholder="12345" maxLength={10} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="ssn" className="block text-sm font-medium leading-6 text-brand-gray-900">Social Security Number</label>
@@ -98,13 +158,20 @@ const EmployeeForm: React.FC<{
                         <label htmlFor="dob" className="block text-sm font-medium leading-6 text-brand-gray-900">Date of Birth</label>
                         <input type="date" name="dob" id="dob" value={formData.dob} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
-                     <div className="sm:col-span-3">
+                    <div className="sm:col-span-3">
                         <label htmlFor="jobTitle" className="block text-sm font-medium leading-6 text-brand-gray-900">Job Title</label>
-                        <input type="text" name="jobTitle" id="jobTitle" value={formData.jobTitle} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                        <select name="jobTitle" id="jobTitle" value={formData.jobTitle} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm">
+                            <option value="">Select Job Title</option>
+                            {JOB_TITLES.map(title => <option key={title} value={title}>{title}</option>)}
+                        </select>
                     </div>
-                     <div className="sm:col-span-3">
+                    <div className="sm:col-span-3">
                         <label htmlFor="payRate" className="block text-sm font-medium leading-6 text-brand-gray-900">Pay Rate ($/hr)</label>
                         <input type="number" name="payRate" id="payRate" value={formData.payRate} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                    </div>
+                    <div className="sm:col-span-3">
+                        <label htmlFor="commissionRate" className="block text-sm font-medium leading-6 text-brand-gray-900">Commission Rate (%) <span className="text-gray-400 font-normal">- Optional</span></label>
+                        <input type="number" name="commissionRate" id="commissionRate" value={formData.commissionRate} onChange={handleChange} step="0.01" min="0" max="100" placeholder="e.g., 5.00" className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="hireDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Hire Date</label>

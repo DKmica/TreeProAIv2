@@ -656,11 +656,16 @@ export interface Employee {
   name: string;
   phone: string;
   address: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   coordinates: { lat: number; lng: number; };
   ssn: string; // In a real app, this would be handled much more securely
   dob: string; // Date of Birth
   jobTitle: string;
   payRate: number; // per hour
+  commissionRate?: number; // optional commission percentage
   hireDate: string;
   certifications: string;
   performanceMetrics?: {

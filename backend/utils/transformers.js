@@ -23,6 +23,10 @@ const transformRow = (row, tableName) => {
       transformed.payRate = (row.pay_rate !== null && row.pay_rate !== '') ? parseFloat(row.pay_rate) : row.pay_rate;
       delete transformed.pay_rate;
     }
+    if (row.commission_rate !== undefined) {
+      transformed.commissionRate = (row.commission_rate !== null && row.commission_rate !== '') ? parseFloat(row.commission_rate) : null;
+      delete transformed.commission_rate;
+    }
     if (row.hire_date !== undefined) {
       transformed.hireDate = row.hire_date;
       delete transformed.hire_date;
@@ -30,6 +34,22 @@ const transformRow = (row, tableName) => {
     if (row.performance_metrics !== undefined) {
       transformed.performanceMetrics = row.performance_metrics;
       delete transformed.performance_metrics;
+    }
+    if (row.street_address !== undefined) {
+      transformed.streetAddress = row.street_address;
+      delete transformed.street_address;
+    }
+    if (row.zip_code !== undefined) {
+      transformed.zipCode = row.zip_code;
+      delete transformed.zip_code;
+    }
+    if (row.default_commission_rate !== undefined) {
+      transformed.defaultCommissionRate = (row.default_commission_rate !== null && row.default_commission_rate !== '') ? parseFloat(row.default_commission_rate) : 0;
+      delete transformed.default_commission_rate;
+    }
+    if (row.is_salesman !== undefined) {
+      transformed.isSalesman = row.is_salesman;
+      delete transformed.is_salesman;
     }
   }
   
