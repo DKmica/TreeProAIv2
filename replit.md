@@ -24,9 +24,21 @@ A comprehensive RBAC system provides granular access control with roles includin
 
 The API has a modular route structure with centralized error handling and UUID-based resource identifiers. Business logic is isolated using a service layer pattern, which includes a job state machine, a template system, and an automation engine. Key services encompass RAG, vector store, job lifecycle management, and payment integration. The backend also supports equipment usage and maintenance tracking, and a time tracking system with GPS capture and an approval workflow. An event-driven workflow system uses a `domain_events` table for tracking async business events with retry capability.
 
+### Work Order Pipeline
+
+The platform now features a unified Work Order model that tracks opportunities from lead to completion. Key features:
+
+- **Unified Pipeline**: Work orders are the canonical pipeline record linking leads, quotes, and jobs via `work_order_id` foreign keys
+- **Six Stages**: lead → quoting → scheduled → in_progress → complete → lost
+- **Event Tracking**: `work_order_events` table logs all stage changes and updates with actor attribution
+- **Pipeline Views**: Kanban-style board view and list view with stage filtering
+- **Detail View**: Shows work order info, linked quotes/jobs, and timeline of events
+- **Backend Service**: `WorkOrderService` handles CRUD operations, stage transitions, and linkage management
+- **REST API**: `/api/work-orders` endpoints with authentication and proper error handling
+
 ### Database Design
 
-PostgreSQL 14+ is the primary database, utilizing `node-postgres` with connection pooling. The schema supports a 3-tier client hierarchy (Clients → Properties → Contacts), soft deletes via `deleted_at` timestamps, full-text search indexes (GIN), and JSONB columns for flexible metadata. Key data models cover clients, properties, contacts, leads, quotes, jobs, invoices, employees, equipment, and templates.
+PostgreSQL 14+ is the primary database, utilizing `node-postgres` with connection pooling. The schema supports a 3-tier client hierarchy (Clients → Properties → Contacts), soft deletes via `deleted_at` timestamps, full-text search indexes (GIN), and JSONB columns for flexible metadata. Key data models cover clients, properties, contacts, leads, quotes, jobs, invoices, employees, equipment, templates, and work orders.
 
 ### AI/ML Integration
 
