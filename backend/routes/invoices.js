@@ -107,12 +107,14 @@ router.get('/invoices',
     const { status, search, clientId, startDate, endDate } = req.query;
     const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);
 
-    const filters = [];
+    const filters = ['deleted_at IS NULL'];
     const params = [];
 
     if (status) {
       params.push(status);
       filters.push(`status = $${params.length}`);
+    } else {
+      filters.push("status NOT IN ('Paid', 'Void')");
     }
 
     if (clientId) {

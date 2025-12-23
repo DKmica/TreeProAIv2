@@ -105,12 +105,14 @@ router.get('/jobs',
     const { status, search } = req.query;
     const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);
 
-    const filters = [];
+    const filters = ['j.deleted_at IS NULL'];
     const params = [];
 
     if (status) {
       params.push(status);
       filters.push(`j.status = $${params.length}`);
+    } else {
+      filters.push("j.status NOT IN ('paid', 'cancelled')");
     }
 
     if (search) {
