@@ -9,6 +9,7 @@ const { sanitizeUUID, snakeToCamel } = require('../utils/formatters');
 const stripeService = require('../services/stripeService');
 const reminderService = require('../services/reminderService');
 const { emitBusinessEvent } = require('../services/automation');
+const workOrderService = require('../services/workOrderService');
 
 const router = express.Router();
 
@@ -62,6 +63,43 @@ const calculateInvoiceTotals = (lineItems, discountAmount = 0, discountPercentag
   };
 };
 
+const resolveWorkOrderIdForInvoice = async ({ workOrderId, quoteId, jobId }) => {
+  if (workOrderId) return workOrderId;
+
+  if (quoteId) {
+    const { rows } = await db.query('SELECT work_order_id FROM quotes WHERE id = $1', [quoteId]);
+    if (rows[0]?.work_order_id) return rows[0].work_order_id;
+  }
+
+  if (jobId) {
+    const { rows } = await db.query('SELECT work_order_id FROM jobs WHERE id = $1', [jobId]);
+    if (rows[0]?.work_order_id) return rows[0].work_order_id;
+  }
+
+  return null;
+};
+
+const syncInvoiceToWorkOrder = async (invoiceRow, actorId = null) => {
+  try {
+    const workOrderId = await resolveWorkOrderIdForInvoice({
+      workOrderId: invoiceRow.work_order_id || invoiceRow.workOrderId,
+      quoteId: invoiceRow.quote_id || invoiceRow.quoteId,
+      jobId: invoiceRow.job_id || invoiceRow.jobId
+    });
+
+    if (!workOrderId) return;
+
+    await workOrderService.changeStage(
+      workOrderId,
+      workOrderService.STAGES.INVOICED,
+      null,
+      actorId
+    );
+  } catch (err) {
+    console.error('Failed to sync invoice to work order:', err.message);
+  }
+};
+
 router.get('/invoices', 
   requirePermission(RESOURCES.INVOICES, ACTIONS.LIST),
   async (req, res) => {
@@ -69,12 +107,14 @@ router.get('/invoices',
     const { status, search, clientId, startDate, endDate } = req.query;
     const { usePagination, page, pageSize, limit, offset } = parsePagination(req.query);
 
-    const filters = [];
+    const filters = ['deleted_at IS NULL'];
     const params = [];
 
     if (status) {
       params.push(status);
       filters.push(`status = $${params.length}`);
+    } else {
+      filters.push("status NOT IN ('Paid', 'Void')");
     }
 
     if (clientId) {
@@ -190,9 +230,15 @@ router.post('/invoices', async (req, res) => {
     const billingSequence = invoiceData.billingSequence || 1;
     const contractTotal = invoiceData.contractTotal || totals.grandTotal;
 
+    const workOrderId = await resolveWorkOrderIdForInvoice({
+      workOrderId: invoiceData.workOrderId,
+      quoteId: invoiceData.quoteId,
+      jobId: invoiceData.jobId
+    });
+
     const query = `
       INSERT INTO invoices (
-        id, quote_id, job_id, client_id, property_id, customer_name, status,
+        id, quote_id, job_id, work_order_id, client_id, property_id, customer_name, status,
         invoice_number, issue_date, due_date,
         line_items, subtotal, discount_amount, discount_percentage,
         tax_rate, tax_amount, total_amount, grand_total,
@@ -201,14 +247,14 @@ router.post('/invoices', async (req, res) => {
         notes, customer_notes, amount,
         billing_type, parent_invoice_id, payment_schedule, billing_sequence, contract_total
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10,
-        $11, $12, $13, $14,
-        $15, $16, $17, $18,
-        $19, $20, $21,
-        $22, $23, $24,
-        $25, $26, $27,
-        $28, $29, $30, $31, $32
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11,
+        $12, $13, $14, $15,
+        $16, $17, $18, $19,
+        $20, $21, $22,
+        $23, $24, $25,
+        $26, $27, $28,
+        $29, $30, $31, $32, $33
       )
       RETURNING *
     `;
@@ -217,6 +263,7 @@ router.post('/invoices', async (req, res) => {
       id,
       invoiceData.quoteId || null,
       invoiceData.jobId || null,
+      workOrderId,
       invoiceData.clientId || null,
       invoiceData.propertyId || null,
       invoiceData.customerName,
@@ -252,6 +299,8 @@ router.post('/invoices', async (req, res) => {
     const result = transformRow(rows[0], 'invoices');
 
     reminderService.scheduleInvoiceReminders(rows[0]);
+
+    await syncInvoiceToWorkOrder(rows[0], req.user?.id || null);
 
     try {
       await emitBusinessEvent('invoice_created', {
@@ -388,7 +437,7 @@ router.post('/invoices/batch', async (req, res) => {
         
         const insertQuery = `
           INSERT INTO invoices (
-            id, job_id, client_id, property_id, customer_name, status,
+            id, job_id, work_order_id, client_id, property_id, customer_name, status,
             invoice_number, issue_date, due_date,
             line_items, subtotal, discount_amount, discount_percentage,
             tax_rate, tax_amount, total_amount, grand_total,
@@ -396,13 +445,13 @@ router.post('/invoices/batch', async (req, res) => {
             customer_email, customer_phone, customer_address, amount,
             billing_type, billing_sequence, contract_total
           ) VALUES (
-            $1, $2, $3, $4, $5, $6,
-            $7, $8, $9,
-            $10, $11, $12, $13,
-            $14, $15, $16, $17,
-            $18, $19, $20,
-            $21, $22, $23, $24,
-            $25, $26, $27
+            $1, $2, $3, $4, $5, $6, $7,
+            $8, $9, $10,
+            $11, $12, $13, $14,
+            $15, $16, $17, $18,
+            $19, $20, $21,
+            $22, $23, $24, $25,
+            $26, $27, $28
           )
           RETURNING *
         `;
@@ -410,6 +459,7 @@ router.post('/invoices/batch', async (req, res) => {
         const insertValues = [
           invoiceId,
           sanitizedJobId,
+          job.work_order_id || null,
           job.client_id || null,
           job.property_id || null,
           customerName,
@@ -440,9 +490,11 @@ router.post('/invoices/batch', async (req, res) => {
         const { rows: invoiceRows } = await client.query(insertQuery, insertValues);
         const invoice = transformRow(invoiceRows[0], 'invoices');
         createdInvoices.push(invoice);
-        
+
         reminderService.scheduleInvoiceReminders(invoiceRows[0]);
-        
+
+        await syncInvoiceToWorkOrder(invoiceRows[0], req.user?.id || null);
+
       } catch (jobError) {
         errors.push({ jobId, error: jobError.message });
       }
@@ -1046,7 +1098,7 @@ router.post('/quotes/:id/convert-to-invoice', async (req, res) => {
 
     const insertInvoiceQuery = `
       INSERT INTO invoices (
-        id, quote_id, job_id, client_id, property_id, customer_name, status,
+        id, quote_id, job_id, work_order_id, client_id, property_id, customer_name, status,
         invoice_number, issue_date, due_date,
         line_items, subtotal, discount_amount, discount_percentage,
         tax_rate, tax_amount, total_amount, grand_total,
@@ -1054,13 +1106,13 @@ router.post('/quotes/:id/convert-to-invoice', async (req, res) => {
         customer_email, customer_phone, customer_address,
         notes, customer_notes, amount
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10,
-        $11, $12, $13, $14,
-        $15, $16, $17, $18,
-        $19, $20, $21,
-        $22, $23, $24,
-        $25, $26, $27
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11,
+        $12, $13, $14, $15,
+        $16, $17, $18, $19,
+        $20, $21, $22,
+        $23, $24, $25,
+        $26, $27, $28
       )
       RETURNING *
     `;
@@ -1069,6 +1121,7 @@ router.post('/quotes/:id/convert-to-invoice', async (req, res) => {
       invoiceId,
       sanitizedId,
       quote.job_id || null,
+      quote.work_order_id || null,
       quote.client_id || null,
       quote.property_id || null,
       quote.customer_name,
@@ -1110,6 +1163,8 @@ router.post('/quotes/:id/convert-to-invoice', async (req, res) => {
 
     const invoice = transformRow(invoiceRows[0], 'invoices');
     const updatedQuote = snakeToCamel(updatedQuoteRows[0]);
+
+    await syncInvoiceToWorkOrder(invoiceRows[0], req.user?.id || null);
 
     reminderService.scheduleInvoiceReminders(invoiceRows[0]);
 

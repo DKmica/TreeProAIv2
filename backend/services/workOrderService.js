@@ -8,6 +8,7 @@ const STAGES = {
   SCHEDULED: 'scheduled',
   IN_PROGRESS: 'in_progress',
   COMPLETE: 'complete',
+  INVOICED: 'invoiced',
   LOST: 'lost'
 };
 
@@ -18,7 +19,8 @@ const STAGE_TRANSITIONS = {
   [STAGES.QUOTING]: [STAGES.SCHEDULED, STAGES.LOST, STAGES.LEAD],
   [STAGES.SCHEDULED]: [STAGES.IN_PROGRESS, STAGES.COMPLETE, STAGES.LOST, STAGES.QUOTING],
   [STAGES.IN_PROGRESS]: [STAGES.COMPLETE, STAGES.SCHEDULED],
-  [STAGES.COMPLETE]: [],
+  [STAGES.COMPLETE]: [STAGES.INVOICED],
+  [STAGES.INVOICED]: [STAGES.COMPLETE, STAGES.LOST],
   [STAGES.LOST]: [STAGES.LEAD, STAGES.QUOTING]
 };
 
@@ -53,7 +55,8 @@ const transformWorkOrder = (row) => {
     propertyState: row.property_state,
     assignedEmployeeName: row.assigned_employee_name,
     quotesCount: parseInt(row.quotes_count) || 0,
-    jobsCount: parseInt(row.jobs_count) || 0
+    jobsCount: parseInt(row.jobs_count) || 0,
+    invoicesCount: parseInt(row.invoices_count) || 0
   };
 };
 
@@ -114,7 +117,11 @@ const workOrderService = {
         p.state as property_state,
         e.name as assigned_employee_name,
         (SELECT COUNT(*) FROM quotes q WHERE q.work_order_id = wo.id AND q.deleted_at IS NULL) as quotes_count,
-        (SELECT COUNT(*) FROM jobs j WHERE j.work_order_id = wo.id AND j.deleted_at IS NULL) as jobs_count
+        (SELECT COUNT(*) FROM jobs j WHERE j.work_order_id = wo.id AND j.deleted_at IS NULL) as jobs_count,
+        (SELECT COUNT(*) FROM invoices i WHERE i.deleted_at IS NULL AND (
+          i.quote_id IN (SELECT id FROM quotes WHERE work_order_id = wo.id)
+          OR i.job_id IN (SELECT id FROM jobs WHERE work_order_id = wo.id)
+        )) as invoices_count
       FROM work_orders wo
       LEFT JOIN clients c ON c.id = wo.client_id
       LEFT JOIN properties p ON p.id = wo.property_id
@@ -162,7 +169,11 @@ const workOrderService = {
         p.state as property_state,
         e.name as assigned_employee_name,
         (SELECT COUNT(*) FROM quotes q WHERE q.work_order_id = wo.id AND q.deleted_at IS NULL) as quotes_count,
-        (SELECT COUNT(*) FROM jobs j WHERE j.work_order_id = wo.id AND j.deleted_at IS NULL) as jobs_count
+        (SELECT COUNT(*) FROM jobs j WHERE j.work_order_id = wo.id AND j.deleted_at IS NULL) as jobs_count,
+        (SELECT COUNT(*) FROM invoices i WHERE i.deleted_at IS NULL AND (
+          i.quote_id IN (SELECT id FROM quotes WHERE work_order_id = wo.id)
+          OR i.job_id IN (SELECT id FROM jobs WHERE work_order_id = wo.id)
+        )) as invoices_count
       FROM work_orders wo
       LEFT JOIN clients c ON c.id = wo.client_id
       LEFT JOIN properties p ON p.id = wo.property_id
@@ -371,7 +382,8 @@ const workOrderService = {
           WHEN 'scheduled' THEN 3
           WHEN 'in_progress' THEN 4
           WHEN 'complete' THEN 5
-          WHEN 'lost' THEN 6
+          WHEN 'invoiced' THEN 6
+          WHEN 'lost' THEN 7
         END
     `);
 

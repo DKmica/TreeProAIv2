@@ -1,4 +1,3 @@
-const { Pool } = require('pg');
 const { getPoolConfig, dbConfig } = require('./config');
 
 let queryImpl;
@@ -8,6 +7,7 @@ let isShuttingDown = false;
 
 const initializePool = () => {
   if (process.env.DATABASE_URL) {
+    const { Pool } = require('pg');
     pool = new Pool(getPoolConfig(process.env.DATABASE_URL));
 
     pool.on('error', (err, client) => {
