@@ -50,6 +50,17 @@ PostgreSQL 14+ is the primary database, utilizing `node-postgres` with connectio
 
 Google Gemini (`@google/genai` v1.27.0) is the primary AI provider, using `gemini-2.0-flash` for chat and `text-embedding-004` for vector embeddings. AI features include an AI Tree Estimator, a RAG system for context-aware AI, a voice interface, a built-in arborist knowledge base, and AI-driven workflow automation. Vector embeddings are stored in ChromaDB, and context injection is dynamic based on user workflow. The AI module includes an Estimator Service for logging estimates and feedback, an Assistant Service for intent detection and conversational responses, and a Scheduling Helper for job duration prediction and crew optimization.
 
+### Lead Generation Landing Page
+
+A public landing page at `/free-estimate` provides a lead generation tool that can be advertised externally:
+
+- **Public Access**: No authentication required - accessible directly from ads or search results
+- **AI Estimator Integration**: Uses the same Gemini-powered tree analysis as the internal estimator
+- **Lead Capture Flow**: After receiving an AI estimate, users can request an official quote by submitting their contact information (name, email, phone, address)
+- **Source Tracking**: Leads created from the landing page are tagged with "AI Free Estimate" source and include full estimate data in the description
+- **CRM Integration**: Leads automatically create clients and work orders, appearing in the standard leads pipeline for follow-up and potential resale
+- **Backend API**: Public endpoint at `/api/public/leads` handles anonymous lead submission
+
 ### PHC & Inventory
 
 The platform includes Plant Health Care (PHC) compliance tracking with a `MaterialUsageForm` for recording application details and a `material_inventory` table for product information, EPA registration, safety data, and inventory tracking. A PHC Compliance Report provides filtering, compliance indicators, and export features.
