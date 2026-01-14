@@ -119,8 +119,7 @@ const workOrderService = {
         (SELECT COUNT(*) FROM quotes q WHERE q.work_order_id = wo.id AND q.deleted_at IS NULL) as quotes_count,
         (SELECT COUNT(*) FROM jobs j WHERE j.work_order_id = wo.id AND j.deleted_at IS NULL) as jobs_count,
         (SELECT COUNT(*) FROM invoices i WHERE (
-          i.work_order_id = wo.id
-          OR i.quote_id IN (SELECT id FROM quotes WHERE work_order_id = wo.id)
+          i.quote_id IN (SELECT id FROM quotes WHERE work_order_id = wo.id)
           OR i.job_id IN (SELECT id FROM jobs WHERE work_order_id = wo.id)
         )) as invoices_count
       FROM work_orders wo
@@ -172,8 +171,7 @@ const workOrderService = {
         (SELECT COUNT(*) FROM quotes q WHERE q.work_order_id = wo.id AND q.deleted_at IS NULL) as quotes_count,
         (SELECT COUNT(*) FROM jobs j WHERE j.work_order_id = wo.id AND j.deleted_at IS NULL) as jobs_count,
         (SELECT COUNT(*) FROM invoices i WHERE (
-          i.work_order_id = wo.id
-          OR i.quote_id IN (SELECT id FROM quotes WHERE work_order_id = wo.id)
+          i.quote_id IN (SELECT id FROM quotes WHERE work_order_id = wo.id)
           OR i.job_id IN (SELECT id FROM jobs WHERE work_order_id = wo.id)
         )) as invoices_count
       FROM work_orders wo
