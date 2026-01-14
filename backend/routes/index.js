@@ -2,6 +2,7 @@ const express = require('express');
 const authRouter = require('./auth');
 const healthRouter = require('./health');
 const leadsRouter = require('./leads');
+const publicLeadsRouter = require('./publicLeads');
 const clientsRouter = require('./clients');
 const propertiesRouter = require('./properties');
 const contactsRouter = require('./contacts');
@@ -96,6 +97,8 @@ function buildApiRouter() {
 }
 
 function mountApiRoutes(app, legacyRouter) {
+  app.use('/api/public', publicLeadsRouter);
+
   const modularRouter = buildApiRouter();
 
   if (useModularRoutes) {

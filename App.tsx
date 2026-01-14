@@ -49,6 +49,7 @@ const QuotePortal = lazy(() => import('./pages/portal/QuotePortal'));
 const InvoicePortal = lazy(() => import('./pages/portal/InvoicePortal'));
 const JobStatusPortal = lazy(() => import('./pages/portal/JobStatusPortal'));
 const ClientHub = lazy(() => import('./pages/portal/ClientHub'));
+const FreeEstimateLanding = lazy(() => import('./pages/FreeEstimateLanding'));
 
 const PageLoader: React.FC = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -65,6 +66,7 @@ const App: React.FC = () => {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/free-estimate" element={<Suspense fallback={<PageLoader />}><FreeEstimateLanding /></Suspense>} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
