@@ -4,7 +4,7 @@ import MapView from '../components/MapView';
 import { Job, PayrollRecord, TimeEntry, PayPeriod, Equipment, AICoreInsights } from '../types';
 import { payrollRecordService, timeEntryService, payPeriodService, equipmentService } from '../services/apiService';
 import { getAiCoreInsights } from '../services/gemini/businessService';
-import { useJobsQuery, useEmployeesQuery, useClientsQuery, useLeadsQuery, useQuotesQuery } from '../hooks/useDataQueries';
+import { useJobsQuery, useEmployeesQuery, useClientsQuery, useWorkOrderSummaryQuery } from '../hooks/useDataQueries';
 
 async function apiFetch<T>(endpoint: string): Promise<T> {
   const response = await fetch(`/api/${endpoint}`);
@@ -17,8 +17,7 @@ const Dashboard: React.FC = () => {
     const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
     const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
     const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
-    const { data: leads = [], isLoading: leadsLoading } = useLeadsQuery();
-    const { data: quotes = [], isLoading: quotesLoading } = useQuotesQuery();
+    const { data: workOrderSummary = [], isLoading: woSummaryLoading } = useWorkOrderSummaryQuery();
 
     const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'jobs' | 'map'>('jobs');
@@ -31,7 +30,7 @@ const Dashboard: React.FC = () => {
     const [insightsError, setInsightsError] = useState<string | null>(null);
     const [dashboardSummary, setDashboardSummary] = useState<any>(null);
 
-    const isLoading = jobsLoading || employeesLoading || customersLoading || leadsLoading || quotesLoading;
+    const isLoading = jobsLoading || employeesLoading || customersLoading || woSummaryLoading;
 
     const activeJobs = useMemo(() => 
         jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress')
@@ -39,15 +38,15 @@ const Dashboard: React.FC = () => {
         [jobs]
     );
 
-    const newLeadsCount = useMemo(() => 
-        leads.filter(lead => lead.status === 'New').length,
-        [leads]
-    );
+    const newLeadsCount = useMemo(() => {
+        const leadStage = workOrderSummary.find((s: any) => s.stage === 'lead');
+        return leadStage?.count || 0;
+    }, [workOrderSummary]);
 
-    const quotesSentCount = useMemo(() => 
-        quotes.filter(quote => quote.status === 'Sent' || quote.status === 'Accepted').length,
-        [quotes]
-    );
+    const quotesSentCount = useMemo(() => {
+        const quotingStage = workOrderSummary.find((s: any) => s.stage === 'quoting');
+        return quotingStage?.count || 0;
+    }, [workOrderSummary]);
 
     const activeJobsCount = useMemo(() => 
         jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress').length,
@@ -79,12 +78,14 @@ const Dashboard: React.FC = () => {
         setInsightsError(null);
         
         try {
-            const [payrollData, timeData, payPeriodData, equipmentData, summary] = await Promise.all([
+            const [payrollData, timeData, payPeriodData, equipmentData, summary, leadsData, quotesData] = await Promise.all([
                 payrollRecordService.getAll().catch(() => []),
                 timeEntryService.getAll().catch(() => []),
                 payPeriodService.getAll().catch(() => []),
                 equipmentService.getAll().catch(() => []),
-                apiFetch<any>('dashboard/summary').catch(() => null)
+                apiFetch<any>('dashboard/summary').catch(() => null),
+                apiFetch<any[]>('leads').catch(() => []),
+                apiFetch<any[]>('quotes').catch(() => [])
             ]);
             
             setPayrollRecords(payrollData);
@@ -94,9 +95,9 @@ const Dashboard: React.FC = () => {
             if (summary) setDashboardSummary(summary.data);
             
             const insights = await getAiCoreInsights(
-                leads,
+                leadsData || [],
                 jobs,
-                quotes,
+                quotesData || [],
                 employees,
                 equipmentData,
                 payrollData,
@@ -163,7 +164,7 @@ const Dashboard: React.FC = () => {
       <h1 className="text-2xl font-bold text-brand-gray-900">Dashboard</h1>
       <p className="mt-2 text-brand-gray-600">Welcome to TreePro AI. Analytics and overview will be displayed here.</p>
        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <button onClick={() => navigate('/crm')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
+          <button onClick={() => navigate('/leads')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
             <dt className="truncate text-sm font-medium text-brand-gray-500">New Leads</dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{newLeadsCount}</dd>
           </button>

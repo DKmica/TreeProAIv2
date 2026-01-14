@@ -96,6 +96,14 @@ export function useDashboardSummaryQuery() {
   });
 }
 
+export function useWorkOrderSummaryQuery() {
+  return useQuery({
+    queryKey: ['work-order-summary'],
+    queryFn: () => api.workOrderService.getSummary(),
+    staleTime: DASHBOARD_STALE_TIME,
+  });
+}
+
 export function useInvalidateQueries() {
   const queryClient = useQueryClient();
   
