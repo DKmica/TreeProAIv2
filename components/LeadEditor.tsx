@@ -10,6 +10,7 @@ interface LeadEditorProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (lead: Lead) => void;
+  onCreateQuote: (lead: Lead) => void;
   lead?: Lead;
 }
 
@@ -53,7 +54,7 @@ interface FormErrors {
   zipCode?: string;
 }
 
-const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, lead }) => {
+const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCreateQuote, lead }) => {
   const [formData, setFormData] = useState<FormData>({
     clientId: '',
     propertyId: '',
@@ -806,7 +807,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, lead }
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex flex-wrap justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
@@ -814,6 +815,18 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, lead }
             className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (lead) {
+                onCreateQuote(lead);
+              }
+            }}
+            disabled={isLoading || !lead?.id}
+            className="px-4 py-2.5 border border-cyan-600 text-cyan-200 rounded-md hover:bg-cyan-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Create Quote
           </button>
           <button
             type="submit"
