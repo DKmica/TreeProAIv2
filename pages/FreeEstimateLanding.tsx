@@ -39,9 +39,7 @@ const FreeEstimateLanding: React.FC = () => {
     notes: ''
   });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files);
+  const handleFileChange = (event: es = Array.from(event.target.files);
       setFiles(prev => [...prev, ...newFiles]);
       const newPreviews = newFiles.map(file => URL.createObjectURL(file as Blob));
       setPreviews(prev => [...prev, ...newPreviews]);
