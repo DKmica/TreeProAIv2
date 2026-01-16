@@ -747,7 +747,15 @@ const Jobs: React.FC = () => {
         setShowForm(true);
         window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
+    if (location.state?.jobId) {
+        const jobToView = jobs.find(job => job.id === location.state.jobId);
+        if (jobToView) {
+            setViewingJobDetail(jobToView);
+            setActiveTab('info');
+            window.history.replaceState({}, document.title);
+        }
+    }
+  }, [location.state, jobs]);
 
   useEffect(() => {
     const warnings = jobs
@@ -823,7 +831,7 @@ const Jobs: React.FC = () => {
               let createdJob: Job;
 
               if (jobData.quoteId) {
-                  const convertedJob = await api.quoteService.convertToJob(jobData.quoteId);
+                  const { job: convertedJob } = await api.quoteService.convertToJob(jobData.quoteId);
                   const updatePayload = {
                       ...newJobPayload,
                       clientId: convertedJob.clientId,

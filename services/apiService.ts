@@ -210,11 +210,11 @@ export const quoteService = {
     const response = await apiFetch<{ success: boolean; data: Quote }>(`quotes/${id}`);
     return response.data;
   },
-  convertToJob: async (id: string): Promise<Job> => {
-    const response = await apiFetch<{ success: boolean; data: Job; message?: string }>(`quotes/${id}/convert-to-job`, {
+  convertToJob: async (id: string): Promise<{ job: Job; quoteDeleted: boolean }> => {
+    const response = await apiFetch<{ success: boolean; data: Job; quoteDeleted?: boolean; message?: string }>(`quotes/${id}/convert-to-job`, {
       method: 'POST',
     });
-    return response.data;
+    return { job: response.data, quoteDeleted: response.quoteDeleted ?? false };
   },
   create: (data: Partial<Omit<Quote, 'id'>>): Promise<Quote> => apiFetch('quotes', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Quote>): Promise<Quote> => apiFetch(`quotes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

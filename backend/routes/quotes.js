@@ -1327,7 +1327,9 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
       ]);
       
       await db.query(
-        `UPDATE quotes SET status = 'Converted', updated_at = NOW() WHERE id = $1`,
+        `UPDATE quotes
+         SET status = 'Converted', deleted_at = NOW(), updated_at = NOW()
+         WHERE id = $1`,
         [sanitizedId]
       );
 
@@ -1350,6 +1352,7 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
       res.status(201).json({
         success: true,
         data: job,
+        quoteDeleted: true,
         message: 'Quote successfully converted to job'
       });
       
