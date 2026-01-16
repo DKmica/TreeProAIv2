@@ -308,7 +308,20 @@ const QuoteDetail: React.FC = () => {
 
   const executeJobConversion = async (quoteToConvert: Quote) => {
     try {
-      const newJob = await quoteService.convertToJob(quoteToConvert.id);
+      const { job: newJob, quoteDeleted } = await quoteService.convertToJob(quoteToConvert.id);
+
+      if (quoteDeleted) {
+        setLinkageMessages([`Created job ${newJob.jobNumber || newJob.id} from this quote.`]);
+        if (newJob?.id) {
+          navigate('/jobs', { state: { jobId: newJob.id } });
+        } else if (quoteToConvert.clientId) {
+          navigate(`/crm/clients/${quoteToConvert.clientId}`);
+        } else {
+          navigate('/crm');
+        }
+        return;
+      }
+
       const updatedQuote = await quoteService.getById(quoteToConvert.id);
       setQuote(updatedQuote);
 
