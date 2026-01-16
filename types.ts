@@ -405,7 +405,14 @@ export interface Job {
   etaWindowStart?: string;
   etaWindowEnd?: string;
   assignedCrew: string[];
+  lineItems?: LineItem[];
   stumpGrindingPrice?: number;
+  totalAmount?: number;
+  discountAmount?: number;
+  discountPercentage?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  grandTotal?: number;
   workStartedAt?: string;
   workEndedAt?: string;
   photos?: string[];
