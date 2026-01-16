@@ -372,9 +372,11 @@ const CrewJobDetail: React.FC = () => {
       });
   };
 
-  const services = quote?.lineItems.filter(item => item.selected) || [];
-  if (quote && (quote.stumpGrindingPrice > 0)) {
-    services.push({ description: 'Stump Grinding', price: quote.stumpGrindingPrice, selected: true });
+  const serviceLineItems = (quote?.lineItems ?? mergedJob?.lineItems ?? []).filter(item => item.selected !== false);
+  const stumpGrindingPrice = quote?.stumpGrindingPrice ?? mergedJob?.stumpGrindingPrice ?? 0;
+  const services = [...serviceLineItems];
+  if (stumpGrindingPrice > 0) {
+    services.push({ description: 'Stump Grinding', price: stumpGrindingPrice, selected: true });
   }
 
   const handleGenerateJHA = async () => {

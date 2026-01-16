@@ -568,7 +568,14 @@ CREATE TABLE IF NOT EXISTS jobs (
     job_template_id VARCHAR(36) REFERENCES job_templates(id) ON DELETE SET NULL,
 
     -- Pricing
+    line_items JSONB DEFAULT '[]',
     stump_grinding_price NUMERIC DEFAULT 0,
+    total_amount NUMERIC(12,2),
+    discount_amount NUMERIC(12,2) DEFAULT 0,
+    discount_percentage NUMERIC(5,2) DEFAULT 0,
+    tax_rate NUMERIC(5,2) DEFAULT 0,
+    tax_amount NUMERIC(12,2) DEFAULT 0,
+    grand_total NUMERIC(12,2),
     
     -- Work Tracking
     work_started_at TIMESTAMP WITH TIME ZONE,

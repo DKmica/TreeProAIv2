@@ -847,21 +847,24 @@ const Jobs: React.FC = () => {
 
   const handleCreateInvoice = (job: Job) => {
     const quote = quotes.find(q => q.id === job.quoteId);
-    if (!quote) {
-        alert('Associated quote not found.');
+    const sourceLineItems = (quote?.lineItems ?? job.lineItems ?? []).filter(item => item.selected !== false);
+    const stumpGrindingPrice = quote?.stumpGrindingPrice ?? job.stumpGrindingPrice ?? 0;
+
+    if (!quote && sourceLineItems.length === 0 && stumpGrindingPrice <= 0) {
+        alert('Associated quote not found and no job line items are available.');
         return;
     }
 
-    const lineItems: LineItem[] = quote.lineItems.map(item => ({
+    const lineItems: LineItem[] = sourceLineItems.map(item => ({
       description: item.description,
       price: item.price,
-      selected: item.selected
+      selected: item.selected ?? true
     }));
 
-    if (quote.stumpGrindingPrice && quote.stumpGrindingPrice > 0) {
+    if (stumpGrindingPrice > 0) {
       lineItems.push({
         description: 'Stump Grinding',
-        price: quote.stumpGrindingPrice,
+        price: stumpGrindingPrice,
         selected: true
       });
     }

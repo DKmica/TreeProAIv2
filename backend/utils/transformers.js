@@ -159,6 +159,62 @@ const transformRow = (row, tableName) => {
       transformed.stumpGrindingPrice = (row.stump_grinding_price !== null && row.stump_grinding_price !== '') ? parseFloat(row.stump_grinding_price) : row.stump_grinding_price;
       delete transformed.stump_grinding_price;
     }
+    if (row.line_items !== undefined) {
+      transformed.lineItems = row.line_items;
+      delete transformed.line_items;
+    }
+    if (row.total_amount !== undefined) {
+      transformed.totalAmount = (row.total_amount !== null && row.total_amount !== '') ? parseFloat(row.total_amount) : row.total_amount;
+      delete transformed.total_amount;
+    }
+    if (row.discount_amount !== undefined) {
+      transformed.discountAmount = (row.discount_amount !== null && row.discount_amount !== '') ? parseFloat(row.discount_amount) : row.discount_amount;
+      delete transformed.discount_amount;
+    }
+    if (row.discount_percentage !== undefined) {
+      transformed.discountPercentage = (row.discount_percentage !== null && row.discount_percentage !== '') ? parseFloat(row.discount_percentage) : row.discount_percentage;
+      delete transformed.discount_percentage;
+    }
+    if (row.tax_rate !== undefined) {
+      transformed.taxRate = (row.tax_rate !== null && row.tax_rate !== '') ? parseFloat(row.tax_rate) : row.tax_rate;
+      delete transformed.tax_rate;
+    }
+    if (row.tax_amount !== undefined) {
+      transformed.taxAmount = (row.tax_amount !== null && row.tax_amount !== '') ? parseFloat(row.tax_amount) : row.tax_amount;
+      delete transformed.tax_amount;
+    }
+    if (row.grand_total !== undefined) {
+      transformed.grandTotal = (row.grand_total !== null && row.grand_total !== '') ? parseFloat(row.grand_total) : row.grand_total;
+      delete transformed.grand_total;
+    }
+    if (row.line_items !== undefined) {
+      transformed.lineItems = row.line_items;
+      delete transformed.line_items;
+    }
+    if (row.total_amount !== undefined) {
+      transformed.totalAmount = (row.total_amount !== null && row.total_amount !== '') ? parseFloat(row.total_amount) : row.total_amount;
+      delete transformed.total_amount;
+    }
+    if (row.discount_amount !== undefined) {
+      transformed.discountAmount = (row.discount_amount !== null && row.discount_amount !== '') ? parseFloat(row.discount_amount) : row.discount_amount;
+      delete transformed.discount_amount;
+    }
+    if (row.discount_percentage !== undefined) {
+      transformed.discountPercentage = (row.discount_percentage !== null && row.discount_percentage !== '') ? parseFloat(row.discount_percentage) : row.discount_percentage;
+      delete transformed.discount_percentage;
+    }
+    if (row.tax_rate !== undefined) {
+      transformed.taxRate = (row.tax_rate !== null && row.tax_rate !== '') ? parseFloat(row.tax_rate) : row.tax_rate;
+      delete transformed.tax_rate;
+    }
+    if (row.tax_amount !== undefined) {
+      transformed.taxAmount = (row.tax_amount !== null && row.tax_amount !== '') ? parseFloat(row.tax_amount) : row.tax_amount;
+      delete transformed.tax_amount;
+    }
+    if (row.grand_total !== undefined) {
+      transformed.grandTotal = (row.grand_total !== null && row.grand_total !== '') ? parseFloat(row.grand_total) : row.grand_total;
+      delete transformed.grand_total;
+    }
     if (row.accepted_at !== undefined) {
       transformed.acceptedAt = row.accepted_at;
       delete transformed.accepted_at;
@@ -232,6 +288,34 @@ const transformRow = (row, tableName) => {
     if (row.stump_grinding_price !== undefined) {
       transformed.stumpGrindingPrice = (row.stump_grinding_price !== null && row.stump_grinding_price !== '') ? parseFloat(row.stump_grinding_price) : row.stump_grinding_price;
       delete transformed.stump_grinding_price;
+    }
+    if (row.line_items !== undefined) {
+      transformed.lineItems = row.line_items;
+      delete transformed.line_items;
+    }
+    if (row.total_amount !== undefined) {
+      transformed.totalAmount = (row.total_amount !== null && row.total_amount !== '') ? parseFloat(row.total_amount) : row.total_amount;
+      delete transformed.total_amount;
+    }
+    if (row.discount_amount !== undefined) {
+      transformed.discountAmount = (row.discount_amount !== null && row.discount_amount !== '') ? parseFloat(row.discount_amount) : row.discount_amount;
+      delete transformed.discount_amount;
+    }
+    if (row.discount_percentage !== undefined) {
+      transformed.discountPercentage = (row.discount_percentage !== null && row.discount_percentage !== '') ? parseFloat(row.discount_percentage) : row.discount_percentage;
+      delete transformed.discount_percentage;
+    }
+    if (row.tax_rate !== undefined) {
+      transformed.taxRate = (row.tax_rate !== null && row.tax_rate !== '') ? parseFloat(row.tax_rate) : row.tax_rate;
+      delete transformed.tax_rate;
+    }
+    if (row.tax_amount !== undefined) {
+      transformed.taxAmount = (row.tax_amount !== null && row.tax_amount !== '') ? parseFloat(row.tax_amount) : row.tax_amount;
+      delete transformed.tax_amount;
+    }
+    if (row.grand_total !== undefined) {
+      transformed.grandTotal = (row.grand_total !== null && row.grand_total !== '') ? parseFloat(row.grand_total) : row.grand_total;
+      delete transformed.grand_total;
     }
     if (row.quote_id !== undefined) {
       transformed.quoteId = row.quote_id;

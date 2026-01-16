@@ -1299,11 +1299,13 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
           id, client_id, property_id, quote_id, work_order_id, job_number, status,
           customer_name, customer_phone, customer_email, customer_address,
           job_location, special_instructions,
+          line_items, stump_grinding_price, total_amount, discount_amount,
+          discount_percentage, tax_rate, tax_amount, grand_total,
           equipment_needed, estimated_hours,
           completion_checklist, jha_required, created_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, 'scheduled', $7, $8, $9, $10, $11, $12,
-          $13, $14, $15, $16, NOW()
+          $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, NOW()
         ) RETURNING *
       `;
 
@@ -1320,6 +1322,14 @@ router.post('/quotes/:id/convert-to-job', isAuthenticated, async (req, res) => {
         customerAddress,
         jobLocation || null,
         quote.special_instructions || null,
+        quote.line_items || [],
+        quote.stump_grinding_price || 0,
+        quote.total_amount || null,
+        quote.discount_amount || 0,
+        quote.discount_percentage || 0,
+        quote.tax_rate || 0,
+        quote.tax_amount || 0,
+        quote.grand_total || null,
         equipmentNeeded,
         matchedTemplate?.default_duration_hours || null,
         completionChecklist,
