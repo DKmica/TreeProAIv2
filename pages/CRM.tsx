@@ -659,6 +659,7 @@ const CRM: React.FC = () => {
           setSelectedLead(null);
         }}
         onSave={handleLeadSave}
+        onCreateQuote={(lead) => handleConvertToQuote(lead.id)}
         lead={selectedLead || undefined}
       />
       <QuoteEditor
