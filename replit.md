@@ -96,3 +96,62 @@ Unit and integration testing are performed with Vitest and React Testing Library
 -   **TypeScript**: Type safety.
 -   **ESLint**: Code quality.
 -   **Dyad component tagger**: Debugging.
+
+---
+
+# TreePro Flow (New Rebuild)
+
+## Overview
+
+TreePro Flow is a greenfield rebuild of TreePro AI with a simplified, workflow-first UX. It features a unified WorkItem model that replaces separate leads/quotes/jobs tables with 8-stage pipeline tracking. Built with Next.js 14, Prisma, shadcn/ui, and designed for Clerk authentication.
+
+## Key Design Differences from TreePro AI
+
+1. **Unified WorkItem Model**: Single table tracks opportunities through 8 stages (LEAD → QUOTE → SCHEDULED → IN_PROGRESS → COMPLETE → INVOICED → PAID → LOST) vs. separate tables in TreePro AI
+2. **6-Item Navigation**: Today, Pipeline, Calendar, Clients, Money, Crew Mode
+3. **Modern Stack**: Next.js 14 App Router, Prisma 5, shadcn/ui components, TailwindCSS
+4. **Separate Database Schema**: Uses PostgreSQL "flow" schema to avoid conflicts with TreePro AI's "public" schema
+
+## Technical Architecture
+
+### Frontend (treepro-flow/)
+
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: TailwindCSS with shadcn/ui components
+- **Authentication**: Clerk (to be configured)
+- **Port**: 5000 (webview)
+
+### Database (Prisma)
+
+- **Schema**: Uses PostgreSQL "flow" schema (separate from TreePro AI)
+- **ORM**: Prisma 5 with multiSchema preview feature
+- **Models**: Company, User, Client, Property, Contact, WorkItem, TimeEntry, Attachment, Activity, EventLog, AutomationRule
+
+### Key Files
+
+- `treepro-flow/prisma/schema.prisma` - Database schema
+- `treepro-flow/src/app/(dashboard)/` - Main app pages
+- `treepro-flow/src/components/layout/` - Sidebar, Header components
+- `treepro-flow/src/lib/prisma.ts` - Prisma client
+
+### Current Status (Milestone 1 Progress)
+
+- [x] Next.js 14 project initialized
+- [x] Prisma schema with WorkItem model
+- [x] Database schema pushed to "flow" schema
+- [x] shadcn/ui components installed
+- [x] Dashboard layout with 6-item sidebar
+- [x] Today page with mock data
+- [x] Pipeline (Kanban) page with mock data
+- [x] Clients page with mock data
+- [x] Calendar page with mock data
+- [x] Money page with mock data
+- [x] Crew Mode page with mock data
+- [ ] Clerk authentication integration
+- [ ] API routes for CRUD operations
+- [ ] Real database integration
+
+## Running TreePro Flow
+
+The "TreePro Flow" workflow runs on port 5000. Note: Cannot run simultaneously with TreePro AI Frontend (both use port 5000).

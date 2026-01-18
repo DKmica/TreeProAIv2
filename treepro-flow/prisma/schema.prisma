@@ -1,0 +1,274 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["flow"]
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  logo      String?
+  timezone  String   @default("America/New_York")
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users      User[]
+  clients    Client[]
+  workItems  WorkItem[]
+  eventLogs  EventLog[]
+
+  @@map("companies")
+  @@schema("flow")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  clerkId       String   @unique @map("clerk_id")
+  email         String
+  firstName     String?  @map("first_name")
+  lastName      String?  @map("last_name")
+  phone         String?
+  role          Role     @default(CREW)
+  avatarUrl     String?  @map("avatar_url")
+  isActive      Boolean  @default(true) @map("is_active")
+  companyId     String   @map("company_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  company       Company    @relation(fields: [companyId], references: [id])
+  assignedItems WorkItem[] @relation("AssignedTo")
+  createdItems  WorkItem[] @relation("CreatedBy")
+  timeEntries   TimeEntry[]
+  eventLogs     EventLog[]
+
+  @@map("users")
+  @@schema("flow")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  SALES
+  FOREMAN
+  CREW
+
+  @@schema("flow")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  name      String
+  email     String?
+  phone     String?
+  notes     String?
+  tags      String[] @default([])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company    Company    @relation(fields: [companyId], references: [id])
+  properties Property[]
+  contacts   Contact[]
+  workItems  WorkItem[]
+
+  @@map("clients")
+  @@schema("flow")
+}
+
+model Property {
+  id        String   @id @default(uuid())
+  clientId  String   @map("client_id")
+  name      String?
+  address   String
+  city      String?
+  state     String?
+  zip       String?
+  lat       Float?
+  lng       Float?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client    Client     @relation(fields: [clientId], references: [id])
+  workItems WorkItem[]
+
+  @@map("properties")
+  @@schema("flow")
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  clientId  String   @map("client_id")
+  name      String
+  email     String?
+  phone     String?
+  role      String?
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@map("contacts")
+  @@schema("flow")
+}
+
+model WorkItem {
+  id              String        @id @default(uuid())
+  companyId       String        @map("company_id")
+  clientId        String?       @map("client_id")
+  propertyId      String?       @map("property_id")
+  stage           WorkItemStage @default(LEAD)
+  title           String
+  description     String?
+  source          String?
+  priority        Priority      @default(MEDIUM)
+  estimatedValue  Float?        @map("estimated_value")
+  actualValue     Float?        @map("actual_value")
+  
+  scheduledDate   DateTime?     @map("scheduled_date")
+  scheduledTime   String?       @map("scheduled_time")
+  estimatedHours  Float?        @map("estimated_hours")
+  
+  assignedToId    String?       @map("assigned_to_id")
+  createdById     String?       @map("created_by_id")
+  
+  quoteData       Json?         @map("quote_data")
+  jobData         Json?         @map("job_data")
+  invoiceData     Json?         @map("invoice_data")
+  
+  completedAt     DateTime?     @map("completed_at")
+  paidAt          DateTime?     @map("paid_at")
+  
+  tags            String[]      @default([])
+  metadata        Json          @default("{}")
+  
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  company     Company      @relation(fields: [companyId], references: [id])
+  client      Client?      @relation(fields: [clientId], references: [id])
+  property    Property?    @relation(fields: [propertyId], references: [id])
+  assignedTo  User?        @relation("AssignedTo", fields: [assignedToId], references: [id])
+  createdBy   User?        @relation("CreatedBy", fields: [createdById], references: [id])
+  timeEntries TimeEntry[]
+  attachments Attachment[]
+  activities  Activity[]
+
+  @@map("work_items")
+  @@schema("flow")
+}
+
+enum WorkItemStage {
+  LEAD
+  QUOTE
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETE
+  INVOICED
+  PAID
+  LOST
+
+  @@schema("flow")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+
+  @@schema("flow")
+}
+
+model TimeEntry {
+  id          String    @id @default(uuid())
+  workItemId  String    @map("work_item_id")
+  userId      String    @map("user_id")
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  notes       String?
+  lat         Float?
+  lng         Float?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@map("time_entries")
+  @@schema("flow")
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  workItemId String   @map("work_item_id")
+  type       String
+  url        String
+  name       String?
+  size       Int?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id])
+
+  @@map("attachments")
+  @@schema("flow")
+}
+
+model Activity {
+  id         String   @id @default(uuid())
+  workItemId String   @map("work_item_id")
+  type       String
+  content    String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id])
+
+  @@map("activities")
+  @@schema("flow")
+}
+
+model EventLog {
+  id        String   @id @default(uuid())
+  companyId String   @map("company_id")
+  userId    String?  @map("user_id")
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  oldData   Json?    @map("old_data")
+  newData   Json?    @map("new_data")
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@map("event_logs")
+  @@schema("flow")
+}
+
+model AutomationRule {
+  id          String   @id @default(uuid())
+  companyId   String   @map("company_id")
+  name        String
+  trigger     String
+  conditions  Json     @default("[]")
+  actions     Json     @default("[]")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("automation_rules")
+  @@schema("flow")
+}
