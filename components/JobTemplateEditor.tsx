@@ -301,13 +301,13 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {templateId ? 'Edit Template' : jobId ? 'Create Template from Job' : 'Create New Template'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -322,11 +322,11 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
               </div>
             )}
 
-            <div className="border-b border-gray-700 pb-6">
+            <div className="border-b border-brand-gray-700 pb-6">
               <h3 className="text-lg font-semibold text-white mb-4">Basic Information</h3>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Template Name <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -335,7 +335,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="e.g., Standard Tree Removal"
                   />
                   {errors.name && (
@@ -344,7 +344,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="description" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Description
                   </label>
                   <textarea
@@ -353,13 +353,13 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     value={formData.description}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Brief description of this template..."
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="category" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Category <span className="text-red-400">*</span>
                   </label>
                   <select
@@ -367,7 +367,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   >
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
@@ -380,11 +380,11 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
               </div>
             </div>
 
-            <div className="border-b border-gray-700 pb-6">
+            <div className="border-b border-brand-gray-700 pb-6">
               <h3 className="text-lg font-semibold text-white mb-4">Configuration</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="defaultDurationHours" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="defaultDurationHours" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Duration (hours)
                   </label>
                   <input
@@ -395,13 +395,13 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     onChange={handleChange}
                     min="0"
                     step="0.5"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="e.g., 4"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="defaultCrewSize" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="defaultCrewSize" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Crew Size
                   </label>
                   <input
@@ -411,19 +411,19 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     value={formData.defaultCrewSize}
                     onChange={handleChange}
                     min="0"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="e.g., 3"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-b border-gray-700 pb-6">
+            <div className="border-b border-brand-gray-700 pb-6">
               <h3 className="text-lg font-semibold text-white mb-4">Pricing</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="basePrice" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="basePrice" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Base Price
                     </label>
                     <input
@@ -434,7 +434,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                       onChange={handleChange}
                       min="0"
                       step="0.01"
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., 500.00"
                     />
                     {errors.basePrice && (
@@ -443,7 +443,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                   </div>
 
                   <div>
-                    <label htmlFor="pricePerHour" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="pricePerHour" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Price Per Hour
                     </label>
                     <input
@@ -454,20 +454,20 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                       onChange={handleChange}
                       min="0"
                       step="0.01"
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., 150.00"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Line Items</label>
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-2">Line Items</label>
                   {formData.lineItems.length > 0 && (
                     <div className="mb-3 space-y-2">
                       {formData.lineItems.map((item, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-800 rounded">
+                        <div key={index} className="flex items-center gap-2 p-2 bg-brand-gray-800 rounded">
                           <span className="flex-1 text-white">{item.description}</span>
-                          <span className="text-cyan-400">${item.price.toFixed(2)}</span>
+                          <span className="text-brand-cyan-400">${item.price.toFixed(2)}</span>
                           <button
                             type="button"
                             onClick={() => handleRemoveLineItem(index)}
@@ -485,7 +485,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                       value={newLineItem.description}
                       onChange={(e) => setNewLineItem({ ...newLineItem, description: e.target.value })}
                       placeholder="Item description"
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="flex-1 px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     />
                     <input
                       type="number"
@@ -494,12 +494,12 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                       placeholder="Price"
                       min="0"
                       step="0.01"
-                      className="w-32 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-32 px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     />
                     <button
                       type="button"
                       onClick={handleAddLineItem}
-                      className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+                      className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
                     >
                       Add
                     </button>
@@ -508,7 +508,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
               </div>
             </div>
 
-            <div className="border-b border-gray-700 pb-6">
+            <div className="border-b border-brand-gray-700 pb-6">
               <h3 className="text-lg font-semibold text-white mb-4">Requirements</h3>
               <div className="space-y-3">
                 <label className="flex items-center cursor-pointer">
@@ -517,9 +517,9 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     name="permitRequired"
                     checked={formData.permitRequired}
                     onChange={handleChange}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500 rounded"
                   />
-                  <span className="text-gray-200">Permit Required</span>
+                  <span className="text-brand-gray-200">Permit Required</span>
                 </label>
 
                 <label className="flex items-center cursor-pointer">
@@ -528,9 +528,9 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     name="jhaRequired"
                     checked={formData.jhaRequired}
                     onChange={handleChange}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500 rounded"
                   />
-                  <span className="text-gray-200">Job Hazard Analysis (JHA) Required</span>
+                  <span className="text-brand-gray-200">Job Hazard Analysis (JHA) Required</span>
                 </label>
 
                 <label className="flex items-center cursor-pointer">
@@ -539,14 +539,14 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     name="depositRequired"
                     checked={formData.depositRequired}
                     onChange={handleChange}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500 rounded"
                   />
-                  <span className="text-gray-200">Deposit Required</span>
+                  <span className="text-brand-gray-200">Deposit Required</span>
                 </label>
 
                 {formData.depositRequired && (
                   <div className="ml-6">
-                    <label htmlFor="depositPercentage" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="depositPercentage" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Deposit Percentage
                     </label>
                     <input
@@ -558,24 +558,24 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                       min="0"
                       max="100"
                       step="1"
-                      className="w-32 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-32 px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., 50"
                     />
-                    <span className="ml-2 text-gray-400">%</span>
+                    <span className="ml-2 text-brand-gray-400">%</span>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="border-b border-gray-700 pb-6">
+            <div className="border-b border-brand-gray-700 pb-6">
               <h3 className="text-lg font-semibold text-white mb-4">Checklists & Notes</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Completion Checklist</label>
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-2">Completion Checklist</label>
                   {formData.completionChecklist.length > 0 && (
                     <div className="mb-3 space-y-2">
                       {formData.completionChecklist.map((item, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-800 rounded">
+                        <div key={index} className="flex items-center gap-2 p-2 bg-brand-gray-800 rounded">
                           <span className="flex-1 text-white">{item}</span>
                           <button
                             type="button"
@@ -594,13 +594,13 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                       value={newChecklistItem}
                       onChange={(e) => setNewChecklistItem(e.target.value)}
                       placeholder="Add checklist item"
-                      className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="flex-1 px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddChecklistItem())}
                     />
                     <button
                       type="button"
                       onClick={handleAddChecklistItem}
-                      className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+                      className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
                     >
                       Add
                     </button>
@@ -608,7 +608,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="safetyNotes" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="safetyNotes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Safety Notes
                   </label>
                   <textarea
@@ -617,13 +617,13 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     value={formData.safetyNotes}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Safety considerations for this type of job..."
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="specialInstructions" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="specialInstructions" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Special Instructions
                   </label>
                   <textarea
@@ -632,7 +632,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
                     value={formData.specialInstructions}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Any special instructions for crews..."
                   />
                 </div>
@@ -641,12 +641,12 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -654,7 +654,7 @@ const JobTemplateEditor: React.FC<JobTemplateEditorProps> = ({
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

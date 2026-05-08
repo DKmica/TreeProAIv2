@@ -144,13 +144,13 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-brand-gray-700">
           <h2 className="text-2xl font-bold text-white">
             Manage Crew Members - {crew.name}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -169,10 +169,10 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
             
             {isLoadingMembers ? (
               <div className="flex items-center justify-center py-8">
-                <SpinnerIcon className="h-8 w-8 text-cyan-500" />
+                <SpinnerIcon className="h-8 w-8 text-brand-cyan-500" />
               </div>
             ) : members.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-brand-gray-400">
                 <p>No members in this crew yet.</p>
                 <p className="text-sm mt-2">Add members below to get started.</p>
               </div>
@@ -181,13 +181,13 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
                 {members.map((member) => (
                   <div
                     key={member.id}
-                    className="bg-gray-800 border border-gray-700 rounded-lg p-4 flex items-center justify-between"
+                    className="bg-brand-gray-800 border border-brand-gray-700 rounded-lg p-4 flex items-center justify-between"
                   >
                     <div className="flex-1">
                       <div className="text-white font-medium">
                         {member.employee?.name || 'Unknown Employee'}
                       </div>
-                      <div className="text-sm text-gray-400 mt-1">
+                      <div className="text-sm text-brand-gray-400 mt-1">
                         Joined {formatDate(member.joinedAt)}
                       </div>
                     </div>
@@ -198,7 +198,7 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
                           value={member.role}
                           onChange={(e) => handleUpdateRole(member.id, e.target.value)}
                           disabled={updatingMemberId === member.id}
-                          className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+                          className="w-full px-3 py-2 bg-brand-gray-900 border border-brand-gray-600 rounded-md text-white text-sm focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 disabled:opacity-50"
                         >
                           {roles.map((role) => (
                             <option key={role} value={role}>
@@ -229,15 +229,15 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
             )}
           </div>
 
-          <div className="border-t border-gray-700 pt-6">
+          <div className="border-t border-brand-gray-700 pt-6">
             <h3 className="text-lg font-semibold text-white mb-4">Add Member</h3>
             
             {isLoadingEmployees ? (
               <div className="flex items-center justify-center py-4">
-                <SpinnerIcon className="h-6 w-6 text-cyan-500" />
+                <SpinnerIcon className="h-6 w-6 text-brand-cyan-500" />
               </div>
             ) : unassignedEmployees.length === 0 ? (
-              <div className="text-center py-4 text-gray-400">
+              <div className="text-center py-4 text-brand-gray-400">
                 <p>No unassigned employees available.</p>
                 <p className="text-sm mt-2">All employees are currently assigned to crews.</p>
               </div>
@@ -245,14 +245,14 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="employee" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="employee" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Employee
                     </label>
                     <select
                       id="employee"
                       value={selectedEmployeeId}
                       onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     >
                       <option value="">Select an employee...</option>
                       {unassignedEmployees.map((employee) => (
@@ -264,14 +264,14 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
                   </div>
 
                   <div>
-                    <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="role" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Role
                     </label>
                     <select
                       id="role"
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     >
                       {roles.map((role) => (
                         <option key={role} value={role}>
@@ -285,7 +285,7 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
                 <button
                   onClick={handleAddMember}
                   disabled={!selectedEmployeeId || isAddingMember}
-                  className="w-full px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isAddingMember ? (
                     <>
@@ -301,11 +301,11 @@ const CrewMemberManager: React.FC<CrewMemberManagerProps> = ({ crew, isOpen, onC
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 p-6 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
           >
             Done
           </button>

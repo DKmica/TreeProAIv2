@@ -823,7 +823,7 @@ const QuoteDetail: React.FC = () => {
                                 Yes
                               </span>
                             ) : (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-gray-100 text-brand-gray-800">
                                 No
                               </span>
                             )}

@@ -64,15 +64,15 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="sm:col-span-3">
                         <label htmlFor="name" className="block text-sm font-medium leading-6 text-brand-gray-900">Equipment Name</label>
-                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                        <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="make" className="block text-sm font-medium leading-6 text-brand-gray-900">Make</label>
-                        <input type="text" name="make" id="make" value={formData.make} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                        <input type="text" name="make" id="make" value={formData.make} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="model" className="block text-sm font-medium leading-6 text-brand-gray-900">Model</label>
-                        <input type="text" name="model" id="model" value={formData.model} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                        <input type="text" name="model" id="model" value={formData.model} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="purchaseDate" className="block text-sm font-medium leading-6 text-brand-gray-900">Purchase Date</label>
@@ -92,7 +92,7 @@ const AddEquipmentForm: React.FC<AddEquipmentFormProps> = ({ onSave, onCancel, i
                     </div>
                     <div className="sm:col-span-3">
                         <label htmlFor="assignedTo" className="block text-sm font-medium leading-6 text-brand-gray-900">Assigned To</label>
-                        <input type="text" name="assignedTo" id="assignedTo" value={formData.assignedTo} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
+                        <input type="text" name="assignedTo" id="assignedTo" value={formData.assignedTo} onChange={handleChange} className="block w-full rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" />
                     </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
@@ -186,14 +186,14 @@ const Equipment: React.FC = () => {
             case 'Operational': return 'bg-green-100 text-green-800';
             case 'Needs Maintenance': return 'bg-yellow-100 text-yellow-800';
             case 'Out of Service': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            default: return 'bg-brand-gray-100 text-brand-gray-800';
         }
     }
 
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-cyan-600"></div>
             </div>
         );
     }

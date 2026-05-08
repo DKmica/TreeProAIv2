@@ -165,7 +165,7 @@ export default function PHCComplianceReport() {
             <FileText className="w-6 h-6 text-green-500" />
             PHC Compliance Report
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-brand-gray-400 mt-1">
             Track and export pesticide/chemical application records for regulatory compliance
           </p>
         </div>
@@ -180,63 +180,63 @@ export default function PHCComplianceReport() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg p-4 border border-brand-gray-700">
           <div className="text-2xl font-bold text-white">{stats.totalApplications}</div>
-          <div className="text-sm text-gray-400">Total Applications</div>
+          <div className="text-sm text-brand-gray-400">Total Applications</div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg p-4 border border-brand-gray-700">
           <div className="text-2xl font-bold text-green-400">{stats.compliantRecords}</div>
-          <div className="text-sm text-gray-400">Complete Records</div>
+          <div className="text-sm text-brand-gray-400">Complete Records</div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg p-4 border border-brand-gray-700">
           <div className="text-2xl font-bold text-yellow-400">{stats.incompleteRecords}</div>
-          <div className="text-sm text-gray-400">Incomplete Records</div>
+          <div className="text-sm text-brand-gray-400">Incomplete Records</div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg p-4 border border-brand-gray-700">
           <div className="text-2xl font-bold text-blue-400">{stats.uniqueMaterials}</div>
-          <div className="text-sm text-gray-400">Unique Materials</div>
+          <div className="text-sm text-brand-gray-400">Unique Materials</div>
         </div>
-        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg p-4 border border-brand-gray-700">
           <div className="text-2xl font-bold text-purple-400">{stats.uniqueApplicators}</div>
-          <div className="text-sm text-gray-400">Applicators</div>
+          <div className="text-sm text-brand-gray-400">Applicators</div>
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+      <div className="bg-brand-gray-800 rounded-lg border border-brand-gray-700 p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-brand-gray-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by material, customer, applicator, or EPA #..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-brand-gray-700 border border-brand-gray-600 rounded-lg text-white placeholder-brand-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
           <div className="flex gap-2">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-brand-gray-400" />
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="px-3 py-2 bg-brand-gray-700 border border-brand-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
-              <span className="text-gray-400">to</span>
+              <span className="text-brand-gray-400">to</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="px-3 py-2 bg-brand-gray-700 border border-brand-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-4 h-4 text-brand-gray-400" />
               <select
                 value={filterCompliance}
                 onChange={(e) => setFilterCompliance(e.target.value as 'all' | 'compliant' | 'incomplete')}
-                className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="px-3 py-2 bg-brand-gray-700 border border-brand-gray-600 rounded-lg text-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="all">All Records</option>
                 <option value="compliant">Complete Only</option>
@@ -267,55 +267,55 @@ export default function PHCComplianceReport() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
         </div>
       ) : filteredRecords.length === 0 && !error ? (
-        <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 text-center">
-          <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+        <div className="bg-brand-gray-800 rounded-lg border border-brand-gray-700 p-8 text-center">
+          <FileText className="w-12 h-12 text-brand-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No Records Found</h3>
-          <p className="text-gray-400">
+          <p className="text-brand-gray-400">
             No chemical/material application records found for the selected date range.
           </p>
         </div>
       ) : (
-        <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="bg-brand-gray-800 rounded-lg border border-brand-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-750">
+              <thead className="bg-brand-gray-750">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Material</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">EPA #</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Method</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Target</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Applicator</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Material</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">EPA #</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Amount</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Method</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Target</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Applicator</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
+              <tbody className="divide-y divide-brand-gray-700">
                 {filteredRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-750">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                  <tr key={record.id} className="hover:bg-brand-gray-750">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-300">
                       {record.appliedAt ? new Date(record.appliedAt).toLocaleDateString() : '-'}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">
                       {record.materialName}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-400">
                       {record.epaRegNumber || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-300">
                       {record.quantityUsed ? `${record.quantityUsed} ${record.unit}` : '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-300">
                       {record.applicationMethod || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-300">
                       {record.targetPestOrCondition || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-300">
                       {record.employeeName || '-'}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-brand-gray-300">
                       {record.customerName || '-'}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -339,9 +339,9 @@ export default function PHCComplianceReport() {
         </div>
       )}
 
-      <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
-        <h3 className="text-sm font-medium text-gray-400 mb-2">Compliance Note</h3>
-        <p className="text-xs text-gray-500">
+      <div className="bg-brand-gray-800 rounded-lg border border-brand-gray-700 p-4">
+        <h3 className="text-sm font-medium text-brand-gray-400 mb-2">Compliance Note</h3>
+        <p className="text-xs text-brand-gray-500">
           This report is generated for record-keeping purposes. A record is considered "Complete" when it includes
           material name, quantity used, application method, applicator name, and application date. Ensure all
           pesticide applications comply with local, state, and federal regulations including EPA requirements.

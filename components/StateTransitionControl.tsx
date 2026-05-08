@@ -90,16 +90,16 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
       case 'in_progress': return 'bg-indigo-600 hover:bg-indigo-700';
       case 'completed': return 'bg-green-600 hover:bg-green-700';
       case 'cancelled': return 'bg-red-600 hover:bg-red-700';
-      case 'scheduled': return 'bg-cyan-600 hover:bg-cyan-700';
-      default: return 'bg-gray-600 hover:bg-gray-700';
+      case 'scheduled': return 'bg-brand-cyan-600 hover:bg-brand-cyan-700';
+      default: return 'bg-brand-gray-600 hover:bg-brand-gray-700';
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-cyan-500"></div>
-        <span className="ml-2 text-gray-400">Loading transitions...</span>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-cyan-500"></div>
+        <span className="ml-2 text-brand-gray-400">Loading transitions...</span>
       </div>
     );
   }
@@ -116,7 +116,7 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
     <div>
       <div className="flex flex-wrap gap-2">
         {allowedTransitions.length === 0 ? (
-          <p className="text-gray-400 text-sm">No transitions available for current state</p>
+          <p className="text-brand-gray-400 text-sm">No transitions available for current state</p>
         ) : (
           allowedTransitions.map((transition) => (
             <button
@@ -141,13 +141,13 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
             className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-brand-gray-700">
               <h2 className="text-2xl font-bold text-white">
                 Confirm State Transition
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1"
+                className="text-brand-gray-400 hover:text-white transition-colors p-1"
                 type="button"
               >
                 <XIcon className="h-6 w-6" />
@@ -163,7 +163,7 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
                 )}
 
                 <div>
-                  <p className="text-gray-300 mb-4">
+                  <p className="text-brand-gray-300 mb-4">
                     Transition job to: <span className="font-semibold text-white">
                       {selectedState.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                     </span>
@@ -171,7 +171,7 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="reason" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Reason
                   </label>
                   <input
@@ -179,13 +179,13 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
                     id="reason"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Brief reason for transition"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="notes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Notes (optional)
                   </label>
                   <textarea
@@ -193,25 +193,25 @@ const StateTransitionControl: React.FC<StateTransitionControlProps> = ({
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Additional details..."
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 p-6 border-t border-gray-700 bg-[#0a1421]">
+              <div className="flex justify-end gap-3 p-6 border-t border-brand-gray-700 bg-[#0a1421]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
                   disabled={isSubmitting}
-                  className="px-4 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
                   {isSubmitting ? (
                     <>

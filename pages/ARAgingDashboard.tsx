@@ -217,30 +217,30 @@ const ARAgingDashboard: React.FC = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-brand-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
               <DollarSign className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Outstanding</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(agingSummary.totalOutstanding)}</p>
+              <p className="text-sm font-medium text-brand-gray-500">Total Outstanding</p>
+              <p className="text-2xl font-bold text-brand-gray-900">{formatCurrency(agingSummary.totalOutstanding)}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-gray-500">{unpaidInvoices.length} unpaid invoice{unpaidInvoices.length !== 1 ? 's' : ''}</p>
+          <p className="mt-3 text-xs text-brand-gray-500">{unpaidInvoices.length} unpaid invoice{unpaidInvoices.length !== 1 ? 's' : ''}</p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-brand-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
               <Clock className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Current</p>
+              <p className="text-sm font-medium text-brand-gray-500">Current</p>
               <p className="text-2xl font-bold text-emerald-600">{formatCurrency(agingSummary.buckets.Current)}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-gray-500">{agingSummary.counts.Current} invoice{agingSummary.counts.Current !== 1 ? 's' : ''} not yet due</p>
+          <p className="mt-3 text-xs text-brand-gray-500">{agingSummary.counts.Current} invoice{agingSummary.counts.Current !== 1 ? 's' : ''} not yet due</p>
         </div>
 
         <div className="rounded-xl border border-red-200 bg-red-50 p-5 shadow-sm">
@@ -256,22 +256,22 @@ const ARAgingDashboard: React.FC = () => {
           <p className="mt-3 text-xs text-red-600">{overdueCount} overdue invoice{overdueCount !== 1 ? 's' : ''}</p>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-brand-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
               <TrendingUp className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Clients w/ Balance</p>
-              <p className="text-2xl font-bold text-gray-900">{clientAging.length}</p>
+              <p className="text-sm font-medium text-brand-gray-500">Clients w/ Balance</p>
+              <p className="text-2xl font-bold text-brand-gray-900">{clientAging.length}</p>
             </div>
           </div>
-          <p className="mt-3 text-xs text-gray-500">Avg {formatCurrency(clientAging.length > 0 ? agingSummary.totalOutstanding / clientAging.length : 0)}/client</p>
+          <p className="mt-3 text-xs text-brand-gray-500">Avg {formatCurrency(clientAging.length > 0 ? agingSummary.totalOutstanding / clientAging.length : 0)}/client</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Aging Breakdown</h2>
+      <div className="rounded-xl border border-brand-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-brand-gray-900 mb-4">Aging Breakdown</h2>
         <div className="grid gap-3 sm:grid-cols-5">
           {(['Current', '1-30', '31-60', '61-90', '90+'] as AgingBucket[]).map((bucket) => {
             const amount = agingSummary.buckets[bucket];
@@ -287,35 +287,35 @@ const ARAgingDashboard: React.FC = () => {
                 className={`rounded-lg border p-4 transition-all ${
                   selectedBucket === bucket 
                     ? 'ring-2 ring-brand-cyan-500 border-brand-cyan-500' 
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-brand-gray-200 hover:border-brand-gray-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded ${getBucketBgColor(bucket)}`}>
                     {bucket === 'Current' ? 'Current' : `${bucket} Days`}
                   </span>
-                  <span className="text-xs text-gray-500">{count}</span>
+                  <span className="text-xs text-brand-gray-500">{count}</span>
                 </div>
-                <p className="text-lg font-bold text-gray-900">{formatCurrency(amount)}</p>
-                <div className="mt-2 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                <p className="text-lg font-bold text-brand-gray-900">{formatCurrency(amount)}</p>
+                <div className="mt-2 h-1.5 w-full bg-brand-gray-200 rounded-full overflow-hidden">
                   <div 
                     className={`h-full ${getBucketColor(bucket)} rounded-full transition-all`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">{percentage.toFixed(1)}%</p>
+                <p className="mt-1 text-xs text-brand-gray-500">{percentage.toFixed(1)}%</p>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="rounded-xl border border-brand-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-brand-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-brand-gray-900">
             Client Aging Detail
             {selectedBucket !== 'All' && (
-              <span className="ml-2 text-sm font-normal text-gray-500">
+              <span className="ml-2 text-sm font-normal text-brand-gray-500">
                 (Filtered: {selectedBucket === 'Current' ? 'Current' : `${selectedBucket} Days`})
               </span>
             )}
@@ -331,12 +331,12 @@ const ARAgingDashboard: React.FC = () => {
         </div>
 
         {filteredClients.length === 0 ? (
-          <div className="px-5 py-12 text-center text-gray-500">
+          <div className="px-5 py-12 text-center text-brand-gray-500">
             <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p>No outstanding invoices found</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-brand-gray-200">
             {filteredClients.map((client) => {
               const isExpanded = expandedClients.has(client.clientId);
               const daysOverdue = getDaysOverdue(client.oldestDueDate);
@@ -345,17 +345,17 @@ const ARAgingDashboard: React.FC = () => {
                 <div key={client.clientId}>
                   <button
                     onClick={() => toggleClient(client.clientId)}
-                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-brand-gray-50 transition-colors text-left"
                   >
                     <div className="flex items-center gap-4">
                       {isExpanded ? (
-                        <ChevronDown className="h-5 w-5 text-gray-400" />
+                        <ChevronDown className="h-5 w-5 text-brand-gray-400" />
                       ) : (
-                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                        <ChevronRight className="h-5 w-5 text-brand-gray-400" />
                       )}
                       <div>
-                        <p className="font-medium text-gray-900">{client.clientName}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="font-medium text-brand-gray-900">{client.clientName}</p>
+                        <p className="text-sm text-brand-gray-500">
                           {client.invoices.length} invoice{client.invoices.length !== 1 ? 's' : ''}
                           {daysOverdue > 0 && (
                             <span className="ml-2 text-red-600">
@@ -378,25 +378,25 @@ const ARAgingDashboard: React.FC = () => {
                           )
                         ))}
                       </div>
-                      <p className="text-lg font-bold text-gray-900">{formatCurrency(client.totalOutstanding)}</p>
+                      <p className="text-lg font-bold text-brand-gray-900">{formatCurrency(client.totalOutstanding)}</p>
                     </div>
                   </button>
 
                   {isExpanded && (
-                    <div className="bg-gray-50 px-5 py-3 border-t border-gray-100">
+                    <div className="bg-brand-gray-50 px-5 py-3 border-t border-brand-gray-100">
                       <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
+                        <table className="min-w-full divide-y divide-brand-gray-200">
                           <thead>
                             <tr>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Issue Date</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount Due</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-brand-gray-500 uppercase">Invoice #</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-brand-gray-500 uppercase">Issue Date</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-brand-gray-500 uppercase">Due Date</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-brand-gray-500 uppercase">Status</th>
+                              <th className="px-3 py-2 text-right text-xs font-medium text-brand-gray-500 uppercase">Amount Due</th>
+                              <th className="px-3 py-2 text-right text-xs font-medium text-brand-gray-500 uppercase">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200 bg-white">
+                          <tbody className="divide-y divide-brand-gray-200 bg-white">
                             {client.invoices
                               .filter(inv => selectedBucket === 'All' || getAgingBucket(inv) === selectedBucket)
                               .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
@@ -405,15 +405,15 @@ const ARAgingDashboard: React.FC = () => {
                                 const overdue = getDaysOverdue(invoice.dueDate);
                                 
                                 return (
-                                  <tr key={invoice.id} className="hover:bg-gray-50">
-                                    <td className="px-3 py-2 text-sm font-medium text-gray-900">
+                                  <tr key={invoice.id} className="hover:bg-brand-gray-50">
+                                    <td className="px-3 py-2 text-sm font-medium text-brand-gray-900">
                                       {invoice.invoiceNumber || invoice.id.slice(0, 8)}
                                     </td>
-                                    <td className="px-3 py-2 text-sm text-gray-500">
+                                    <td className="px-3 py-2 text-sm text-brand-gray-500">
                                       {formatDate(invoice.issueDate)}
                                     </td>
                                     <td className="px-3 py-2 text-sm">
-                                      <span className={overdue > 0 ? 'text-red-600 font-medium' : 'text-gray-500'}>
+                                      <span className={overdue > 0 ? 'text-red-600 font-medium' : 'text-brand-gray-500'}>
                                         {formatDate(invoice.dueDate)}
                                         {overdue > 0 && (
                                           <span className="ml-1 text-xs">({overdue}d)</span>
@@ -425,7 +425,7 @@ const ARAgingDashboard: React.FC = () => {
                                         {bucket === 'Current' ? 'Current' : `${bucket} Days`}
                                       </span>
                                     </td>
-                                    <td className="px-3 py-2 text-sm text-right font-semibold text-gray-900">
+                                    <td className="px-3 py-2 text-sm text-right font-semibold text-brand-gray-900">
                                       {formatCurrency(invoice.amountDue)}
                                     </td>
                                     <td className="px-3 py-2 text-right">
@@ -435,7 +435,7 @@ const ARAgingDashboard: React.FC = () => {
                                             e.stopPropagation();
                                             navigate('/invoices');
                                           }}
-                                          className="p-1 text-gray-400 hover:text-brand-cyan-600"
+                                          className="p-1 text-brand-gray-400 hover:text-brand-cyan-600"
                                           title="View Invoice"
                                         >
                                           <ExternalLink className="h-4 w-4" />
@@ -444,7 +444,7 @@ const ARAgingDashboard: React.FC = () => {
                                           <a
                                             href={`mailto:${invoice.customerEmail}?subject=Invoice ${invoice.invoiceNumber || invoice.id} - Payment Reminder`}
                                             onClick={(e) => e.stopPropagation()}
-                                            className="p-1 text-gray-400 hover:text-brand-cyan-600"
+                                            className="p-1 text-brand-gray-400 hover:text-brand-cyan-600"
                                             title="Send Reminder"
                                           >
                                             <Mail className="h-4 w-4" />

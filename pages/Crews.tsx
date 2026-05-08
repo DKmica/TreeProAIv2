@@ -83,7 +83,7 @@ const Crews: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <SpinnerIcon className="h-12 w-12 text-cyan-500" />
+        <SpinnerIcon className="h-12 w-12 text-brand-cyan-500" />
       </div>
     );
   }
@@ -101,14 +101,14 @@ const Crews: React.FC = () => {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <UsersIcon className="h-8 w-8 text-cyan-500" />
+            <UsersIcon className="h-8 w-8 text-brand-cyan-500" />
             Crews
           </h1>
-          <p className="text-gray-400 mt-2">Manage your work crews and team assignments</p>
+          <p className="text-brand-gray-400 mt-2">Manage your work crews and team assignments</p>
         </div>
         <button
           onClick={handleCreateNew}
-          className="px-6 py-3 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors flex items-center gap-2 shadow-lg"
+          className="px-6 py-3 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors flex items-center gap-2 shadow-lg"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -119,12 +119,12 @@ const Crews: React.FC = () => {
 
       {crews.length === 0 ? (
         <div className="text-center py-16">
-          <UsersIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-400 mb-2">No crews yet</h3>
-          <p className="text-gray-500 mb-6">Get started by creating your first crew</p>
+          <UsersIcon className="h-16 w-16 text-brand-gray-600 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-brand-gray-400 mb-2">No crews yet</h3>
+          <p className="text-brand-gray-500 mb-6">Get started by creating your first crew</p>
           <button
             onClick={handleCreateNew}
-            className="px-6 py-3 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+            className="px-6 py-3 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
           >
             Create New Crew
           </button>
@@ -137,20 +137,20 @@ const Crews: React.FC = () => {
             return (
               <div
                 key={crew.id}
-                className="bg-[#0f1c2e] border border-gray-700 rounded-lg p-6 hover:border-cyan-500/50 transition-all"
+                className="bg-[#0f1c2e] border border-brand-gray-700 rounded-lg p-6 hover:border-brand-cyan-500/50 transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-white mb-1">{crew.name}</h3>
                     {crew.description && (
-                      <p className="text-gray-400 text-sm line-clamp-2">{crew.description}</p>
+                      <p className="text-brand-gray-400 text-sm line-clamp-2">{crew.description}</p>
                     )}
                   </div>
                   <span
                     className={`px-2 py-1 text-xs font-medium rounded ${
                       crew.isActive
                         ? 'bg-green-900/30 text-green-400 border border-green-500/30'
-                        : 'bg-gray-700 text-gray-400 border border-gray-600'
+                        : 'bg-brand-gray-700 text-brand-gray-400 border border-brand-gray-600'
                     }`}
                   >
                     {crew.isActive ? 'Active' : 'Inactive'}
@@ -159,19 +159,19 @@ const Crews: React.FC = () => {
 
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Members:</span>
+                    <span className="text-brand-gray-400">Members:</span>
                     <span className="text-white font-medium">{crew.memberCount || 0}</span>
                   </div>
 
                   {crew.capacity && (
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-400">Capacity:</span>
+                        <span className="text-brand-gray-400">Capacity:</span>
                         <span className={`font-medium ${getUtilizationColor(utilization)}`}>
                           {utilization}%
                         </span>
                       </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div className="w-full bg-brand-gray-700 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all ${
                             utilization >= 90
@@ -183,7 +183,7 @@ const Crews: React.FC = () => {
                           style={{ width: `${utilization}%` }}
                         />
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-brand-gray-500">
                         {crew.assignmentCount || 0} / {crew.capacity} jobs
                       </div>
                     </div>
@@ -191,7 +191,7 @@ const Crews: React.FC = () => {
 
                   {crew.defaultStartTime && crew.defaultEndTime && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">Schedule:</span>
+                      <span className="text-brand-gray-400">Schedule:</span>
                       <span className="text-white">
                         {crew.defaultStartTime} - {crew.defaultEndTime}
                       </span>
@@ -199,16 +199,16 @@ const Crews: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-gray-700">
+                <div className="flex gap-2 pt-4 border-t border-brand-gray-700">
                   <button
                     onClick={() => handleEdit(crew)}
-                    className="flex-1 px-3 py-2 bg-gray-700 text-white text-sm rounded-md hover:bg-gray-600 transition-colors"
+                    className="flex-1 px-3 py-2 bg-brand-gray-700 text-white text-sm rounded-md hover:bg-brand-gray-600 transition-colors"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleManageMembers(crew)}
-                    className="flex-1 px-3 py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition-colors"
+                    className="flex-1 px-3 py-2 bg-brand-cyan-600 text-white text-sm rounded-md hover:bg-brand-cyan-700 transition-colors"
                   >
                     Members
                   </button>

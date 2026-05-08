@@ -23,7 +23,7 @@ const ROLE_COLORS: Record<string, string> = {
   sales: 'bg-green-500/20 text-green-300 border-green-500/30',
   scheduler: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
   foreman: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-  laborer: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+  laborer: 'bg-brand-cyan-500/20 text-brand-cyan-300 border-brand-cyan-500/30',
   crew: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
 };
 
@@ -34,7 +34,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
-  const colorClass = ROLE_COLORS[role] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+  const colorClass = ROLE_COLORS[role] || 'bg-gray-500/20 text-brand-gray-300 border-brand-gray-500/30';
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${colorClass}`}>
       {role}
@@ -43,7 +43,7 @@ const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const styleClass = STATUS_STYLES[status] || 'bg-gray-500/20 text-gray-300';
+  const styleClass = STATUS_STYLES[status] || 'bg-gray-500/20 text-brand-gray-300';
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${styleClass}`}>
       {status}
@@ -77,23 +77,23 @@ function ApproveModal({ user, roles, onConfirm, onCancel, isLoading }: ApproveMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-gray-700">
+      <div className="bg-brand-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 border border-brand-gray-700">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-emerald-500/20 rounded-lg">
             <UserPlus className="w-5 h-5 text-emerald-400" />
           </div>
           <h3 className="text-lg font-semibold text-white">Approve User</h3>
         </div>
-        <p className="text-gray-300 mb-4">
+        <p className="text-brand-gray-300 mb-4">
           Approve <span className="font-medium text-white">{getUserDisplayName(user)}</span> and assign them a role.
         </p>
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-300 mb-2">Select Role</label>
+          <label className="block text-sm font-medium text-brand-gray-300 mb-2">Select Role</label>
           <div className="relative">
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
+              className="w-full px-3 py-2 bg-brand-gray-700 border border-brand-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
             >
               {roles.map((role) => (
                 <option key={role.value} value={role.value}>
@@ -101,14 +101,14 @@ function ApproveModal({ user, roles, onConfirm, onCancel, isLoading }: ApproveMo
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-gray-400 pointer-events-none" />
           </div>
         </div>
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            className="px-4 py-2 text-sm font-medium text-brand-gray-300 hover:text-white transition-colors"
           >
             Cancel
           </button>
@@ -197,10 +197,10 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
   if (isLoadingUser) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-        <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 border border-brand-gray-700">
           <div className="text-center py-8">
             <div className="animate-spin w-8 h-8 border-2 border-brand-cyan-500 border-t-transparent rounded-full mx-auto mb-3" />
-            <p className="text-gray-400">Loading user details...</p>
+            <p className="text-brand-gray-400">Loading user details...</p>
           </div>
         </div>
       </div>
@@ -210,9 +210,9 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
   if (!userDetails) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-        <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 border border-gray-700">
+        <div className="bg-brand-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6 border border-brand-gray-700">
           <p className="text-red-400 text-center">User not found</p>
-          <button onClick={onClose} className="mt-4 w-full px-4 py-2 bg-gray-700 rounded-lg text-white">
+          <button onClick={onClose} className="mt-4 w-full px-4 py-2 bg-brand-gray-700 rounded-lg text-white">
             Close
           </button>
         </div>
@@ -222,8 +222,8 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 overflow-y-auto py-8">
-      <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 border border-gray-700">
-        <div className="p-6 border-b border-gray-700">
+      <div className="bg-brand-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 border border-brand-gray-700">
+        <div className="p-6 border-b border-brand-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-brand-cyan-500/20 rounded-lg">
@@ -231,10 +231,10 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white">{getUserDisplayName(userDetails)}</h3>
-                <p className="text-sm text-gray-400">{userDetails.email}</p>
+                <p className="text-sm text-brand-gray-400">{userDetails.email}</p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-white transition-colors">
+            <button onClick={onClose} className="p-2 text-brand-gray-400 hover:text-white transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -242,9 +242,9 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
 
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
           <div>
-            <h4 className="text-sm font-medium text-gray-300 mb-3">Current Roles</h4>
+            <h4 className="text-sm font-medium text-brand-gray-300 mb-3">Current Roles</h4>
             {userDetails.roles.length === 0 ? (
-              <p className="text-sm text-gray-500">No roles assigned</p>
+              <p className="text-sm text-brand-gray-500">No roles assigned</p>
             ) : (
               <div className="space-y-2">
                 {userDetails.roles.map((role) => {
@@ -254,14 +254,14 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
                   const hasChanges = !!pendingPermissions[role];
 
                   return (
-                    <div key={role} className="bg-gray-700/50 rounded-lg border border-gray-600">
+                    <div key={role} className="bg-brand-gray-700/50 rounded-lg border border-brand-gray-600">
                       <div className="flex items-center justify-between p-3">
                         <div className="flex items-center gap-2">
                           <RoleBadge role={role} />
                           {rolePerms && (
                             <button
                               onClick={() => setExpandedRole(isExpanded ? null : role)}
-                              className="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+                              className="text-xs text-brand-gray-400 hover:text-white flex items-center gap-1"
                             >
                               <Shield className="w-3 h-3" />
                               Permissions
@@ -282,16 +282,16 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
                       </div>
 
                       {isExpanded && rolePerms && (
-                        <div className="border-t border-gray-600 p-3 space-y-2">
+                        <div className="border-t border-brand-gray-600 p-3 space-y-2">
                           {Object.entries(rolePerms).map(([permKey, permConfig]) => {
                             const isEnabled = currentPerms[permKey] ?? permConfig.default;
                             return (
                               <label key={permKey} className="flex items-center justify-between cursor-pointer group">
-                                <span className="text-sm text-gray-300 group-hover:text-white">{permConfig.description}</span>
+                                <span className="text-sm text-brand-gray-300 group-hover:text-white">{permConfig.description}</span>
                                 <button
                                   onClick={() => handlePermissionChange(role, permKey, !isEnabled)}
                                   className={`relative w-10 h-5 rounded-full transition-colors ${
-                                    isEnabled ? 'bg-brand-cyan-600' : 'bg-gray-600'
+                                    isEnabled ? 'bg-brand-cyan-600' : 'bg-brand-gray-600'
                                   }`}
                                 >
                                   <span
@@ -323,13 +323,13 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
 
           {availableRolesToAdd.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-300 mb-3">Add Role</h4>
+              <h4 className="text-sm font-medium text-brand-gray-300 mb-3">Add Role</h4>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <select
                     value={selectedRoleToAdd}
                     onChange={(e) => setSelectedRoleToAdd(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-700 border border-brand-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                   >
                     <option value="">Select a role...</option>
                     {availableRolesToAdd.map((role) => (
@@ -338,7 +338,7 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-gray-400 pointer-events-none" />
                 </div>
                 <button
                   onClick={handleAddRole}
@@ -352,10 +352,10 @@ function EditUserModal({ userId, roles, configurablePermissions, onClose }: Edit
           )}
         </div>
 
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-brand-gray-700">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+            className="w-full px-4 py-2 text-sm font-medium text-brand-gray-300 hover:text-white bg-brand-gray-700 hover:bg-brand-gray-600 rounded-lg transition-colors"
           >
             Close
           </button>
@@ -414,7 +414,7 @@ const UserManagement: React.FC = () => {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">User Management</h1>
-          <p className="text-sm text-gray-400">Manage users, approve signups, and assign roles</p>
+          <p className="text-sm text-brand-gray-400">Manage users, approve signups, and assign roles</p>
         </div>
       </div>
 
@@ -426,8 +426,8 @@ const UserManagement: React.FC = () => {
       )}
 
       <div className="space-y-8">
-        <section className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-700 flex items-center gap-3">
+        <section className="bg-brand-gray-800/50 rounded-xl border border-brand-gray-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-brand-gray-700 flex items-center gap-3">
             <Clock className="w-5 h-5 text-amber-400" />
             <h2 className="text-lg font-semibold text-white">Pending Approvals</h2>
             {pendingUsers && pendingUsers.length > 0 && (
@@ -440,41 +440,41 @@ const UserManagement: React.FC = () => {
           {isLoadingPending ? (
             <div className="p-8 text-center">
               <div className="animate-spin w-8 h-8 border-2 border-brand-cyan-500 border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-gray-400">Loading pending users...</p>
+              <p className="text-brand-gray-400">Loading pending users...</p>
             </div>
           ) : !pendingUsers || pendingUsers.length === 0 ? (
             <div className="p-8 text-center">
               <Check className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-              <p className="text-gray-400">No pending approvals</p>
+              <p className="text-brand-gray-400">No pending approvals</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-900/50">
+                <thead className="bg-brand-gray-900/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Signed Up</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Signed Up</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-brand-gray-700">
                   {pendingUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
+                    <tr key={user.id} className="hover:bg-brand-gray-700/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           {user.profile_image_url ? (
                             <img src={user.profile_image_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-sm font-medium text-white">
+                            <div className="w-8 h-8 rounded-full bg-brand-gray-600 flex items-center justify-center text-sm font-medium text-white">
                               {(user.first_name?.[0] || user.email[0]).toUpperCase()}
                             </div>
                           )}
                           <span className="text-white font-medium">{getUserDisplayName(user)}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-300">{user.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-400">{formatDate(user.created_at)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-brand-gray-300">{user.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-brand-gray-400">{formatDate(user.created_at)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -502,71 +502,71 @@ const UserManagement: React.FC = () => {
           )}
         </section>
 
-        <section className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-700 flex items-center gap-3">
+        <section className="bg-brand-gray-800/50 rounded-xl border border-brand-gray-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-brand-gray-700 flex items-center gap-3">
             <Shield className="w-5 h-5 text-brand-cyan-400" />
             <h2 className="text-lg font-semibold text-white">All Users</h2>
             {users && (
-              <span className="ml-auto text-sm text-gray-400">{users.length} users</span>
+              <span className="ml-auto text-sm text-brand-gray-400">{users.length} users</span>
             )}
           </div>
 
           {isLoadingUsers ? (
             <div className="p-8 text-center">
               <div className="animate-spin w-8 h-8 border-2 border-brand-cyan-500 border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-gray-400">Loading users...</p>
+              <p className="text-brand-gray-400">Loading users...</p>
             </div>
           ) : !users || users.length === 0 ? (
             <div className="p-8 text-center">
-              <Users className="w-10 h-10 text-gray-500 mx-auto mb-3" />
-              <p className="text-gray-400">No users found</p>
+              <Users className="w-10 h-10 text-brand-gray-500 mx-auto mb-3" />
+              <p className="text-brand-gray-400">No users found</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-900/50">
+                <thead className="bg-brand-gray-900/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Roles</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Roles</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Joined</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-brand-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700">
+                <tbody className="divide-y divide-brand-gray-700">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-700/30 transition-colors">
+                    <tr key={user.id} className="hover:bg-brand-gray-700/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           {user.profile_image_url ? (
                             <img src={user.profile_image_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-sm font-medium text-white">
+                            <div className="w-8 h-8 rounded-full bg-brand-gray-600 flex items-center justify-center text-sm font-medium text-white">
                               {(user.first_name?.[0] || user.email[0]).toUpperCase()}
                             </div>
                           )}
                           <span className="text-white font-medium">{getUserDisplayName(user)}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-300">{user.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-brand-gray-300">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={user.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 flex-wrap">
                           {user.roles.length === 0 ? (
-                            <span className="text-gray-500 text-sm">No roles</span>
+                            <span className="text-brand-gray-500 text-sm">No roles</span>
                           ) : (
                             user.roles.map((role) => <RoleBadge key={role} role={role} />)
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-400">{formatDate(user.created_at)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-brand-gray-400">{formatDate(user.created_at)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <button
                           onClick={() => setEditingUserId(user.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-brand-gray-300 hover:text-white bg-brand-gray-700 hover:bg-brand-gray-600 rounded-lg transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
                           Edit

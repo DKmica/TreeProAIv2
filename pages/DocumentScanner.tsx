@@ -513,7 +513,7 @@ const DocumentScanner: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-brand-gray-900 p-6">
+    <div className="space-y-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan-400 to-emerald-400">

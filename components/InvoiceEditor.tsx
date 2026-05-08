@@ -303,8 +303,8 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
       case 'Sent': return 'bg-blue-500';
       case 'Paid': return 'bg-green-500';
       case 'Overdue': return 'bg-red-500';
-      case 'Void': return 'bg-gray-500';
-      default: return 'bg-gray-500';
+      case 'Void': return 'bg-brand-gray-500';
+      default: return 'bg-brand-gray-500';
     }
   };
 
@@ -318,13 +318,13 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <div className="flex items-center gap-4">
             <h2 className="text-lg sm:text-xl font-bold text-white">
               {invoice ? 'Edit Invoice' : 'Create Invoice'}
             </h2>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">Status:</span>
+              <span className="text-sm text-brand-gray-400">Status:</span>
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(formData.status)}`}>
                 {formData.status}
               </span>
@@ -332,7 +332,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -353,7 +353,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="customerName" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="customerName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Customer Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -362,7 +362,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       name="customerName"
                       value={formData.customerName}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="Enter customer name"
                     />
                     {errors.customerName && (
@@ -371,7 +371,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                   </div>
 
                   <div>
-                    <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="customerEmail" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Customer Email
                     </label>
                     <input
@@ -380,13 +380,13 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       name="customerEmail"
                       value={formData.customerEmail}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="email@example.com"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="customerPhone" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Customer Phone
                     </label>
                     <input
@@ -398,13 +398,13 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                         const formatted = formatPhone(e.target.value);
                         setFormData(prev => ({ ...prev, customerPhone: formatted }));
                       }}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="(555) 123-4567"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="customerAddress" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Customer Address
                     </label>
                     <textarea
@@ -413,7 +413,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       value={formData.customerAddress}
                       onChange={handleChange}
                       rows={2}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                       placeholder="Full address"
                     />
                   </div>
@@ -425,7 +425,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="issueDate" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="issueDate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Issue Date <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -434,12 +434,12 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       name="issueDate"
                       value={formData.issueDate}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="dueDate" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="dueDate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Due Date <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -448,7 +448,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       name="dueDate"
                       value={formData.dueDate}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     />
                     {errors.dueDate && (
                       <p className="mt-1 text-sm text-red-400">{errors.dueDate}</p>
@@ -456,7 +456,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                   </div>
 
                   <div>
-                    <label htmlFor="paymentTerms" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="paymentTerms" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Payment Terms
                     </label>
                     <select
@@ -464,7 +464,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       name="paymentTerms"
                       value={formData.paymentTerms}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     >
                       <option value="Due on Receipt">Due on Receipt</option>
                       <option value="Net 15">Net 15</option>
@@ -475,7 +475,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                   </div>
 
                   <div>
-                    <label htmlFor="billingType" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="billingType" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Billing Type
                     </label>
                     <select
@@ -515,7 +515,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                           return newState;
                         });
                       }}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     >
                       <option value="single">Single Invoice</option>
                       <option value="deposit">Deposit + Final</option>
@@ -526,11 +526,11 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
 
                   {formData.billingType !== 'single' && (
                     <div>
-                      <label htmlFor="contractTotal" className="block text-sm font-medium text-gray-300 mb-1">
+                      <label htmlFor="contractTotal" className="block text-sm font-medium text-brand-gray-300 mb-1">
                         Total Contract Value
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-2 text-gray-400">$</span>
+                        <span className="absolute left-3 top-2 text-brand-gray-400">$</span>
                         <input
                           type="number"
                           id="contractTotal"
@@ -549,7 +549,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                           }}
                           step="0.01"
                           min="0"
-                          className="w-full pl-7 pr-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                          className="w-full pl-7 pr-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                           placeholder="0.00"
                         />
                       </div>
@@ -571,7 +571,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <LineItemBuilder
                 lineItems={formData.lineItems}
                 onChange={handleLineItemsChange}
@@ -582,7 +582,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
             </div>
 
             {formData.billingType !== 'single' && formData.paymentSchedule.length > 0 && (
-              <div className="border-t border-gray-700 pt-6">
+              <div className="border-t border-brand-gray-700 pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-white">Payment Schedule</h3>
                   <button
@@ -600,17 +600,17 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                         paymentSchedule: [...prev.paymentSchedule, newItem],
                       }));
                     }}
-                    className="text-sm text-cyan-400 hover:text-cyan-300"
+                    className="text-sm text-brand-cyan-400 hover:text-brand-cyan-300"
                   >
                     + Add Payment
                   </button>
                 </div>
                 <div className="space-y-3">
                   {formData.paymentSchedule.map((item, index) => (
-                    <div key={index} className="bg-gray-800 border border-gray-600 rounded-md p-3">
+                    <div key={index} className="bg-brand-gray-800 border border-brand-gray-600 rounded-md p-3">
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">Name</label>
+                          <label className="block text-xs text-brand-gray-400 mb-1">Name</label>
                           <input
                             type="text"
                             value={item.name}
@@ -619,11 +619,11 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                               updated[index] = { ...updated[index], name: e.target.value };
                               setFormData(prev => ({ ...prev, paymentSchedule: updated }));
                             }}
-                            className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-cyan-500"
+                            className="w-full px-2 py-1.5 bg-brand-gray-700 border border-brand-gray-600 rounded text-white text-sm focus:outline-none focus:border-brand-cyan-500"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">Percentage</label>
+                          <label className="block text-xs text-brand-gray-400 mb-1">Percentage</label>
                           <div className="relative">
                             <input
                               type="number"
@@ -641,13 +641,13 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                               step="1"
                               min="0"
                               max="100"
-                              className="w-full px-2 py-1.5 pr-6 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-cyan-500"
+                              className="w-full px-2 py-1.5 pr-6 bg-brand-gray-700 border border-brand-gray-600 rounded text-white text-sm focus:outline-none focus:border-brand-cyan-500"
                             />
-                            <span className="absolute right-2 top-1.5 text-gray-400 text-sm">%</span>
+                            <span className="absolute right-2 top-1.5 text-brand-gray-400 text-sm">%</span>
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 mb-1">Due Date</label>
+                          <label className="block text-xs text-brand-gray-400 mb-1">Due Date</label>
                           <input
                             type="date"
                             value={item.dueDate}
@@ -656,11 +656,11 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                               updated[index] = { ...updated[index], dueDate: e.target.value };
                               setFormData(prev => ({ ...prev, paymentSchedule: updated }));
                             }}
-                            className="w-full px-2 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-cyan-500"
+                            className="w-full px-2 py-1.5 bg-brand-gray-700 border border-brand-gray-600 rounded text-white text-sm focus:outline-none focus:border-brand-cyan-500"
                           />
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-300">
+                          <span className="text-sm text-brand-gray-300">
                             ${((formData.contractTotal * item.percentage) / 100).toFixed(2)}
                           </span>
                           {formData.paymentSchedule.length > 1 && (
@@ -679,8 +679,8 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       </div>
                     </div>
                   ))}
-                  <div className="flex justify-between text-sm pt-2 border-t border-gray-600">
-                    <span className="text-gray-400">Total:</span>
+                  <div className="flex justify-between text-sm pt-2 border-t border-brand-gray-600">
+                    <span className="text-brand-gray-400">Total:</span>
                     <span className={`font-medium ${
                       formData.paymentSchedule.reduce((sum, item) => sum + item.percentage, 0) === 100 
                         ? 'text-green-400' 
@@ -699,12 +699,12 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
               </div>
             )}
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Discounts & Taxes</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                     Discount Type
                   </label>
                   <div className="flex gap-4">
@@ -715,9 +715,9 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                         value="percentage"
                         checked={formData.discountType === 'percentage'}
                         onChange={handleChange}
-                        className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                        className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                       />
-                      <span className="text-gray-200">Percentage (%)</span>
+                      <span className="text-brand-gray-200">Percentage (%)</span>
                     </label>
                     <label className="flex items-center cursor-pointer">
                       <input
@@ -726,16 +726,16 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                         value="amount"
                         checked={formData.discountType === 'amount'}
                         onChange={handleChange}
-                        className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                        className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                       />
-                      <span className="text-gray-200">Fixed Amount ($)</span>
+                      <span className="text-brand-gray-200">Fixed Amount ($)</span>
                     </label>
                   </div>
                 </div>
 
                 {formData.discountType === 'percentage' ? (
                   <div>
-                    <label htmlFor="discountPercentage" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="discountPercentage" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Discount Percentage
                     </label>
                     <div className="relative">
@@ -748,19 +748,19 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                         step="0.01"
                         min="0"
                         max="100"
-                        className="w-full px-3 py-2 pr-8 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-3 py-2 pr-8 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                         placeholder="0.00"
                       />
-                      <span className="absolute right-3 top-2 text-gray-400">%</span>
+                      <span className="absolute right-3 top-2 text-brand-gray-400">%</span>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <label htmlFor="discountAmount" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="discountAmount" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Discount Amount
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-400">$</span>
+                      <span className="absolute left-3 top-2 text-brand-gray-400">$</span>
                       <input
                         type="number"
                         id="discountAmount"
@@ -769,7 +769,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                         onChange={handleChange}
                         step="0.01"
                         min="0"
-                        className="w-full pl-7 pr-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full pl-7 pr-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                         placeholder="0.00"
                       />
                     </div>
@@ -777,7 +777,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                 )}
 
                 <div>
-                  <label htmlFor="taxRate" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="taxRate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Tax Rate (%)
                   </label>
                   <div className="relative">
@@ -790,23 +790,23 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                       step="0.01"
                       min="0"
                       max="100"
-                      className="w-full px-3 py-2 pr-8 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 pr-8 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="0.00"
                     />
-                    <span className="absolute right-3 top-2 text-gray-400">%</span>
+                    <span className="absolute right-3 top-2 text-brand-gray-400">%</span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 bg-gray-800 border border-gray-600 rounded-md p-4">
+              <div className="mt-6 bg-brand-gray-800 border border-brand-gray-600 rounded-md p-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Subtotal:</span>
+                    <span className="text-brand-gray-400">Subtotal:</span>
                     <span className="text-white font-medium">${totals.subtotal.toFixed(2)}</span>
                   </div>
                   {totals.discountAmount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">
+                      <span className="text-brand-gray-400">
                         Discount {formData.discountType === 'percentage' ? `(${formData.discountPercentage}%)` : ''}:
                       </span>
                       <span className="text-red-400">-${totals.discountAmount.toFixed(2)}</span>
@@ -814,22 +814,22 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                   )}
                   {totals.taxAmount > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Tax ({formData.taxRate}%):</span>
+                      <span className="text-brand-gray-400">Tax ({formData.taxRate}%):</span>
                       <span className="text-white font-medium">${totals.taxAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="border-t border-gray-600 pt-2 flex justify-between">
+                  <div className="border-t border-brand-gray-600 pt-2 flex justify-between">
                     <span className="text-white font-bold text-lg">Grand Total:</span>
-                    <span className="text-cyan-400 font-bold text-lg">${totals.grandTotal.toFixed(2)}</span>
+                    <span className="text-brand-cyan-400 font-bold text-lg">${totals.grandTotal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="notes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Internal Notes
                   </label>
                   <textarea
@@ -838,13 +838,13 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                     value={formData.notes}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Notes for internal use (not visible to customer)"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="customerNotes" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="customerNotes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Customer Notes
                   </label>
                   <textarea
@@ -853,7 +853,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
                     value={formData.customerNotes}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Notes visible to customer on invoice"
                   />
                 </div>
@@ -862,12 +862,12 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -875,7 +875,7 @@ const InvoiceEditor: React.FC<InvoiceEditorProps> = ({ isOpen, onClose, onSave, 
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading || !isFormValid()}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

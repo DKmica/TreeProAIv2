@@ -100,8 +100,8 @@ const JobTemplates: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
-        <span className="ml-3 text-gray-300 text-lg">Loading templates...</span>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-cyan-500"></div>
+        <span className="ml-3 text-brand-gray-300 text-lg">Loading templates...</span>
       </div>
     );
   }
@@ -111,14 +111,14 @@ const JobTemplates: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-            <DocumentTextIcon className="h-8 w-8 text-cyan-500" />
+            <DocumentTextIcon className="h-8 w-8 text-brand-cyan-500" />
             Job Templates
           </h1>
-          <p className="mt-1 text-gray-400">Create and manage reusable job templates</p>
+          <p className="mt-1 text-brand-gray-400">Create and manage reusable job templates</p>
         </div>
         <button
           onClick={handleCreateNew}
-          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
         >
           <PlusCircleIcon className="h-5 w-5" />
           Create New Template
@@ -132,19 +132,19 @@ const JobTemplates: React.FC = () => {
       )}
 
       {mostUsedTemplates.length > 0 && (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+        <div className="bg-brand-gray-800 border border-brand-gray-700 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-white mb-4">Most Used Templates</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {mostUsedTemplates.map((template) => (
               <button
                 key={template.id}
                 onClick={() => handleUseTemplate(template.id)}
-                className="text-left p-4 bg-gray-750 border border-gray-600 rounded-lg hover:border-cyan-500 hover:bg-gray-700 transition-colors"
+                className="text-left p-4 bg-gray-750 border border-brand-gray-600 rounded-lg hover:border-brand-cyan-500 hover:bg-brand-gray-700 transition-colors"
               >
                 <h3 className="font-semibold text-white mb-1 truncate">{template.name}</h3>
-                <p className="text-sm text-gray-400">Used {template.usageCount} times</p>
+                <p className="text-sm text-brand-gray-400">Used {template.usageCount} times</p>
                 {template.basePrice && (
-                  <p className="text-sm text-cyan-400 mt-1">${Number(template.basePrice).toFixed(2)}</p>
+                  <p className="text-sm text-brand-cyan-400 mt-1">${Number(template.basePrice).toFixed(2)}</p>
                 )}
               </button>
             ))}
@@ -158,7 +158,7 @@ const JobTemplates: React.FC = () => {
           placeholder="Search templates..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+          className="flex-1 px-4 py-2 bg-brand-gray-800 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
         />
         <div className="flex gap-2 overflow-x-auto">
           {categories.map((cat) => (
@@ -167,8 +167,8 @@ const JobTemplates: React.FC = () => {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-md whitespace-nowrap transition-colors ${
                 selectedCategory === cat
-                  ? 'bg-cyan-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-brand-cyan-600 text-white'
+                  : 'bg-brand-gray-800 text-brand-gray-300 hover:bg-brand-gray-700'
               }`}
             >
               {cat === 'all' ? 'All' : cat}
@@ -179,8 +179,8 @@ const JobTemplates: React.FC = () => {
 
       {filteredTemplates.length === 0 ? (
         <div className="text-center py-12">
-          <DocumentTextIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">
+          <DocumentTextIcon className="h-16 w-16 text-brand-gray-600 mx-auto mb-4" />
+          <p className="text-brand-gray-400 text-lg">
             {templates.length === 0
               ? 'No templates yet. Create your first template to get started!'
               : 'No templates match your search criteria'}
@@ -191,44 +191,44 @@ const JobTemplates: React.FC = () => {
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden hover:border-cyan-500 transition-colors"
+              className="bg-brand-gray-800 border border-brand-gray-700 rounded-lg overflow-hidden hover:border-brand-cyan-500 transition-colors"
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="text-xl font-semibold text-white">{template.name}</h3>
                   {template.category && (
-                    <span className="px-2 py-1 text-xs bg-cyan-900/30 text-cyan-300 rounded">
+                    <span className="px-2 py-1 text-xs bg-cyan-900/30 text-brand-cyan-300 rounded">
                       {template.category}
                     </span>
                   )}
                 </div>
 
                 {template.description && (
-                  <p className="text-gray-400 mb-4 line-clamp-2">{template.description}</p>
+                  <p className="text-brand-gray-400 mb-4 line-clamp-2">{template.description}</p>
                 )}
 
                 <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                   {template.basePrice && (
                     <div>
-                      <span className="text-gray-500">Base Price:</span>
+                      <span className="text-brand-gray-500">Base Price:</span>
                       <p className="text-white font-medium">${Number(template.basePrice).toFixed(2)}</p>
                     </div>
                   )}
                   {template.pricePerHour && (
                     <div>
-                      <span className="text-gray-500">Per Hour:</span>
+                      <span className="text-brand-gray-500">Per Hour:</span>
                       <p className="text-white font-medium">${Number(template.pricePerHour).toFixed(2)}/h</p>
                     </div>
                   )}
                   {template.defaultDurationHours && (
                     <div>
-                      <span className="text-gray-500">Duration:</span>
+                      <span className="text-brand-gray-500">Duration:</span>
                       <p className="text-white font-medium">{template.defaultDurationHours} hours</p>
                     </div>
                   )}
                   {template.defaultCrewSize && (
                     <div>
-                      <span className="text-gray-500">Crew Size:</span>
+                      <span className="text-brand-gray-500">Crew Size:</span>
                       <p className="text-white font-medium">{template.defaultCrewSize} people</p>
                     </div>
                   )}
@@ -254,7 +254,7 @@ const JobTemplates: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                <div className="flex items-center justify-between text-sm text-brand-gray-500 mb-4">
                   <span>Used {template.usageCount} times</span>
                   {template.lastUsedAt && (
                     <span>Last: {new Date(template.lastUsedAt).toLocaleDateString()}</span>
@@ -262,16 +262,16 @@ const JobTemplates: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 bg-gray-750 px-6 py-3 flex gap-2">
+              <div className="border-t border-brand-gray-700 bg-gray-750 px-6 py-3 flex gap-2">
                 <button
                   onClick={() => handleUseTemplate(template.id)}
-                  className="flex-1 px-3 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors text-sm font-medium"
+                  className="flex-1 px-3 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors text-sm font-medium"
                 >
                   Use Template
                 </button>
                 <button
                   onClick={() => handleEdit(template.id)}
-                  className="px-3 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700 transition-colors text-sm font-medium"
+                  className="px-3 py-2 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-700 transition-colors text-sm font-medium"
                 >
                   Edit
                 </button>
@@ -285,7 +285,7 @@ const JobTemplates: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setDeleteConfirmId(null)}
-                      className="px-3 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700 transition-colors text-sm font-medium"
+                      className="px-3 py-2 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-700 transition-colors text-sm font-medium"
                     >
                       Cancel
                     </button>

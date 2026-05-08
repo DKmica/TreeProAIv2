@@ -148,19 +148,19 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-lg max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <div className="flex items-center gap-3">
-            <div className="bg-cyan-600 p-2 rounded-lg">
+            <div className="bg-brand-cyan-600 p-2 rounded-lg">
               <DollarIcon className="h-6 w-6 text-white" />
             </div>
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-white">Record Payment</h2>
-              <p className="text-sm text-gray-400">Invoice #{invoice.invoiceNumber || invoice.id}</p>
+              <p className="text-sm text-brand-gray-400">Invoice #{invoice.invoiceNumber || invoice.id}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -175,36 +175,36 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
               </div>
             )}
 
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 space-y-2">
+            <div className="bg-brand-gray-800 border border-brand-gray-600 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Invoice Total:</span>
+                <span className="text-brand-gray-400">Invoice Total:</span>
                 <span className="text-white font-medium">${(invoice.grandTotal ?? invoice.totalAmount ?? 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Amount Paid:</span>
+                <span className="text-brand-gray-400">Amount Paid:</span>
                 <span className="text-green-400 font-medium">${(invoice.amountPaid ?? 0).toFixed(2)}</span>
               </div>
-              <div className="border-t border-gray-600 pt-2 flex justify-between">
+              <div className="border-t border-brand-gray-600 pt-2 flex justify-between">
                 <span className="text-white font-bold">Amount Due:</span>
-                <span className="text-cyan-400 font-bold text-lg">${getAmountDue().toFixed(2)}</span>
+                <span className="text-brand-cyan-400 font-bold text-lg">${getAmountDue().toFixed(2)}</span>
               </div>
             </div>
 
             {invoice.payments && invoice.payments.length > 0 && (
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-4">
+              <div className="bg-brand-gray-900 border border-brand-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-white">Payment history</h3>
-                  <span className="text-xs text-gray-400">{invoice.payments.length} record{invoice.payments.length === 1 ? '' : 's'}</span>
+                  <span className="text-xs text-brand-gray-400">{invoice.payments.length} record{invoice.payments.length === 1 ? '' : 's'}</span>
                 </div>
-                <div className="divide-y divide-gray-800 max-h-40 overflow-y-auto pr-1">
+                <div className="divide-y divide-brand-gray-800 max-h-40 overflow-y-auto pr-1">
                   {invoice.payments.map((payment) => (
                     <div key={payment.id} className="py-2 text-sm flex justify-between">
                       <div className="space-y-0.5">
                         <p className="text-white">${(payment.amount ?? 0).toFixed(2)}</p>
-                        <p className="text-gray-400 text-xs">{payment.paymentMethod} • {new Date(payment.paymentDate).toLocaleDateString()}</p>
-                        {payment.referenceNumber && <p className="text-gray-500 text-xs">Ref: {payment.referenceNumber}</p>}
+                        <p className="text-brand-gray-400 text-xs">{payment.paymentMethod} • {new Date(payment.paymentDate).toLocaleDateString()}</p>
+                        {payment.referenceNumber && <p className="text-brand-gray-500 text-xs">Ref: {payment.referenceNumber}</p>}
                       </div>
-                      <span className="text-gray-400 text-xs text-right whitespace-nowrap">Recorded {new Date(payment.createdAt || payment.paymentDate).toLocaleDateString()}</span>
+                      <span className="text-brand-gray-400 text-xs text-right whitespace-nowrap">Recorded {new Date(payment.createdAt || payment.paymentDate).toLocaleDateString()}</span>
                     </div>
                   ))}
                 </div>
@@ -212,11 +212,11 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
             )}
 
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="amount" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Payment Amount <span className="text-red-400">*</span>
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2 text-gray-400 text-lg">$</span>
+                <span className="absolute left-3 top-2 text-brand-gray-400 text-lg">$</span>
                 <input
                   type="number"
                   id="amount"
@@ -226,7 +226,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                   step="0.01"
                   min="0"
                   max={getAmountDue()}
-                  className="w-full pl-8 pr-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white text-lg placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full pl-8 pr-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white text-lg placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   placeholder="0.00"
                 />
               </div>
@@ -237,14 +237,14 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, amount: getAmountDue() }))}
-                  className="px-3 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                  className="px-3 py-1 bg-brand-gray-700 text-white text-xs rounded hover:bg-brand-gray-600 transition-colors"
                 >
                   Full Amount
                 </button>
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, amount: getAmountDue() / 2 }))}
-                  className="px-3 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                  className="px-3 py-1 bg-brand-gray-700 text-white text-xs rounded hover:bg-brand-gray-600 transition-colors"
                 >
                   50%
                 </button>
@@ -252,7 +252,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
             </div>
 
             <div>
-              <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="paymentDate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Payment Date <span className="text-red-400">*</span>
               </label>
               <input
@@ -261,7 +261,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                 name="paymentDate"
                 value={formData.paymentDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
               />
               {errors.paymentDate && (
                 <p className="mt-1 text-sm text-red-400">{errors.paymentDate}</p>
@@ -269,7 +269,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
             </div>
 
             <div>
-              <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="paymentMethod" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Payment Method <span className="text-red-400">*</span>
               </label>
               <select
@@ -277,7 +277,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                 name="paymentMethod"
                 value={formData.paymentMethod}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
               >
                 <option value="Cash">Cash</option>
                 <option value="Check">Check</option>
@@ -290,7 +290,7 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
             </div>
 
             <div>
-              <label htmlFor="referenceNumber" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="referenceNumber" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Reference Number
               </label>
               <input
@@ -299,13 +299,13 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                 name="referenceNumber"
                 value={formData.referenceNumber}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 placeholder="Check #, Transaction ID, etc."
               />
             </div>
 
             <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="notes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Notes
               </label>
               <textarea
@@ -314,19 +314,19 @@ const PaymentRecorder: React.FC<PaymentRecorderProps> = ({ isOpen, onClose, onPa
                 value={formData.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                 placeholder="Additional notes about this payment..."
               />
             </div>
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>

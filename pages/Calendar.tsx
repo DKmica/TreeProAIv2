@@ -459,8 +459,8 @@ const Calendar: React.FC = () => {
         switch (status) {
             case 'scheduled': return 'bg-blue-100 text-blue-800 border-blue-200';
             case 'in_progress': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-            case 'draft': return 'bg-gray-100 text-gray-800 border-gray-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'draft': return 'bg-brand-gray-100 text-brand-gray-800 border-brand-gray-200';
+            default: return 'bg-brand-gray-100 text-brand-gray-800 border-brand-gray-200';
         }
     };
 
@@ -469,14 +469,14 @@ const Calendar: React.FC = () => {
             case 'month':
                 return (
                     <>
-                        <button onClick={goToPreviousMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                        <button onClick={goToPreviousMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-brand-gray-100">
                             <span className="sr-only">Previous month</span>
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-48">
                             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </h2>
-                        <button onClick={goToNextMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                        <button onClick={goToNextMonth} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-brand-gray-100">
                             <span className="sr-only">Next month</span>
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>
@@ -486,14 +486,14 @@ const Calendar: React.FC = () => {
             case 'crew':
                 return (
                     <>
-                        <button onClick={goToPreviousWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                        <button onClick={goToPreviousWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-brand-gray-100">
                             <span className="sr-only">Previous week</span>
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-48">
                             Week of {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </h2>
-                        <button onClick={goToNextWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                        <button onClick={goToNextWeek} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-brand-gray-100">
                             <span className="sr-only">Next week</span>
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>
@@ -503,14 +503,14 @@ const Calendar: React.FC = () => {
             case '3-day':
                 return (
                     <>
-                        <button onClick={goToPreviousDay} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                        <button onClick={goToPreviousDay} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-brand-gray-100">
                             <span className="sr-only">Previous day</span>
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 className="text-base md:text-lg font-semibold text-brand-gray-800 text-center w-48">
                             {currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                         </h2>
-                        <button onClick={goToNextDay} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-gray-100">
+                        <button onClick={goToNextDay} className="text-brand-gray-500 hover:text-brand-gray-700 p-1 rounded-full hover:bg-brand-gray-100">
                             <span className="sr-only">Next day</span>
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>

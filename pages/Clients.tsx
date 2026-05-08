@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { WorkOrder } from '../types';
 import { workOrderService } from '../services/apiService';
-import SpinnerIcon from '../components/icons/SpinnerIcon';
+import { Card, CardContent } from '../components/ui/Card';
+import Avatar from '../components/ui/Avatar';
+import { MapPin, Phone, Mail, Briefcase, FileText, MoreHorizontal, Search } from 'lucide-react';
 
 interface ClientSummary {
   clientId: string;
@@ -39,7 +41,6 @@ const Clients: React.FC = () => {
         setIsLoading(false);
       }
     };
-
     load();
   }, []);
 
@@ -60,108 +61,134 @@ const Clients: React.FC = () => {
         jobs: 0,
         invoices: 0,
       };
-
       existing.totalWorkOrders += 1;
       if (wo.stage === 'lead') existing.leads += 1;
       if (wo.stage === 'quoting') existing.quotes += 1;
       if (['scheduled', 'in_progress', 'complete'].includes(wo.stage)) existing.jobs += 1;
       if (wo.stage === 'invoiced') existing.invoices += 1;
-
       map.set(wo.clientId, existing);
     });
 
-    const list = Array.from(map.values());
-    return list
-      .filter((client) =>
-        !search ||
-        client.clientName.toLowerCase().includes(search.toLowerCase()) ||
-        client.clientEmail?.toLowerCase().includes(search.toLowerCase()) ||
-        client.propertyAddress?.toLowerCase().includes(search.toLowerCase())
+    return Array.from(map.values())
+      .filter(
+        (client) =>
+          !search ||
+          client.clientName.toLowerCase().includes(search.toLowerCase()) ||
+          client.clientEmail?.toLowerCase().includes(search.toLowerCase()) ||
+          client.propertyAddress?.toLowerCase().includes(search.toLowerCase())
       )
       .sort((a, b) => a.clientName.localeCompare(b.clientName));
   }, [search, workOrders]);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <SpinnerIcon className="w-8 h-8 animate-spin text-cyan-500" />
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-brand-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Clients</h1>
-          <p className="text-gray-400">Active clients sourced from work orders</p>
-        </div>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-brand-gray-400">{clients.length} active clients</p>
         <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-gray-500" />
           <input
             type="text"
             placeholder="Search clients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-64 px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="pl-9 pr-4 py-2 text-sm rounded-lg bg-brand-gray-800 border border-brand-gray-700 text-white placeholder-brand-gray-500 focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20 transition-all w-56"
           />
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300">{error}</div>
+        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid gap-3">
         {clients.map((client) => (
-          <div
+          <Card
             key={client.clientId}
-            className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-cyan-500/60 transition"
+            className="hover:border-brand-gray-600 transition-colors cursor-pointer"
+            onClick={() => navigate(`/work-orders?clientId=${client.clientId}`)}
           >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-lg font-semibold text-white">{client.clientName}</h3>
-                {client.propertyAddress && (
-                  <p className="text-sm text-gray-400">{client.propertyAddress}</p>
-                )}
-                {client.clientEmail && (
-                  <p className="text-sm text-gray-400">{client.clientEmail}</p>
-                )}
-                {client.clientPhone && (
-                  <p className="text-sm text-gray-400">{client.clientPhone}</p>
-                )}
-              </div>
-              <button
-                onClick={() => navigate(`/work-orders?clientId=${client.clientId}`)}
-                className="text-cyan-400 text-sm hover:text-cyan-300"
-              >
-                View work orders
-              </button>
-            </div>
+            <CardContent className="py-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 min-w-0">
+                  <Avatar name={client.clientName} size="lg" />
+                  <div className="min-w-0 space-y-1">
+                    <h3 className="font-semibold text-white text-base">{client.clientName}</h3>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-brand-gray-400">
+                      {client.clientEmail && (
+                        <span className="flex items-center gap-1">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate max-w-[180px]">{client.clientEmail}</span>
+                        </span>
+                      )}
+                      {client.clientPhone && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-3 w-3 flex-shrink-0" />
+                          {client.clientPhone}
+                        </span>
+                      )}
+                      {client.propertyAddress && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate max-w-[200px]">{client.propertyAddress}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="bg-gray-700/50 rounded p-2">
-                <div className="text-xs text-gray-400">Leads</div>
-                <div className="text-white font-semibold">{client.leads}</div>
+                <div className="flex items-center gap-5 flex-shrink-0">
+                  <div className="hidden sm:flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-white">{client.leads}</div>
+                      <div className="text-xs text-brand-gray-500">Leads</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-white">{client.quotes}</div>
+                      <div className="text-xs text-brand-gray-500">Quotes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-white">{client.jobs}</div>
+                      <div className="text-xs text-brand-gray-500">Jobs</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-white">{client.invoices}</div>
+                      <div className="text-xs text-brand-gray-500">Invoices</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/work-orders?clientId=${client.clientId}`);
+                    }}
+                    className="p-1.5 text-brand-gray-500 hover:text-white hover:bg-brand-gray-700 rounded-lg transition-colors"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              <div className="bg-gray-700/50 rounded p-2">
-                <div className="text-xs text-gray-400">Quotes</div>
-                <div className="text-white font-semibold">{client.quotes}</div>
-              </div>
-              <div className="bg-gray-700/50 rounded p-2">
-                <div className="text-xs text-gray-400">Jobs</div>
-                <div className="text-white font-semibold">{client.jobs}</div>
-              </div>
-              <div className="bg-gray-700/50 rounded p-2">
-                <div className="text-xs text-gray-400">Invoices</div>
-                <div className="text-white font-semibold">{client.invoices}</div>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {clients.length === 0 && !error && (
-        <div className="text-center text-gray-500 py-12">No clients found in work orders</div>
+        <div className="text-center py-16">
+          <Briefcase className="h-10 w-10 text-brand-gray-600 mx-auto mb-3" />
+          <p className="text-brand-gray-400 text-sm">No clients found</p>
+          {search && (
+            <button onClick={() => setSearch('')} className="mt-2 text-xs text-brand-cyan-400 hover:text-brand-cyan-300">
+              Clear search
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

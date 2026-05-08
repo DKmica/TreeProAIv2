@@ -74,7 +74,7 @@ const typeColors: Record<string, string> = {
   property: 'bg-rose-500/20 text-rose-400',
   tag: 'bg-indigo-500/20 text-indigo-400',
   employee: 'bg-orange-500/20 text-orange-400',
-  equipment: 'bg-gray-500/20 text-gray-400',
+  equipment: 'bg-brand-gray-700/50 text-brand-gray-400',
 };
 
 const RECENT_SEARCHES_KEY = 'treeproai_recent_searches';

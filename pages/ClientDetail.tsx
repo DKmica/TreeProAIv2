@@ -92,14 +92,14 @@ const ClientDetail: React.FC = () => {
       case 'property_manager':
         return 'bg-blue-100 text-blue-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
   const getQuoteStatusColor = (status: Quote['status']) => {
     switch (status) {
       case 'Draft':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
       case 'Sent':
         return 'bg-blue-100 text-blue-800';
       case 'Accepted':
@@ -109,14 +109,14 @@ const ClientDetail: React.FC = () => {
       case 'Converted':
         return 'bg-purple-100 text-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
   const getJobStatusColor = (status: Job['status']) => {
     switch (status) {
       case 'draft':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
       case 'scheduled':
         return 'bg-blue-100 text-blue-800';
       case 'in_progress':
@@ -126,7 +126,7 @@ const ClientDetail: React.FC = () => {
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
@@ -402,13 +402,13 @@ const ClientDetail: React.FC = () => {
                   {formatClientType(client.clientType)}
                 </span>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${
-                  client.status === 'active' ? 'bg-green-50' : 'bg-gray-50'
+                  client.status === 'active' ? 'bg-green-50' : 'bg-brand-gray-50'
                 }`}>
                   <span className={`w-2 h-2 rounded-full ${
-                    client.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                    client.status === 'active' ? 'bg-green-500' : 'bg-brand-gray-400'
                   }`}></span>
                   <span className={`text-sm font-medium ${
-                    client.status === 'active' ? 'text-green-800' : 'text-gray-800'
+                    client.status === 'active' ? 'text-green-800' : 'text-brand-gray-800'
                   }`}>
                     {client.status}
                   </span>
@@ -528,7 +528,7 @@ const ClientDetail: React.FC = () => {
                     <label className="text-sm font-medium text-brand-gray-500">Status</label>
                     <p className="mt-1">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        client.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        client.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-brand-gray-100 text-brand-gray-800'
                       }`}>
                         {client.status}
                       </span>
@@ -643,12 +643,12 @@ const ClientDetail: React.FC = () => {
                     </div>
                     <span className="text-2xl font-bold text-purple-600">{quotes.length}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-brand-cyan-50 rounded-lg">
                     <div className="flex items-center">
-                      <JobIcon className="h-5 w-5 text-cyan-600 mr-2" />
+                      <JobIcon className="h-5 w-5 text-brand-cyan-600 mr-2" />
                       <span className="text-sm font-medium text-brand-gray-700">Total Jobs</span>
                     </div>
-                    <span className="text-2xl font-bold text-cyan-600">{jobs.length}</span>
+                    <span className="text-2xl font-bold text-brand-cyan-600">{jobs.length}</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                     <div className="flex items-center">
@@ -807,7 +807,7 @@ const ClientDetail: React.FC = () => {
                           </h3>
                           <div className="mt-1 flex flex-wrap gap-2">
                             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              contact.isPrimary ? 'bg-brand-cyan-100 text-brand-cyan-800' : 'bg-gray-100 text-gray-800'
+                              contact.isPrimary ? 'bg-brand-cyan-100 text-brand-cyan-800' : 'bg-brand-gray-100 text-brand-gray-800'
                             }`}>
                               {getContactTypeLabel(contact.contactType)}
                             </span>

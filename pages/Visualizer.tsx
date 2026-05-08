@@ -345,25 +345,25 @@ const Visualizer: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="space-y-6">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Tree Trim Visualizer</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-brand-gray-900">Tree Trim Visualizer</h1>
+            <p className="text-brand-gray-600 mt-1">
               Upload a photo and paint over the areas you want to trim. Then generate a preview to show your customer.
             </p>
           </div>
 
           {!image ? (
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center">
+            <div className="border-2 border-dashed border-brand-gray-300 rounded-xl p-12 text-center">
               <div className="flex flex-col items-center gap-4">
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
                   <Upload className="w-8 h-8 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Upload a Tree Photo</h3>
-                  <p className="text-gray-500 text-sm mt-1">Take a photo or select from your gallery</p>
+                  <h3 className="text-lg font-semibold text-brand-gray-900">Upload a Tree Photo</h3>
+                  <p className="text-brand-gray-500 text-sm mt-1">Take a photo or select from your gallery</p>
                 </div>
                 <div className="flex gap-3 mt-4">
                   <button
@@ -375,7 +375,7 @@ const Visualizer: React.FC = () => {
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-gray-100 text-brand-gray-700 rounded-lg hover:bg-brand-gray-200 transition-colors"
                   >
                     <Upload className="w-5 h-5" />
                     Upload File
@@ -401,7 +401,7 @@ const Visualizer: React.FC = () => {
                       setStrokes([]);
                       setShowComparison(false);
                     }}
-                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                    className="px-3 py-2 text-sm text-brand-gray-600 hover:text-brand-gray-900 flex items-center gap-1"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     New Photo
@@ -411,7 +411,7 @@ const Visualizer: React.FC = () => {
                 {!showComparison && (
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Brush:</span>
+                      <span className="text-sm text-brand-gray-600">Brush:</span>
                       <input
                         type="range"
                         min="10"
@@ -420,13 +420,13 @@ const Visualizer: React.FC = () => {
                         onChange={(e) => setBrushSize(parseInt(e.target.value))}
                         className="w-24 accent-emerald-600"
                       />
-                      <span className="text-sm text-gray-500 w-8">{brushSize}px</span>
+                      <span className="text-sm text-brand-gray-500 w-8">{brushSize}px</span>
                     </div>
                     
                     <button
                       onClick={handleUndo}
                       disabled={strokes.length === 0}
-                      className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-2 text-brand-gray-600 hover:text-brand-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Undo"
                     >
                       <Undo2 className="w-5 h-5" />
@@ -435,7 +435,7 @@ const Visualizer: React.FC = () => {
                     <button
                       onClick={handleClear}
                       disabled={strokes.length === 0}
-                      className="p-2 text-gray-600 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="p-2 text-brand-gray-600 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Clear All"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -446,7 +446,7 @@ const Visualizer: React.FC = () => {
 
               <div 
                 ref={containerRef}
-                className="relative bg-gray-100 rounded-lg overflow-hidden"
+                className="relative bg-brand-gray-100 rounded-lg overflow-hidden"
                 style={{ minHeight: '300px' }}
               >
                 {showComparison && processedImage ? (
@@ -476,8 +476,8 @@ const Visualizer: React.FC = () => {
                         onTouchStart={() => setIsDraggingSlider(true)}
                       >
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
-                          <ChevronLeft className="w-4 h-4 text-gray-600 -mr-1" />
-                          <ChevronRight className="w-4 h-4 text-gray-600 -ml-1" />
+                          <ChevronLeft className="w-4 h-4 text-brand-gray-600 -mr-1" />
+                          <ChevronRight className="w-4 h-4 text-brand-gray-600 -ml-1" />
                         </div>
                       </div>
                       
@@ -512,7 +512,7 @@ const Visualizer: React.FC = () => {
                   <>
                     <button
                       onClick={() => setShowComparison(false)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="px-4 py-2 bg-brand-gray-100 text-brand-gray-700 rounded-lg hover:bg-brand-gray-200 transition-colors"
                     >
                       Edit Mask
                     </button>
@@ -546,7 +546,7 @@ const Visualizer: React.FC = () => {
               </div>
 
               {!showComparison && strokes.length === 0 && (
-                <p className="text-center text-gray-500 text-sm mt-4">
+                <p className="text-center text-brand-gray-500 text-sm mt-4">
                   Paint over the branches or foliage you want to remove, then click "Generate Trim Preview"
                 </p>
               )}

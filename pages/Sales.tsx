@@ -420,7 +420,7 @@ const Sales: React.FC = () => {
                           commission.status === 'paid' ? 'bg-purple-100 text-purple-800' :
                           commission.status === 'earned' ? 'bg-green-100 text-green-800' :
                           commission.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
+                          'bg-brand-gray-100 text-brand-gray-800'
                         }`}>
                           {commission.status}
                         </span>
@@ -508,7 +508,7 @@ const Sales: React.FC = () => {
       )}
 
       {showAssignModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-brand-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Assign Sale to Salesman</h3>
             <div className="space-y-4">
@@ -585,7 +585,7 @@ const Sales: React.FC = () => {
       )}
 
       {showPayrollModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-brand-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Process Commission Payroll</h3>
             <div className="space-y-4">
@@ -650,7 +650,7 @@ const Sales: React.FC = () => {
               <button
                 onClick={handleProcessPayroll}
                 disabled={processingPayroll || selectedCommissionIds.length === 0}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400"
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-brand-gray-400"
               >
                 {processingPayroll ? 'Processing...' : 'Process Payroll'}
               </button>
@@ -660,7 +660,7 @@ const Sales: React.FC = () => {
       )}
 
       {selectedSalesman && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-brand-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <div>

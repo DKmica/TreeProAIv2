@@ -1,71 +1,90 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import DashboardIcon from './icons/DashboardIcon';
-import JobIcon from './icons/JobIcon';
-import CustomerIcon from './icons/CustomerIcon';
-import LeadIcon from './icons/LeadIcon';
-import QuoteIcon from './icons/QuoteIcon';
-import InvoiceIcon from './icons/InvoiceIcon';
-import EmployeeIcon from './icons/EmployeeIcon';
-import EquipmentIcon from './icons/EquipmentIcon';
-import CalendarIcon from './icons/CalendarIcon';
-import MarketingIcon from './icons/MarketingIcon';
-import AICoreIcon from './icons/AICoreIcon';
-import SparklesIcon from './icons/SparklesIcon';
-import ChatIcon from './icons/ChatIcon';
-import DollarIcon from './icons/DollarIcon';
-import CogIcon from './icons/CogIcon';
-import DocumentTextIcon from './icons/DocumentTextIcon';
-import UsersIcon from './icons/UsersIcon';
-import ClockIcon from './icons/ClockIcon';
-import ClipboardDocumentListIcon from './icons/ClipboardDocumentListIcon';
-import ExclamationTriangleIcon from './icons/ExclamationTriangleIcon';
-import AutomationIcon from './icons/AutomationIcon';
-import LogsIcon from './icons/LogsIcon';
-import ScanIcon from './icons/ScanIcon';
-import ShieldCheckIcon from './icons/ShieldCheckIcon';
 import { useBadgeCounts } from '../hooks/useBadgeCounts';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  LayoutDashboard, Calendar, ClipboardList, Users, FileText,
+  Briefcase, UserCheck, Clock, Wrench, Receipt, DollarSign,
+  BarChart2, Sparkles, TreePine, MessageSquare, Megaphone,
+  Zap, ScrollText, BookTemplate, Settings, ShieldCheck,
+  ScanLine, FlaskConical, Shovel, ChevronDown, ChevronRight,
+  HardHat, TrendingUp,
+} from 'lucide-react';
 
-type NavigationItem = { 
-  name: string; 
-  href: string; 
-  icon: React.ComponentType<{ className?: string }>;
+type NavItem = {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   badge?: number | string;
   allowedRoles?: string[];
 };
 
-const navigationItems: NavigationItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
-  { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-  { name: 'Work Orders', href: '/work-orders', icon: ClipboardDocumentListIcon },
-  { name: 'Clients', href: '/clients', icon: CustomerIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales', 'scheduler'] },
-  { name: 'Leads', href: '/leads', icon: LeadIcon },
-  { name: 'Quotes', href: '/quotes', icon: QuoteIcon },
-  { name: 'Jobs', href: '/jobs', icon: JobIcon },
-  { name: 'Document Scanner', href: '/document-scanner', icon: ScanIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
-  { name: 'Crews', href: '/crews', icon: UsersIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Employees', href: '/employees', icon: EmployeeIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Time Tracking', href: '/time-tracking', icon: ClockIcon },
-  { name: 'Equipment', href: '/equipment', icon: EquipmentIcon },
-  { name: 'PHC Compliance', href: '/phc-compliance', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager', 'foreman'] },
-  { name: 'Stump Grinding', href: '/stump-grinding', icon: JobIcon },
-  { name: 'Invoicing', href: '/invoicing', icon: InvoiceIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
-  { name: 'Payroll', href: '/payroll', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
-  { name: 'Sales', href: '/sales', icon: DollarIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Profitability', href: '/profitability', icon: DollarIcon, allowedRoles: ['owner', 'admin'] },
-  { name: 'Reports', href: '/reports', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'AI Estimator', href: '/ai-tree-estimator', icon: SparklesIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
-  { name: 'Tree Visualizer', href: '/visualizer', icon: SparklesIcon, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
-  { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Chat', href: '/chat', icon: ChatIcon },
-  { name: 'Marketing', href: '/marketing', icon: MarketingIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Workflows', href: '/workflows', icon: AutomationIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Automation Logs', href: '/automation-logs', icon: LogsIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Templates', href: '/job-templates', icon: DocumentTextIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'AI Core', href: '/ai-core', icon: AICoreIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'Settings', href: '/settings', icon: CogIcon, allowedRoles: ['owner', 'admin', 'manager'] },
-  { name: 'User Management', href: '/user-management', icon: ShieldCheckIcon, allowedRoles: ['owner'] },
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Overview',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Calendar', href: '/calendar', icon: Calendar },
+      { name: 'Work Orders', href: '/work-orders', icon: ClipboardList },
+    ],
+  },
+  {
+    label: 'Customers',
+    items: [
+      { name: 'Clients', href: '/clients', icon: Users, allowedRoles: ['owner', 'admin', 'manager', 'sales', 'scheduler'] },
+      { name: 'Leads', href: '/leads', icon: FileText },
+      { name: 'Quotes', href: '/quotes', icon: Receipt },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { name: 'Jobs', href: '/jobs', icon: Briefcase },
+      { name: 'Crews', href: '/crews', icon: HardHat, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Employees', href: '/employees', icon: UserCheck, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Time Tracking', href: '/time-tracking', icon: Clock },
+      { name: 'Equipment', href: '/equipment', icon: Wrench },
+      { name: 'PHC Compliance', href: '/phc-compliance', icon: FlaskConical, allowedRoles: ['owner', 'admin', 'manager', 'foreman'] },
+      { name: 'Stump Grinding', href: '/stump-grinding', icon: Shovel },
+      { name: 'Document Scanner', href: '/document-scanner', icon: ScanLine, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+    ],
+  },
+  {
+    label: 'Finance',
+    items: [
+      { name: 'Invoicing', href: '/invoicing', icon: DollarSign, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+      { name: 'Payroll', href: '/payroll', icon: Receipt, allowedRoles: ['owner', 'admin'] },
+      { name: 'Sales', href: '/sales', icon: TrendingUp, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Profitability', href: '/profitability', icon: BarChart2, allowedRoles: ['owner', 'admin'] },
+      { name: 'Reports', href: '/reports', icon: BarChart2, allowedRoles: ['owner', 'admin', 'manager'] },
+    ],
+  },
+  {
+    label: 'AI Suite',
+    items: [
+      { name: 'AI Estimator', href: '/ai-tree-estimator', icon: Sparkles, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+      { name: 'Tree Visualizer', href: '/visualizer', icon: TreePine, allowedRoles: ['owner', 'admin', 'manager', 'sales'] },
+      { name: 'Ask ProBot', href: '/chat', icon: MessageSquare },
+      { name: 'Marketing', href: '/marketing', icon: Megaphone, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'AI Core', href: '/ai-core', icon: Sparkles, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Estimate Analytics', href: '/estimate-feedback-analytics', icon: BarChart2, allowedRoles: ['owner', 'admin', 'manager'] },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { name: 'Workflows', href: '/workflows', icon: Zap, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Automation Logs', href: '/automation-logs', icon: ScrollText, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Templates', href: '/job-templates', icon: BookTemplate, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'Settings', href: '/settings', icon: Settings, allowedRoles: ['owner', 'admin', 'manager'] },
+      { name: 'User Management', href: '/user-management', icon: ShieldCheck, allowedRoles: ['owner'] },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -77,215 +96,159 @@ const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
   const { counts } = useBadgeCounts();
   const { hasAnyRole, userRoles } = useAuth();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  const filteredNavigation = useMemo(() => {
-    return navigationItems.filter(item => {
-      if (!item.allowedRoles) return true;
-      if (userRoles.length === 0) return false;
-      return hasAnyRole(item.allowedRoles);
-    });
-  }, [hasAnyRole, userRoles]);
+  const badgeMap: Record<string, number | undefined> = useMemo(() => ({
+    '/leads': counts.pendingLeads > 0 ? counts.pendingLeads : undefined,
+    '/jobs': counts.todayJobs > 0 ? counts.todayJobs : undefined,
+    '/invoicing': counts.unpaidInvoices > 0 ? counts.unpaidInvoices : undefined,
+    '/chat': counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
+  }), [counts]);
 
-  const navigationWithBadges = useMemo(() => {
-    const badgeMap: Record<string, number | string | undefined> = {
-      '/leads': counts.pendingLeads > 0 ? counts.pendingLeads : undefined,
-      '/jobs': counts.todayJobs > 0 ? counts.todayJobs : undefined,
-      '/invoices': counts.unpaidInvoices > 0 ? counts.unpaidInvoices : undefined,
-      '/exception-queue': counts.exceptions > 0 ? counts.exceptions : undefined,
-      '/chat': counts.unreadMessages > 0 ? counts.unreadMessages : undefined,
-    };
-
-    return filteredNavigation.map(item => ({
-      ...item,
-      badge: badgeMap[item.href],
-    }));
-  }, [counts, filteredNavigation]);
+  const filteredGroups = useMemo(() => {
+    return navGroups.map(group => ({
+      ...group,
+      items: group.items.filter(item => {
+        if (!item.allowedRoles) return true;
+        if (userRoles.length === 0) return false;
+        return hasAnyRole(item.allowedRoles);
+      }).map(item => ({
+        ...item,
+        badge: badgeMap[item.href],
+      })),
+    })).filter(group => group.items.length > 0);
+  }, [hasAnyRole, userRoles, badgeMap]);
 
   const isActiveRoute = useCallback((href: string) => {
     if (href === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(href);
   }, [location.pathname]);
 
-  const renderNavItem = (item: NavigationItem, collapsed: boolean = false) => {
-    const isActive = isActiveRoute(item.href);
-    
-    return (
-      <NavLink
-        key={item.name}
-        to={item.href}
-        onClick={() => setSidebarOpen(false)}
-        title={collapsed ? item.name : undefined}
-        className={`
-          group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg
-          transition-all duration-200 relative
-          ${isActive
-            ? 'bg-gradient-to-r from-brand-cyan-600 to-brand-cyan-500 text-white shadow-lg shadow-brand-cyan-500/20'
-            : 'text-brand-gray-300 hover:bg-brand-gray-800/80 hover:text-white'
-          }
-          ${collapsed ? 'justify-center' : ''}
-        `}
-      >
-        <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? '' : 'group-hover:text-brand-cyan-400'}`} />
-        {!collapsed && (
-          <>
-            <span className="flex-1">{item.name}</span>
-            {item.badge && (
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-500 text-white">
-                {item.badge}
-              </span>
-            )}
-          </>
-        )}
-        {collapsed && item.badge && (
-          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
-        )}
-      </NavLink>
-    );
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
   };
 
-  const NavLinks = ({ collapsed = false }: { collapsed?: boolean }) => (
-    <div className="space-y-1">
-      {navigationWithBadges.map((item) => renderNavItem(item, collapsed))}
-    </div>
-  );
-
-  const QuickActions = ({ collapsed = false }: { collapsed?: boolean }) => (
-    <div className={`space-y-2 ${collapsed ? '' : 'px-2'}`}>
-      {!collapsed && (
-        <p className="px-1 text-xs font-semibold uppercase tracking-wider text-brand-gray-400 mb-3">
-          Quick Actions
-        </p>
-      )}
-      <NavLink
-        to="/ai-tree-estimator"
-        onClick={() => setSidebarOpen(false)}
-        title={collapsed ? "AI Estimator" : undefined}
-        className={`
-          flex items-center gap-2 rounded-lg 
-          bg-gradient-to-r from-brand-cyan-600 to-emerald-600 
-          text-white font-semibold shadow-lg shadow-brand-cyan-500/20 
-          hover:from-brand-cyan-500 hover:to-emerald-500 
-          transition-all duration-200
-          ${collapsed ? 'p-2.5 justify-center' : 'px-4 py-2.5'}
-        `}
-      >
-        <SparklesIcon className="h-5 w-5" />
-        {!collapsed && <span>AI Estimator</span>}
-      </NavLink>
-      <NavLink
-        to="/chat"
-        onClick={() => setSidebarOpen(false)}
-        title={collapsed ? "Ask ProBot" : undefined}
-        className={`
-          flex items-center gap-2 rounded-lg 
-          border border-brand-cyan-500/40 bg-brand-gray-800 
-          text-brand-cyan-100 font-medium
-          hover:bg-brand-gray-700 hover:border-brand-cyan-400 
-          transition-all duration-200
-          ${collapsed ? 'p-2.5 justify-center' : 'px-4 py-2.5'}
-        `}
-      >
-        <ChatIcon className="h-5 w-5" />
-        {!collapsed && <span>Ask ProBot</span>}
-      </NavLink>
-    </div>
-  );
-
-  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
+  const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      <div className={`
-        flex items-center border-b border-brand-gray-800 bg-brand-gray-900
-        ${collapsed ? 'h-16 justify-center' : 'h-16 px-4 gap-3'}
-      `}>
-        <img 
-          src="/logo.jpg" 
-          alt="TreePro AI" 
-          className={`rounded-full ring-2 ring-brand-cyan-500/50 ${collapsed ? 'h-9 w-9' : 'h-10 w-10'}`} 
+      <div className="h-16 flex items-center gap-3 px-4 border-b border-brand-gray-800 flex-shrink-0">
+        <img
+          src="/logo.jpg"
+          alt="TreePro AI"
+          className="h-9 w-9 rounded-full ring-2 ring-brand-cyan-500/50 flex-shrink-0"
         />
-        {!collapsed && (
-          <div>
-            <span className="text-lg font-bold text-white">TreePro AI</span>
-            <span className="block text-xs text-brand-gray-400">Tree Service Management</span>
-          </div>
-        )}
+        <div className="min-w-0">
+          <span className="block text-sm font-bold text-white truncate">TreePro AI</span>
+          <span className="block text-xs text-brand-gray-400 truncate">Tree Service Management</span>
+        </div>
       </div>
-      
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-brand-gray-700 scrollbar-track-transparent">
-        <nav className={`py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
-          <NavLinks collapsed={collapsed} />
-        </nav>
-      </div>
-      
-      <div className={`border-t border-brand-gray-800 py-4 ${collapsed ? 'px-2' : 'px-3'}`}>
-        <QuickActions collapsed={collapsed} />
-      </div>
-      
-      {!collapsed && (
-        <button
-          onClick={() => setIsCollapsed(true)}
-          className="hidden lg:flex items-center justify-center gap-2 px-4 py-2 mx-3 mb-3 text-xs text-brand-gray-400 hover:text-white rounded-lg hover:bg-brand-gray-800 transition-colors"
+
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5 scrollbar-thin">
+        {filteredGroups.map((group) => {
+          const isCollapsed = collapsedGroups.has(group.label);
+          return (
+            <div key={group.label} className="mb-1">
+              <button
+                onClick={() => toggleGroup(group.label)}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-brand-gray-500 hover:text-brand-gray-300 transition-colors rounded-md hover:bg-brand-gray-800/50"
+              >
+                <span>{group.label}</span>
+                {isCollapsed
+                  ? <ChevronRight className="h-3 w-3" />
+                  : <ChevronDown className="h-3 w-3" />
+                }
+              </button>
+
+              {!isCollapsed && (
+                <div className="mt-0.5 space-y-0.5">
+                  {group.items.map((item) => {
+                    const isActive = isActiveRoute(item.href);
+                    return (
+                      <NavLink
+                        key={item.href}
+                        to={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`
+                          flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg
+                          transition-all duration-150 relative
+                          ${isActive
+                            ? 'bg-brand-cyan-600/15 text-brand-cyan-400 border border-brand-cyan-500/20'
+                            : 'text-brand-gray-400 hover:bg-brand-gray-800/80 hover:text-white border border-transparent'
+                          }
+                        `}
+                      >
+                        <item.icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-brand-cyan-400' : ''}`} />
+                        <span className="flex-1 truncate">{item.name}</span>
+                        {item.badge !== undefined && (
+                          <span className="ml-auto px-1.5 py-0.5 text-xs font-semibold rounded-full bg-red-500 text-white leading-none">
+                            {item.badge}
+                          </span>
+                        )}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      <div className="flex-shrink-0 border-t border-brand-gray-800 p-2 space-y-1">
+        <NavLink
+          to="/ai-tree-estimator"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-brand-cyan-600 to-emerald-600 text-white text-sm font-semibold hover:from-brand-cyan-500 hover:to-emerald-500 transition-all duration-200 shadow-lg shadow-brand-cyan-500/20"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-          Collapse sidebar
-        </button>
-      )}
+          <Sparkles className="h-4 w-4" />
+          <span>AI Estimator</span>
+        </NavLink>
+        <NavLink
+          to="/chat"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-brand-cyan-500/30 bg-brand-gray-800 text-brand-cyan-300 text-sm font-medium hover:bg-brand-gray-700 hover:border-brand-cyan-400 transition-all duration-200"
+        >
+          <MessageSquare className="h-4 w-4" />
+          <span>Ask ProBot</span>
+        </NavLink>
+      </div>
     </div>
   );
 
   return (
     <>
-      <div className={`
-        hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col
-        bg-brand-gray-900 border-r border-brand-gray-800
-        transition-all duration-300 ease-in-out
-        ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
-      `}>
-        <SidebarContent collapsed={isCollapsed} />
-        
-        {isCollapsed && (
-          <button
-            onClick={() => setIsCollapsed(false)}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 p-2 text-brand-gray-400 hover:text-white rounded-lg hover:bg-brand-gray-800 transition-colors"
-            title="Expand sidebar"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
-      </div>
+      <aside className="hidden lg:flex lg:flex-col w-64 flex-shrink-0 bg-brand-gray-900 border-r border-brand-gray-800">
+        <SidebarContent />
+      </aside>
 
-      <div 
+      <div
         className={`fixed inset-0 z-40 lg:hidden transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         aria-hidden="true"
       >
-        <div 
+        <div
           className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
-        
-        <div className={`
-          absolute inset-y-0 left-0 w-72 bg-brand-gray-900 
+        <aside className={`
+          absolute inset-y-0 left-0 w-72 bg-brand-gray-900
           transform transition-transform duration-300 ease-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
-          <button 
+          <button
             onClick={() => setSidebarOpen(false)}
             className="absolute top-4 right-4 p-2 text-brand-gray-400 hover:text-white rounded-lg hover:bg-brand-gray-800 transition-colors z-10"
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          
           <SidebarContent />
-        </div>
+        </aside>
       </div>
-      
-      <div className={`hidden lg:block transition-all duration-300 ${isCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`} />
     </>
   );
 };

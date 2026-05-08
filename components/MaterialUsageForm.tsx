@@ -155,11 +155,11 @@ export default function MaterialUsageForm({
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700">
+    <div className="bg-brand-gray-800 rounded-lg border border-brand-gray-700">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-750"
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-brand-gray-750"
       >
         <div className="flex items-center gap-3">
           <Beaker className="w-5 h-5 text-green-500" />
@@ -171,9 +171,9 @@ export default function MaterialUsageForm({
           )}
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
+          <ChevronUp className="w-5 h-5 text-brand-gray-400" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
+          <ChevronDown className="w-5 h-5 text-brand-gray-400" />
         )}
       </button>
 
@@ -184,19 +184,19 @@ export default function MaterialUsageForm({
               {materials.map((material) => (
                 <div
                   key={material.id}
-                  className="bg-gray-750 rounded-lg p-3 border border-gray-600"
+                  className="bg-brand-gray-750 rounded-lg p-3 border border-brand-gray-600"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-white">{material.materialName}</span>
                         {material.epaRegNumber && (
-                          <span className="text-xs text-gray-400 bg-gray-700 px-2 py-0.5 rounded">
+                          <span className="text-xs text-brand-gray-400 bg-brand-gray-700 px-2 py-0.5 rounded">
                             EPA# {material.epaRegNumber}
                           </span>
                         )}
                       </div>
-                      <div className="mt-1 text-sm text-gray-400 space-y-0.5">
+                      <div className="mt-1 text-sm text-brand-gray-400 space-y-0.5">
                         {material.quantityUsed && (
                           <div>Amount: {material.quantityUsed} {material.unit}</div>
                         )}
@@ -238,10 +238,10 @@ export default function MaterialUsageForm({
               Add Material/Chemical
             </button>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 bg-gray-750 rounded-lg p-4 border border-gray-600">
+            <form onSubmit={handleSubmit} className="space-y-4 bg-brand-gray-750 rounded-lg p-4 border border-brand-gray-600">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Material Name *
                   </label>
                   <div className="relative">
@@ -267,7 +267,7 @@ export default function MaterialUsageForm({
                           key={mat.id}
                           type="button"
                           onClick={() => handleInventorySelect(mat)}
-                          className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded"
+                          className="text-xs bg-brand-gray-700 hover:bg-brand-gray-600 text-brand-gray-300 px-2 py-1 rounded"
                         >
                           {mat.materialName}
                         </button>
@@ -277,7 +277,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Quantity Used
                   </label>
                   <div className="flex gap-2">
@@ -302,7 +302,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     EPA Registration #
                   </label>
                   <input
@@ -315,7 +315,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Application Method
                   </label>
                   <select
@@ -331,7 +331,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Application Rate
                   </label>
                   <input
@@ -344,7 +344,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Target Pest/Condition
                   </label>
                   <input
@@ -357,7 +357,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Applied By
                   </label>
                   <select
@@ -373,7 +373,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Applied At
                   </label>
                   <input
@@ -385,7 +385,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Weather Conditions
                   </label>
                   <input
@@ -399,7 +399,7 @@ export default function MaterialUsageForm({
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Wind (mph)
                     </label>
                     <input
@@ -412,7 +412,7 @@ export default function MaterialUsageForm({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Temp (°F)
                     </label>
                     <input
@@ -427,7 +427,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     REI (hours)
                   </label>
                   <input
@@ -440,7 +440,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                     PPE Used
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -452,7 +452,7 @@ export default function MaterialUsageForm({
                         className={`text-xs px-2 py-1 rounded border ${
                           formData.ppeUsed?.includes(ppe)
                             ? 'bg-green-600 border-green-500 text-white'
-                            : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                            : 'bg-brand-gray-700 border-brand-gray-600 text-brand-gray-300 hover:bg-brand-gray-600'
                         }`}
                       >
                         {ppe}
@@ -462,7 +462,7 @@ export default function MaterialUsageForm({
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Notes
                   </label>
                   <textarea
@@ -479,7 +479,7 @@ export default function MaterialUsageForm({
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 text-gray-400 hover:text-white"
+                  className="px-4 py-2 text-brand-gray-400 hover:text-white"
                 >
                   Cancel
                 </button>

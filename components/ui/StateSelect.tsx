@@ -81,8 +81,8 @@ const StateSelect: React.FC<StateSelectProps> = ({
     onChange(e.target.value);
   };
 
-  const baseClasses = `w-full px-3 py-2 bg-gray-800 border rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 ${
-    error ? 'border-red-500' : 'border-gray-600'
+  const baseClasses = `w-full px-3 py-2 bg-brand-gray-800 border rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 ${
+    error ? 'border-red-500' : 'border-brand-gray-600'
   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`;
 
   return (

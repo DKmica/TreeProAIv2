@@ -142,14 +142,14 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <div className="flex items-center gap-3">
-            <FileText className="h-6 w-6 text-cyan-400" />
+            <FileText className="h-6 w-6 text-brand-cyan-400" />
             <h2 className="text-lg sm:text-xl font-bold text-white">Batch Invoice Creation</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors text-2xl"
+            className="text-brand-gray-400 hover:text-white transition-colors text-2xl"
           >
             ×
           </button>
@@ -189,11 +189,11 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Payment Terms</label>
+              <label className="block text-sm font-medium text-brand-gray-300 mb-1">Payment Terms</label>
               <select
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500"
               >
                 <option value="Due on Receipt">Due on Receipt</option>
                 <option value="Net 15">Net 15</option>
@@ -203,7 +203,7 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Tax Rate (%)</label>
+              <label className="block text-sm font-medium text-brand-gray-300 mb-1">Tax Rate (%)</label>
               <input
                 type="number"
                 value={taxRate}
@@ -211,18 +211,18 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
                 step="0.01"
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500"
               />
             </div>
           </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-              <span className="ml-3 text-gray-400">Loading completed jobs...</span>
+              <Loader2 className="h-8 w-8 animate-spin text-brand-cyan-400" />
+              <span className="ml-3 text-brand-gray-400">Loading completed jobs...</span>
             </div>
           ) : candidates.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-brand-gray-400">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No completed jobs found that need invoicing.</p>
               <p className="text-sm mt-1">All completed jobs already have invoices.</p>
@@ -232,7 +232,7 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
               <div className="flex items-center justify-between mb-4">
                 <button
                   onClick={toggleSelectAll}
-                  className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"
+                  className="flex items-center gap-2 text-sm text-brand-cyan-400 hover:text-brand-cyan-300"
                 >
                   {selectedIds.size === candidates.length ? (
                     <CheckSquare className="h-5 w-5" />
@@ -241,7 +241,7 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
                   )}
                   {selectedIds.size === candidates.length ? 'Deselect All' : 'Select All'}
                 </button>
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-brand-gray-400">
                   {selectedIds.size} of {candidates.length} selected
                 </span>
               </div>
@@ -253,16 +253,16 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
                     onClick={() => toggleSelection(candidate.id)}
                     className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                       selectedIds.has(candidate.id)
-                        ? 'bg-cyan-900/20 border-cyan-500'
-                        : 'bg-gray-800 border-gray-600 hover:border-gray-500'
+                        ? 'bg-cyan-900/20 border-brand-cyan-500'
+                        : 'bg-brand-gray-800 border-brand-gray-600 hover:border-brand-gray-500'
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className="pt-1">
                         {selectedIds.has(candidate.id) ? (
-                          <CheckSquare className="h-5 w-5 text-cyan-400" />
+                          <CheckSquare className="h-5 w-5 text-brand-cyan-400" />
                         ) : (
-                          <Square className="h-5 w-5 text-gray-500" />
+                          <Square className="h-5 w-5 text-brand-gray-500" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -270,19 +270,19 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
                           <span className="font-medium text-white">
                             {candidate.jobNumber ? `Job #${candidate.jobNumber}` : `Job ${candidate.id.slice(0, 8)}`}
                           </span>
-                          <span className="text-cyan-400 font-semibold">
+                          <span className="text-brand-cyan-400 font-semibold">
                             {formatCurrency(candidate.totalAmount)}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-400 mt-1">
+                        <div className="text-sm text-brand-gray-400 mt-1">
                           {candidate.clientName || candidate.customerName}
                         </div>
                         {candidate.propertyAddress && (
-                          <div className="text-sm text-gray-500 truncate">
+                          <div className="text-sm text-brand-gray-500 truncate">
                             {candidate.propertyAddress}
                           </div>
                         )}
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-brand-gray-500 mt-1">
                           Completed: {formatDate(candidate.updatedAt)}
                         </div>
                       </div>
@@ -294,23 +294,23 @@ const BatchInvoicing: React.FC<BatchInvoicingProps> = ({ isOpen, onClose, onSucc
           )}
         </div>
 
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
-          <div className="text-sm text-gray-400">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
+          <div className="text-sm text-brand-gray-400">
             {selectedIds.size > 0 && (
-              <>Selected total: <span className="text-cyan-400 font-semibold">{formatCurrency(selectedTotal)}</span></>
+              <>Selected total: <span className="text-brand-cyan-400 font-semibold">{formatCurrency(selectedTotal)}</span></>
             )}
           </div>
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors"
+              className="px-4 py-2 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateInvoices}
               disabled={selectedIds.size === 0 || isCreating}
-              className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isCreating ? (
                 <>

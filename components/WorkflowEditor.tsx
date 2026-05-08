@@ -391,9 +391,9 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                 })}
                 className="select-light"
               >
-                <option value="POST" className="text-gray-900 bg-white">POST</option>
-                <option value="GET" className="text-gray-900 bg-white">GET</option>
-                <option value="PUT" className="text-gray-900 bg-white">PUT</option>
+                <option value="POST" className="text-brand-gray-900 bg-white">POST</option>
+                <option value="GET" className="text-brand-gray-900 bg-white">GET</option>
+                <option value="PUT" className="text-brand-gray-900 bg-white">PUT</option>
               </select>
             </div>
           </div>
@@ -588,7 +588,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                   className="select-light"
                                 >
                                   {TRIGGER_TYPES.map(type => (
-                                    <option key={type.value} value={type.value} className="text-gray-900 bg-white">
+                                    <option key={type.value} value={type.value} className="text-brand-gray-900 bg-white">
                                       {type.label}
                                     </option>
                                   ))}
@@ -635,7 +635,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                           className="select-light !py-1.5 text-sm"
                                         >
                                           {CONDITION_OPERATORS.map(op => (
-                                            <option key={op.value} value={op.value} className="text-gray-900 bg-white">{op.label}</option>
+                                            <option key={op.value} value={op.value} className="text-brand-gray-900 bg-white">{op.label}</option>
                                           ))}
                                         </select>
                                         <input
@@ -746,7 +746,7 @@ const WorkflowEditor: React.FC<WorkflowEditorProps> = ({
                                   className="select-light"
                                 >
                                   {ACTION_TYPES.map(type => (
-                                    <option key={type.value} value={type.value} className="text-gray-900 bg-white">
+                                    <option key={type.value} value={type.value} className="text-brand-gray-900 bg-white">
                                       {type.label}
                                     </option>
                                   ))}

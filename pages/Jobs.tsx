@@ -383,12 +383,12 @@ const JobForm: React.FC<{
     };
 
     return (
-        <div className="bg-[#0f1c2e] p-6 rounded-lg shadow my-6 border border-gray-700">
+        <div className="bg-[#0f1c2e] p-6 rounded-lg shadow my-6 border border-brand-gray-700">
             <h2 className="text-xl font-bold text-white mb-4">{initialData ? 'Edit Job' : 'Create New Job'}</h2>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="col-span-full">
-                        <label className="block text-sm font-medium leading-6 text-gray-300 mb-2">Customer Source *</label>
+                        <label className="block text-sm font-medium leading-6 text-brand-gray-300 mb-2">Customer Source *</label>
                         <div className="flex gap-6">
                             <label className="flex items-center cursor-pointer">
                                 <input
@@ -397,9 +397,9 @@ const JobForm: React.FC<{
                                     value="existing"
                                     checked={customerMode === 'existing'}
                                     onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
-                                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                                 />
-                                <span className="text-gray-300">From Accepted Quote</span>
+                                <span className="text-brand-gray-300">From Accepted Quote</span>
                             </label>
                             <label className="flex items-center cursor-pointer">
                                 <input
@@ -408,9 +408,9 @@ const JobForm: React.FC<{
                                     value="new"
                                     checked={customerMode === 'new'}
                                     onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
-                                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                                 />
-                                <span className="text-gray-300">Create New Customer</span>
+                                <span className="text-brand-gray-300">Create New Customer</span>
                             </label>
                         </div>
                     </div>
@@ -418,147 +418,147 @@ const JobForm: React.FC<{
                     {customerMode === 'existing' ? (
                         <>
                             <div className="sm:col-span-3">
-                                <label htmlFor="quoteId" className="block text-sm font-medium leading-6 text-gray-300">Accepted Quote *</label>
-                                <select id="quoteId" name="quoteId" value={formData.quoteId} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6">
+                                <label htmlFor="quoteId" className="block text-sm font-medium leading-6 text-brand-gray-300">Accepted Quote *</label>
+                                <select id="quoteId" name="quoteId" value={formData.quoteId} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                                     <option value="">Select a quote...</option>
                                     {availableQuotes.map(quote => (<option key={quote.id} value={quote.id}>{`${quote.id} - ${quote.customerName}`}</option>))}
                                 </select>
                                 {errors.quoteId && <p className="mt-1 text-sm text-red-400">{errors.quoteId}</p>}
                             </div>
                             <div className="sm:col-span-3">
-                                <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-gray-300">Customer</label>
-                                <input type="text" name="customerName" id="customerName" value={formData.customerName} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-0 sm:text-sm sm:leading-6" />
+                                <label htmlFor="customerName" className="block text-sm font-medium leading-6 text-brand-gray-300">Customer</label>
+                                <input type="text" name="customerName" id="customerName" value={formData.customerName} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-brand-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-0 sm:text-sm sm:leading-6" />
                             </div>
                             <div className="sm:col-span-3">
-                                <label className="block text-sm font-medium leading-6 text-gray-300">Customer Phone</label>
-                                <input type="text" value={formData.customerPhone} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-700 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
+                                <label className="block text-sm font-medium leading-6 text-brand-gray-300">Customer Phone</label>
+                                <input type="text" value={formData.customerPhone} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-700 text-brand-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
                             </div>
                             <div className="sm:col-span-3">
-                                <label className="block text-sm font-medium leading-6 text-gray-300">Customer Email</label>
-                                <input type="text" value={formData.customerEmail} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-700 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
+                                <label className="block text-sm font-medium leading-6 text-brand-gray-300">Customer Email</label>
+                                <input type="text" value={formData.customerEmail} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-700 text-brand-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
                             </div>
                             <div className="sm:col-span-6">
-                                <label className="block text-sm font-medium leading-6 text-gray-300">Customer Address</label>
-                                <input type="text" value={formData.customerAddress} readOnly className="block w-full rounded-md border-0 py-1.5 bg-gray-700 text-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
+                                <label className="block text-sm font-medium leading-6 text-brand-gray-300">Customer Address</label>
+                                <input type="text" value={formData.customerAddress} readOnly className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-700 text-brand-gray-400 shadow-sm ring-1 ring-inset ring-gray-600 sm:text-sm sm:leading-6" />
                             </div>
                         </>
                     ) : (
-                        <div className="col-span-full p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                        <div className="col-span-full p-4 bg-brand-gray-800/50 rounded-lg border border-brand-gray-700">
                             <h3 className="text-lg font-semibold text-white mb-4">New Customer Information</h3>
                             
                             <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
                                 <div className="col-span-full">
-                                    <label htmlFor="companyName" className="block text-sm font-medium leading-6 text-gray-300">Company Name (Optional)</label>
+                                    <label htmlFor="companyName" className="block text-sm font-medium leading-6 text-brand-gray-300">Company Name (Optional)</label>
                                     <input
                                         type="text"
                                         id="companyName"
                                         name="companyName"
                                         value={newCustomerData.companyName}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="Enter company name"
                                     />
                                 </div>
 
                                 <div className="sm:col-span-3">
-                                    <label htmlFor="firstName" className="block text-sm font-medium leading-6 text-gray-300">First Name *</label>
+                                    <label htmlFor="firstName" className="block text-sm font-medium leading-6 text-brand-gray-300">First Name *</label>
                                     <input
                                         type="text"
                                         id="firstName"
                                         name="firstName"
                                         value={newCustomerData.firstName}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="First name"
                                     />
                                     {errors.firstName && <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>}
                                 </div>
 
                                 <div className="sm:col-span-3">
-                                    <label htmlFor="lastName" className="block text-sm font-medium leading-6 text-gray-300">Last Name *</label>
+                                    <label htmlFor="lastName" className="block text-sm font-medium leading-6 text-brand-gray-300">Last Name *</label>
                                     <input
                                         type="text"
                                         id="lastName"
                                         name="lastName"
                                         value={newCustomerData.lastName}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="Last name"
                                     />
                                     {errors.lastName && <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>}
                                 </div>
 
                                 <div className="sm:col-span-3">
-                                    <label htmlFor="phone" className="block text-sm font-medium leading-6 text-gray-300">Phone Number *</label>
+                                    <label htmlFor="phone" className="block text-sm font-medium leading-6 text-brand-gray-300">Phone Number *</label>
                                     <input
                                         type="tel"
                                         id="phone"
                                         name="phone"
                                         value={newCustomerData.phone}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="(555) 123-4567"
                                     />
                                     {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
                                 </div>
 
                                 <div className="sm:col-span-3">
-                                    <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-300">Email Address *</label>
+                                    <label htmlFor="email" className="block text-sm font-medium leading-6 text-brand-gray-300">Email Address *</label>
                                     <input
                                         type="email"
                                         id="email"
                                         name="email"
                                         value={newCustomerData.email}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="email@example.com"
                                     />
                                     {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
                                 </div>
 
                                 <div className="col-span-full">
-                                    <label htmlFor="addressLine1" className="block text-sm font-medium leading-6 text-gray-300">Address Line 1 *</label>
+                                    <label htmlFor="addressLine1" className="block text-sm font-medium leading-6 text-brand-gray-300">Address Line 1 *</label>
                                     <input
                                         type="text"
                                         id="addressLine1"
                                         name="addressLine1"
                                         value={newCustomerData.addressLine1}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="Street address"
                                     />
                                     {errors.addressLine1 && <p className="mt-1 text-sm text-red-400">{errors.addressLine1}</p>}
                                 </div>
 
                                 <div className="col-span-full">
-                                    <label htmlFor="addressLine2" className="block text-sm font-medium leading-6 text-gray-300">Address Line 2 (Optional)</label>
+                                    <label htmlFor="addressLine2" className="block text-sm font-medium leading-6 text-brand-gray-300">Address Line 2 (Optional)</label>
                                     <input
                                         type="text"
                                         id="addressLine2"
                                         name="addressLine2"
                                         value={newCustomerData.addressLine2}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="Apt, suite, unit, etc."
                                     />
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <label htmlFor="city" className="block text-sm font-medium leading-6 text-gray-300">City *</label>
+                                    <label htmlFor="city" className="block text-sm font-medium leading-6 text-brand-gray-300">City *</label>
                                     <input
                                         type="text"
                                         id="city"
                                         name="city"
                                         value={newCustomerData.city}
                                         onChange={handleNewCustomerChange}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="City"
                                     />
                                     {errors.city && <p className="mt-1 text-sm text-red-400">{errors.city}</p>}
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <label htmlFor="state" className="block text-sm font-medium leading-6 text-gray-300">State *</label>
+                                    <label htmlFor="state" className="block text-sm font-medium leading-6 text-brand-gray-300">State *</label>
                                     <StateSelect
                                         id="state"
                                         name="state"
@@ -570,13 +570,13 @@ const JobForm: React.FC<{
                                             }
                                         }}
                                         required
-                                        className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                     />
                                     {errors.state && <p className="mt-1 text-sm text-red-400">{errors.state}</p>}
                                 </div>
 
                                 <div className="sm:col-span-2">
-                                    <label htmlFor="zipCode" className="block text-sm font-medium leading-6 text-gray-300">Zip Code *</label>
+                                    <label htmlFor="zipCode" className="block text-sm font-medium leading-6 text-brand-gray-300">Zip Code *</label>
                                     <input
                                         type="text"
                                         id="zipCode"
@@ -594,7 +594,7 @@ const JobForm: React.FC<{
                                             }
                                         }}
                                         maxLength={5}
-                                        className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                        className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                         placeholder="12345"
                                     />
                                     {errors.zipCode && <p className="mt-1 text-sm text-red-400">{errors.zipCode}</p>}
@@ -612,19 +612,19 @@ const JobForm: React.FC<{
                                         zipCode: newCustomerData.zipCode,
                                     });
                                 }}
-                                className="mt-3 w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
+                                className="mt-3 w-full px-4 py-2 bg-brand-cyan-600 hover:bg-brand-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
                             >
                                 Use as Job Location
                             </button>
                         </div>
                     )}
                     <div className="sm:col-span-3">
-                        <label htmlFor="scheduledDate" className="block text-sm font-medium leading-6 text-gray-300">Scheduled Date</label>
-                        <input type="date" name="scheduledDate" id="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <label htmlFor="scheduledDate" className="block text-sm font-medium leading-6 text-brand-gray-300">Scheduled Date</label>
+                        <input type="date" name="scheduledDate" id="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="sm:col-span-3">
-                        <label htmlFor="status" className="block text-sm font-medium leading-6 text-gray-300">Status</label>
-                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6">
+                        <label htmlFor="status" className="block text-sm font-medium leading-6 text-brand-gray-300">Status</label>
+                        <select id="status" name="status" value={formData.status} onChange={handleChange} className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6">
                             <option value="draft">Draft</option>
                             <option value="needs_permit">Needs Permit</option>
                             <option value="waiting_on_client">Waiting on Client</option>
@@ -644,48 +644,48 @@ const JobForm: React.FC<{
                         <h3 className="text-md font-semibold text-white mb-3">Job Location</h3>
                         <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
                             <div className="col-span-full">
-                                <label htmlFor="locationAddress1" className="block text-sm font-medium leading-6 text-gray-300">Street Address</label>
-                                <input type="text" id="locationAddress1" name="addressLine1" value={jobLocationData.addressLine1} onChange={handleJobLocationChange} placeholder="123 Oak Street" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                                <label htmlFor="locationAddress1" className="block text-sm font-medium leading-6 text-brand-gray-300">Street Address</label>
+                                <input type="text" id="locationAddress1" name="addressLine1" value={jobLocationData.addressLine1} onChange={handleJobLocationChange} placeholder="123 Oak Street" className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                             </div>
                             <div className="col-span-full">
-                                <label htmlFor="locationAddress2" className="block text-sm font-medium leading-6 text-gray-300">Address Line 2 (Optional)</label>
-                                <input type="text" id="locationAddress2" name="addressLine2" value={jobLocationData.addressLine2} onChange={handleJobLocationChange} placeholder="Apt, suite, etc." className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                                <label htmlFor="locationAddress2" className="block text-sm font-medium leading-6 text-brand-gray-300">Address Line 2 (Optional)</label>
+                                <input type="text" id="locationAddress2" name="addressLine2" value={jobLocationData.addressLine2} onChange={handleJobLocationChange} placeholder="Apt, suite, etc." className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                             </div>
                             <div className="sm:col-span-2">
-                                <label htmlFor="locationCity" className="block text-sm font-medium leading-6 text-gray-300">City</label>
-                                <input type="text" id="locationCity" name="city" value={jobLocationData.city} onChange={handleJobLocationChange} placeholder="Los Angeles" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                                <label htmlFor="locationCity" className="block text-sm font-medium leading-6 text-brand-gray-300">City</label>
+                                <input type="text" id="locationCity" name="city" value={jobLocationData.city} onChange={handleJobLocationChange} placeholder="Los Angeles" className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                             </div>
                             <div className="sm:col-span-2">
-                                <label htmlFor="locationState" className="block text-sm font-medium leading-6 text-gray-300">State</label>
+                                <label htmlFor="locationState" className="block text-sm font-medium leading-6 text-brand-gray-300">State</label>
                                 <StateSelect
                                     id="locationState"
                                     name="state"
                                     value={jobLocationData.state}
                                     onChange={(value) => setJobLocationData(prev => ({ ...prev, state: value }))}
-                                    className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6"
+                                    className="block w-full rounded-md border-0 py-1.5 shadow-sm ring-1 ring-inset ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6"
                                 />
                             </div>
                             <div className="sm:col-span-2">
-                                <label htmlFor="locationZip" className="block text-sm font-medium leading-6 text-gray-300">Zip Code</label>
-                                <input type="text" id="locationZip" name="zipCode" value={jobLocationData.zipCode} onChange={handleJobLocationChange} maxLength={5} placeholder="90001" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                                <label htmlFor="locationZip" className="block text-sm font-medium leading-6 text-brand-gray-300">Zip Code</label>
+                                <input type="text" id="locationZip" name="zipCode" value={jobLocationData.zipCode} onChange={handleJobLocationChange} maxLength={5} placeholder="90001" className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                             </div>
                         </div>
                     </div>
                     <div className="sm:col-span-3">
-                        <label htmlFor="estimatedHours" className="block text-sm font-medium leading-6 text-gray-300">Estimated Hours</label>
-                        <input type="number" name="estimatedHours" id="estimatedHours" value={formData.estimatedHours} onChange={e => setFormData(prev => ({...prev, estimatedHours: e.target.value }))} min="0" step="0.5" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" placeholder=" " />
+                        <label htmlFor="estimatedHours" className="block text-sm font-medium leading-6 text-brand-gray-300">Estimated Hours</label>
+                        <input type="number" name="estimatedHours" id="estimatedHours" value={formData.estimatedHours} onChange={e => setFormData(prev => ({...prev, estimatedHours: e.target.value }))} min="0" step="0.5" className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" placeholder=" " />
                     </div>
                     <div className="sm:col-span-3">
-                        <label htmlFor="equipmentNeeded" className="block text-sm font-medium leading-6 text-gray-300">Equipment Needed</label>
-                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={equipmentText} onChange={e => setEquipmentText(e.target.value)} onBlur={e => setFormData(prev => ({...prev, equipmentNeeded: parseEquipment(e.target.value) }))} placeholder="e.g. Chainsaw, Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <label htmlFor="equipmentNeeded" className="block text-sm font-medium leading-6 text-brand-gray-300">Equipment Needed</label>
+                        <input type="text" name="equipmentNeeded" id="equipmentNeeded" value={equipmentText} onChange={e => setEquipmentText(e.target.value)} onBlur={e => setFormData(prev => ({...prev, equipmentNeeded: parseEquipment(e.target.value) }))} placeholder="e.g. Chainsaw, Chipper, Stump Grinder" className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="col-span-full">
-                        <label htmlFor="specialInstructions" className="block text-sm font-medium leading-6 text-gray-300">Special Instructions / Notes</label>
-                        <textarea name="specialInstructions" id="specialInstructions" value={formData.specialInstructions} onChange={e => setFormData(prev => ({...prev, specialInstructions: e.target.value }))} rows={3} placeholder="Gate code, parking instructions, special considerations, etc." className="block w-full rounded-md border-0 py-1.5 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm sm:leading-6" />
+                        <label htmlFor="specialInstructions" className="block text-sm font-medium leading-6 text-brand-gray-300">Special Instructions / Notes</label>
+                        <textarea name="specialInstructions" id="specialInstructions" value={formData.specialInstructions} onChange={e => setFormData(prev => ({...prev, specialInstructions: e.target.value }))} rows={3} placeholder="Gate code, parking instructions, special considerations, etc." className="block w-full rounded-md border-0 py-1.5 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm sm:leading-6" />
                     </div>
                     <div className="col-span-full">
-                        <label className="block text-sm font-medium leading-6 text-gray-300">Assign Crew</label>
-                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-md border border-gray-600 bg-gray-800/50 p-4">
+                        <label className="block text-sm font-medium leading-6 text-brand-gray-300">Assign Crew</label>
+                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-4 rounded-md border border-brand-gray-600 bg-brand-gray-800/50 p-4">
                             {employees.map(emp => (
                                 <div key={emp.id} className="relative flex items-start">
                                     <div className="flex h-6 items-center">
@@ -694,11 +694,11 @@ const JobForm: React.FC<{
                                             type="checkbox"
                                             checked={formData.assignedCrew.includes(emp.id)}
                                             onChange={() => handleCrewChange(emp.id)}
-                                            className="h-4 w-4 rounded border-gray-600 text-cyan-600 focus:ring-cyan-500"
+                                            className="h-4 w-4 rounded border-brand-gray-600 text-cyan-600 focus:ring-brand-cyan-500"
                                         />
                                     </div>
                                     <div className="ml-3 text-sm leading-6">
-                                        <label htmlFor={`emp-form-${emp.id}`} className="font-medium text-gray-300">{emp.name}</label>
+                                        <label htmlFor={`emp-form-${emp.id}`} className="font-medium text-brand-gray-300">{emp.name}</label>
                                     </div>
                                 </div>
                             ))}
@@ -706,8 +706,8 @@ const JobForm: React.FC<{
                     </div>
                 </div>
                 <div className="mt-6 flex items-center justify-end gap-x-6">
-                    <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-gray-300 hover:text-white">Cancel</button>
-                    <button type="submit" className="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500">Save Job</button>
+                    <button type="button" onClick={onCancel} className="text-sm font-semibold leading-6 text-brand-gray-300 hover:text-white">Cancel</button>
+                    <button type="submit" className="rounded-md bg-brand-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-500">Save Job</button>
                 </div>
             </form>
         </div>
@@ -1089,7 +1089,7 @@ const Jobs: React.FC = () => {
       {showForm && <JobForm quotes={quotes} employees={employees} onSave={handleSave} onCancel={handleCancel} initialData={editingJob || undefined} />}
       
       <div className="mt-6">
-        <input type="text" placeholder="Search jobs..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" aria-label="Search jobs" />
+        <input type="text" placeholder="Search jobs..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="block w-full max-w-sm rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm" aria-label="Search jobs" />
       </div>
 
       {linkageWarnings.length > 0 && (
@@ -1315,28 +1315,28 @@ const Jobs: React.FC = () => {
             className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-brand-gray-700">
               <div>
                 <h2 className="text-2xl font-bold text-white">Job Details</h2>
-                <p className="text-sm text-gray-400 mt-1">Job ID: {viewingJobDetail.id}</p>
+                <p className="text-sm text-brand-gray-400 mt-1">Job ID: {viewingJobDetail.id}</p>
               </div>
               <button
                 onClick={() => setViewingJobDetail(null)}
-                className="text-gray-400 hover:text-white transition-colors p-1"
+                className="text-brand-gray-400 hover:text-white transition-colors p-1"
                 type="button"
               >
                 <XIcon className="h-6 w-6" />
               </button>
             </div>
 
-            <div className="border-b border-gray-700">
+            <div className="border-b border-brand-gray-700">
               <nav className="flex space-x-4 px-6" aria-label="Tabs">
                 <button
                   onClick={() => setActiveTab('info')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'info'
-                      ? 'border-cyan-500 text-cyan-400'
-                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                      ? 'border-brand-cyan-500 text-brand-cyan-400'
+                      : 'border-transparent text-brand-gray-400 hover:text-brand-gray-300 hover:border-gray-300'
                   }`}
                 >
                   Information
@@ -1345,8 +1345,8 @@ const Jobs: React.FC = () => {
                   onClick={() => setActiveTab('history')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'history'
-                      ? 'border-cyan-500 text-cyan-400'
-                      : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-300'
+                      ? 'border-brand-cyan-500 text-brand-cyan-400'
+                      : 'border-transparent text-brand-gray-400 hover:text-brand-gray-300 hover:border-gray-300'
                   }`}
                 >
                   History
@@ -1359,19 +1359,19 @@ const Jobs: React.FC = () => {
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Customer</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Customer</label>
                       <p className="text-white">{viewingJobDetail.customerName}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Status</label>
                       <JobStatusBadge status={viewingJobDetail.status} size="md" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Scheduled Date</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Scheduled Date</label>
                       <p className="text-white">{viewingJobDetail.scheduledDate || 'Not scheduled'}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Quote ID</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Quote ID</label>
                       <p className="text-white">{viewingJobDetail.quoteId || 'N/A'}</p>
                     </div>
                   </div>
@@ -1380,25 +1380,25 @@ const Jobs: React.FC = () => {
                     <div className="grid grid-cols-2 gap-6">
                       {viewingJobDetail.quoteNumber && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">Quote Number</label>
+                          <label className="block text-sm font-medium text-brand-gray-300 mb-1">Quote Number</label>
                           <p className="text-white">{viewingJobDetail.quoteNumber}</p>
                         </div>
                       )}
                       {viewingJobDetail.quoteVersion && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">Quote Version</label>
+                          <label className="block text-sm font-medium text-brand-gray-300 mb-1">Quote Version</label>
                           <p className="text-white">v{viewingJobDetail.quoteVersion}</p>
                         </div>
                       )}
                       {viewingJobDetail.quoteApprovalStatus && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">Approval Status</label>
+                          <label className="block text-sm font-medium text-brand-gray-300 mb-1">Approval Status</label>
                           <p className="text-white capitalize">{viewingJobDetail.quoteApprovalStatus}</p>
                         </div>
                       )}
                       {viewingJobDetail.quoteApprovedAt && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">Approved At</label>
+                          <label className="block text-sm font-medium text-brand-gray-300 mb-1">Approved At</label>
                           <p className="text-white">{new Date(viewingJobDetail.quoteApprovedAt).toLocaleString()}</p>
                         </div>
                       )}
@@ -1407,26 +1407,26 @@ const Jobs: React.FC = () => {
 
                   {viewingJobDetail.jobLocation && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Location</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Location</label>
                       <p className="text-white">{viewingJobDetail.jobLocation}</p>
                     </div>
                   )}
 
                   {viewingJobDetail.specialInstructions && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Special Instructions</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Special Instructions</label>
                       <p className="text-white whitespace-pre-wrap">{viewingJobDetail.specialInstructions}</p>
                     </div>
                   )}
 
                   {viewingJobDetail.assignedCrew && viewingJobDetail.assignedCrew.length > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Assigned Crew</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Assigned Crew</label>
                       <div className="flex flex-wrap gap-2">
                         {viewingJobDetail.assignedCrew.map(crewId => {
                           const employee = employees.find(e => e.id === crewId);
                           return (
-                            <span key={crewId} className="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm">
+                            <span key={crewId} className="px-3 py-1 bg-brand-gray-700 text-brand-gray-200 rounded-full text-sm">
                               {employee?.name || crewId}
                             </span>
                           );
@@ -1437,10 +1437,10 @@ const Jobs: React.FC = () => {
 
                   {viewingJobDetail.equipmentNeeded && viewingJobDetail.equipmentNeeded.length > 0 && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Equipment Needed</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Equipment Needed</label>
                       <div className="flex flex-wrap gap-2">
                         {viewingJobDetail.equipmentNeeded.map((eq, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm">
+                          <span key={idx} className="px-3 py-1 bg-brand-gray-700 text-brand-gray-200 rounded-full text-sm">
                             {eq}
                           </span>
                         ))}
@@ -1450,14 +1450,14 @@ const Jobs: React.FC = () => {
 
                   {viewingJobDetail.estimatedHours && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Estimated Hours</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Estimated Hours</label>
                       <p className="text-white">{viewingJobDetail.estimatedHours} hours</p>
                     </div>
                   )}
 
                   {viewingJobDetail.riskLevel && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Risk Level</label>
+                      <label className="block text-sm font-medium text-brand-gray-300 mb-1">Risk Level</label>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                         viewingJobDetail.riskLevel === 'Critical' ? 'bg-red-600 text-red-100' :
                         viewingJobDetail.riskLevel === 'High' ? 'bg-orange-600 text-orange-100' :
@@ -1513,11 +1513,11 @@ const Jobs: React.FC = () => {
             className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-brand-gray-700">
               <h2 className="text-xl font-bold text-white">Send Work Order</h2>
               <button
                 onClick={() => setShowJobEmailModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1"
+                className="text-brand-gray-400 hover:text-white transition-colors p-1"
                 type="button"
               >
                 <XIcon className="h-6 w-6" />
@@ -1526,7 +1526,7 @@ const Jobs: React.FC = () => {
 
             <div className="p-6 space-y-4">
               <div>
-                <label htmlFor="emailRecipient" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="emailRecipient" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Recipient Email *
                 </label>
                 <input
@@ -1535,12 +1535,12 @@ const Jobs: React.FC = () => {
                   value={jobEmailRecipient}
                   onChange={(e) => setJobEmailRecipient(e.target.value)}
                   placeholder="customer@example.com"
-                  className="block w-full rounded-md border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm"
+                  className="block w-full rounded-md border-0 py-2 px-3 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm"
                 />
               </div>
 
               <div>
-                <label htmlFor="emailSubject" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="emailSubject" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Subject (Optional)
                 </label>
                 <input
@@ -1549,12 +1549,12 @@ const Jobs: React.FC = () => {
                   value={jobEmailSubject}
                   onChange={(e) => setJobEmailSubject(e.target.value)}
                   placeholder="Work Order"
-                  className="block w-full rounded-md border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm"
+                  className="block w-full rounded-md border-0 py-2 px-3 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm"
                 />
               </div>
 
               <div>
-                <label htmlFor="emailMessage" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="emailMessage" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Message (Optional)
                 </label>
                 <textarea
@@ -1563,20 +1563,20 @@ const Jobs: React.FC = () => {
                   onChange={(e) => setJobEmailMessage(e.target.value)}
                   rows={3}
                   placeholder="Add a personal message..."
-                  className="block w-full rounded-md border-0 py-2 px-3 bg-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-500 sm:text-sm"
+                  className="block w-full rounded-md border-0 py-2 px-3 bg-brand-gray-800 text-white shadow-sm ring-1 ring-inset ring-gray-600 placeholder:text-brand-gray-400 focus:ring-2 focus:ring-inset focus:ring-brand-cyan-500 sm:text-sm"
                 />
               </div>
 
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-brand-gray-400">
                 Work order for: <span className="text-white font-medium">{emailModalJob.customerName}</span>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
+            <div className="flex justify-end gap-3 p-6 border-t border-brand-gray-700">
               <button
                 type="button"
                 onClick={() => setShowJobEmailModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm font-medium text-brand-gray-300 hover:text-white transition-colors"
                 disabled={isSendingJobEmail}
               >
                 Cancel
@@ -1585,7 +1585,7 @@ const Jobs: React.FC = () => {
                 type="button"
                 onClick={handleSendJobEmail}
                 disabled={isSendingJobEmail || !jobEmailRecipient.trim()}
-                className="px-4 py-2 text-sm font-medium rounded-md bg-cyan-600 text-white shadow-sm hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-sm font-medium rounded-md bg-brand-cyan-600 text-white shadow-sm hover:bg-brand-cyan-700 disabled:bg-brand-gray-600 disabled:cursor-not-allowed transition-colors"
               >
                 {isSendingJobEmail ? 'Sending...' : 'Send'}
               </button>

@@ -264,13 +264,13 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {property ? 'Edit Property' : 'Add Property'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -286,7 +286,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
             )}
 
             <div>
-              <label htmlFor="propertyType" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="propertyType" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Property Type <span className="text-red-400">*</span>
               </label>
               <select
@@ -294,7 +294,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                 name="propertyType"
                 value={formData.propertyType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
               >
                 <option value="residential">Residential</option>
                 <option value="commercial">Commercial</option>
@@ -306,12 +306,12 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
               )}
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Service Address</h3>
               
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="addressLine1" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Street Address <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -320,7 +320,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                     name="addressLine1"
                     value={formData.addressLine1}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="123 Main St"
                   />
                   {errors.addressLine1 && (
@@ -329,7 +329,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                 </div>
 
                 <div>
-                  <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="addressLine2" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Address Line 2
                   </label>
                   <input
@@ -338,14 +338,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                     name="addressLine2"
                     value={formData.addressLine2}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Apt, Suite, etc."
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="city" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       City <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -354,7 +354,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="City"
                     />
                     {errors.city && (
@@ -363,7 +363,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                   </div>
 
                   <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="state" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       State/Province <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -372,7 +372,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="state"
                       value={formData.state}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="State"
                     />
                     {errors.state && (
@@ -383,7 +383,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="zipCode" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Postal Code <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -392,7 +392,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="zipCode"
                       value={formData.zipCode}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="12345"
                     />
                     {errors.zipCode && (
@@ -401,7 +401,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                   </div>
 
                   <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="country" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Country
                     </label>
                     <input
@@ -410,7 +410,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="country"
                       value={formData.country}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="USA"
                     />
                   </div>
@@ -418,7 +418,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="lat" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="lat" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Latitude (optional)
                     </label>
                     <input
@@ -427,7 +427,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="lat"
                       value={formData.lat}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., 40.7128"
                     />
                     {errors.lat && (
@@ -436,7 +436,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                   </div>
 
                   <div>
-                    <label htmlFor="lon" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="lon" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Longitude (optional)
                     </label>
                     <input
@@ -445,7 +445,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="lon"
                       value={formData.lon}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., -74.0060"
                     />
                     {errors.lon && (
@@ -456,13 +456,13 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Property Details</h3>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="squareFootage" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="squareFootage" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Property Size (sq ft)
                     </label>
                     <input
@@ -471,14 +471,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="squareFootage"
                       value={formData.squareFootage}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., 2500"
                       min="0"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="lotSize" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="lotSize" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Lot Size (acres)
                     </label>
                     <input
@@ -487,7 +487,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="lotSize"
                       value={formData.lotSize}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="e.g., 0.5"
                       min="0"
                       step="0.01"
@@ -496,7 +496,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                 </div>
 
                 <div>
-                  <label htmlFor="gateCode" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="gateCode" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Gate Code
                   </label>
                   <input
@@ -505,13 +505,13 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                     name="gateCode"
                     value={formData.gateCode}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Enter gate code if applicable"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="accessInstructions" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="accessInstructions" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Access Notes
                   </label>
                   <textarea
@@ -520,14 +520,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                     value={formData.accessInstructions}
                     onChange={handleChange}
                     rows={3}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Special instructions for crew access..."
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <div className="space-y-4">
                 <div>
                   <label className="flex items-center cursor-pointer">
@@ -536,14 +536,14 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                       name="isPrimary"
                       checked={formData.isPrimary}
                       onChange={handleChange}
-                      className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
+                      className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500 rounded"
                     />
-                    <span className="text-gray-200">Set as primary property</span>
+                    <span className="text-brand-gray-200">Set as primary property</span>
                   </label>
                 </div>
 
                 <div>
-                  <label htmlFor="parkingInstructions" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="parkingInstructions" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Additional Notes
                   </label>
                   <textarea
@@ -552,7 +552,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
                     value={formData.parkingInstructions}
                     onChange={handleChange}
                     rows={4}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Add any additional notes about this property..."
                   />
                 </div>
@@ -561,12 +561,12 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -574,7 +574,7 @@ const PropertyEditor: React.FC<PropertyEditorProps> = ({ isOpen, onClose, onSave
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading || !isFormValid()}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

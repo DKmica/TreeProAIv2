@@ -2,60 +2,42 @@ import React, { useState } from 'react';
 import Invoices from './Invoices';
 import InvoiceTemplates from './InvoiceTemplates';
 import ARAgingDashboard from './ARAgingDashboard';
+import { FileText, Layout, BarChart2 } from 'lucide-react';
 
 type TabType = 'invoices' | 'templates' | 'aging';
+
+const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
+  { key: 'invoices',   label: 'Invoices',   icon: <FileText className="w-4 h-4" /> },
+  { key: 'templates',  label: 'Templates',  icon: <Layout className="w-4 h-4" /> },
+  { key: 'aging',      label: 'A/R Aging',  icon: <BarChart2 className="w-4 h-4" /> },
+];
 
 const Invoicing: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('invoices');
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-brand-gray-900">Invoicing</h1>
-        <p className="mt-2 text-sm text-brand-gray-600">
-          Manage invoices, templates, and track receivables
-        </p>
+    <div className="space-y-6">
+      <div className="flex items-center gap-1 bg-brand-gray-800 border border-brand-gray-700 rounded-xl p-1 w-fit">
+        {tabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === tab.key
+                ? 'bg-brand-cyan-600 text-white shadow-sm'
+                : 'text-brand-gray-400 hover:text-white hover:bg-brand-gray-700'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="border-b border-brand-gray-200">
-        <nav className="flex space-x-8 overflow-x-auto" aria-label="Tabs">
-          <button
-            onClick={() => setActiveTab('invoices')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-              activeTab === 'invoices'
-                ? 'border-brand-green-500 text-brand-green-600'
-                : 'border-transparent text-brand-gray-500 hover:text-brand-gray-700 hover:border-brand-gray-300'
-            }`}
-          >
-            Invoices
-          </button>
-          <button
-            onClick={() => setActiveTab('templates')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-              activeTab === 'templates'
-                ? 'border-brand-green-500 text-brand-green-600'
-                : 'border-transparent text-brand-gray-500 hover:text-brand-gray-700 hover:border-brand-gray-300'
-            }`}
-          >
-            Templates
-          </button>
-          <button
-            onClick={() => setActiveTab('aging')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-              activeTab === 'aging'
-                ? 'border-brand-green-500 text-brand-green-600'
-                : 'border-transparent text-brand-gray-500 hover:text-brand-gray-700 hover:border-brand-gray-300'
-            }`}
-          >
-            A/R Aging
-          </button>
-        </nav>
-      </div>
-
-      <div className="mt-6">
-        {activeTab === 'invoices' && <Invoices />}
+      <div>
+        {activeTab === 'invoices'  && <Invoices />}
         {activeTab === 'templates' && <InvoiceTemplates />}
-        {activeTab === 'aging' && <ARAgingDashboard />}
+        {activeTab === 'aging'     && <ARAgingDashboard />}
       </div>
     </div>
   );

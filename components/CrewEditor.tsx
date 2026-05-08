@@ -163,13 +163,13 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {crew ? 'Edit Crew' : 'Create New Crew'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -185,7 +185,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Crew Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -194,7 +194,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 placeholder="Enter crew name"
               />
               {errors.name && (
@@ -203,7 +203,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Description
               </label>
               <textarea
@@ -212,7 +212,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                 placeholder="Enter crew description..."
               />
             </div>
@@ -224,18 +224,18 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
                   name="isActive"
                   checked={formData.isActive}
                   onChange={handleChange}
-                  className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
+                  className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500 rounded"
                 />
-                <span className="text-gray-200">Active</span>
+                <span className="text-brand-gray-200">Active</span>
               </label>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Default Schedule</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="defaultStartTime" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="defaultStartTime" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Start Time
                   </label>
                   <input
@@ -244,12 +244,12 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
                     name="defaultStartTime"
                     value={formData.defaultStartTime}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="defaultEndTime" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="defaultEndTime" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     End Time
                   </label>
                   <input
@@ -258,7 +258,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
                     name="defaultEndTime"
                     value={formData.defaultEndTime}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   />
                 </div>
               </div>
@@ -268,7 +268,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
             </div>
 
             <div>
-              <label htmlFor="capacity" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="capacity" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Capacity (jobs per day) <span className="text-red-400">*</span>
               </label>
               <input
@@ -278,7 +278,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
                 value={formData.capacity}
                 onChange={handleChange}
                 min="1"
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 placeholder="5"
               />
               {errors.capacity && (
@@ -288,12 +288,12 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -301,7 +301,7 @@ const CrewEditor: React.FC<CrewEditorProps> = ({ isOpen, onClose, onSave, crew }
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading || !isFormValid()}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

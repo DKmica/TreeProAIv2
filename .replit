@@ -21,7 +21,7 @@ args = "Backend"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "TreePro Flow"
+args = "Frontend"
 
 [[workflows.workflow]]
 name = "Backend"
@@ -35,12 +35,12 @@ args = "npm run dev:backend"
 outputType = "console"
 
 [[workflows.workflow]]
-name = "TreePro Flow"
+name = "Frontend"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd treepro-flow && npm run dev"
+args = "npm run dev:frontend"
 waitForPort = 5000
 
 [workflows.workflow.metadata]

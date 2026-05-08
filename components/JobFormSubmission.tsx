@@ -177,8 +177,8 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
     const value = formData[field.id];
     const hasError = !!validationErrors[field.id];
 
-    const baseInputClass = `w-full px-3 py-2 bg-[#0a1628] border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed ${
-      hasError ? 'border-red-500' : 'border-gray-700'
+    const baseInputClass = `w-full px-3 py-2 bg-[#0a1628] border rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed ${
+      hasError ? 'border-red-500' : 'border-brand-gray-700'
     }`;
 
     switch (field.type) {
@@ -226,11 +226,11 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
               checked={value || false}
               onChange={(e) => handleFieldChange(field.id, e.target.checked)}
               disabled={isReadOnly}
-              className={`h-5 w-5 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded bg-[#0a1628] disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`h-5 w-5 text-brand-cyan-600 focus:ring-brand-cyan-500 border-brand-gray-600 rounded bg-[#0a1628] disabled:opacity-50 disabled:cursor-not-allowed ${
                 hasError ? 'border-red-500' : ''
               }`}
             />
-            <span className="ml-2 text-sm text-gray-400">
+            <span className="ml-2 text-sm text-brand-gray-400">
               {field.required ? 'Required' : 'Optional'}
             </span>
           </div>
@@ -275,7 +275,7 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
               className={baseInputClass}
               placeholder="Type your full name as signature"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-brand-gray-500">
               For MVP, please type your full name. Digital signature pad coming soon.
             </p>
           </div>
@@ -312,7 +312,7 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-brand-gray-700">
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold text-white">
@@ -323,12 +323,12 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
               </span>
             </div>
             {currentJobForm.template?.description && (
-              <p className="text-gray-400 text-sm mt-2">{currentJobForm.template.description}</p>
+              <p className="text-brand-gray-400 text-sm mt-2">{currentJobForm.template.description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -361,7 +361,7 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
           <div className="space-y-6">
             {currentJobForm.template?.fields.map((field) => (
               <div key={field.id}>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                   {field.label}
                   {field.required && <span className="text-red-400 ml-1">*</span>}
                 </label>
@@ -373,8 +373,8 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
             ))}
 
             {currentJobForm.template?.requireSignature && (
-              <div className="pt-4 border-t border-gray-700">
-                <p className="text-sm text-gray-400 mb-2">
+              <div className="pt-4 border-t border-brand-gray-700">
+                <p className="text-sm text-brand-gray-400 mb-2">
                   <svg className="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
@@ -384,8 +384,8 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
             )}
 
             {currentJobForm.template?.requirePhotos && currentJobForm.template.requirePhotos > 0 && (
-              <div className="pt-4 border-t border-gray-700">
-                <p className="text-sm text-gray-400">
+              <div className="pt-4 border-t border-brand-gray-700">
+                <p className="text-sm text-brand-gray-400">
                   <svg className="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -398,11 +398,11 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
         </div>
 
         {!isReadOnly && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-700 bg-[#0a1628]">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-brand-gray-700 bg-[#0a1628]">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              className="px-6 py-2 bg-brand-gray-700 text-white rounded-md hover:bg-brand-gray-600 transition-colors"
               disabled={isSaving || isCompleting}
             >
               Cancel
@@ -439,7 +439,7 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
         )}
 
         {isReadOnly && (
-          <div className="flex items-center justify-between p-6 border-t border-gray-700 bg-[#0a1628]">
+          <div className="flex items-center justify-between p-6 border-t border-brand-gray-700 bg-[#0a1628]">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -470,7 +470,7 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+              className="px-6 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
             >
               Close
             </button>
@@ -489,14 +489,14 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
               className="bg-[#0f1c2e] rounded-lg shadow-xl w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <div className="flex items-center justify-between p-4 border-b border-brand-gray-700">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                   <Mail className="h-5 w-5 text-purple-400" />
                   Send Form PDF via Email
                 </h3>
                 <button
                   onClick={handleCloseEmailModal}
-                  className="text-gray-400 hover:text-white transition-colors p-1"
+                  className="text-brand-gray-400 hover:text-white transition-colors p-1"
                   type="button"
                 >
                   <XIcon className="h-5 w-5" />
@@ -504,47 +504,47 @@ const JobFormSubmission: React.FC<JobFormSubmissionProps> = ({ isOpen, onClose, 
               </div>
               <div className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Recipient Email <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="email"
                     value={emailRecipient}
                     onChange={(e) => setEmailRecipient(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Enter email address"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Subject <span className="text-gray-500 text-xs">(optional)</span>
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
+                    Subject <span className="text-brand-gray-500 text-xs">(optional)</span>
                   </label>
                   <input
                     type="text"
                     value={emailSubject}
                     onChange={(e) => setEmailSubject(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Email subject"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Message <span className="text-gray-500 text-xs">(optional)</span>
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">
+                    Message <span className="text-brand-gray-500 text-xs">(optional)</span>
                   </label>
                   <textarea
                     value={emailMessage}
                     onChange={(e) => setEmailMessage(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     placeholder="Add a message to include in the email"
                   />
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-700">
+              <div className="flex items-center justify-end gap-3 p-4 border-t border-brand-gray-700">
                 <button
                   type="button"
                   onClick={handleCloseEmailModal}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 bg-brand-gray-700 text-white rounded-md hover:bg-brand-gray-600 transition-colors"
                   disabled={isSendingEmail}
                 >
                   Cancel

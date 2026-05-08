@@ -1,10 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MapView from '../components/MapView';
 import { Job, PayrollRecord, TimeEntry, PayPeriod, Equipment, AICoreInsights } from '../types';
 import { payrollRecordService, timeEntryService, payPeriodService, equipmentService } from '../services/apiService';
 import { getAiCoreInsights } from '../services/gemini/businessService';
 import { useJobsQuery, useEmployeesQuery, useClientsQuery, useWorkOrderSummaryQuery } from '../hooks/useDataQueries';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import {
+  CalendarCheck, Clock, DollarSign, TrendingUp, Sparkles,
+  Users, Briefcase, AlertTriangle, RefreshCw, ChevronRight,
+} from 'lucide-react';
 
 async function apiFetch<T>(endpoint: string): Promise<T> {
   const response = await fetch(`/api/${endpoint}`);
@@ -12,449 +16,383 @@ async function apiFetch<T>(endpoint: string): Promise<T> {
   return response.json();
 }
 
+const statusColors: Record<string, string> = {
+  scheduled:  'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  en_route:   'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  on_site:    'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  in_progress:'bg-brand-cyan-500/20 text-brand-cyan-400 border-brand-cyan-500/30',
+  completed:  'bg-green-500/20 text-green-400 border-green-500/30',
+};
+
 const Dashboard: React.FC = () => {
-    const navigate = useNavigate();
-    const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
-    const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
-    const { data: customers = [], isLoading: customersLoading } = useClientsQuery();
-    const { data: workOrderSummary = [], isLoading: woSummaryLoading } = useWorkOrderSummaryQuery();
+  const navigate = useNavigate();
+  const { data: jobs = [], isLoading: jobsLoading } = useJobsQuery();
+  const { data: employees = [], isLoading: employeesLoading } = useEmployeesQuery();
+  const { data: workOrderSummary = [], isLoading: woSummaryLoading } = useWorkOrderSummaryQuery();
+  const { data: customers = [] } = useClientsQuery();
 
-    const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-    const [mobileView, setMobileView] = useState<'jobs' | 'map'>('jobs');
-    const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
-    const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
-    const [payPeriods, setPayPeriods] = useState<PayPeriod[]>([]);
-    const [equipment, setEquipment] = useState<Equipment[]>([]);
-    const [aiInsights, setAiInsights] = useState<AICoreInsights | null>(null);
-    const [loadingInsights, setLoadingInsights] = useState(false);
-    const [insightsError, setInsightsError] = useState<string | null>(null);
-    const [dashboardSummary, setDashboardSummary] = useState<any>(null);
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [payPeriods, setPayPeriods] = useState<PayPeriod[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [aiInsights, setAiInsights] = useState<AICoreInsights | null>(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [dashboardSummary, setDashboardSummary] = useState<any>(null);
 
-    const isLoading = jobsLoading || employeesLoading || customersLoading || woSummaryLoading;
+  const isLoading = jobsLoading || employeesLoading || woSummaryLoading;
 
-    const activeJobs = useMemo(() => 
-        jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress')
-            .sort((a, b) => (a.scheduledDate || '').localeCompare(b.scheduledDate || '')), 
-        [jobs]
+  const activeJobs = useMemo(() =>
+    jobs
+      .filter(job => ['scheduled', 'en_route', 'on_site', 'in_progress'].includes(job.status))
+      .sort((a, b) => (a.scheduledDate || '').localeCompare(b.scheduledDate || '')),
+    [jobs]
+  );
+
+  const newLeadsCount = useMemo(() => {
+    const s = workOrderSummary.find((s: any) => s.stage === 'lead');
+    return s?.count || 0;
+  }, [workOrderSummary]);
+
+  const quotesSentCount = useMemo(() => {
+    const s = workOrderSummary.find((s: any) => s.stage === 'quoting');
+    return s?.count || 0;
+  }, [workOrderSummary]);
+
+  const activeJobsCount = useMemo(() =>
+    jobs.filter(job => ['scheduled', 'en_route', 'on_site', 'in_progress'].includes(job.status)).length,
+    [jobs]
+  );
+
+  const monthlyRevenue = useMemo(() => {
+    if (dashboardSummary?.revenue?.totalPaid) return dashboardSummary.revenue.totalPaid;
+    const now = new Date();
+    return jobs
+      .filter(job => {
+        if (job.status !== 'completed' || !job.workEndedAt) return false;
+        const d = new Date(job.workEndedAt);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, job) => sum + (job.costs?.total || 0), 0);
+  }, [jobs, dashboardSummary]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [payrollData, timeData, payPeriodData, equipmentData, summary] = await Promise.all([
+          payrollRecordService.getAll().catch(() => []),
+          timeEntryService.getAll().catch(() => []),
+          payPeriodService.getAll().catch(() => []),
+          equipmentService.getAll().catch(() => []),
+          apiFetch<any>('dashboard/summary').catch(() => null),
+        ]);
+        setPayrollRecords(payrollData);
+        setTimeEntries(timeData);
+        setPayPeriods(payPeriodData);
+        setEquipment(equipmentData);
+        if (summary) setDashboardSummary(summary.data);
+      } catch (e) {
+        console.error('Dashboard load error', e);
+      }
+    };
+    load();
+  }, []);
+
+  const fetchAiInsights = async () => {
+    if (isLoading) return;
+    setLoadingInsights(true);
+    setInsightsError(null);
+    try {
+      const [leadsData, quotesData] = await Promise.all([
+        apiFetch<any[]>('leads').catch(() => []),
+        apiFetch<any[]>('quotes').catch(() => []),
+      ]);
+      const insights = await getAiCoreInsights(
+        leadsData || [], jobs, quotesData || [], employees,
+        equipment, payrollRecords, timeEntries, payPeriods
+      );
+      setAiInsights(insights);
+    } catch (error: any) {
+      setInsightsError(error.message || 'Failed to load AI insights');
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
+  const stats = [
+    {
+      title: 'New Leads',
+      value: newLeadsCount,
+      icon: Users,
+      change: 'incoming opportunities',
+      href: '/leads',
+      color: 'text-blue-400',
+    },
+    {
+      title: 'Quotes Sent',
+      value: quotesSentCount,
+      icon: TrendingUp,
+      change: 'awaiting responses',
+      href: '/quotes',
+      color: 'text-yellow-400',
+    },
+    {
+      title: 'Active Jobs',
+      value: activeJobsCount,
+      icon: Briefcase,
+      change: 'crews working today',
+      href: '/jobs',
+      color: 'text-brand-cyan-400',
+    },
+    {
+      title: 'Revenue (Month)',
+      value: `$${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      icon: DollarSign,
+      change: 'collected this month',
+      href: '/invoicing',
+      color: 'text-green-400',
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-brand-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-brand-gray-400 text-sm">Loading dashboard...</p>
+        </div>
+      </div>
     );
-
-    const newLeadsCount = useMemo(() => {
-        const leadStage = workOrderSummary.find((s: any) => s.stage === 'lead');
-        return leadStage?.count || 0;
-    }, [workOrderSummary]);
-
-    const quotesSentCount = useMemo(() => {
-        const quotingStage = workOrderSummary.find((s: any) => s.stage === 'quoting');
-        return quotingStage?.count || 0;
-    }, [workOrderSummary]);
-
-    const activeJobsCount = useMemo(() => 
-        jobs.filter(job => job.status === 'scheduled' || job.status === 'en_route' || job.status === 'on_site' || job.status === 'in_progress').length,
-        [jobs]
-    );
-
-    const monthlyRevenue = useMemo(() => {
-        if (dashboardSummary?.revenue?.totalPaid) {
-            return dashboardSummary.revenue.totalPaid;
-        }
-        
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        
-        return jobs
-            .filter(job => {
-                if (job.status !== 'completed' || !job.workEndedAt) return false;
-                const completedDate = new Date(job.workEndedAt);
-                return completedDate.getMonth() === currentMonth && completedDate.getFullYear() === currentYear;
-            })
-            .reduce((sum, job) => sum + (job.costs?.total || 0), 0);
-    }, [jobs, dashboardSummary]);
-
-    const fetchAiInsights = async () => {
-        if (isLoading) return;
-        
-        setLoadingInsights(true);
-        setInsightsError(null);
-        
-        try {
-            const [payrollData, timeData, payPeriodData, equipmentData, summary, leadsData, quotesData] = await Promise.all([
-                payrollRecordService.getAll().catch(() => []),
-                timeEntryService.getAll().catch(() => []),
-                payPeriodService.getAll().catch(() => []),
-                equipmentService.getAll().catch(() => []),
-                apiFetch<any>('dashboard/summary').catch(() => null),
-                apiFetch<any[]>('leads').catch(() => []),
-                apiFetch<any[]>('quotes').catch(() => [])
-            ]);
-            
-            setPayrollRecords(payrollData);
-            setTimeEntries(timeData);
-            setPayPeriods(payPeriodData);
-            setEquipment(equipmentData);
-            if (summary) setDashboardSummary(summary.data);
-            
-            const insights = await getAiCoreInsights(
-                leadsData || [],
-                jobs,
-                quotesData || [],
-                employees,
-                equipmentData,
-                payrollData,
-                timeData,
-                payPeriodData
-            );
-            
-            setAiInsights(insights);
-        } catch (error: any) {
-            console.error('Error fetching AI insights:', error);
-            setInsightsError(error.message || 'Failed to load AI insights');
-        } finally {
-            setLoadingInsights(false);
-        }
-    };
-
-    const getStatusColor = (status: Job['status']) => {
-        switch (status) {
-            case 'scheduled': return 'text-blue-800';
-            case 'in_progress': return 'text-yellow-800';
-            default: return 'text-gray-800';
-        }
-    }
-
-    const getStatusBgColor = (status: Job['status']) => {
-        switch (status) {
-            case 'scheduled': return 'bg-blue-100';
-            case 'in_progress': return 'bg-yellow-100';
-            default: return 'bg-gray-100';
-        }
-    }
-
-    const getLaborCostColor = (percentage: number) => {
-        if (percentage < 35) return 'text-green-700';
-        if (percentage <= 40) return 'text-yellow-700';
-        return 'text-red-700';
-    };
-
-    const getLaborCostBgColor = (percentage: number) => {
-        if (percentage < 35) return 'bg-green-50';
-        if (percentage <= 40) return 'bg-yellow-50';
-        return 'bg-red-50';
-    };
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
-            </div>
-        );
-    }
+  }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-brand-gray-900">Dashboard</h1>
-      <p className="mt-2 text-brand-gray-600">Welcome to TreePro AI. Analytics and overview will be displayed here.</p>
-       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <button onClick={() => navigate('/leads')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
-            <dt className="truncate text-sm font-medium text-brand-gray-500">New Leads</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{newLeadsCount}</dd>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <button
+            key={stat.title}
+            onClick={() => navigate(stat.href)}
+            className="text-left group"
+          >
+            <Card className="hover:border-brand-gray-600 transition-colors cursor-pointer">
+              <CardHeader>
+                <CardTitle>{stat.title}</CardTitle>
+                <stat.icon className={`h-4 w-4 ${stat.color} flex-shrink-0`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-bold text-white`}>{stat.value}</div>
+                <p className="text-xs text-brand-gray-500 mt-1">{stat.change}</p>
+              </CardContent>
+            </Card>
           </button>
-          <button onClick={() => navigate('/quotes')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
-            <dt className="truncate text-sm font-medium text-brand-gray-500">Quotes Sent</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{quotesSentCount}</dd>
-          </button>
-          <button onClick={() => navigate('/jobs')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
-            <dt className="truncate text-sm font-medium text-brand-gray-500">Active Jobs</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">{activeJobsCount}</dd>
-          </button>
-          <button onClick={() => navigate('/invoices')} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6 cursor-pointer hover:shadow-lg hover:scale-105 transition-all">
-            <dt className="truncate text-sm font-medium text-brand-gray-500">Revenue (Month)</dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-brand-gray-900">
-              ${monthlyRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-            </dd>
-          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-white font-semibold text-base">Today's Schedule</CardTitle>
+              <button
+                onClick={() => navigate('/calendar')}
+                className="flex items-center gap-1 text-xs text-brand-cyan-400 hover:text-brand-cyan-300 transition-colors"
+              >
+                View calendar <ChevronRight className="h-3 w-3" />
+              </button>
+            </CardHeader>
+            <CardContent>
+              {activeJobs.length === 0 ? (
+                <div className="text-center py-10 text-brand-gray-500">
+                  <CalendarCheck className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">No active jobs scheduled for today</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {activeJobs.slice(0, 6).map((job) => (
+                    <div
+                      key={job.id}
+                      onClick={() => navigate(`/jobs`)}
+                      className="flex items-center justify-between p-3 rounded-lg bg-brand-gray-900/50 border border-brand-gray-700/50 hover:border-brand-gray-600 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="min-w-0">
+                          <div className="font-medium text-white text-sm truncate">
+                            {(job as any).customerName || (job as any).client_name || 'Client'}
+                          </div>
+                          <div className="text-xs text-brand-gray-400 truncate">
+                            {(job as any).title || (job as any).serviceType || 'Tree Service'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                        {job.scheduledDate && (
+                          <span className="text-xs text-brand-gray-500 hidden sm:block">
+                            {new Date(job.scheduledDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </span>
+                        )}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColors[job.status] || 'bg-brand-gray-700 text-brand-gray-300 border-brand-gray-600'}`}>
+                          {job.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {activeJobs.length > 6 && (
+                    <button
+                      onClick={() => navigate('/jobs')}
+                      className="w-full text-xs text-brand-cyan-400 hover:text-brand-cyan-300 py-2 text-center transition-colors"
+                    >
+                      +{activeJobs.length - 6} more jobs — view all
+                    </button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        {/* AI Insights Section */}
-        {loadingInsights ? (
-          <div className="mt-8 bg-white rounded-lg shadow p-8">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
-              <span className="ml-3 text-brand-gray-600">Loading AI insights...</span>
-            </div>
-          </div>
-        ) : insightsError ? (
-          <div className="mt-8 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Error loading AI insights: {insightsError}</p>
-            <button 
-              onClick={fetchAiInsights}
-              className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
-            >
-              Try again
-            </button>
-          </div>
-        ) : !aiInsights ? (
-          <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow p-6 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-purple-900 flex items-center">
-                  <span className="mr-2">🤖</span> AI Insights
-                </h3>
-                <p className="text-sm text-purple-700 mt-1">Get AI-powered business intelligence, lead scoring, and recommendations</p>
-              </div>
-              <button
-                onClick={fetchAiInsights}
-                disabled={isLoading}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
-                </svg>
-                Load Insights
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-white font-semibold text-base">Pipeline</CardTitle>
+              <button onClick={() => navigate('/work-orders')} className="text-xs text-brand-cyan-400 hover:text-brand-cyan-300 transition-colors flex items-center gap-1">
+                View all <ChevronRight className="h-3 w-3" />
               </button>
-            </div>
-          </div>
-        ) : aiInsights ? (
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-brand-gray-900 mb-4">🤖 AI Insights</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Core Insights Card */}
-              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg shadow-lg p-6 border border-purple-200">
-                <h3 className="text-lg font-semibold text-purple-900 mb-3 flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
-                  </svg>
-                  Core Insights
-                </h3>
-                <div className="space-y-3">
-                  <div className="bg-white rounded-md p-3 border border-purple-100">
-                    <p className="text-sm font-medium text-purple-700 mb-1">Business Summary</p>
-                    <p className="text-sm text-brand-gray-700">{aiInsights.businessSummary}</p>
-                  </div>
-                  
-                  {aiInsights.leadScores && aiInsights.leadScores.length > 0 && (
-                    <div className="bg-white rounded-md p-3 border border-purple-100">
-                      <p className="text-sm font-medium text-purple-700 mb-2">Top Priority Leads</p>
-                      <ul className="space-y-2">
-                        {aiInsights.leadScores.slice(0, 3).map((lead, idx) => (
-                          <li key={idx} className="text-xs">
-                            <span className="font-semibold">{lead.customerName}</span>
-                            <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full text-xs">
-                              Score: {lead.score}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {workOrderSummary.length === 0 ? (
+                  <p className="text-sm text-brand-gray-500 text-center py-4">No pipeline data</p>
+                ) : (
+                  workOrderSummary.slice(0, 5).map((stage: any) => (
+                    <div key={stage.stage} className="flex items-center justify-between">
+                      <span className="text-sm text-brand-gray-300 capitalize">{stage.stage.replace(/_/g, ' ')}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{stage.count}</span>
+                        {stage.totalValue > 0 && (
+                          <span className="text-xs text-brand-gray-500">${Number(stage.totalValue).toLocaleString()}</span>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-                  {aiInsights.maintenanceAlerts && aiInsights.maintenanceAlerts.length > 0 && (
-                    <div className="bg-white rounded-md p-3 border border-purple-100">
-                      <p className="text-sm font-medium text-purple-700 mb-2">⚠️ Equipment Alerts</p>
-                      <ul className="space-y-1">
-                        {aiInsights.maintenanceAlerts.slice(0, 2).map((alert, idx) => (
-                          <li key={idx} className="text-xs text-brand-gray-700">
-                            {alert.equipmentName}: {alert.recommendedAction}
-                          </li>
-                        ))}
-                      </ul>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white font-semibold text-base">
+                <Sparkles className="h-4 w-4 text-brand-cyan-400" />
+                AI Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingInsights ? (
+                <div className="flex items-center gap-2 py-4 justify-center">
+                  <RefreshCw className="h-4 w-4 text-brand-cyan-400 animate-spin" />
+                  <span className="text-sm text-brand-gray-400">Loading...</span>
+                </div>
+              ) : insightsError ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-red-400 text-xs">
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <span>{insightsError}</span>
+                  </div>
+                  <button onClick={fetchAiInsights} className="text-xs text-brand-cyan-400 hover:text-brand-cyan-300 underline">Try again</button>
+                </div>
+              ) : aiInsights ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-brand-gray-300 leading-relaxed">{aiInsights.businessSummary}</p>
+                  {aiInsights.leadScores && aiInsights.leadScores.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-brand-gray-500 mb-1.5">Top Leads</p>
+                      {aiInsights.leadScores.slice(0, 2).map((lead, i) => (
+                        <div key={i} className="flex items-center justify-between py-1">
+                          <span className="text-xs text-brand-gray-300 truncate">{lead.customerName}</span>
+                          <span className="text-xs px-1.5 py-0.5 bg-brand-cyan-500/20 text-brand-cyan-400 rounded-full ml-2 flex-shrink-0">
+                            {lead.score}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-xs text-brand-gray-500 mb-3">AI-powered business insights and recommendations</p>
+                  <button
+                    onClick={fetchAiInsights}
+                    disabled={isLoading}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-brand-cyan-600/20 text-brand-cyan-400 border border-brand-cyan-500/30 rounded-lg hover:bg-brand-cyan-600/30 transition-colors disabled:opacity-50"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Load Insights
+                  </button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
-              {/* Labor Cost Analytics Card */}
-              <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg shadow-lg p-6 border border-cyan-200">
-                <h3 className="text-lg font-semibold text-cyan-900 mb-3 flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
-                  </svg>
-                  Labor Cost Analytics
-                </h3>
-                
-                {aiInsights.payrollInsights && (payrollRecords.length > 0 || timeEntries.length > 0) ? (
-                  <div className="space-y-3">
-                    {/* Total Labor Cost */}
-                    <div className="bg-white rounded-md p-3 border border-cyan-100">
-                      <p className="text-xs text-cyan-700 font-medium mb-1">Total Labor Cost</p>
-                      <p className="text-2xl font-bold text-cyan-900">
-                        {formatCurrency(aiInsights.payrollInsights.totalLaborCost)}
-                      </p>
-                    </div>
-
-                    {/* Labor Cost Percentage */}
-                    <div className={`rounded-md p-3 border ${getLaborCostBgColor(aiInsights.payrollInsights.laborCostPercentage)} ${aiInsights.payrollInsights.laborCostPercentage < 35 ? 'border-green-200' : aiInsights.payrollInsights.laborCostPercentage <= 40 ? 'border-yellow-200' : 'border-red-200'}`}>
-                      <p className="text-xs font-medium mb-1" style={{ color: '#0e7490' }}>Labor Cost % of Revenue</p>
-                      <div className="flex items-baseline">
-                        <p className={`text-2xl font-bold ${getLaborCostColor(aiInsights.payrollInsights.laborCostPercentage)}`}>
-                          {aiInsights.payrollInsights.laborCostPercentage.toFixed(1)}%
-                        </p>
-                        <span className="ml-2 text-xs text-brand-gray-600">
-                          {aiInsights.payrollInsights.laborCostPercentage < 35 ? '✓ Under target' : 
-                           aiInsights.payrollInsights.laborCostPercentage <= 40 ? '⚠ Near target' : 
-                           '⚠ Above target'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-brand-gray-600 mt-1">Target: 30-35%</p>
-                    </div>
-
-                    {/* Overtime Impact */}
-                    <div className="bg-white rounded-md p-3 border border-cyan-100">
-                      <p className="text-xs text-cyan-700 font-medium mb-1">Overtime Impact</p>
-                      <p className="text-xl font-bold text-cyan-900">
-                        {formatCurrency(aiInsights.payrollInsights.overtimeCostImpact)}
-                      </p>
-                    </div>
-
-                    {/* Recommendations */}
-                    {aiInsights.payrollInsights.recommendations && aiInsights.payrollInsights.recommendations.length > 0 && (
-                      <div className="bg-white rounded-md p-3 border border-cyan-100">
-                        <p className="text-xs font-medium text-cyan-700 mb-2">💡 Recommendations</p>
-                        <ul className="space-y-1.5">
-                          {aiInsights.payrollInsights.recommendations.map((rec, idx) => (
-                            <li key={idx} className="text-xs text-brand-gray-700 flex items-start">
-                              <span className="text-cyan-600 mr-1.5">•</span>
-                              <span>{rec}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-md p-6 border border-cyan-100 text-center">
-                    <svg className="w-12 h-12 mx-auto text-cyan-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p className="text-sm text-cyan-700 font-medium mb-1">No Payroll Data Available</p>
-                    <p className="text-xs text-brand-gray-600">Add time entries and payroll records to see labor cost analytics</p>
+      {aiInsights && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-white font-semibold text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-brand-cyan-400" />
+                Business Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-brand-gray-900/50 border border-brand-gray-700/50">
+                  <p className="text-xs font-medium text-brand-gray-400 mb-1">Business Summary</p>
+                  <p className="text-sm text-brand-gray-200">{aiInsights.businessSummary}</p>
+                </div>
+                {aiInsights.maintenanceAlerts && aiInsights.maintenanceAlerts.length > 0 && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <p className="text-xs font-medium text-amber-400 mb-1.5 flex items-center gap-1">
+                      <AlertTriangle className="h-3.5 w-3.5" /> Equipment Alerts
+                    </p>
+                    {aiInsights.maintenanceAlerts.slice(0, 2).map((alert, i) => (
+                      <p key={i} className="text-xs text-brand-gray-300">{alert.equipmentName}: {alert.recommendedAction}</p>
+                    ))}
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        ) : null}
-        
-        {/* Mobile: Tabbed Interface */}
-        <div className="mt-8 lg:hidden">
-            <div className="flex border-b border-gray-200 mb-4">
-                <button
-                    onClick={() => setMobileView('jobs')}
-                    className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
-                        mobileView === 'jobs'
-                            ? 'border-b-2 border-cyan-600 text-cyan-600'
-                            : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    Active Jobs ({activeJobs.length})
+            </CardContent>
+          </Card>
+
+          {aiInsights.leadScores && aiInsights.leadScores.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-white font-semibold text-base">Priority Leads</CardTitle>
+                <button onClick={() => navigate('/leads')} className="text-xs text-brand-cyan-400 hover:text-brand-cyan-300 flex items-center gap-1">
+                  View leads <ChevronRight className="h-3 w-3" />
                 </button>
-                <button
-                    onClick={() => setMobileView('map')}
-                    className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
-                        mobileView === 'map'
-                            ? 'border-b-2 border-cyan-600 text-cyan-600'
-                            : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                    Map View
-                </button>
-            </div>
-
-            {mobileView === 'jobs' ? (
-                <div className="bg-white rounded-lg shadow max-h-[70vh] overflow-y-auto">
-                    {activeJobs.length > 0 ? (
-                        <ul className="divide-y divide-brand-gray-200">
-                            {activeJobs.map(job => (
-                                <li 
-                                    key={job.id} 
-                                    onClick={() => setSelectedJobId(job.id === selectedJobId ? null : job.id)}
-                                    className={`p-4 border-l-4 cursor-pointer transition-colors duration-150 ${selectedJobId === job.id ? 'border-brand-green-500 bg-brand-green-50' : 'border-transparent active:bg-brand-gray-100'}`}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <p className="font-semibold text-brand-gray-800">{job.customerName}</p>
-                                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBgColor(job.status)} ${getStatusColor(job.status)}`}>
-                                            {job.status}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-brand-gray-600">Job ID: {job.id}</p>
-                                    <p className="text-sm text-brand-gray-500 mt-1">{job.scheduledDate || 'Unscheduled'}</p>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <div className="p-8 text-center text-brand-gray-500">
-                            No active jobs.
-                        </div>
-                    )}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {aiInsights.leadScores.slice(0, 5).map((lead, i) => (
+                    <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-brand-gray-900/50 border border-brand-gray-700/50">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-white truncate">{lead.customerName}</div>
+                        {(lead as any).reasoning && (
+                          <div className="text-xs text-brand-gray-400 truncate">{(lead as any).reasoning}</div>
+                        )}
+                      </div>
+                      <span className="ml-3 flex-shrink-0 text-xs px-2 py-0.5 bg-brand-cyan-500/20 text-brand-cyan-400 border border-brand-cyan-500/30 rounded-full font-medium">
+                        {lead.score}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-            ) : (
-                <div className="h-[70vh] min-h-[400px] w-full overflow-hidden rounded-lg bg-white shadow">
-                    <MapView 
-                        jobs={jobs} 
-                        employees={employees} 
-                        customers={customers} 
-                        selectedJobId={selectedJobId}
-                        onJobSelect={setSelectedJobId}
-                    />
-                </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
         </div>
-
-        {/* Desktop: Grid Layout */}
-        <div className="mt-8 hidden lg:grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1">
-                <h2 className="text-xl font-semibold text-brand-gray-900">Active Jobs</h2>
-                <div className="mt-4 bg-white rounded-lg shadow max-h-[60vh] overflow-y-auto">
-                    {activeJobs.length > 0 ? (
-                        <ul className="divide-y divide-brand-gray-200">
-                        {activeJobs.map(job => (
-                            <li 
-                            key={job.id} 
-                            onClick={() => setSelectedJobId(job.id === selectedJobId ? null : job.id)}
-                            className={`p-4 border-l-4 cursor-pointer transition-colors duration-150 ${selectedJobId === job.id ? 'border-brand-green-500 bg-brand-green-50' : 'border-transparent hover:bg-brand-gray-50'}`}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <p className="font-semibold text-brand-gray-800">{job.customerName}</p>
-                                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getStatusBgColor(job.status)} ${getStatusColor(job.status)}`}>
-                                        {job.status}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-brand-gray-600">Job ID: {job.id}</p>
-                                <p className="text-sm text-brand-gray-500 mt-1">{job.scheduledDate || 'Unscheduled'}</p>
-                            </li>
-                        ))}
-                        </ul>
-                    ) : (
-                         <div className="p-8 text-center text-brand-gray-500">
-                            No active jobs.
-                         </div>
-                    )}
-                </div>
-            </div>
-            <div className="lg:col-span-2">
-                <h2 className="text-xl font-semibold text-brand-gray-900">Live Job & Crew Map</h2>
-                <div className="mt-4 h-[60vh] min-h-[400px] w-full overflow-hidden rounded-lg bg-white shadow">
-                    <MapView 
-                        jobs={jobs} 
-                        employees={employees} 
-                        customers={customers} 
-                        selectedJobId={selectedJobId}
-                        onJobSelect={setSelectedJobId}
-                    />
-                </div>
-            </div>
-        </div>
-
+      )}
     </div>
   );
 };

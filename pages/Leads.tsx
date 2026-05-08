@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { WorkOrder } from '../types';
 import { workOrderService } from '../services/apiService';
-import SpinnerIcon from '../components/icons/SpinnerIcon';
-import { Search, MapPin, User, Plus, X } from 'lucide-react';
+import { Card, CardContent } from '../components/ui/Card';
+import Avatar from '../components/ui/Avatar';
+import { Search, MapPin, User, Plus, X, Phone, Mail } from 'lucide-react';
 
 const Leads: React.FC = () => {
   const navigate = useNavigate();
@@ -33,13 +34,11 @@ const Leads: React.FC = () => {
         const result = await workOrderService.getAll({ stage: 'lead', clientId, pageSize: 200 });
         setWorkOrders(result.data);
       } catch (err: any) {
-        console.error('Failed to load leads from work orders', err);
         setError(err.message || 'Failed to load leads');
       } finally {
         setIsLoading(false);
       }
     };
-
     load();
   }, [searchParams]);
 
@@ -91,33 +90,30 @@ const Leads: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <SpinnerIcon className="w-8 h-8 animate-spin text-cyan-500" />
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-brand-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Leads</h1>
-          <p className="text-gray-400">Lead-stage work orders</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-brand-gray-400">{filtered.length} lead{filtered.length !== 1 ? 's' : ''}</p>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-gray-500" />
             <input
               type="text"
               placeholder="Search leads..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="pl-9 pr-4 py-2 text-sm bg-brand-gray-800 border border-brand-gray-700 rounded-lg text-white placeholder-brand-gray-500 focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20 transition-all w-52"
             />
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-brand-cyan-600 text-white rounded-lg hover:bg-brand-cyan-500 transition-colors"
           >
             <Plus className="w-4 h-4" />
             New Lead
@@ -126,111 +122,116 @@ const Leads: React.FC = () => {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300">{error}</div>
+        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{error}</div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid gap-3">
         {filtered.map((lead) => (
-          <div
+          <Card
             key={lead.id}
-            className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-cyan-500/60 transition cursor-pointer"
+            className="hover:border-brand-gray-600 transition-colors cursor-pointer"
             onClick={() => navigate(`/work-orders/${lead.id}`)}
           >
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-lg font-semibold text-white">{lead.title || 'Lead'}</h3>
-                <p className="text-sm text-gray-400 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  {lead.clientName || 'Unknown client'}
-                </p>
+            <CardContent className="py-4">
+              <div className="flex items-start gap-4">
+                <Avatar name={lead.clientName || 'Lead'} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-white text-sm">{lead.title || 'New Lead'}</h3>
+                      <p className="text-xs text-brand-gray-400 flex items-center gap-1 mt-0.5">
+                        <User className="w-3 h-3" />
+                        {lead.clientName || 'Unknown client'}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      Lead
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-brand-gray-500">
+                    {lead.propertyAddress && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {lead.propertyAddress}
+                      </span>
+                    )}
+                    {lead.clientPhone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        {lead.clientPhone}
+                      </span>
+                    )}
+                    {lead.clientEmail && (
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3 h-3" />
+                        {lead.clientEmail}
+                      </span>
+                    )}
+                    <span className="ml-auto text-brand-gray-600">
+                      {new Date(lead.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <span className="px-2 py-1 rounded-full text-xs bg-blue-500/20 text-blue-300">Lead</span>
-            </div>
-            {lead.propertyAddress && (
-              <p className="text-sm text-gray-400 flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                {lead.propertyAddress}
-              </p>
-            )}
-            <div className="mt-3 text-xs text-gray-500">
-              Created {new Date(lead.createdAt).toLocaleDateString()}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {filtered.length === 0 && !error && (
-        <div className="text-center text-gray-500 py-10">No leads found in the work order pipeline</div>
+        <div className="text-center py-16 text-brand-gray-500 text-sm">No leads found</div>
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-brand-gray-800 border border-brand-gray-700 rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray-700">
+              <h3 className="text-base font-semibold text-white">Create New Lead</h3>
+              <button onClick={() => setShowCreateModal(false)} className="p-1.5 text-brand-gray-400 hover:text-white hover:bg-brand-gray-700 rounded-lg transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-white">Create New Lead</h3>
-                <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-white">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
               {createError && (
-                <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
-                  {createError}
-                </div>
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{createError}</div>
               )}
               <form onSubmit={handleCreateLead} className="space-y-4">
+                {[
+                  { label: 'Client Name', key: 'clientName', type: 'text', required: true },
+                  { label: 'Email', key: 'email', type: 'email', required: false },
+                  { label: 'Phone', key: 'phone', type: 'tel', required: false },
+                  { label: 'Address', key: 'address', type: 'text', required: false },
+                ].map(({ label, key, type, required }) => (
+                  <div key={key}>
+                    <label className="block text-xs font-medium text-brand-gray-300 mb-1.5">{label}{required && ' *'}</label>
+                    <input
+                      type={type}
+                      required={required}
+                      value={(formData as any)[key]}
+                      onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                      className="w-full px-3 py-2 text-sm bg-brand-gray-900 border border-brand-gray-600 rounded-lg text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20 transition-all placeholder-brand-gray-600"
+                    />
+                  </div>
+                ))}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Client Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.clientName}
-                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Address</label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                  <label className="block text-xs font-medium text-brand-gray-300 mb-1.5">Description</label>
                   <textarea
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 text-sm bg-brand-gray-900 border border-brand-gray-600 rounded-lg text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-2 focus:ring-brand-cyan-500/20 transition-all resize-none"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={creating}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors disabled:bg-gray-600"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-brand-cyan-600 text-white rounded-lg hover:bg-brand-cyan-500 transition-colors disabled:opacity-50"
                 >
-                  {creating ? <SpinnerIcon className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                  {creating ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
                   {creating ? 'Creating...' : 'Create Lead'}
                 </button>
               </form>

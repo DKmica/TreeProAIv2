@@ -168,8 +168,8 @@ const StumpGrinding: React.FC = () => {
       case 'assigned': return 'bg-blue-100 text-blue-800';
       case 'in_progress': return 'bg-purple-100 text-purple-800';
       case 'completed': return 'bg-green-100 text-green-800';
-      case 'cancelled': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-brand-gray-100 text-brand-gray-800';
+      default: return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
@@ -339,7 +339,7 @@ const StumpGrinding: React.FC = () => {
       </div>
 
       {showAssignModal && selectedStump && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-brand-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">
               Assign Stump Grinder
@@ -377,7 +377,7 @@ const StumpGrinding: React.FC = () => {
               <button
                 onClick={handleAssign}
                 disabled={!assignEmployeeId || processing}
-                className="px-4 py-2 text-sm font-medium text-white bg-brand-cyan-600 rounded-md hover:bg-brand-cyan-700 disabled:bg-gray-400"
+                className="px-4 py-2 text-sm font-medium text-white bg-brand-cyan-600 rounded-md hover:bg-brand-cyan-700 disabled:bg-brand-gray-400"
               >
                 {processing ? 'Assigning...' : 'Assign'}
               </button>
@@ -387,7 +387,7 @@ const StumpGrinding: React.FC = () => {
       )}
 
       {showCompleteModal && selectedStump && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-brand-gray-500 bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">
               Complete Stump Grinding
@@ -433,7 +433,7 @@ const StumpGrinding: React.FC = () => {
               <button
                 onClick={handleComplete}
                 disabled={processing}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-gray-400"
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:bg-brand-gray-400"
               >
                 {processing ? 'Completing...' : 'Mark Complete'}
               </button>

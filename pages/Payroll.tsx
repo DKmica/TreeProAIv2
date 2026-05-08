@@ -75,9 +75,9 @@ const Payroll: React.FC = () => {
       case 'Processing':
         return 'bg-yellow-100 text-yellow-800';
       case 'Closed':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
@@ -411,7 +411,7 @@ const Payroll: React.FC = () => {
                   <select
                     value={filterPayPeriod}
                     onChange={(e) => setFilterPayPeriod(e.target.value)}
-                    className="rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 text-sm"
+                    className="rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 text-sm"
                   >
                     <option value="">All Pay Periods</option>
                     {payPeriods.map(period => (
@@ -423,7 +423,7 @@ const Payroll: React.FC = () => {
                   <select
                     value={filterEmployee}
                     onChange={(e) => setFilterEmployee(e.target.value)}
-                    className="rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 text-sm"
+                    className="rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 text-sm"
                   >
                     <option value="">All Employees</option>
                     {employees.map(emp => (

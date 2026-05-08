@@ -59,27 +59,24 @@ const Layout: React.FC = () => {
         setIsCommandPaletteOpen(true);
       }
     };
-
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
   return (
-    <div className="min-h-screen bg-brand-gray-950">
+    <div className="flex h-screen overflow-hidden bg-brand-gray-950">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex flex-1 flex-col lg:pl-64 transition-all duration-300">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Header
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         />
 
-        <main className="flex-1">
-          <div className="py-6">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <Outlet />
-            </div>
+        <main className="flex-1 overflow-auto">
+          <div className="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <Outlet />
           </div>
         </main>
       </div>

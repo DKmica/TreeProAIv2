@@ -299,14 +299,14 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={handleOverlayClick}
     >
-      <div className="bg-gray-900 rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+      <div className="bg-brand-gray-900 rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {contact ? 'Edit Contact' : 'Add Contact'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-brand-gray-400 hover:text-white transition-colors"
           >
             <XIcon className="w-6 h-6" />
           </button>
@@ -322,14 +322,14 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                   Contact Type <span className="text-red-400">*</span>
                 </label>
                 <select
                   name="contactType"
                   value={formData.contactType}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 >
                   <option value="general">General Contact</option>
                   <option value="billing">Billing Contact</option>
@@ -343,7 +343,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                   Title
                 </label>
                 <input
@@ -352,14 +352,14 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="Mr., Mrs., Dr., etc."
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                   First Name <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -367,7 +367,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-sm text-red-400">{errors.firstName}</p>
@@ -375,7 +375,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                   Last Name <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -383,7 +383,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-sm text-red-400">{errors.lastName}</p>
@@ -392,7 +392,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Job Title
               </label>
               <input
@@ -401,19 +401,19 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                 value={formData.jobTitle}
                 onChange={handleChange}
                 placeholder="e.g., Property Manager, Facilities Director"
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-brand-gray-300">
                   Contact Channels <span className="text-red-400">*</span>
                 </label>
                 <button
                   type="button"
                   onClick={handleAddChannel}
-                  className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
+                  className="text-brand-cyan-400 hover:text-brand-cyan-300 text-sm font-medium"
                 >
                   + Add Channel
                 </button>
@@ -427,7 +427,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                     <select
                       value={channel.channelType}
                       onChange={(e) => handleChannelChange(index, 'channelType', e.target.value)}
-                      className="w-32 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      className="w-32 px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                     >
                       <option value="email">Email</option>
                       <option value="phone">Phone</option>
@@ -440,7 +440,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                         value={channel.channelValue}
                         onChange={(e) => handleChannelChange(index, 'channelValue', e.target.value)}
                         placeholder={channel.channelType === 'email' ? 'email@example.com' : '(555) 123-4567'}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                       />
                       {errors[`channel_${index}`] && (
                         <p className="mt-1 text-sm text-red-400">{errors[`channel_${index}`]}</p>
@@ -451,16 +451,16 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                       value={channel.label || ''}
                       onChange={(e) => handleChannelChange(index, 'label', e.target.value)}
                       placeholder="Label (optional)"
-                      className="w-32 px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      className="w-32 px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                     />
-                    <label className="flex items-center px-3 py-2 bg-gray-800 border border-gray-600 rounded-md">
+                    <label className="flex items-center px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md">
                       <input
                         type="checkbox"
                         checked={channel.isPrimary}
                         onChange={(e) => handleChannelChange(index, 'isPrimary', e.target.checked)}
                         className="mr-2"
                       />
-                      <span className="text-sm text-gray-300">Primary</span>
+                      <span className="text-sm text-brand-gray-300">Primary</span>
                     </label>
                     {formData.channels.length > 1 && (
                       <button
@@ -477,14 +477,14 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Preferred Contact Method
               </label>
               <select
                 name="preferredContactMethod"
                 value={formData.preferredContactMethod}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
               >
                 <option value="email">Email</option>
                 <option value="phone">Phone</option>
@@ -493,7 +493,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
             </div>
 
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">
+              <label className="block text-sm font-medium text-brand-gray-300">
                 Permissions
               </label>
               <div className="space-y-2">
@@ -505,7 +505,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <span className="text-gray-300">Can Approve Quotes</span>
+                  <span className="text-brand-gray-300">Can Approve Quotes</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -515,7 +515,7 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <span className="text-gray-300">Can Receive Invoices</span>
+                  <span className="text-brand-gray-300">Can Receive Invoices</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -525,13 +525,13 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <span className="text-gray-300">Primary Contact</span>
+                  <span className="text-brand-gray-300">Primary Contact</span>
                 </label>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Notes
               </label>
               <textarea
@@ -540,16 +540,16 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
                 onChange={handleChange}
                 rows={4}
                 placeholder="Additional notes about this contact..."
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
               />
             </div>
           </div>
 
-          <div className="flex gap-3 px-4 sm:px-6 py-4 border-t border-gray-700">
+          <div className="flex gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              className="flex-1 px-4 py-2.5 bg-brand-gray-700 text-white rounded-md hover:bg-brand-gray-600 transition-colors"
               disabled={isLoading}
             >
               Cancel
@@ -559,8 +559,8 @@ const ContactEditor: React.FC<ContactEditorProps> = ({
               disabled={isLoading || !isFormValid()}
               className={`flex-1 px-4 py-2 rounded-md transition-colors ${
                 isLoading || !isFormValid()
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-cyan-600 text-white hover:bg-cyan-700'
+                  ? 'bg-brand-gray-700 text-brand-gray-500 cursor-not-allowed'
+                  : 'bg-brand-cyan-600 text-white hover:bg-brand-cyan-700'
               }`}
             >
               {isLoading ? 'Saving...' : contact ? 'Update Contact' : 'Create Contact'}

@@ -393,16 +393,16 @@ const Invoices: React.FC<InvoicesProps> = () => {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">Total outstanding</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">${agingSummary.totalOutstanding.toFixed(2)}</p>
-          <p className="text-xs text-gray-500 mt-1">Across {invoices.length} invoices</p>
+        <div className="rounded-lg border border-brand-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-brand-gray-500">Total outstanding</p>
+          <p className="text-2xl font-bold text-brand-gray-900 mt-1">${agingSummary.totalOutstanding.toFixed(2)}</p>
+          <p className="text-xs text-brand-gray-500 mt-1">Across {invoices.length} invoices</p>
         </div>
         {(['Current', '1-30', '31-60', '61-90', '90+'] as const).map((bucket) => (
-          <div key={bucket} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex items-center justify-between">
+          <div key={bucket} className="rounded-lg border border-brand-gray-200 bg-white p-4 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">{bucket} days</p>
-              <p className="text-xl font-semibold text-gray-900">${agingSummary.buckets[bucket].toFixed(2)}</p>
+              <p className="text-sm text-brand-gray-500">{bucket} days</p>
+              <p className="text-xl font-semibold text-brand-gray-900">${agingSummary.buckets[bucket].toFixed(2)}</p>
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getAgingColor(bucket)}`}>
               {bucket}
@@ -412,7 +412,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
       </div>
 
       <div className="mt-6">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-brand-gray-200">
           <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto" aria-label="Tabs">
             {(['All', 'Draft', 'Sent', 'Paid', 'Overdue', 'Void'] as StatusFilter[]).map((status) => (
               <button
@@ -422,13 +422,13 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors
                   ${statusFilter === status
                     ? 'border-brand-green-500 text-brand-green-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-brand-gray-500 hover:text-brand-gray-700 hover:border-brand-gray-300'
                   }
                 `}
               >
                 {status}
                 <span className={`ml-2 py-0.5 px-2.5 rounded-full text-xs ${
-                  statusFilter === status ? 'bg-brand-green-100 text-brand-green-600' : 'bg-gray-100 text-gray-600'
+                  statusFilter === status ? 'bg-brand-green-100 text-brand-green-600' : 'bg-brand-gray-100 text-brand-gray-600'
                 }`}>
                   {statusCounts[status]}
                 </span>
@@ -444,7 +444,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
           placeholder="Search by invoice number, customer, or amount..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="block w-full max-w-md rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
+          className="block w-full max-w-md rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
           aria-label="Search invoices"
         />
       </div>
@@ -486,7 +486,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                 <tbody className="divide-y divide-brand-gray-200 bg-white">
                   {filteredInvoices.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-sm text-gray-500">
+                      <td colSpan={7} className="py-12 text-center text-sm text-brand-gray-500">
                         {searchTerm || statusFilter !== 'All' ? 'No invoices found matching your criteria' : 'No invoices yet. Create your first invoice to get started.'}
                       </td>
                     </tr>
@@ -495,7 +495,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                       const displayStatus = calculateStatus(invoice);
                       const agingBucket = getAgingBucket(invoice);
                       return (
-                        <tr key={invoice.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleViewInvoice(invoice)}>
+                        <tr key={invoice.id} className="hover:bg-brand-gray-50 cursor-pointer" onClick={() => handleViewInvoice(invoice)}>
                           <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brand-gray-900 sm:pl-6">
                             {invoice.invoiceNumber || invoice.id}
                           </td>
@@ -525,7 +525,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => handleViewInvoice(invoice)}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 transition-colors"
                                 title="View Invoice"
                               >
                                 <DocumentTextIcon className="h-4 w-4" />
@@ -534,7 +534,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                               
                               <button
                                 onClick={() => handleEditInvoice(invoice)}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 transition-colors"
                                 title="Edit Invoice"
                               >
                                 Edit
@@ -543,7 +543,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                               <button
                                 onClick={() => handleDownloadPdf(invoice)}
                                 disabled={isDownloadingPdf === invoice.id}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-60"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 transition-colors disabled:opacity-60"
                                 title="Download PDF"
                               >
                                 <Download className="h-4 w-4" />
@@ -552,7 +552,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
 
                               <button
                                 onClick={() => handleSendPdf(invoice)}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 transition-colors"
                                 title="Send PDF via Email"
                               >
                                 <Mail className="h-4 w-4" />
@@ -593,7 +593,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                               {invoice.status !== 'Void' && (
                                 <button
                                   onClick={() => handleVoidInvoice(invoice)}
-                                  className="inline-flex items-center gap-1 px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                  className="inline-flex items-center gap-1 px-2 py-1 bg-brand-gray-600 text-white rounded hover:bg-brand-gray-700 transition-colors"
                                   title="Void Invoice"
                                 >
                                   Void
@@ -613,7 +613,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                               <button
                                 onClick={() => handleGeneratePaymentLink(invoice)}
                                 disabled={isGeneratingLink === invoice.id}
-                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-60"
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 transition-colors disabled:opacity-60"
                                 title="Copy payment link"
                               >
                                 {isGeneratingLink === invoice.id ? 'Copying…' : 'Pay Link'}
@@ -643,7 +643,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
       <div className="mt-4 lg:hidden space-y-4">
         {filteredInvoices.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-brand-gray-500">
               {searchTerm || statusFilter !== 'All' ? 'No invoices found matching your criteria' : 'No invoices yet. Create your first invoice to get started.'}
             </p>
           </div>
@@ -689,28 +689,28 @@ const Invoices: React.FC<InvoicesProps> = () => {
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-gray-100" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => handleViewInvoice(invoice)}
-                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 text-sm font-medium"
                   >
                     <DocumentTextIcon className="h-4 w-4" />
                     View
                   </button>
                   <button
                     onClick={() => handleEditInvoice(invoice)}
-                    className="flex-1 min-w-[100px] px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                    className="flex-1 min-w-[100px] px-3 py-2 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 text-sm font-medium"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDownloadPdf(invoice)}
                     disabled={isDownloadingPdf === invoice.id}
-                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium disabled:opacity-60"
+                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 text-sm font-medium disabled:opacity-60"
                   >
                     <Download className="h-4 w-4" />
                     {isDownloadingPdf === invoice.id ? 'Downloading...' : 'PDF'}
                   </button>
                   <button
                     onClick={() => handleSendPdf(invoice)}
-                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium"
+                    className="flex-1 min-w-[100px] inline-flex items-center justify-center gap-1 px-3 py-2 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 text-sm font-medium"
                   >
                     <Mail className="h-4 w-4" />
                     Email
@@ -746,7 +746,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   {invoice.status !== 'Void' && (
                     <button
                       onClick={() => handleVoidInvoice(invoice)}
-                      className="flex-1 min-w-[100px] px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 text-sm font-medium"
+                      className="flex-1 min-w-[100px] px-3 py-2 bg-brand-gray-600 text-white rounded hover:bg-brand-gray-700 text-sm font-medium"
                     >
                       Void
                     </button>
@@ -762,7 +762,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   <button
                     onClick={() => handleGeneratePaymentLink(invoice)}
                     disabled={isGeneratingLink === invoice.id}
-                    className="flex-1 min-w-[100px] px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 text-sm font-medium disabled:opacity-60"
+                    className="flex-1 min-w-[100px] px-3 py-2 bg-white border border-brand-gray-300 text-brand-gray-700 rounded hover:bg-brand-gray-50 text-sm font-medium disabled:opacity-60"
                   >
                     {isGeneratingLink === invoice.id ? 'Copying…' : 'Pay Link'}
                   </button>
@@ -816,7 +816,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div 
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              className="fixed inset-0 bg-brand-gray-500 bg-opacity-75 transition-opacity"
               onClick={handleCloseEmailModal}
             />
             <span className="hidden sm:inline-block sm:h-screen sm:align-middle">&#8203;</span>
@@ -826,10 +826,10 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   <Mail className="h-6 w-6 text-blue-600" />
                 </div>
                 <div className="mt-3 text-center sm:mt-5">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  <h3 className="text-lg font-medium leading-6 text-brand-gray-900">
                     Send Invoice PDF
                   </h3>
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm text-brand-gray-500">
                     Send invoice {emailModalInvoice.invoiceNumber || emailModalInvoice.id} to the recipient via email.
                   </p>
                 </div>
@@ -837,7 +837,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
               
               <div className="mt-5 space-y-4">
                 <div>
-                  <label htmlFor="emailRecipient" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="emailRecipient" className="block text-sm font-medium text-brand-gray-700">
                     Recipient Email <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -845,14 +845,14 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     id="emailRecipient"
                     value={emailRecipient}
                     onChange={(e) => setEmailRecipient(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                     placeholder="customer@example.com"
                     required
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="emailSubject" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="emailSubject" className="block text-sm font-medium text-brand-gray-700">
                     Subject (optional)
                   </label>
                   <input
@@ -860,13 +860,13 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     id="emailSubject"
                     value={emailSubject}
                     onChange={(e) => setEmailSubject(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                     placeholder="Invoice from Your Company"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="emailMessage" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="emailMessage" className="block text-sm font-medium text-brand-gray-700">
                     Message (optional)
                   </label>
                   <textarea
@@ -874,7 +874,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                     value={emailMessage}
                     onChange={(e) => setEmailMessage(e.target.value)}
                     rows={3}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md border-brand-gray-300 shadow-sm focus:border-brand-green-500 focus:ring-brand-green-500 sm:text-sm"
                     placeholder="Please find attached the invoice for your recent service..."
                   />
                 </div>
@@ -903,7 +903,7 @@ const Invoices: React.FC<InvoicesProps> = () => {
                   type="button"
                   onClick={handleCloseEmailModal}
                   disabled={isSendingPdf}
-                  className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:opacity-50 sm:col-start-1 sm:mt-0 sm:text-sm"
+                  className="mt-3 inline-flex w-full justify-center rounded-md border border-brand-gray-300 bg-white px-4 py-2 text-base font-medium text-brand-gray-700 shadow-sm hover:bg-brand-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-green-500 focus:ring-offset-2 disabled:opacity-50 sm:col-start-1 sm:mt-0 sm:text-sm"
                 >
                   Cancel
                 </button>

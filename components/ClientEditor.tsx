@@ -241,13 +241,13 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {client ? 'Edit Client' : 'Add Client'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -263,7 +263,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Client Type <span className="text-red-400">*</span>
               </label>
               <div className="flex gap-4">
@@ -275,9 +275,9 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                       value={type}
                       checked={formData.clientType === type}
                       onChange={handleChange}
-                      className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                      className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                     />
-                    <span className="text-gray-200 capitalize">{type.replace('_', ' ')}</span>
+                    <span className="text-brand-gray-200 capitalize">{type.replace('_', ' ')}</span>
                   </label>
                 ))}
               </div>
@@ -290,16 +290,16 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                   name="isCompany"
                   checked={formData.isCompany}
                   onChange={handleChange}
-                  className="mr-2 text-cyan-500 focus:ring-cyan-500 rounded"
+                  className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500 rounded"
                 />
-                <span className="text-gray-200">This is a company</span>
+                <span className="text-brand-gray-200">This is a company</span>
               </label>
             </div>
 
             {formData.isCompany ? (
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="companyName" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="companyName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Company Name <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -308,7 +308,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="companyName"
                     value={formData.companyName}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Enter company name"
                   />
                   {errors.companyName && (
@@ -317,7 +317,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                 </div>
 
                 <div>
-                  <label htmlFor="industry" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="industry" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Industry
                   </label>
                   <input
@@ -326,7 +326,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="industry"
                     value={formData.industry}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="e.g., Property Management, Construction"
                   />
                 </div>
@@ -334,7 +334,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     First Name <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -343,7 +343,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="First name"
                   />
                   {errors.firstName && (
@@ -352,7 +352,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                 </div>
 
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Last Name <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -361,7 +361,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Last name"
                   />
                   {errors.lastName && (
@@ -371,12 +371,12 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
               </div>
             )}
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Contact Information</h3>
               
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="primaryEmail" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="primaryEmail" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Primary Email <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -385,7 +385,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="primaryEmail"
                     value={formData.primaryEmail}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="email@example.com"
                   />
                   {errors.primaryEmail && (
@@ -394,7 +394,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                 </div>
 
                 <div>
-                  <label htmlFor="primaryPhone" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="primaryPhone" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Primary Phone <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -409,7 +409,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                         setErrors(prev => ({ ...prev, primaryPhone: undefined }));
                       }
                     }}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="(555) 123-4567"
                   />
                   {errors.primaryPhone && (
@@ -419,12 +419,12 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Billing Address</h3>
               
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="billingAddressLine1" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="billingAddressLine1" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Street Address
                   </label>
                   <input
@@ -433,13 +433,13 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="billingAddressLine1"
                     value={formData.billingAddressLine1}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="123 Main St"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="billingAddressLine2" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="billingAddressLine2" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Address Line 2
                   </label>
                   <input
@@ -448,14 +448,14 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="billingAddressLine2"
                     value={formData.billingAddressLine2}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Apt, Suite, etc."
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="billingCity" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="billingCity" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       City
                     </label>
                     <input
@@ -464,13 +464,13 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                       name="billingCity"
                       value={formData.billingCity}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="City"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="billingState" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="billingState" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       State/Province
                     </label>
                     <StateSelect
@@ -484,7 +484,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="billingZip" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="billingZip" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Postal Code
                     </label>
                     <input
@@ -493,13 +493,13 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                       name="billingZip"
                       value={formData.billingZip}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="12345"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="billingCountry" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="billingCountry" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Country
                     </label>
                     <input
@@ -508,7 +508,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                       name="billingCountry"
                       value={formData.billingCountry}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="USA"
                     />
                   </div>
@@ -516,10 +516,10 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="status" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Status <span className="text-red-400">*</span>
                   </label>
                   <select
@@ -527,7 +527,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -535,7 +535,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                 </div>
 
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="notes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Notes
                   </label>
                   <textarea
@@ -544,7 +544,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
                     value={formData.notes}
                     onChange={handleChange}
                     rows={4}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                     placeholder="Add any notes about this client..."
                   />
                 </div>
@@ -553,12 +553,12 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -566,7 +566,7 @@ const ClientEditor: React.FC<ClientEditorProps> = ({ isOpen, onClose, onSave, cl
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading || !isFormValid()}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

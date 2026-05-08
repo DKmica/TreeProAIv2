@@ -364,13 +364,13 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {lead ? 'Edit Lead' : 'Add Lead'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -386,7 +386,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Customer <span className="text-red-400">*</span>
               </label>
               <div className="flex gap-4 mb-4">
@@ -397,9 +397,9 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                     value="existing"
                     checked={customerMode === 'existing'}
                     onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                   />
-                  <span className="text-gray-300">Select Existing Customer</span>
+                  <span className="text-brand-gray-300">Select Existing Customer</span>
                 </label>
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -408,9 +408,9 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                     value="new"
                     checked={customerMode === 'new'}
                     onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                   />
-                  <span className="text-gray-300">Create New Customer</span>
+                  <span className="text-brand-gray-300">Create New Customer</span>
                 </label>
               </div>
             </div>
@@ -434,11 +434,11 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                 variant="light"
               />
             ) : (
-              <div className="space-y-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="space-y-4 p-4 bg-brand-gray-800/50 rounded-lg border border-brand-gray-700">
                 <h3 className="text-lg font-semibold text-white mb-4">New Customer Information</h3>
                 
                 <div>
-                  <label htmlFor="companyName" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="companyName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Company Name (Optional)
                   </label>
                   <input
@@ -447,14 +447,14 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                     name="companyName"
                     value={newCustomerData.companyName}
                     onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Enter company name"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       First Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -463,7 +463,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                       name="firstName"
                       value={newCustomerData.firstName}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="First name"
                     />
                     {errors.firstName && (
@@ -472,7 +472,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   </div>
 
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Last Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -481,7 +481,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                       name="lastName"
                       value={newCustomerData.lastName}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="Last name"
                     />
                     {errors.lastName && (
@@ -492,7 +492,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="phone" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Phone Number <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -507,7 +507,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                           setErrors(prev => ({ ...prev, phone: undefined }));
                         }
                       }}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="(555) 123-4567"
                     />
                     {errors.phone && (
@@ -516,7 +516,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Email Address <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -525,7 +525,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                       name="email"
                       value={newCustomerData.email}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="email@example.com"
                     />
                     {errors.email && (
@@ -535,7 +535,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                 </div>
 
                 <div>
-                  <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="addressLine1" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Address Line 1 <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -544,7 +544,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                     name="addressLine1"
                     value={newCustomerData.addressLine1}
                     onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Street address"
                   />
                   {errors.addressLine1 && (
@@ -553,7 +553,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                 </div>
 
                 <div>
-                  <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="addressLine2" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Address Line 2 (Optional)
                   </label>
                   <input
@@ -562,14 +562,14 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                     name="addressLine2"
                     value={newCustomerData.addressLine2}
                     onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Apt, suite, unit, etc."
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="city" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       City <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -578,7 +578,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                       name="city"
                       value={newCustomerData.city}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="City"
                     />
                     {errors.city && (
@@ -587,7 +587,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   </div>
 
                   <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="state" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       State <span className="text-red-400">*</span>
                     </label>
                     <StateSelect
@@ -609,7 +609,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   </div>
 
                   <div>
-                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="zipCode" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Zip Code <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -618,7 +618,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                       name="zipCode"
                       value={newCustomerData.zipCode}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="12345"
                     />
                     {errors.zipCode && (
@@ -639,7 +639,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                       billingZipCode: newCustomerData.zipCode,
                     } as any));
                   }}
-                  className="mt-3 w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
+                  className="mt-3 w-full px-4 py-2 bg-brand-cyan-600 hover:bg-brand-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
                 >
                   Use as Billing Address
                 </button>
@@ -647,7 +647,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
             )}
 
             <div>
-              <label htmlFor="propertyId" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="propertyId" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Property (Optional)
               </label>
               <select
@@ -656,7 +656,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                 value={formData.propertyId}
                 onChange={handleChange}
                 disabled={loadingProperties || !formData.clientId}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 disabled:opacity-50"
               >
                 <option value="">Select a property...</option>
                 {properties.map((property) => (
@@ -669,7 +669,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="source" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="source" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Lead Source <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -678,7 +678,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   name="source"
                   value={formData.source}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   placeholder="e.g., Website, Referral, Cold Call"
                 />
                 {errors.source && (
@@ -687,7 +687,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="status" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Status <span className="text-red-400">*</span>
                 </label>
                 <select
@@ -695,7 +695,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 >
                   <option value="New">New</option>
                   <option value="Contacted">Contacted</option>
@@ -707,7 +707,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="priority" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Priority <span className="text-red-400">*</span>
                 </label>
                 <select
@@ -715,7 +715,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   name="priority"
                   value={formData.priority}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -725,7 +725,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
               </div>
 
               <div>
-                <label htmlFor="estimatedValue" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="estimatedValue" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Estimated Value ($)
                 </label>
                 <input
@@ -734,7 +734,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   name="estimatedValue"
                   value={formData.estimatedValue}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   placeholder="0.00"
                   step="0.01"
                   min="0"
@@ -746,7 +746,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
             </div>
 
             <div>
-              <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="assignedTo" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Assigned To
               </label>
               <input
@@ -755,14 +755,14 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                 name="assignedTo"
                 value={formData.assignedTo}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 placeholder="Employee name"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="expectedCloseDate" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="expectedCloseDate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Expected Close Date
                 </label>
                 <input
@@ -771,12 +771,12 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   name="expectedCloseDate"
                   value={formData.expectedCloseDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="nextFollowupDate" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="nextFollowupDate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Next Follow-up Date
                 </label>
                 <input
@@ -785,13 +785,13 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                   name="nextFollowupDate"
                   value={formData.nextFollowupDate}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Description
               </label>
               <textarea
@@ -800,19 +800,19 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                 placeholder="Add any notes about this lead..."
               />
             </div>
           </div>
         </form>
 
-        <div className="flex flex-wrap justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex flex-wrap justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -824,7 +824,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
               }
             }}
             disabled={isLoading || !lead?.id}
-            className="px-4 py-2.5 border border-cyan-600 text-cyan-200 rounded-md hover:bg-cyan-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-cyan-600 text-brand-cyan-200 rounded-md hover:bg-cyan-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Create Quote
           </button>
@@ -832,7 +832,7 @@ const LeadEditor: React.FC<LeadEditorProps> = ({ isOpen, onClose, onSave, onCrea
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading || !isFormValid()}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

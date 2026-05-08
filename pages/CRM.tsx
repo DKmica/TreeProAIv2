@@ -356,7 +356,7 @@ const CRM: React.FC = () => {
       case 'Lost':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-brand-gray-100 text-brand-gray-800 border-brand-gray-200';
     }
   };
 
@@ -369,16 +369,16 @@ const CRM: React.FC = () => {
       case 'medium':
         return 'bg-yellow-100 text-yellow-800';
       case 'low':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
   const getQuoteStatusColor = (status: Quote['status']) => {
     switch (status) {
       case 'Draft':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
       case 'Sent':
         return 'bg-blue-100 text-blue-800';
       case 'Accepted':
@@ -388,7 +388,7 @@ const CRM: React.FC = () => {
       case 'Converted':
         return 'bg-purple-100 text-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-brand-gray-100 text-brand-gray-800';
     }
   };
 
@@ -768,7 +768,7 @@ const CRM: React.FC = () => {
           placeholder={`Search ${activeTab}...`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="block w-full max-w-md rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
+          className="block w-full max-w-md rounded-md border border-brand-gray-600 bg-brand-gray-800 px-3 py-2 text-white shadow-sm placeholder:text-brand-gray-400 focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 sm:text-sm"
         />
       </div>
 
@@ -964,7 +964,7 @@ const CRM: React.FC = () => {
                                   ? 'bg-purple-100 text-purple-800'
                                   : client.clientType === 'residential'
                                   ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
+                                  : 'bg-brand-gray-100 text-brand-gray-800'
                               }`}
                             >
                               {client.clientType}
@@ -973,10 +973,10 @@ const CRM: React.FC = () => {
                         )}
                       </div>
                       <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                        client.status === 'active' ? 'bg-green-100' : 'bg-gray-100'
+                        client.status === 'active' ? 'bg-green-100' : 'bg-brand-gray-100'
                       }`}>
                         <span className={`w-3 h-3 rounded-full ${
-                          client.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                          client.status === 'active' ? 'bg-green-500' : 'bg-brand-gray-400'
                         }`}></span>
                       </div>
                     </div>
@@ -1265,7 +1265,7 @@ const CRM: React.FC = () => {
                   className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200"
                 >
                   <div 
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
+                    className="p-6 cursor-pointer hover:bg-brand-gray-50 transition-colors rounded-t-lg"
                     onClick={() => handleLeadEdit(lead.id)}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -1399,7 +1399,7 @@ const CRM: React.FC = () => {
                   className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-brand-gray-200"
                 >
                   <div 
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
+                    className="p-6 cursor-pointer hover:bg-brand-gray-50 transition-colors rounded-t-lg"
                     onClick={() => handleQuoteEdit(quote.id)}
                   >
                     <div className="flex items-start justify-between">

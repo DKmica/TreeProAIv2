@@ -98,7 +98,7 @@ const JobForms: React.FC<JobFormsProps> = ({ jobId }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <SpinnerIcon className="h-8 w-8 text-cyan-500" />
+        <SpinnerIcon className="h-8 w-8 text-brand-cyan-500" />
       </div>
     );
   }
@@ -111,7 +111,7 @@ const JobForms: React.FC<JobFormsProps> = ({ jobId }) => {
           <button
             onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
             disabled={isAttaching}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
           >
             {isAttaching ? (
               <>
@@ -134,9 +134,9 @@ const JobForms: React.FC<JobFormsProps> = ({ jobId }) => {
                 className="fixed inset-0 z-10" 
                 onClick={() => setShowTemplateDropdown(false)}
               />
-              <div className="absolute right-0 mt-2 w-64 bg-[#0f1c2e] border border-gray-700 rounded-md shadow-xl z-20 max-h-64 overflow-y-auto">
+              <div className="absolute right-0 mt-2 w-64 bg-[#0f1c2e] border border-brand-gray-700 rounded-md shadow-xl z-20 max-h-64 overflow-y-auto">
                 {templates.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-gray-400">
+                  <div className="px-4 py-3 text-sm text-brand-gray-400">
                     No active templates available
                   </div>
                 ) : (
@@ -144,10 +144,10 @@ const JobForms: React.FC<JobFormsProps> = ({ jobId }) => {
                     <button
                       key={template.id}
                       onClick={() => handleAttachForm(template.id)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors text-sm border-b border-gray-700 last:border-b-0"
+                      className="w-full text-left px-4 py-3 hover:bg-brand-gray-700 transition-colors text-sm border-b border-brand-gray-700 last:border-b-0"
                     >
                       <div className="font-medium text-white">{template.name}</div>
-                      <div className="text-xs text-gray-400 capitalize">{template.category}</div>
+                      <div className="text-xs text-brand-gray-400 capitalize">{template.category}</div>
                     </button>
                   ))
                 )}
@@ -164,19 +164,19 @@ const JobForms: React.FC<JobFormsProps> = ({ jobId }) => {
       )}
 
       {jobForms.length === 0 ? (
-        <div className="text-center py-8 bg-[#0a1628] border border-gray-700 rounded-md">
-          <svg className="h-12 w-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="text-center py-8 bg-[#0a1628] border border-brand-gray-700 rounded-md">
+          <svg className="h-12 w-12 text-brand-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p className="text-gray-400 text-sm">No forms attached to this job yet</p>
-          <p className="text-gray-500 text-xs mt-1">Click "Attach Form" to add one</p>
+          <p className="text-brand-gray-400 text-sm">No forms attached to this job yet</p>
+          <p className="text-brand-gray-500 text-xs mt-1">Click "Attach Form" to add one</p>
         </div>
       ) : (
         <div className="space-y-3">
           {jobForms.map(form => (
             <div
               key={form.id}
-              className="bg-[#0a1628] border border-gray-700 rounded-md p-4 hover:border-cyan-500/50 transition-all"
+              className="bg-[#0a1628] border border-brand-gray-700 rounded-md p-4 hover:border-brand-cyan-500/50 transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 cursor-pointer" onClick={() => handleOpenForm(form)}>
@@ -190,10 +190,10 @@ const JobForms: React.FC<JobFormsProps> = ({ jobId }) => {
                   </div>
                   
                   {form.template?.description && (
-                    <p className="text-sm text-gray-400 mb-2">{form.template.description}</p>
+                    <p className="text-sm text-brand-gray-400 mb-2">{form.template.description}</p>
                   )}
 
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-xs text-brand-gray-500">
                     <span>{form.template?.fields.length || 0} fields</span>
                     {form.completedAt && (
                       <span>Completed: {new Date(form.completedAt).toLocaleDateString()}</span>

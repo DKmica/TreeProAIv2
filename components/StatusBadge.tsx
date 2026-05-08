@@ -30,7 +30,7 @@ interface StatusBadgeProps {
 }
 
 const STATUS_COLORS: Record<StatusPaletteKey, string> = {
-  draft: 'bg-gray-600 text-gray-100',
+  draft: 'bg-brand-gray-600 text-brand-gray-100',
   sent: 'bg-blue-600 text-blue-100',
   accepted: 'bg-green-600 text-green-100',
   declined: 'bg-red-600 text-red-100',
@@ -39,12 +39,12 @@ const STATUS_COLORS: Record<StatusPaletteKey, string> = {
   scheduled: 'bg-blue-600 text-blue-100',
   en_route: 'bg-sky-600 text-sky-100',
   on_site: 'bg-orange-600 text-orange-100',
-  in_progress: 'bg-cyan-600 text-cyan-100',
+  in_progress: 'bg-brand-cyan-600 text-brand-cyan-100',
   completed: 'bg-green-700 text-green-100',
   cancelled: 'bg-red-700 text-red-100',
   paid: 'bg-emerald-600 text-emerald-100',
   overdue: 'bg-amber-600 text-amber-100',
-  void: 'bg-gray-700 text-gray-100',
+  void: 'bg-brand-gray-700 text-brand-gray-100',
   needs_permit: 'bg-yellow-600 text-yellow-100',
   waiting_on_client: 'bg-orange-500 text-orange-100',
   weather_hold: 'bg-indigo-600 text-indigo-100',

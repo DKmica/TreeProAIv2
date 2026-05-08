@@ -52,7 +52,7 @@ interface KPICardProps {
 
 function KPICard({ title, value, change, icon, color }: KPICardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
       <div className="flex items-center justify-between">
         <div className={`p-3 rounded-lg ${color}`}>
           {icon}
@@ -65,8 +65,8 @@ function KPICard({ title, value, change, icon, color }: KPICardProps) {
         )}
       </div>
       <div className="mt-4">
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+        <p className="text-sm font-medium text-brand-gray-500">{title}</p>
+        <p className="text-2xl font-bold text-brand-gray-900 mt-1">{value}</p>
       </div>
     </div>
   );
@@ -188,21 +188,21 @@ export default function Reports() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="space-y-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Business Reports</h1>
-            <p className="text-gray-500 mt-1">Track performance and make data-driven decisions</p>
+            <h1 className="text-3xl font-bold text-brand-gray-900">Business Reports</h1>
+            <p className="text-brand-gray-500 mt-1">Track performance and make data-driven decisions</p>
           </div>
           
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-gray-400" />
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg bg-white text-sm font-medium text-gray-700 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2 border border-brand-gray-200 rounded-lg bg-white text-sm font-medium text-brand-gray-700 focus:ring-2 focus:ring-brand-cyan-500 focus:border-transparent"
               >
                 {dateRangeOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -212,15 +212,15 @@ export default function Reports() {
             
             <button
               onClick={() => refetchKPIs()}
-              className="p-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
+              className="p-2 border border-brand-gray-200 rounded-lg bg-white hover:bg-brand-gray-800/20 transition-colors"
               title="Refresh data"
             >
-              <RefreshCw className={`w-4 h-4 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-brand-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-cyan-600 text-white rounded-lg hover:bg-brand-cyan-700 transition-colors text-sm font-medium"
             >
               <Download className="w-4 h-4" />
               Export CSV
@@ -228,15 +228,15 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg mb-6 w-fit">
+        <div className="flex gap-1 p-1 bg-brand-gray-100 rounded-lg mb-6 w-fit">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white text-brand-gray-900 shadow-sm'
+                  : 'text-brand-gray-600 hover:text-brand-gray-900'
               }`}
             >
               {tab.label}
@@ -257,7 +257,7 @@ export default function Reports() {
                 title="Win Rate"
                 value={`${kpis?.winRate || 0}%`}
                 icon={<Target className="w-5 h-5 text-white" />}
-                color="bg-cyan-500"
+                color="bg-brand-cyan-500"
               />
               <KPICard
                 title="Jobs Completed"
@@ -274,11 +274,11 @@ export default function Reports() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Funnel</h3>
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
+                <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Sales Funnel</h3>
                 {funnelLoading ? (
                   <div className="h-64 flex items-center justify-center">
-                    <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+                    <RefreshCw className="w-6 h-6 animate-spin text-brand-gray-400" />
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height={280}>
@@ -298,28 +298,28 @@ export default function Reports() {
                   </ResponsiveContainer>
                 )}
                 {salesFunnel && (
-                  <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                  <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t border-brand-gray-100">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900">{salesFunnel.leadQualificationRate}%</p>
-                      <p className="text-xs text-gray-500">Lead Qualification</p>
+                      <p className="text-2xl font-bold text-brand-gray-900">{salesFunnel.leadQualificationRate}%</p>
+                      <p className="text-xs text-brand-gray-500">Lead Qualification</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900">{salesFunnel.quoteAcceptanceRate}%</p>
-                      <p className="text-xs text-gray-500">Quote Acceptance</p>
+                      <p className="text-2xl font-bold text-brand-gray-900">{salesFunnel.quoteAcceptanceRate}%</p>
+                      <p className="text-xs text-brand-gray-500">Quote Acceptance</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-gray-900">{salesFunnel.quoteConversionRate}%</p>
-                      <p className="text-xs text-gray-500">Quote Conversion</p>
+                      <p className="text-2xl font-bold text-brand-gray-900">{salesFunnel.quoteConversionRate}%</p>
+                      <p className="text-xs text-brand-gray-500">Quote Conversion</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Service Type</h3>
+              <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6">
+                <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Revenue by Service Type</h3>
                 {serviceLoading ? (
                   <div className="h-64 flex items-center justify-center">
-                    <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+                    <RefreshCw className="w-6 h-6 animate-spin text-brand-gray-400" />
                   </div>
                 ) : serviceChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
@@ -344,7 +344,7 @@ export default function Reports() {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-64 flex items-center justify-center text-gray-500">
+                  <div className="h-64 flex items-center justify-center text-brand-gray-500">
                     No revenue data for selected period
                   </div>
                 )}
@@ -354,11 +354,11 @@ export default function Reports() {
         )}
 
         {(activeTab === 'overview' || activeTab === 'revenue') && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Revenue Trend</h3>
             {trendLoading ? (
               <div className="h-64 flex items-center justify-center">
-                <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+                <RefreshCw className="w-6 h-6 animate-spin text-brand-gray-400" />
               </div>
             ) : revenueTrend && revenueTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={320}>
@@ -390,7 +390,7 @@ export default function Reports() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">
+              <div className="h-64 flex items-center justify-center text-brand-gray-500">
                 No revenue trend data for selected period
               </div>
             )}
@@ -398,25 +398,25 @@ export default function Reports() {
         )}
 
         {activeTab === 'revenue' && jobProfitability && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Job Profitability</h3>
+              <h3 className="text-lg font-semibold text-brand-gray-900">Job Profitability</h3>
               <div className="grid grid-cols-4 gap-6 text-center">
                 <div>
-                  <p className="text-xl font-bold text-gray-900">{jobProfitability.summary.totalJobs}</p>
-                  <p className="text-xs text-gray-500">Jobs</p>
+                  <p className="text-xl font-bold text-brand-gray-900">{jobProfitability.summary.totalJobs}</p>
+                  <p className="text-xs text-brand-gray-500">Jobs</p>
                 </div>
                 <div>
                   <p className="text-xl font-bold text-green-600">{formatCurrency(jobProfitability.summary.totalRevenue)}</p>
-                  <p className="text-xs text-gray-500">Revenue</p>
+                  <p className="text-xs text-brand-gray-500">Revenue</p>
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-cyan-600">{formatCurrency(jobProfitability.summary.totalProfit)}</p>
-                  <p className="text-xs text-gray-500">Profit</p>
+                  <p className="text-xl font-bold text-brand-cyan-600">{formatCurrency(jobProfitability.summary.totalProfit)}</p>
+                  <p className="text-xs text-brand-gray-500">Profit</p>
                 </div>
                 <div>
                   <p className="text-xl font-bold text-purple-600">{jobProfitability.summary.avgProfitMargin}%</p>
-                  <p className="text-xs text-gray-500">Avg Margin</p>
+                  <p className="text-xs text-brand-gray-500">Avg Margin</p>
                 </div>
               </div>
             </div>
@@ -424,22 +424,22 @@ export default function Reports() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Job</th>
-                    <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Quote</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Cost</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Profit</th>
-                    <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Margin</th>
+                  <tr className="border-b border-brand-gray-100">
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Job</th>
+                    <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Customer</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Quote</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Cost</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Profit</th>
+                    <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Margin</th>
                   </tr>
                 </thead>
                 <tbody>
                   {jobProfitability.jobs.slice(0, 10).map((job) => (
-                    <tr key={job.id} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm font-medium text-gray-900">{job.jobNumber}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{job.customerName}</td>
-                      <td className="py-3 px-4 text-sm text-right text-gray-900">{formatCurrency(job.quoteAmount)}</td>
-                      <td className="py-3 px-4 text-sm text-right text-gray-600">{formatCurrency(job.totalCost)}</td>
+                    <tr key={job.id} className="border-b border-brand-gray-50 hover:bg-brand-gray-800/20">
+                      <td className="py-3 px-4 text-sm font-medium text-brand-gray-900">{job.jobNumber}</td>
+                      <td className="py-3 px-4 text-sm text-brand-gray-600">{job.customerName}</td>
+                      <td className="py-3 px-4 text-sm text-right text-brand-gray-900">{formatCurrency(job.quoteAmount)}</td>
+                      <td className="py-3 px-4 text-sm text-right text-brand-gray-600">{formatCurrency(job.totalCost)}</td>
                       <td className={`py-3 px-4 text-sm text-right font-medium ${job.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrency(job.profit)}
                       </td>
@@ -455,53 +455,53 @@ export default function Reports() {
         )}
 
         {activeTab === 'crew' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Crew Productivity</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Crew Productivity</h3>
             
             {crewLoading ? (
               <div className="h-64 flex items-center justify-center">
-                <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+                <RefreshCw className="w-6 h-6 animate-spin text-brand-gray-400" />
               </div>
             ) : crewProductivity ? (
               <>
                 <div className="grid grid-cols-4 gap-4 mb-6">
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{crewProductivity.summary.totalEmployees}</p>
-                    <p className="text-sm text-gray-500">Active Crew</p>
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-brand-gray-900">{crewProductivity.summary.totalEmployees}</p>
+                    <p className="text-sm text-brand-gray-500">Active Crew</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-cyan-600">{crewProductivity.summary.totalHours}</p>
-                    <p className="text-sm text-gray-500">Total Hours</p>
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-brand-cyan-600">{crewProductivity.summary.totalHours}</p>
+                    <p className="text-sm text-brand-gray-500">Total Hours</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-green-600">{crewProductivity.summary.totalJobsCompleted}</p>
-                    <p className="text-sm text-gray-500">Jobs Completed</p>
+                    <p className="text-sm text-brand-gray-500">Jobs Completed</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-purple-600">{crewProductivity.summary.avgHoursPerEmployee}</p>
-                    <p className="text-sm text-gray-500">Avg Hours/Employee</p>
+                    <p className="text-sm text-brand-gray-500">Avg Hours/Employee</p>
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Employee</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Hours</th>
-                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Jobs</th>
-                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Avg Hrs/Job</th>
+                      <tr className="border-b border-brand-gray-100">
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Employee</th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Role</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Hours</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Jobs</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Avg Hrs/Job</th>
                       </tr>
                     </thead>
                     <tbody>
                       {crewProductivity.employees.map((emp) => (
-                        <tr key={emp.employeeId} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-sm font-medium text-gray-900">{emp.employeeName}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{emp.role || '-'}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-900">{emp.totalHours}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-900">{emp.jobsCompleted}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-600">{emp.avgHoursPerJob}</td>
+                        <tr key={emp.employeeId} className="border-b border-brand-gray-50 hover:bg-brand-gray-800/20">
+                          <td className="py-3 px-4 text-sm font-medium text-brand-gray-900">{emp.employeeName}</td>
+                          <td className="py-3 px-4 text-sm text-brand-gray-600">{emp.role || '-'}</td>
+                          <td className="py-3 px-4 text-sm text-right text-brand-gray-900">{emp.totalHours}</td>
+                          <td className="py-3 px-4 text-sm text-right text-brand-gray-900">{emp.jobsCompleted}</td>
+                          <td className="py-3 px-4 text-sm text-right text-brand-gray-600">{emp.avgHoursPerJob}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -509,7 +509,7 @@ export default function Reports() {
                 </div>
               </>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">
+              <div className="h-64 flex items-center justify-center text-brand-gray-500">
                 No crew productivity data for selected period
               </div>
             )}
@@ -517,51 +517,51 @@ export default function Reports() {
         )}
 
         {activeTab === 'equipment' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Equipment Utilization</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-brand-gray-100 p-6 mb-8">
+            <h3 className="text-lg font-semibold text-brand-gray-900 mb-4">Equipment Utilization</h3>
             
             {equipmentLoading ? (
               <div className="h-64 flex items-center justify-center">
-                <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+                <RefreshCw className="w-6 h-6 animate-spin text-brand-gray-400" />
               </div>
             ) : equipmentUtilization ? (
               <>
                 <div className="grid grid-cols-4 gap-4 mb-6">
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-gray-900">{equipmentUtilization.summary.totalEquipment}</p>
-                    <p className="text-sm text-gray-500">Total Equipment</p>
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-brand-gray-900">{equipmentUtilization.summary.totalEquipment}</p>
+                    <p className="text-sm text-brand-gray-500">Total Equipment</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-cyan-600">{equipmentUtilization.summary.activeEquipment}</p>
-                    <p className="text-sm text-gray-500">Active Equipment</p>
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
+                    <p className="text-2xl font-bold text-brand-cyan-600">{equipmentUtilization.summary.activeEquipment}</p>
+                    <p className="text-sm text-brand-gray-500">Active Equipment</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-green-600">{equipmentUtilization.summary.utilizationRate}%</p>
-                    <p className="text-sm text-gray-500">Utilization Rate</p>
+                    <p className="text-sm text-brand-gray-500">Utilization Rate</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="bg-brand-gray-800/20 rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-purple-600">{equipmentUtilization.summary.totalHoursUsed}</p>
-                    <p className="text-sm text-gray-500">Total Hours Used</p>
+                    <p className="text-sm text-brand-gray-500">Total Hours Used</p>
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Equipment</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
-                        <th className="py-3 px-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Hours Used</th>
-                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Jobs</th>
-                        <th className="py-3 px-4 text-right text-xs font-semibold text-gray-500 uppercase">Last Used</th>
+                      <tr className="border-b border-brand-gray-100">
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Equipment</th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Type</th>
+                        <th className="py-3 px-4 text-left text-xs font-semibold text-brand-gray-500 uppercase">Status</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Hours Used</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Jobs</th>
+                        <th className="py-3 px-4 text-right text-xs font-semibold text-brand-gray-500 uppercase">Last Used</th>
                       </tr>
                     </thead>
                     <tbody>
                       {equipmentUtilization.equipment.map((eq) => (
-                        <tr key={eq.equipmentId} className="border-b border-gray-50 hover:bg-gray-50">
-                          <td className="py-3 px-4 text-sm font-medium text-gray-900">{eq.equipmentName}</td>
-                          <td className="py-3 px-4 text-sm text-gray-600">{eq.equipmentType || '-'}</td>
+                        <tr key={eq.equipmentId} className="border-b border-brand-gray-50 hover:bg-brand-gray-800/20">
+                          <td className="py-3 px-4 text-sm font-medium text-brand-gray-900">{eq.equipmentName}</td>
+                          <td className="py-3 px-4 text-sm text-brand-gray-600">{eq.equipmentType || '-'}</td>
                           <td className="py-3 px-4">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                               eq.status === 'available' ? 'bg-green-100 text-green-800' :
@@ -571,9 +571,9 @@ export default function Reports() {
                               {eq.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-900">{eq.totalHoursUsed}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-900">{eq.jobsUsedOn}</td>
-                          <td className="py-3 px-4 text-sm text-right text-gray-600">
+                          <td className="py-3 px-4 text-sm text-right text-brand-gray-900">{eq.totalHoursUsed}</td>
+                          <td className="py-3 px-4 text-sm text-right text-brand-gray-900">{eq.jobsUsedOn}</td>
+                          <td className="py-3 px-4 text-sm text-right text-brand-gray-600">
                             {eq.lastUsed ? new Date(eq.lastUsed).toLocaleDateString() : '-'}
                           </td>
                         </tr>
@@ -583,7 +583,7 @@ export default function Reports() {
                 </div>
               </>
             ) : (
-              <div className="h-64 flex items-center justify-center text-gray-500">
+              <div className="h-64 flex items-center justify-center text-brand-gray-500">
                 No equipment utilization data for selected period
               </div>
             )}

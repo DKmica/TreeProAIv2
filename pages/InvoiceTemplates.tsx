@@ -196,8 +196,8 @@ const InvoiceTemplates: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <SpinnerIcon className="h-12 w-12 text-cyan-500" />
-        <span className="ml-3 text-gray-300 text-lg">Loading templates...</span>
+        <SpinnerIcon className="h-12 w-12 text-brand-cyan-500" />
+        <span className="ml-3 text-brand-gray-300 text-lg">Loading templates...</span>
       </div>
     );
   }
@@ -207,14 +207,14 @@ const InvoiceTemplates: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-            <DocumentTextIcon className="h-8 w-8 text-cyan-500" />
+            <DocumentTextIcon className="h-8 w-8 text-brand-cyan-500" />
             Invoice Templates
           </h1>
-          <p className="mt-1 text-gray-400">Create and manage invoice branding templates</p>
+          <p className="mt-1 text-brand-gray-400">Create and manage invoice branding templates</p>
         </div>
         <button
           onClick={handleCreateNew}
-          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
         >
           <PlusCircleIcon className="h-5 w-5" />
           Create New Template
@@ -233,18 +233,18 @@ const InvoiceTemplates: React.FC = () => {
           placeholder="Search templates..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+          className="flex-1 px-4 py-2 bg-brand-gray-800 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
         />
       </div>
 
       {filteredTemplates.length === 0 ? (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-12 text-center">
-          <DocumentTextIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+        <div className="bg-brand-gray-800 border border-brand-gray-700 rounded-lg p-12 text-center">
+          <DocumentTextIcon className="h-16 w-16 text-brand-gray-600 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-white mb-2">No Invoice Templates</h3>
-          <p className="text-gray-400 mb-6">Create your first invoice template to customize your invoice branding</p>
+          <p className="text-brand-gray-400 mb-6">Create your first invoice template to customize your invoice branding</p>
           <button
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors"
           >
             <PlusCircleIcon className="h-5 w-5" />
             Create Template
@@ -255,8 +255,8 @@ const InvoiceTemplates: React.FC = () => {
           {filteredTemplates.map((template) => (
             <div
               key={template.id}
-              className={`relative bg-gray-800 border rounded-lg overflow-hidden transition-all hover:border-cyan-500/50 ${
-                template.isDefault ? 'border-cyan-500 ring-1 ring-cyan-500/30' : 'border-gray-700'
+              className={`relative bg-brand-gray-800 border rounded-lg overflow-hidden transition-all hover:border-brand-cyan-500/50 ${
+                template.isDefault ? 'border-brand-cyan-500 ring-1 ring-brand-cyan-500/30' : 'border-brand-gray-700'
               }`}
             >
               <div 
@@ -272,7 +272,7 @@ const InvoiceTemplates: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-white truncate">{template.name}</h3>
                       {template.isDefault && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-cyan-500/20 text-cyan-400 text-xs font-medium rounded-full">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-cyan-500/20 text-brand-cyan-400 text-xs font-medium rounded-full">
                           <Star className="h-3 w-3" />
                           Default
                         </span>
@@ -284,21 +284,21 @@ const InvoiceTemplates: React.FC = () => {
                       )}
                     </div>
                     {template.description && (
-                      <p className="text-sm text-gray-400 mt-1 line-clamp-2">{template.description}</p>
+                      <p className="text-sm text-brand-gray-400 mt-1 line-clamp-2">{template.description}</p>
                     )}
                   </div>
                 </div>
 
-                <div className="space-y-2 text-sm text-gray-400 mb-4">
+                <div className="space-y-2 text-sm text-brand-gray-400 mb-4">
                   <div className="flex items-center gap-2">
                     <Palette className="h-4 w-4" />
                     <div className="flex items-center gap-1">
                       <span 
-                        className="w-4 h-4 rounded-full border border-gray-600" 
+                        className="w-4 h-4 rounded-full border border-brand-gray-600" 
                         style={{ backgroundColor: template.primaryColor }} 
                       />
                       <span 
-                        className="w-4 h-4 rounded-full border border-gray-600" 
+                        className="w-4 h-4 rounded-full border border-brand-gray-600" 
                         style={{ backgroundColor: template.secondaryColor }} 
                       />
                       <span className="ml-2">{template.fontFamily}</span>
@@ -309,17 +309,17 @@ const InvoiceTemplates: React.FC = () => {
                     <span>Tax: {template.defaultTaxRate}%</span>
                   </div>
                   {template.usageCount > 0 && (
-                    <div className="text-cyan-400">
+                    <div className="text-brand-cyan-400">
                       Used {template.usageCount} time{template.usageCount !== 1 ? 's' : ''}
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 pt-3 border-t border-gray-700">
+                <div className="flex items-center gap-2 pt-3 border-t border-brand-gray-700">
                   {!template.isDefault && (
                     <button
                       onClick={() => handleSetDefault(template.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-cyan-400 hover:bg-cyan-500/10 rounded transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-brand-cyan-400 hover:bg-brand-cyan-500/10 rounded transition-colors"
                     >
                       <Star className="h-4 w-4" />
                       Set Default
@@ -327,7 +327,7 @@ const InvoiceTemplates: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleEdit(template)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 rounded transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-sm text-brand-gray-300 hover:bg-brand-gray-700 rounded transition-colors"
                   >
                     <Edit2 className="h-4 w-4" />
                     Edit
@@ -342,7 +342,7 @@ const InvoiceTemplates: React.FC = () => {
                   )}
                   {deleteConfirmId === template.id && (
                     <div className="flex items-center gap-1 ml-auto">
-                      <span className="text-xs text-gray-400 mr-1">Delete?</span>
+                      <span className="text-xs text-brand-gray-400 mr-1">Delete?</span>
                       <button
                         onClick={() => handleDelete(template.id)}
                         className="p-1.5 text-red-400 hover:bg-red-500/10 rounded"
@@ -351,7 +351,7 @@ const InvoiceTemplates: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(null)}
-                        className="p-1.5 text-gray-400 hover:bg-gray-700 rounded"
+                        className="p-1.5 text-brand-gray-400 hover:bg-brand-gray-700 rounded"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -366,14 +366,14 @@ const InvoiceTemplates: React.FC = () => {
 
       {isEditorOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-brand-gray-800 border border-brand-gray-700 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-brand-gray-800 border-b border-brand-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
                 {editingTemplate ? 'Edit Invoice Template' : 'Create Invoice Template'}
               </h2>
               <button
                 onClick={() => setIsEditorOpen(false)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 text-brand-gray-400 hover:text-white hover:bg-brand-gray-700 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -382,99 +382,99 @@ const InvoiceTemplates: React.FC = () => {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Template Name *</label>
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">Template Name *</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleFormChange('name', e.target.value)}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                    className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                     placeholder="e.g., Professional Template"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-brand-gray-300 mb-1">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => handleFormChange('description', e.target.value)}
                     rows={2}
-                    className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                    className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                     placeholder="Brief description of this template..."
                   />
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
+              <div className="border-t border-brand-gray-700 pt-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Company Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Company Name</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Company Name</label>
                     <input
                       type="text"
                       value={formData.companyName}
                       onChange={(e) => handleFormChange('companyName', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Logo URL</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Logo URL</label>
                     <input
                       type="text"
                       value={formData.logoUrl}
                       onChange={(e) => handleFormChange('logoUrl', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                       placeholder="https://..."
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Address</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Address</label>
                     <input
                       type="text"
                       value={formData.companyAddress}
                       onChange={(e) => handleFormChange('companyAddress', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Phone</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Phone</label>
                     <input
                       type="text"
                       value={formData.companyPhone}
                       onChange={(e) => handleFormChange('companyPhone', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Email</label>
                     <input
                       type="email"
                       value={formData.companyEmail}
                       onChange={(e) => handleFormChange('companyEmail', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Website</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Website</label>
                     <input
                       type="text"
                       value={formData.companyWebsite}
                       onChange={(e) => handleFormChange('companyWebsite', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                       placeholder="https://..."
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
+              <div className="border-t border-brand-gray-700 pt-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Invoice Defaults</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Payment Terms</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Payment Terms</label>
                     <select
                       value={formData.defaultPaymentTerms}
                       onChange={(e) => handleFormChange('defaultPaymentTerms', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white focus:outline-none focus:border-brand-cyan-500"
                     >
                       {paymentTermsOptions.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
@@ -482,7 +482,7 @@ const InvoiceTemplates: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Default Tax Rate (%)</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Default Tax Rate (%)</label>
                     <input
                       type="number"
                       value={formData.defaultTaxRate}
@@ -490,95 +490,95 @@ const InvoiceTemplates: React.FC = () => {
                       step="0.01"
                       min="0"
                       max="100"
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white focus:outline-none focus:border-brand-cyan-500"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Header Text</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Header Text</label>
                     <input
                       type="text"
                       value={formData.headerText}
                       onChange={(e) => handleFormChange('headerText', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                       placeholder="Text to appear at the top of invoices"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Footer Text</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Footer Text</label>
                     <input
                       type="text"
                       value={formData.footerText}
                       onChange={(e) => handleFormChange('footerText', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                       placeholder="Text to appear at the bottom of invoices"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Default Notes</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Default Notes</label>
                     <textarea
                       value={formData.defaultNotes}
                       onChange={(e) => handleFormChange('defaultNotes', e.target.value)}
                       rows={2}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                       placeholder="Internal notes for reference..."
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Default Customer Message</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Default Customer Message</label>
                     <textarea
                       value={formData.defaultCustomerNotes}
                       onChange={(e) => handleFormChange('defaultCustomerNotes', e.target.value)}
                       rows={2}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500"
                       placeholder="Thank you for your business..."
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
+              <div className="border-t border-brand-gray-700 pt-6">
                 <h3 className="text-lg font-semibold text-white mb-4">Appearance</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Primary Color</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Primary Color</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={formData.primaryColor}
                         onChange={(e) => handleFormChange('primaryColor', e.target.value)}
-                        className="h-10 w-16 bg-transparent border border-gray-700 rounded cursor-pointer"
+                        className="h-10 w-16 bg-transparent border border-brand-gray-700 rounded cursor-pointer"
                       />
                       <input
                         type="text"
                         value={formData.primaryColor}
                         onChange={(e) => handleFormChange('primaryColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-cyan-500"
+                        className="flex-1 px-3 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-brand-cyan-500"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Secondary Color</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Secondary Color</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
                         value={formData.secondaryColor}
                         onChange={(e) => handleFormChange('secondaryColor', e.target.value)}
-                        className="h-10 w-16 bg-transparent border border-gray-700 rounded cursor-pointer"
+                        className="h-10 w-16 bg-transparent border border-brand-gray-700 rounded cursor-pointer"
                       />
                       <input
                         type="text"
                         value={formData.secondaryColor}
                         onChange={(e) => handleFormChange('secondaryColor', e.target.value)}
-                        className="flex-1 px-3 py-2 bg-gray-900 border border-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-cyan-500"
+                        className="flex-1 px-3 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-brand-cyan-500"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">Font Family</label>
+                    <label className="block text-sm font-medium text-brand-gray-300 mb-1">Font Family</label>
                     <select
                       value={formData.fontFamily}
                       onChange={(e) => handleFormChange('fontFamily', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-md text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full px-4 py-2 bg-brand-gray-900 border border-brand-gray-700 rounded-md text-white focus:outline-none focus:border-brand-cyan-500"
                     >
                       {fontOptions.map(font => (
                         <option key={font} value={font}>{font}</option>
@@ -587,8 +587,8 @@ const InvoiceTemplates: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-gray-900 rounded-lg">
-                  <p className="text-sm text-gray-400 mb-2">Preview</p>
+                <div className="mt-4 p-4 bg-brand-gray-900 rounded-lg">
+                  <p className="text-sm text-brand-gray-400 mb-2">Preview</p>
                   <div 
                     className="h-2 rounded-full mb-2" 
                     style={{ 
@@ -604,30 +604,30 @@ const InvoiceTemplates: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border-t border-gray-700 pt-6">
+              <div className="border-t border-brand-gray-700 pt-6">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => handleFormChange('isActive', e.target.checked)}
-                    className="w-5 h-5 bg-gray-900 border-gray-700 rounded text-cyan-500 focus:ring-cyan-500 focus:ring-offset-gray-800"
+                    className="w-5 h-5 bg-brand-gray-900 border-brand-gray-700 rounded text-brand-cyan-500 focus:ring-brand-cyan-500 focus:ring-offset-gray-800"
                   />
-                  <span className="text-gray-300">Active (can be used for new invoices)</span>
+                  <span className="text-brand-gray-300">Active (can be used for new invoices)</span>
                 </label>
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-gray-800 border-t border-gray-700 px-6 py-4 flex items-center justify-end gap-3">
+            <div className="sticky bottom-0 bg-brand-gray-800 border-t border-brand-gray-700 px-6 py-4 flex items-center justify-end gap-3">
               <button
                 onClick={() => setIsEditorOpen(false)}
-                className="px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-md transition-colors"
+                className="px-4 py-2 text-brand-gray-300 hover:bg-brand-gray-700 rounded-md transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-2 px-6 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-6 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isSaving && <SpinnerIcon className="h-4 w-4" />}
                 {editingTemplate ? 'Save Changes' : 'Create Template'}

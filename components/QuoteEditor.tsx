@@ -455,13 +455,13 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {quote ? 'Edit Quote' : 'Create Quote'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -477,7 +477,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Customer <span className="text-red-400">*</span>
               </label>
               <div className="flex gap-4 mb-4">
@@ -488,9 +488,9 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     value="existing"
                     checked={customerMode === 'existing'}
                     onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                   />
-                  <span className="text-gray-300">Select Existing Customer</span>
+                  <span className="text-brand-gray-300">Select Existing Customer</span>
                 </label>
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -499,9 +499,9 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     value="new"
                     checked={customerMode === 'new'}
                     onChange={(e) => handleCustomerModeChange(e.target.value as 'existing' | 'new')}
-                    className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                    className="mr-2 text-brand-cyan-500 focus:ring-brand-cyan-500"
                   />
-                  <span className="text-gray-300">Create New Customer</span>
+                  <span className="text-brand-gray-300">Create New Customer</span>
                 </label>
               </div>
             </div>
@@ -527,7 +527,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 />
 
                 <div>
-                  <label htmlFor="propertyId" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="propertyId" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Property (Optional)
                   </label>
                   <select
@@ -536,7 +536,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     value={formData.propertyId}
                     onChange={handleChange}
                     disabled={loadingProperties || !formData.clientId}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 disabled:opacity-50"
                   >
                     <option value="">Select a property...</option>
                     {properties.map((property) => (
@@ -548,11 +548,11 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 </div>
               </div>
             ) : (
-              <div className="space-y-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="space-y-4 p-4 bg-brand-gray-800/50 rounded-lg border border-brand-gray-700">
                 <h3 className="text-lg font-semibold text-white mb-4">New Customer Information</h3>
                 
                 <div>
-                  <label htmlFor="companyName" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="companyName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Company Name (Optional)
                   </label>
                   <input
@@ -561,14 +561,14 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     name="companyName"
                     value={newCustomerData.companyName}
                     onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Enter company name"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="firstName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       First Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -577,7 +577,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       name="firstName"
                       value={newCustomerData.firstName}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="First name"
                     />
                     {errors.firstName && (
@@ -586,7 +586,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   </div>
 
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="lastName" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Last Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -595,7 +595,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       name="lastName"
                       value={newCustomerData.lastName}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="Last name"
                     />
                     {errors.lastName && (
@@ -606,7 +606,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="phone" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Phone Number <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -621,7 +621,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                           setErrors(prev => ({ ...prev, phone: undefined }));
                         }
                       }}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="(555) 123-4567"
                     />
                     {errors.phone && (
@@ -630,7 +630,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Email Address <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -639,7 +639,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       name="email"
                       value={newCustomerData.email}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="email@example.com"
                     />
                     {errors.email && (
@@ -649,7 +649,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 </div>
 
                 <div>
-                  <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="addressLine1" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Address Line 1 <span className="text-red-400">*</span>
                   </label>
                   <input
@@ -658,7 +658,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     name="addressLine1"
                     value={newCustomerData.addressLine1}
                     onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Street address"
                   />
                   {errors.addressLine1 && (
@@ -667,7 +667,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 </div>
 
                 <div>
-                  <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="addressLine2" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Address Line 2 (Optional)
                   </label>
                   <input
@@ -676,14 +676,14 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     name="addressLine2"
                     value={newCustomerData.addressLine2}
                     onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="Apt, suite, unit, etc."
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="city" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       City <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -692,7 +692,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       name="city"
                       value={newCustomerData.city}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="City"
                     />
                     {errors.city && (
@@ -701,7 +701,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   </div>
 
                   <div>
-                    <label htmlFor="state" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="state" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       State <span className="text-red-400">*</span>
                     </label>
                     <StateSelect
@@ -723,7 +723,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   </div>
 
                   <div>
-                    <label htmlFor="zipCode" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="zipCode" className="block text-sm font-medium text-brand-gray-300 mb-1">
                       Zip Code <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -732,7 +732,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       name="zipCode"
                       value={newCustomerData.zipCode}
                       onChange={handleNewCustomerChange}
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                       placeholder="12345"
                     />
                     {errors.zipCode && (
@@ -753,7 +753,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                       billingZipCode: newCustomerData.zipCode,
                     } as any));
                   }}
-                  className="mt-3 w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
+                  className="mt-3 w-full px-4 py-2 bg-brand-cyan-600 hover:bg-brand-cyan-700 text-white rounded-md text-sm font-medium transition-colors"
                 >
                   Use as Billing Address
                 </button>
@@ -762,7 +762,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="status" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Status <span className="text-red-400">*</span>
                 </label>
                 <select
@@ -770,7 +770,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 >
                   <option value="Draft">Draft</option>
                   <option value="Sent">Sent</option>
@@ -781,7 +781,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
               </div>
 
               <div>
-                <label htmlFor="validUntil" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="validUntil" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Valid Until
                 </label>
                 <input
@@ -790,18 +790,18 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   name="validUntil"
                   value={formData.validUntil}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                 />
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white">Line Items</h3>
                 <button
                   type="button"
                   onClick={addLineItem}
-                  className="flex items-center text-cyan-400 hover:text-cyan-300 text-sm"
+                  className="flex items-center text-brand-cyan-400 hover:text-brand-cyan-300 text-sm"
                 >
                   <PlusCircleIcon className="h-5 w-5 mr-1" />
                   Add Item
@@ -820,7 +820,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                         type="text"
                         value={item.description}
                         onChange={(e) => handleLineItemChange(index, 'description', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                         placeholder="Service description"
                       />
                     </div>
@@ -829,7 +829,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                         type="number"
                         value={item.price}
                         onChange={(e) => handleLineItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                         placeholder="Price"
                         step="0.01"
                         min="0"
@@ -849,12 +849,12 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
               </div>
             </div>
 
-            <div className="border-t border-gray-700 pt-6">
+            <div className="border-t border-brand-gray-700 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">Pricing</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="discountPercentage" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="discountPercentage" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Discount (%)
                   </label>
                   <input
@@ -863,7 +863,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     name="discountPercentage"
                     value={formData.discountPercentage}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="0"
                     step="0.01"
                     min="0"
@@ -875,7 +875,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 </div>
 
                 <div>
-                  <label htmlFor="taxRate" className="block text-sm font-medium text-gray-300 mb-1">
+                  <label htmlFor="taxRate" className="block text-sm font-medium text-brand-gray-300 mb-1">
                     Tax Rate (%)
                   </label>
                   <input
@@ -884,7 +884,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                     name="taxRate"
                     value={formData.taxRate}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                     placeholder="0"
                     step="0.01"
                     min="0"
@@ -896,20 +896,20 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 </div>
               </div>
 
-              <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-gray-300">
+              <div className="bg-brand-gray-800 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between text-brand-gray-300">
                   <span>Subtotal:</span>
                   <span>${totals.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300">
+                <div className="flex justify-between text-brand-gray-300">
                   <span>Discount:</span>
                   <span>-${totals.discountAmount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300">
+                <div className="flex justify-between text-brand-gray-300">
                   <span>Tax:</span>
                   <span>${totals.taxAmount.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-white font-bold text-lg border-t border-gray-600 pt-2">
+                <div className="flex justify-between text-white font-bold text-lg border-t border-brand-gray-600 pt-2">
                   <span>Total:</span>
                   <span>${totals.grandTotal.toFixed(2)}</span>
                 </div>
@@ -918,7 +918,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="paymentTerms" className="block text-sm font-medium text-gray-300 mb-1">
+                <label htmlFor="paymentTerms" className="block text-sm font-medium text-brand-gray-300 mb-1">
                   Payment Terms
                 </label>
                 <input
@@ -927,14 +927,14 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                   name="paymentTerms"
                   value={formData.paymentTerms}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500"
                   placeholder="e.g., Net 30, Due on Receipt"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="termsAndConditions" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="termsAndConditions" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Terms and Conditions
               </label>
               <textarea
@@ -943,13 +943,13 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 value={formData.termsAndConditions}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                 placeholder="Terms and conditions for this quote..."
               />
             </div>
 
             <div>
-              <label htmlFor="internalNotes" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="internalNotes" className="block text-sm font-medium text-brand-gray-300 mb-1">
                 Internal Notes
               </label>
               <textarea
@@ -958,19 +958,19 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
                 value={formData.internalNotes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                className="w-full px-3 py-2 bg-brand-gray-800 border border-brand-gray-600 rounded-md text-white placeholder-brand-gray-400 focus:outline-none focus:border-brand-cyan-500 focus:ring-1 focus:ring-brand-cyan-500 resize-none"
                 placeholder="Internal notes (not visible to client)..."
               />
             </div>
           </div>
         </form>
 
-        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1421]">
+        <div className="flex justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1421]">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2.5 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2.5 border border-brand-gray-600 text-brand-gray-300 rounded-md hover:bg-brand-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -978,7 +978,7 @@ const QuoteEditor: React.FC<QuoteEditorProps> = ({ isOpen, onClose, onSave, quot
             type="submit"
             onClick={handleSubmit}
             disabled={isLoading || !isFormValid()}
-            className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {isLoading ? (
               <>

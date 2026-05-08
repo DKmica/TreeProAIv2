@@ -76,9 +76,9 @@ const AssociationModal: React.FC<AssociationModalProps> = ({ isOpen, onClose, de
       onClick={handleOverlayClick}
     >
       <div className="relative bg-white rounded-lg shadow-xl w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Quick-create client & property</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">×</button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-gray-200">
+          <h3 className="text-lg font-semibold text-brand-gray-900">Quick-create client & property</h3>
+          <button onClick={onClose} className="text-brand-gray-500 hover:text-brand-gray-700">×</button>
         </div>
 
         <div className="px-6 py-4 space-y-3 max-h-[70vh] overflow-y-auto">
@@ -86,28 +86,28 @@ const AssociationModal: React.FC<AssociationModalProps> = ({ isOpen, onClose, de
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
+              <label className="block text-sm font-medium text-brand-gray-700 mb-1">First name</label>
               <input value={firstName} onChange={(e) => setFirstName(e.target.value)} className="input-light" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
+              <label className="block text-sm font-medium text-brand-gray-700 mb-1">Last name</label>
               <input value={lastName} onChange={(e) => setLastName(e.target.value)} className="input-light" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-brand-gray-700 mb-1">Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-light" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <label className="block text-sm font-medium text-brand-gray-700 mb-1">Phone</label>
               <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input-light" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Property address</label>
+            <label className="block text-sm font-medium text-brand-gray-700 mb-1">Property address</label>
             <input value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} className="input-light" placeholder="Street address" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -117,9 +117,9 @@ const AssociationModal: React.FC<AssociationModalProps> = ({ isOpen, onClose, de
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-white" disabled={isSaving}>Cancel</button>
-          <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-700 disabled:opacity-50 flex items-center gap-2">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-brand-gray-200 bg-brand-gray-50">
+          <button onClick={onClose} className="px-4 py-2 rounded-md border border-brand-gray-300 text-brand-gray-700 hover:bg-white" disabled={isSaving}>Cancel</button>
+          <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 rounded-md bg-brand-cyan-600 text-white hover:bg-brand-cyan-700 disabled:opacity-50 flex items-center gap-2">
             {isSaving && <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
             Save & link
           </button>

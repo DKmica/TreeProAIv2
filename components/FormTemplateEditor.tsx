@@ -192,13 +192,13 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
         className="relative bg-[#0f1c2e] rounded-lg shadow-xl w-[95vw] sm:w-full sm:max-w-4xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-brand-gray-700">
           <h2 className="text-lg sm:text-xl font-bold text-white">
             {template ? 'Edit Form Template' : 'Create New Form Template'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1"
+            className="text-brand-gray-400 hover:text-white transition-colors p-1"
             type="button"
           >
             <XIcon className="h-6 w-6" />
@@ -214,7 +214,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Template Name *
               </label>
               <input
@@ -222,14 +222,14 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 placeholder="e.g., Pre-Job Safety Inspection"
               />
               {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Description
               </label>
               <textarea
@@ -237,20 +237,20 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 placeholder="Describe the purpose of this form..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                 Category *
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 capitalize"
+                className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500 capitalize"
               >
                 {categories.map(cat => (
                   <option key={cat} value={cat} className="capitalize">
@@ -262,13 +262,13 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-brand-gray-300">
                   Form Fields *
                 </label>
                 <button
                   type="button"
                   onClick={handleAddField}
-                  className="px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors text-sm flex items-center gap-2"
+                  className="px-4 py-2 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors text-sm flex items-center gap-2"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -281,9 +281,9 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
 
               <div className="space-y-4">
                 {formData.fields.map((field, index) => (
-                  <div key={field.id} className="p-4 bg-[#0a1628] border border-gray-700 rounded-md">
+                  <div key={field.id} className="p-4 bg-[#0a1628] border border-brand-gray-700 rounded-md">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-400">Field {index + 1}</span>
+                      <span className="text-sm font-medium text-brand-gray-400">Field {index + 1}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveField(field.id)}
@@ -297,11 +297,11 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Field Type</label>
+                        <label className="block text-xs text-brand-gray-400 mb-1">Field Type</label>
                         <select
                           value={field.type}
                           onChange={(e) => handleFieldChange(field.id, 'type', e.target.value)}
-                          className="w-full px-3 py-2 bg-[#0f1c2e] border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500 capitalize"
+                          className="w-full px-3 py-2 bg-[#0f1c2e] border border-brand-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-brand-cyan-500 capitalize"
                         >
                           {fieldTypes.map(type => (
                             <option key={type} value={type} className="capitalize">
@@ -312,12 +312,12 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                       </div>
 
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Field Label</label>
+                        <label className="block text-xs text-brand-gray-400 mb-1">Field Label</label>
                         <input
                           type="text"
                           value={field.label}
                           onChange={(e) => handleFieldChange(field.id, 'label', e.target.value)}
-                          className="w-full px-3 py-2 bg-[#0f1c2e] border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                          className="w-full px-3 py-2 bg-[#0f1c2e] border border-brand-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-brand-cyan-500"
                           placeholder="e.g., Safety Equipment Checked"
                         />
                       </div>
@@ -328,19 +328,19 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                         type="checkbox"
                         checked={field.required}
                         onChange={(e) => handleFieldChange(field.id, 'required', e.target.checked)}
-                        className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded bg-[#0f1c2e]"
+                        className="h-4 w-4 text-brand-cyan-600 focus:ring-brand-cyan-500 border-brand-gray-600 rounded bg-[#0f1c2e]"
                       />
-                      <label className="ml-2 text-sm text-gray-300">Required field</label>
+                      <label className="ml-2 text-sm text-brand-gray-300">Required field</label>
                     </div>
 
                     {field.type === 'select' && (
                       <div className="mt-3">
-                        <label className="block text-xs text-gray-400 mb-1">Options (one per line)</label>
+                        <label className="block text-xs text-brand-gray-400 mb-1">Options (one per line)</label>
                         <textarea
                           value={field.options?.join('\n') || ''}
                           onChange={(e) => handleFieldOptionsChange(field.id, e.target.value)}
                           rows={4}
-                          className="w-full px-3 py-2 bg-[#0f1c2e] border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                          className="w-full px-3 py-2 bg-[#0f1c2e] border border-brand-gray-600 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-brand-cyan-500"
                           placeholder="Option 1&#10;Option 2&#10;Option 3"
                         />
                       </div>
@@ -349,7 +349,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                 ))}
 
                 {formData.fields.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-700 rounded-md">
+                  <div className="text-center py-8 text-brand-gray-500 border-2 border-dashed border-brand-gray-700 rounded-md">
                     No fields added yet. Click "Add Field" to get started.
                   </div>
                 )}
@@ -363,13 +363,13 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                   name="requireSignature"
                   checked={formData.requireSignature}
                   onChange={handleChange}
-                  className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded bg-[#0a1628]"
+                  className="h-4 w-4 text-brand-cyan-600 focus:ring-brand-cyan-500 border-brand-gray-600 rounded bg-[#0a1628]"
                 />
-                <label className="ml-2 text-sm text-gray-300">Require signature on completion</label>
+                <label className="ml-2 text-sm text-brand-gray-300">Require signature on completion</label>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-brand-gray-300 mb-2">
                   Number of required photos
                 </label>
                 <input
@@ -378,18 +378,18 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
                   value={formData.requirePhotos}
                   onChange={handleChange}
                   min="0"
-                  className="w-full px-3 py-2 bg-[#0a1628] border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-[#0a1628] border border-brand-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan-500"
                 />
                 {errors.requirePhotos && <p className="mt-1 text-sm text-red-400">{errors.requirePhotos}</p>}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-gray-700 bg-[#0a1628]">
+          <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-brand-gray-700 bg-[#0a1628]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 sm:px-6 py-2.5 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+              className="px-4 sm:px-6 py-2.5 bg-brand-gray-700 text-white rounded-md hover:bg-brand-gray-600 transition-colors"
               disabled={isLoading}
             >
               Cancel
@@ -397,7 +397,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ isOpen, onClose
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 sm:px-6 py-2.5 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 sm:px-6 py-2.5 bg-brand-cyan-600 text-white rounded-md hover:bg-brand-cyan-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
               {isLoading && (
                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
